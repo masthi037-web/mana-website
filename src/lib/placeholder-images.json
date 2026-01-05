@@ -1,0 +1,148 @@
+{
+  "placeholderImages": [
+    {
+      "id": "product-1",
+      "description": "A jar of mango pickle",
+      "imageUrl": "https://images.unsplash.com/photo-1617854307432-13950e24ba07?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtYW5nbyUyMHBpY2tsZXxlbnwwfHx8fDE3Njc1MzE4MzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mango pickle"
+    },
+    {
+      "id": "product-2",
+      "description": "A jar of lime pickle",
+      "imageUrl": "https://images.unsplash.com/photo-1508910238952-0dfebf373ecf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bGltZSUyMHBpY2tsZXxlbnwwfHx8fDE3Njc1MzE4MzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "lime pickle"
+    },
+    {
+      "id": "product-3",
+      "description": "A bowl of sweet mango chutney",
+      "imageUrl": "https://images.unsplash.com/photo-1591465619339-60fce055bc82?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtYW5nbyUyMGNodXRuZXl8ZW58MHx8fHwxNzY3NTMxODM0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mango chutney"
+    },
+    {
+      "id": "product-4",
+      "description": "A pair of jhumka earrings",
+      "imageUrl": "https://images.unsplash.com/photo-1644613537735-a0226e8f865d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxqaHVta2ElMjBlYXJyaW5nc3xlbnwwfHx8fDE3Njc1MzE4MzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "jhumka earrings"
+    },
+    {
+      "id": "product-5",
+      "description": "A pair of stud earrings",
+      "imageUrl": "https://images.unsplash.com/photo-1761479258392-011cb2090063?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdHVkJTIwZWFycmluZ3N8ZW58MHx8fHwxNzY3NTMxODM0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "stud earrings"
+    },
+    {
+      "id": "product-6",
+      "description": "A kundan necklace set",
+      "imageUrl": "https://images.unsplash.com/photo-1625916036111-ae7bd8b353c6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxrdW5kYW4lMjBuZWNrbGFjZXxlbnwwfHx8fDE3Njc1MzE4MzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "kundan necklace"
+    },
+    {
+      "id": "product-7",
+      "description": "An anarkali suit",
+      "imageUrl": "https://picsum.photos/seed/suit1/600/400",
+      "imageHint": "anarkali suit"
+    },
+    {
+      "id": "product-8",
+      "description": "A cotton saree",
+      "imageUrl": "https://images.unsplash.com/photo-1707782438650-d324025da296?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjb3R0b24lMjBzYXJlZXxlbnwwfHx8fDE3Njc1MzE4MzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cotton saree"
+    },
+    {
+      "id": "product-9",
+      "description": "A kurta pyjama set",
+      "imageUrl": "https://images.unsplash.com/photo-1602907021769-9f2eba51d061?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxrdXJ0YSUyMHB5amFtYXxlbnwwfHx8fDE3Njc1MzE4MzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "kurta pyjama"
+    },
+    {
+      "id": "product-10",
+      "description": "An electric kettle",
+      "imageUrl": "https://images.unsplash.com/photo-1643114786355-ff9e52736eab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxlbGVjdHJpYyUyMGtldHRsZXxlbnwwfHx8fDE3Njc0NzU4OTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "electric kettle"
+    },
+    {
+      "id": "product-11",
+      "description": "A portable bluetooth speaker",
+      "imageUrl": "https://images.unsplash.com/photo-1547052178-7f2c5a20c332?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxibHVldG9vdGglMjBzcGVha2VyfGVufDB8fHx8MTc2NzQzMTIwMXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "bluetooth speaker"
+    },
+    {
+      "id": "product-12",
+      "description": "A minimalist backpack",
+      "imageUrl": "https://images.unsplash.com/photo-1765872551254-5e7c7a9bcd1f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxtaW5pbWFsaXN0JTIwYmFja3BhY2t8ZW58MHx8fHwxNzY3NDc1ODkzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "minimalist backpack"
+    },
+    {
+      "id": "product-13",
+      "description": "Spicy chicken pickle",
+      "imageUrl": "https://images.unsplash.com/photo-1550850584-455a131629e8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y2hpY2tlbiUyMHBpY2tsZXxlbnwwfHx8fDE3Njc1MzIwODd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "chicken pickle"
+    },
+    {
+      "id": "product-14",
+      "description": "Tangy and spicy prawn pickle",
+      "imageUrl": "https://images.unsplash.com/photo-1531170858071-90621b6d369b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwcmF3biUyMHBpY2tsZXxlbnwwfHx8fDE3Njc1MzIwODd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "prawn pickle"
+    },
+    {
+      "id": "product-15",
+      "description": "Flavorful garlic pickle",
+      "imageUrl": "https://images.unsplash.com/photo-1602141901597-dd9e5e5ae5b4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Z2FybGljJTIwcGlja2xlfGVufDB8fHx8MTc2NzUzMjcwNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "garlic pickle"
+    },
+    {
+      "id": "product-16",
+      "description": "A mix of seasonal vegetables",
+      "imageUrl": "https://images.unsplash.com/photo-1737049994922-176fa32bdb8b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxtaXhlZCUyMHZlZ2V0YWJsZSUyMHBpY2tsZXxlbnwwfHx8fDE3Njc1MzI3MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mixed vegetable pickle"
+    },
+    {
+      "id": "product-17",
+      "description": "Hot and spicy chilli pickle",
+      "imageUrl": "https://images.unsplash.com/photo-1695835394238-d3367fa34b45?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjaGlsbGklMjBwaWNrbGV8ZW58MHx8fHwxNzY3NTMyNzA2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "chilli pickle"
+    },
+    {
+      "id": "product-18",
+      "description": "Rich and spicy mutton pickle",
+      "imageUrl": "https://images.unsplash.com/photo-1543280207-5f62a4c20be2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtdXR0b24lMjBwaWNrbGV8ZW58MHx8fHwxNzY3NTMyNzA2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mutton pickle"
+    },
+    {
+      "id": "product-19",
+      "description": "Tangy fish pickle with spices",
+      "imageUrl": "https://images.unsplash.com/photo-1531170858071-90621b6d369b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxmaXNoJTIwcGlja2xlfGVufDB8fHx8MTc2NzUzMjcwNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fish pickle"
+    },
+    {
+      "id": "product-20",
+      "description": "Fresh coriander and mint chutney",
+      "imageUrl": "https://images.unsplash.com/photo-1720276363063-b2872feaed88?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjb3JpYW5kZXIlMjBjaHV0bmV5fGVufDB8fHx8MTc2NzUzMjcwNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "coriander chutney"
+    },
+    {
+      "id": "product-21",
+      "description": "Sweet and tangy tamarind chutney",
+      "imageUrl": "https://images.unsplash.com/photo-1570989132960-573d921c8de1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx0YW1hcmluZCUyMGNodXRuZXl8ZW58MHx8fHwxNzY3NTMyNzA2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tamarind chutney"
+    },
+    {
+      "id": "product-22",
+      "description": "Aromatic blend of ground spices",
+      "imageUrl": "https://images.unsplash.com/photo-1757802261964-a8e03ed98981?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxnYXJhbSUyMG1hc2FsYXxlbnwwfHx8fDE3Njc1MjU3MDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "garam masala"
+    },
+    {
+      "id": "product-23",
+      "description": "Pure and authentic turmeric powder",
+      "imageUrl": "https://images.unsplash.com/photo-1633881614907-8587c9b93c2f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx0dXJtZXJpYyUyMHBvd2RlcnxlbnwwfHx8fDE3Njc0MzU1Mjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "turmeric powder"
+    },
+    {
+      "id": "product-24",
+      "description": "Spicy red chilli powder",
+      "imageUrl": "https://images.unsplash.com/photo-1684253188181-eebebe802311?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjaGlsbGklMjBwb3dkZXJ8ZW58MHx8fHwxNzY3NDM1NTQ3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "chilli powder"
+    }
+  ]
+}
