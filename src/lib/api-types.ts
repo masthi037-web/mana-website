@@ -97,3 +97,92 @@ export interface Category {
     companyId: string;
     categories: Category[];
 }
+
+// ... existing interfaces ...
+
+// --- Create Request Interfaces ---
+
+export interface CreateCategoryRequest {
+    companyId: string;
+    categoryName: string;
+    categoryDescription: string;
+    categoryStatus: string;
+}
+
+export interface CreateCategoryResponse {
+    companyId: string;
+    categoryId: number;
+    categoryName: string;
+    categoryDescription: string;
+    categoryStatus: string;
+    createdAt: string;
+    catalogues: null | Catalogue[];
+}
+
+export interface CreateCatalogueRequest {
+    categoryId: string; // or number? User prompt showed "1" (string) but response has 1 (number). create request says "1".
+    catalogueName: string;
+    catalogueDescription: string;
+}
+
+export interface CreateCatalogueResponse {
+    categoryId: number;
+    catalogueId: number;
+    catalogueName: string;
+    catalogueDescription: string;
+    catalogueStatus: string;
+    createdAt: string;
+    products: null | Product[];
+}
+
+export interface CreateProductRequest {
+    catalogueId: number;
+    productName: string;
+    productIng: string;
+    productBestBefore: string;
+    productInst: string;
+    productInfo: string;
+    productPics: string;
+    productStatus: string;
+    famous: boolean;
+    productDeliveryCost: number;
+}
+
+export interface CreateProductResponse {
+    productId: number;
+    catalogueId: number;
+    productName: string; // ... other fields same as Product
+    productStatus: string;
+    createdAt: string;
+}
+
+export interface CreatePricingRequest {
+    productId: number;
+    productPrice: number;
+    productQuantity: string;
+}
+
+export interface CreatePricingResponse {
+    productPricingId: number;
+    productId: number;
+    productPrice: number;
+    productQuantity: string;
+    productAddons: ProductAddon[];
+}
+
+export interface CreateAddonRequest {
+    productPricingId: number;
+    addonName: string;
+    addonPrice: number;
+    mandatory: boolean;
+    active: boolean;
+}
+
+export interface CreateAddonResponse {
+    productAddonId: number;
+    productPricingId: number;
+    addonName: string;
+    addonPrice: number;
+    mandatory: boolean;
+    active: boolean;
+}

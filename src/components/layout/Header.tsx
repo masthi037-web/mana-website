@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Heart, User, ShoppingCart, Search, ShoppingBag, History, Home } from 'lucide-react';
+import { Heart, User, ShoppingCart, Search, ShoppingBag, History, Home, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/hooks/use-cart';
@@ -19,6 +19,7 @@ const navItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/wishlist', label: 'Wishlist', icon: Heart },
   { href: '/cart', label: 'Cart', icon: ShoppingCart },
+  { href: '/admin/inventory', label: 'Admin', icon: Settings },
 ];
 
 const Header = () => {

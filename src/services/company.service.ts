@@ -5,7 +5,8 @@ import { CompanyDetails } from '@/lib/api-types';
 export const fetchCompanyDetails = cache(async (companyDomain: string): Promise<CompanyDetails | null> => {
     try {
         const data = await apiClient<CompanyDetails>('/company/get', {
-            params: { companyDomain }
+            params: { companyDomain },
+            next: { revalidate: 900, tags: ['company'] } // 15 minutes cache
         });
         return data;
     } catch (error) {

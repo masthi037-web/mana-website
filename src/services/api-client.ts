@@ -25,7 +25,9 @@ export async function apiClient<T>(endpoint: string, options: ApiRequestOptions 
     try {
         const res = await fetch(url.toString(), {
             // Default info, can be overridden by options
-            cache: 'no-store',
+            // In dynamic routes (using headers/cookies), fetch defaults to 'no-store' if cache is undefined.
+            // We must explicitly set 'force-cache' to enable the Data Cache when using revalidation.
+            cache: fetchOptions.next?.revalidate ? 'force-cache' : 'no-store',
             ...fetchOptions,
             headers: {
                 'Content-Type': 'application/json',

@@ -20,19 +20,20 @@ export const categories: Category[] = [
         id: 'non-veg-pickles',
         name: 'Non-Veg Pickles',
         products: [
+
           {
             id: '1',
             name: 'Chicken Pickle',
             price: 300,
             imageId: 'product-13',
-            description: 'Traditional homemade pickle. Made with authentic spices.', // Adjusted description to make sense
-            rating: 0,
+            description: 'Traditional homemade sweet',
+            rating: 4.5,
             deliveryTime: '3-5 days',
             deliveryCost: 40.0,
             createdAt: '2026-01-06T10:25:40.988292',
             variants: [],
             famous: false,
-            ingredients: "Gram flour, ghee, sugar", // Keeping user JSON for fidelity even if weird
+            ingredients: "Gram flour, ghee, sugar",
             bestBefore: "15 days",
             instructions: "Store in a cool, dry place",
             pricing: [

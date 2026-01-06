@@ -9,6 +9,7 @@ import { CartProvider } from '@/context/CartContext';
 import { headers } from 'next/headers';
 import { fetchCompanyDetails } from '@/services/company.service';
 import { StoreInitializer } from '@/components/providers/StoreInitializer';
+import QueryProvider from '@/providers/QueryProvider';
 
 export const metadata: Metadata = {
   title: 'ShopSphere',
@@ -35,14 +36,16 @@ export default async function RootLayout({
       </head>
       <body className="font-body antialiased h-full bg-background">
         {companyDetails && <StoreInitializer companyDetails={companyDetails} />}
-        <WishlistProvider>
-          <div className="relative flex min-h-full w-full flex-col">
-            <Header />
-            <main className="flex-1 pb-24">{children}</main>
-            <BottomNavigation />
-          </div>
-          <Toaster />
-        </WishlistProvider>
+        <QueryProvider>
+          <WishlistProvider>
+            <div className="relative flex min-h-full w-full flex-col">
+              <Header />
+              <main className="flex-1 pb-24">{children}</main>
+              <BottomNavigation />
+            </div>
+            <Toaster />
+          </WishlistProvider>
+        </QueryProvider>
       </body>
     </html>
   );
