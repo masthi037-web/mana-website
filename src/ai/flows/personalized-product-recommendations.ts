@@ -8,8 +8,8 @@
  * - PersonalizedRecommendationsOutput - The return type for the getPersonalizedRecommendations function, containing a list of recommended product names.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 import { categories } from '@/data/products';
 
 const allProductNames = categories.flatMap(c => c.catalogs.flatMap(ca => ca.products.map(p => p.name)));
@@ -33,8 +33,8 @@ export async function getPersonalizedRecommendations(input: PersonalizedRecommen
 
 const prompt = ai.definePrompt({
   name: 'personalizedRecommendationsPrompt',
-  input: {schema: PersonalizedRecommendationsInputSchema},
-  output: {schema: PersonalizedRecommendationsOutputSchema},
+  input: { schema: PersonalizedRecommendationsInputSchema },
+  output: { schema: PersonalizedRecommendationsOutputSchema },
   prompt: `You are an e-commerce recommendation engine.
 Based on the user's browsing history, recommend 4 products they might be interested in.
 Only recommend products from the following list: ${allProductNames.join(', ')}
@@ -51,7 +51,7 @@ const personalizedRecommendationsFlow = ai.defineFlow(
     outputSchema: PersonalizedRecommendationsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const { output } = await prompt(input);
     return output!;
   }
 );

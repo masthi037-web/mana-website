@@ -38,6 +38,7 @@ export interface Product {
     createdAt: string;
     productPricing: ProductPricing[];
     productRatings: ProductRating[];
+    famous: boolean;
 }
 
 export interface Catalogue {
@@ -50,17 +51,49 @@ export interface Catalogue {
     products: Product[];
 }
 
-export interface Category {
+export interface CompanyDetails {
     companyId: string;
-    categoryId: number;
-    categoryName: string;
-    categoryDescription: string;
-    categoryStatus: string; // 'ACTIVE' etc.
-    createdAt: string;
-    catalogues: Catalogue[];
+    companyName: string;
+    companyDomain: string;
+    companyPhone: string;
+    companyMessage: string | null;
+    companyEmail: string;
+    gstNumber: string;
+    logo: string;
+    banner: string;
+    companyCoupon: string;
+    ownerName: string;
+    ownerEmail: string;
+    companyStatus: string;
+    ownerPhone: string;
+    companyAddress: string;
+    companyCity: string;
+    companyState: string;
+    companyPinCode: string;
+    companyFssAi: string;
+    companyProductCategory: string;
+    deliveryBetween: string;
+    companyEstDate: string;
+    averageRating: number;
+    totalRating: number;
+    noOfRatings: number;
+    companyRegisteredAt: string;
+    updatedAt: string;
+    minimumOrderCost: string;
+    freeDeliveryCost: string;
+    socialMediaLink: string | null;
+    about: string;
 }
 
 export interface CompanyInventory {
+    companyId: number;
+    categories: Category[];
+}
+
+export interface Category {
+    categoryId: number;
+    categoryName: string;
+    catalogues: Catalogue[];
     companyId: string;
     categories: Category[];
 }

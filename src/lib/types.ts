@@ -3,15 +3,36 @@ export type ProductVariant = {
   options: string[];
 };
 
+export type ProductAddonOption = {
+  id: string;
+  name: string;
+  price: number;
+  mandatory: boolean;
+};
+
+export type ProductPriceOption = {
+  id: string;
+  price: number;
+  quantity: string;
+  addons?: ProductAddonOption[];
+};
+
 export type Product = {
   id: string;
   name: string;
   price: number;
+  pricing: ProductPriceOption[]; // For quantity-based pricing
   imageId: string;
   description: string;
   rating: number;
   deliveryTime: string;
+  deliveryCost: number;
+  createdAt: string;
   variants?: ProductVariant[];
+  famous?: boolean;
+  ingredients?: string;
+  bestBefore?: string;
+  instructions?: string;
 };
 
 export type ProductWithImage = Product & {
