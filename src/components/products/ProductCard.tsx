@@ -96,13 +96,25 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
             {/* Price Block */}
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wider">Starts from</span>
-              <span className="text-lg font-bold font-headline text-primary leading-none mt-0.5">
-                {product.pricing && product.pricing.length > 0
-                  ? `₹${Math.min(...product.pricing.map(p => p.price)).toFixed(0)}`
-                  : (product.price ? `₹${product.price.toFixed(0)}` : 'NA')
-                }
-              </span>
+              {(() => {
+                const prices = product.pricing?.map(p => p.price) || [];
+                const hasPricing = prices.length > 0;
+                const minPrice = hasPricing ? Math.min(...prices) : (product.price || 0);
+                const maxPrice = hasPricing ? Math.max(...prices) : (product.price || 0);
+                // Show "Starts from" only if there are multiple pricing options AND they vary in price
+                const showStartsFrom = hasPricing && minPrice !== maxPrice;
+
+                return (
+                  <>
+                    {showStartsFrom && (
+                      <span className="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wider">Starts from</span>
+                    )}
+                    <span className="text-lg font-bold font-headline text-primary leading-none mt-0.5">
+                      ₹{minPrice.toFixed(0)}
+                    </span>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </CardContent>

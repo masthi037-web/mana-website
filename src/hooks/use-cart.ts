@@ -28,6 +28,7 @@ interface CartState {
   setCompanyDetails: (details: CompanyDetails) => void;
   checkExpiration: () => void;
   timestamp: number;
+  lastAddedItemId: string | null;
 }
 
 const EXPIRATION_TIME = 10 * 24 * 60 * 60 * 1000; // 10 days in milliseconds
@@ -53,6 +54,7 @@ export const useCart = create<CartState>()(
       ],
       companyDetails: null,
       timestamp: Date.now(),
+      lastAddedItemId: null,
       addToCart: (product, selectedVariants, selectedAddons = []) => {
         const currentCart = get().cart;
 
@@ -77,23 +79,29 @@ export const useCart = create<CartState>()(
         });
 
         let updatedCart;
+        let newCartItemId;
+
         if (existingItemIndex > -1) {
           updatedCart = [...currentCart];
           updatedCart[existingItemIndex] = {
             ...updatedCart[existingItemIndex],
             quantity: updatedCart[existingItemIndex].quantity + 1
           };
+          newCartItemId = updatedCart[existingItemIndex].cartItemId;
         } else {
+          newCartItemId = crypto.randomUUID();
           updatedCart = [...currentCart, {
             ...product,
-            cartItemId: crypto.randomUUID(),
+            cartItemId: newCartItemId,
             quantity: 1,
             selectedVariants,
             selectedAddons
           }];
         }
 
-        set({ cart: updatedCart, timestamp: Date.now() });
+        set({ cart: updatedCart, timestamp: Date.now(), lastAddedItemId: newCartItemId });
+        // Clear highlight after 3 seconds
+        setTimeout(() => set({ lastAddedItemId: null }), 3000);
       },
       removeFromCart: (cartItemId) => {
         set(state => ({
@@ -133,7 +141,8 @@ export const useCart = create<CartState>()(
     }),
     {
       name: 'cart-storage',
-      storage: createJSONStorage(() => localStorage),
+      // Ensure storage is only accessed on client side
+      storage: createJSONStorage(() => (typeof window !== 'undefined' ? localStorage : sessionStorage)),
       onRehydrateStorage: () => (state) => {
         state?.checkExpiration();
       }

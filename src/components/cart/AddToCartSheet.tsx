@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import Image from 'next/image';
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -14,7 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+// import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { X, Check, Plus, ShoppingBag } from "lucide-react";
@@ -45,23 +45,23 @@ const OptionCard = ({
   <div
     onClick={onClick}
     className={cn(
-      "relative flex flex-col items-center justify-center py-2 px-3 rounded-lg border cursor-pointer transition-all duration-200 ease-in-out",
-      "hover:border-primary/50 hover:bg-primary/5",
+      "relative flex flex-col items-center justify-center py-2.5 px-3 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-out",
+      "hover:border-primary/30 hover:bg-secondary/30",
       isSelected
-        ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
-        : "border-border bg-card/50"
+        ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
+        : "border-transparent bg-secondary/30 text-muted-foreground"
     )}
   >
     {isSelected && (
-      <div className="absolute top-1.5 right-1.5 text-primary">
-        <Check className="w-3 h-3" />
+      <div className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm">
+        <Check className="w-2.5 h-2.5" strokeWidth={3} />
       </div>
     )}
-    <span className={cn("text-sm font-semibold", isSelected ? "text-primary" : "text-foreground")}>
+    <span className={cn("text-sm font-bold tracking-tight", isSelected ? "text-primary" : "text-foreground")}>
       {label}
     </span>
     {subLabel && (
-      <span className="text-[10px] text-muted-foreground mt-0.5">{subLabel}</span>
+      <span className={cn("text-[10px] font-medium mt-0.5", isSelected ? "text-primary/80" : "text-muted-foreground")}>{subLabel}</span>
     )}
   </div>
 );
@@ -78,30 +78,30 @@ const AddonRow = ({
   <div
     onClick={onToggle}
     className={cn(
-      "group flex items-center justify-between p-3 rounded-lg border transition-all duration-200 cursor-pointer",
-      "hover:border-primary/40 hover:bg-accent/50",
+      "group flex items-center justify-between p-3 rounded-xl transition-all duration-200 cursor-pointer border border-transparent",
+      "hover:bg-secondary/40",
       isSelected
-        ? "border-primary bg-primary/5 shadow-sm"
-        : "border-border bg-transparent"
+        ? "bg-primary/5 border-primary/10 shadow-sm"
+        : "bg-transparent"
     )}
   >
     <div className="flex items-center gap-3">
       <div
         className={cn(
-          "w-4 h-4 rounded border flex items-center justify-center transition-colors",
-          isSelected ? "bg-primary border-primary" : "border-muted-foreground/40 group-hover:border-primary/60"
+          "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-300",
+          isSelected ? "bg-primary border-primary scale-110" : "border-muted-foreground/30 group-hover:border-primary/50"
         )}
       >
-        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+        {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />}
       </div>
       <div className="flex flex-col">
-        <span className={cn("text-xs font-semibold leading-none", isSelected ? "text-foreground" : "text-foreground/90")}>
+        <span className={cn("text-sm font-medium leading-none transition-colors", isSelected ? "text-foreground font-semibold" : "text-foreground/80")}>
           {addon.name}
         </span>
-        {addon.mandatory && <span className="text-[9px] text-destructive uppercase tracking-wide font-bold mt-1">Required</span>}
+        {addon.mandatory && <span className="text-[9px] text-destructive uppercase tracking-wider font-bold mt-1.5">Required</span>}
       </div>
     </div>
-    <span className="text-xs font-medium text-primary">
+    <span className={cn("text-xs font-bold transition-colors", isSelected ? "text-primary" : "text-muted-foreground")}>
       +₹{addon.price}
     </span>
   </div>
@@ -172,10 +172,14 @@ const AddToCartContent = ({
     }
     const selectedAddonsList = availableAddons.filter(a => selectedAddonIds.has(a.id));
     addToCart({ ...product, price: basePrice }, variantsToAdd, selectedAddonsList);
+
     close();
-    setCartOpen(true);
-    // Trigger optional callback
-    if (onAddToCart) onAddToCart();
+
+    // Small delay to ensure the AddToCartSheet closes completely before opening the CartSheet
+    setTimeout(() => {
+      setCartOpen(true);
+      if (onAddToCart) onAddToCart();
+    }, 300);
   };
 
   const hasVariants = (product.variants && product.variants.length > 0) || (product.pricing && product.pricing.length > 0);
@@ -184,52 +188,50 @@ const AddToCartContent = ({
 
   return (
     <div className="flex flex-col h-full bg-background relative group/sheet">
-      {/* Header with Image Background Effect */}
-      <div className="relative h-40 w-full shrink-0 overflow-hidden">
-        <Image
-          src={product.imageUrl}
-          alt={product.name}
-          fill
-          className="object-cover transition-transform duration-700 group-hover/sheet:scale-105"
-        />
-        {/* Gradient only at the bottom to make text readable, ensuring image is clear */}
-        <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-background via-background/60 to-transparent" />
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-3 right-3 h-8 w-8 rounded-full bg-black/20 text-white backdrop-blur-md hover:bg-black/40"
-          onClick={close}
-        >
-          <X className="w-4 h-4" />
-        </Button>
-
-        <div className="absolute bottom-3 left-5 right-5">
-          <h2 className="text-lg font-bold tracking-tight text-foreground shadow-sm">{product.name}</h2>
-          <p className="text-xs text-muted-foreground line-clamp-1">{product.description}</p>
+      {/* Header - Compact Text Only */}
+      <div className="flex flex-col p-5 pb-2 shrink-0 relative border-b border-border/40">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1 pr-8">
+            <h2 className="text-xl font-bold tracking-tight text-foreground">{product.name}</h2>
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{product.description}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-3 right-3 h-8 w-8 rounded-full hover:bg-secondary text-muted-foreground"
+            onClick={close}
+          >
+            <X className="w-5 h-5" />
+          </Button>
         </div>
       </div>
 
-      <ScrollArea className="flex-1 px-4 pb-20 pt-2">
+      <div className="flex-1 px-4 min-h-0 overflow-y-auto overscroll-contain pb-32 pt-2">
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
 
           {/* Quantity Selector */}
           {product.pricing && product.pricing.length > 0 && (
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Select Quantity</h3>
+                <h3 className="text-sm font-semibold">Select</h3>
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Required</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {product.pricing.map((option) => (
-                  <OptionCard
-                    key={option.id}
-                    label={option.quantity}
-                    subLabel={`₹${option.price}`}
-                    isSelected={selectedPricingId === option.id}
-                    onClick={() => setSelectedPricingId(option.id)}
-                  />
-                ))}
+                {(() => {
+                  const prices = product.pricing.map(p => p.price);
+                  // Check if all prices are the same (using a simple strict equality check against the first item)
+                  const allPricesSame = prices.every(p => p === prices[0]);
+
+                  return product.pricing.map((option) => (
+                    <OptionCard
+                      key={option.id}
+                      label={option.quantity}
+                      subLabel={!allPricesSame ? `₹${option.price}` : undefined}
+                      isSelected={selectedPricingId === option.id}
+                      onClick={() => setSelectedPricingId(option.id)}
+                    />
+                  ));
+                })()}
               </div>
             </div>
           )}
@@ -283,7 +285,7 @@ const AddToCartContent = ({
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Sticky Bottom Bar */}
       <div className="absolute bottom-0 left-0 right-0 p-3 bg-background/80 backdrop-blur-lg border-t z-10 transition-all">
@@ -295,7 +297,7 @@ const AddToCartContent = ({
           <Button
             onClick={handleAddToCart}
             size="default"
-            className="flex-1 rounded-lg shadow-md shadow-primary/20 text-sm font-semibold h-10"
+            className="flex-1 rounded-lg shadow-md shadow-primary/20 text-sm font-semibold h-10 transition-all duration-300"
           >
             <ShoppingBag className="w-4 h-4 mr-2" />
             Add to Cart
@@ -309,18 +311,7 @@ const AddToCartContent = ({
 
 // --- Desktop Version (Popover) ---
 
-const AddToCartContentDesktop = ({
-  product,
-  close,
-  onAddToCart,
-}: {
-  product: ProductWithImage;
-  close: () => void;
-  onAddToCart?: () => void;
-}) => {
-  // Reuse logic (could allow minimal variation)
-  return <AddToCartContent product={product} close={close} onAddToCart={onAddToCart} />;
-};
+
 
 
 // --- Main Component ---
@@ -343,9 +334,13 @@ export function AddToCartSheet({ product, children, onAddToCart }: AddToCartShee
     e.stopPropagation();
     e.preventDefault();
     addToCart(product, {});
-    setCartOpen(true);
-    // Trigger optional callback
-    if (onAddToCart) onAddToCart();
+
+    // Small delay for smooth transition and ensuring state updates don't conflict
+    setTimeout(() => {
+      setCartOpen(true);
+      // Trigger optional callback
+      if (onAddToCart) onAddToCart();
+    }, 100);
   };
 
   const handleTriggerClick = (e: React.MouseEvent) => {
@@ -360,13 +355,12 @@ export function AddToCartSheet({ product, children, onAddToCart }: AddToCartShee
 
   const trigger = React.cloneElement(children as React.ReactElement<any>, { onClick: handleTriggerClick });
 
-
   if (isMobile) {
     return (
       <>
         {trigger}
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="bottom" className="rounded-t-[20px] p-0 h-[75vh] max-h-[600px] overflow-hidden border-none shadow-2xl z-[100]">
+          <SheetContent side="bottom" className="rounded-t-[20px] p-0 h-auto max-h-[85vh] flex flex-col overflow-hidden border-none shadow-2xl z-[100] [&>button]:hidden">
             <div className="h-full w-full">
               <AddToCartContent product={product} close={() => setOpen(false)} onAddToCart={onAddToCart} />
             </div>
@@ -376,12 +370,19 @@ export function AddToCartSheet({ product, children, onAddToCart }: AddToCartShee
     );
   }
 
-  // Desktop Popover
+  // Desktop Popover - Beside the card
   return (
     <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent className="w-[320px] p-0 overflow-hidden border-none shadow-xl rounded-xl z-[100]" sideOffset={8}>
-        <AddToCartContentDesktop product={product} close={() => setOpen(false)} onAddToCart={onAddToCart} />
+      <PopoverContent
+        side="right"
+        align="center"
+        sideOffset={16}
+        className="w-[340px] p-0 overflow-hidden border-none shadow-2xl shadow-black/20 rounded-2xl h-[450px] flex flex-col bg-background"
+      >
+        {/* Passing close prop correctly as it is used in AddToCartContent */}
+        {/* AddToCartContent needs to be wrapped in a way that it fills height but respects max-height */}
+        <AddToCartContent product={product} close={() => setOpen(false)} onAddToCart={onAddToCart} />
       </PopoverContent>
     </Popover>
   );

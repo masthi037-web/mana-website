@@ -317,8 +317,9 @@ export default function ProductDetailPage() {
         <div className="flex flex-col gap-6">
           <div>
             <div className="space-y-1">
-              <span className="text-sm font-bold tracking-widest text-muted-foreground uppercase">PALLETURIPACHALLU</span>
+              <span className="text-sm font-bold tracking-widest text-muted-foreground uppercase">{companyDetails?.companyName || 'Digi Turu'}</span>
               <h1 className="font-headline text-3xl md:text-5xl font-bold text-foreground leading-tight">
+                {product.name}
               </h1>
             </div>
 
@@ -334,7 +335,9 @@ export default function ProductDetailPage() {
                 <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")} />
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">Taxes included. Free shipping on orders over 500/-</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Taxes included. {companyDetails?.freeDeliveryCost && `Free shipping on orders over ${companyDetails.freeDeliveryCost}/-`}
+            </p>
 
             {/* Rating simplified */}
             <div className="flex items-center gap-2 mt-3">
@@ -367,7 +370,6 @@ export default function ProductDetailPage() {
 
           {product.instructions && (
             <div className="bg-secondary/20 rounded-xl p-4 border border-border/50">
-              <span className="text-xs font-bold text-foreground uppercase tracking-wider mb-1 block">Storage Instructions</span>
               <p className="text-sm text-muted-foreground">{product.instructions}</p>
             </div>
           )}
@@ -377,35 +379,42 @@ export default function ProductDetailPage() {
             {product.pricing && product.pricing.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <label className="text-lg font-bold text-foreground">Select Quantity</label>
+                  <label className="text-lg font-bold text-foreground">Select</label>
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider bg-secondary/50 px-2 py-1 rounded">REQUIRED</span>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  {product.pricing.map((option) => (
-                    <button
-                      key={option.id}
-                      onClick={() => {
-                        setSelectedPricingId(option.id);
-                        setSelectedAddons([]);
-                      }}
-                      className={cn(
-                        "relative flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 transition-all duration-200 h-24",
-                        selectedPricingId === option.id
-                          ? "border-primary bg-primary/5 shadow-sm"
-                          : "border-border bg-background hover:border-primary/30"
-                      )}
-                    >
-                      {selectedPricingId === option.id && (
-                        <div className="absolute top-2 right-2 text-primary">
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                        </div>
-                      )}
-                      <span className={cn("text-lg font-bold mb-1", selectedPricingId === option.id ? "text-primary" : "text-foreground")}>
-                        {option.quantity}
-                      </span>
-                      <span className="text-sm text-muted-foreground">₹{option.price}</span>
-                    </button>
-                  ))}
+                  {(() => {
+                    const prices = product.pricing.map(p => p.price);
+                    const allPricesSame = prices.every(p => p === prices[0]);
+
+                    return product.pricing.map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => {
+                          setSelectedPricingId(option.id);
+                          setSelectedAddons([]);
+                        }}
+                        className={cn(
+                          "relative flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 transition-all duration-200 h-24",
+                          selectedPricingId === option.id
+                            ? "border-primary bg-primary/5 shadow-sm"
+                            : "border-border bg-background hover:border-primary/30"
+                        )}
+                      >
+                        {selectedPricingId === option.id && (
+                          <div className="absolute top-2 right-2 text-primary">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                          </div>
+                        )}
+                        <span className={cn("text-lg font-bold mb-1", selectedPricingId === option.id ? "text-primary" : "text-foreground")}>
+                          {option.quantity}
+                        </span>
+                        {!allPricesSame && (
+                          <span className="text-sm text-muted-foreground">₹{option.price}</span>
+                        )}
+                      </button>
+                    ));
+                  })()}
                 </div>
               </div>
             )}
