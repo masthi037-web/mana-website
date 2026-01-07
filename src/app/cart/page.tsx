@@ -15,7 +15,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
-import { useWishlist } from '@/context/WishlistContext';
+import { useWishlist } from '@/hooks/use-wishlist';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils'; // Assuming cn utility exists
 
@@ -140,10 +140,10 @@ export default function CartPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className={cn("rounded-full h-10 w-10 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors", wishlist.includes(item.id) && "text-red-500 bg-red-50")}
-                            onClick={() => toggleWishlist(item.id, item.name)}
+                            className={cn("rounded-full h-10 w-10 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors", wishlist.some(i => i.id === item.id) && "text-red-500 bg-red-50")}
+                            onClick={() => toggleWishlist(item)}
                           >
-                            <Heart className={cn("h-5 w-5", wishlist.includes(item.id) && "fill-current")} />
+                            <Heart className={cn("h-5 w-5", wishlist.some(i => i.id === item.id) && "fill-current")} />
                           </Button>
                           <Button
                             variant="ghost"

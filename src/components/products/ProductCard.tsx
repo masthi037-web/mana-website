@@ -6,7 +6,7 @@ import { Heart, Star, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useWishlist } from '@/context/WishlistContext';
+import { useWishlist } from '@/hooks/use-wishlist';
 import type { ProductWithImage } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { AddToCartSheet } from '../cart/AddToCartSheet';
@@ -23,7 +23,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleWishlist(product.id, product.name);
+    toggleWishlist(product);
   }
 
   return (
@@ -79,19 +79,31 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
         <CardContent className="p-5">
           <div className="flex justify-between items-start mb-2 gap-2">
-            <h3 className="font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors leading-tight" title={product.name}>{product.name}</h3>
-            <span className="font-bold text-lg whitespace-nowrap">₹{product.price.toFixed(0)}</span>
+            {/* <h3 className="font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors leading-tight" title={product.name}>{product.name}</h3> */}
+            {/* Keeping title, removing price from top right as requested to move it to bottom */}
+            <h3 className="font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors leading-tight w-full" title={product.name}>{product.name}</h3>
+            {/* <span className="font-bold text-lg whitespace-nowrap">₹{product.price.toFixed(0)}</span> */}
           </div>
 
           <p className="text-muted-foreground text-sm line-clamp-2 mb-4 h-10 leading-relaxed">{product.description}</p>
 
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <div className="flex items-center bg-secondary px-2 py-1 rounded-md">
-              <Clock className="w-3 h-3 mr-1" />
-              {product.deliveryTime}
+          <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between gap-2">
+            {/* Delivery Time Pill */}
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground bg-secondary/50 px-2.5 py-1.5 rounded-full border border-border/50 backdrop-blur-sm">
+              <Clock className="w-3 h-3" />
+              <span>{product.deliveryTime}</span>
             </div>
-            <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
-            <span className="font-medium text-emerald-600">FREE Delivery</span>
+
+            {/* Price Block */}
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wider">Starts from</span>
+              <span className="text-lg font-bold font-headline text-primary leading-none mt-0.5">
+                {product.pricing && product.pricing.length > 0
+                  ? `₹${Math.min(...product.pricing.map(p => p.price)).toFixed(0)}`
+                  : (product.price ? `₹${product.price.toFixed(0)}` : 'NA')
+                }
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>

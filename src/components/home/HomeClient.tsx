@@ -11,6 +11,7 @@ import CatalogGrid from '@/components/products/CatalogGrid';
 import { FilterSortSheet, FilterState } from '@/components/products/FilterSortSheet';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { AddToCartSheet } from '@/components/cart/AddToCartSheet';
+import { ProductCard } from '@/components/products/ProductCard';
 
 import { ArrowRight, Sparkles, Star } from 'lucide-react';
 import Link from 'next/link';
@@ -179,7 +180,7 @@ export default function HomeClient({ initialCategories }: HomeClientProps) {
                                         <Sparkles className="w-6 h-6" />
                                     </div>
                                     <span className={cn(
-                                        "text-sm font-semibold transition-colors whitespace-nowrap",
+                                        "text-xs md:text-sm font-semibold transition-colors text-center line-clamp-2 leading-tight max-w-[120px]",
                                         selectedCategory === category.id ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                                     )}>
                                         {category.name}
@@ -206,45 +207,8 @@ export default function HomeClient({ initialCategories }: HomeClientProps) {
 
                                 <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
                                     {newArrivals.map((product) => (
-                                        <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center">
-                                            <Link href={`/product/${product.id}`} className="block h-full">
-                                                <div className="group relative h-full bg-card rounded-3xl overflow-hidden border border-border/50 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
-                                                    {/* Image Area */}
-                                                    <div className="aspect-[4/3] relative overflow-hidden bg-secondary/20">
-                                                        <div className="absolute top-3 left-3 z-10 bg-primary text-primary-foreground backdrop-blur-md text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                                                            New
-                                                        </div>
-                                                        {/* We can use the ProductCard component logic here, but for custom layout manually rendering simplified card */}
-                                                        <img
-                                                            src={product.imageUrl}
-                                                            alt={product.name}
-                                                            className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
-                                                        />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                                                            <div className="w-full" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                                                                <AddToCartSheet product={product}>
-                                                                    <Button size="sm" className="w-full rounded-full font-semibold shadow-lg translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                                                        Quick Add
-                                                                    </Button>
-                                                                </AddToCartSheet>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    {/* Content Area */}
-                                                    <div className="p-5">
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <h4 className="font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors">{product.name}</h4>
-                                                            <span className="font-bold text-lg">₹{product.price}</span>
-                                                        </div>
-                                                        <p className="text-muted-foreground text-sm line-clamp-2 mb-4">{product.description}</p>
-                                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                            <span className="bg-secondary px-2 py-1 rounded-md">{product.deliveryTime}</span>
-                                                            <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
-                                                            <span>FREE Delivery</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </Link>
+                                        <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
+                                            <ProductCard product={product} />
                                         </div>
                                     ))}
                                 </div>
@@ -269,52 +233,8 @@ export default function HomeClient({ initialCategories }: HomeClientProps) {
 
                                 <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
                                     {famousProducts.map((product) => (
-                                        <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center">
-                                            <Link href={`/product/${product.id}`} className="block h-full">
-                                                <div className="group relative h-full bg-card rounded-3xl overflow-hidden border border-border/50 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
-                                                    {/* Image Area */}
-                                                    <div className="aspect-[4/3] relative overflow-hidden bg-secondary/20">
-                                                        <div className="absolute top-3 left-3 z-10 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
-                                                            <Sparkles className="w-3 h-3 fill-current" /> Famous
-                                                        </div>
-                                                        <img
-                                                            src={product.imageUrl}
-                                                            alt={product.name}
-                                                            className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
-                                                        />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                                                            <div className="w-full" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                                                                <AddToCartSheet product={product}>
-                                                                    <Button size="sm" className="w-full rounded-full font-semibold shadow-lg translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                                                        Quick Add
-                                                                    </Button>
-                                                                </AddToCartSheet>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    {/* Content Area */}
-                                                    <div className="p-5">
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <h4 className="font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors">{product.name}</h4>
-                                                            <span className="font-bold text-lg">₹{product.price}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1 mb-4">
-                                                            <div className="flex text-primary">
-                                                                {[...Array(5)].map((_, i) => (
-                                                                    <Star key={i} className={cn("w-3.5 h-3.5 fill-current", i >= Math.floor(product.rating) && "text-muted-foreground/30 fill-muted-foreground/30")} />
-                                                                ))}
-                                                            </div>
-                                                            <span className="text-xs text-muted-foreground font-medium">({product.rating})</span>
-                                                        </div>
-                                                        <p className="text-muted-foreground text-sm line-clamp-2 mb-4">{product.description}</p>
-                                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                            <span className="bg-secondary px-2 py-1 rounded-md">{product.deliveryTime}</span>
-                                                            <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
-                                                            <span>FREE Delivery</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </Link>
+                                        <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
+                                            <ProductCard product={product} />
                                         </div>
                                     ))}
                                 </div>

@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Heart, User, ShoppingCart, Search, ShoppingBag, History, Home, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useWishlist } from '@/context/WishlistContext';
+import { useWishlist } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
 import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CartSheet } from '@/components/cart/CartSheet';
+import { WishlistSheet } from '@/components/wishlist/WishlistSheet';
 import { Product } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useProduct } from '@/hooks/use-product';
@@ -22,7 +23,7 @@ const navItems = [
   { href: '/admin/inventory', label: 'Admin', icon: Settings },
 ];
 
-const Header = () => {
+const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { wishlist } = useWishlist();
@@ -80,7 +81,7 @@ const Header = () => {
         <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-90">
           <ShoppingBag className="h-7 w-7 text-primary" />
           <span className="font-headline text-2xl font-bold text-foreground tracking-tight">
-            ShopSphere
+            {companyName}
           </span>
         </Link>
         <div className="relative hidden w-full max-w-md md:block lg:max-w-lg" ref={searchRef}>
@@ -136,6 +137,28 @@ const Header = () => {
             {navItems.map(({ href, label, icon: Icon }) => {
               const isActive = pathname === href;
 
+              const content = (
+                <div className="cursor-pointer">
+                  {Icon && <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />}
+                  {label === 'Cart' && cartItemCount > 0 && (
+                    <span className={cn(
+                      "absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold shadow-sm animate-in zoom-in",
+                      isActive ? "bg-background text-primary" : "bg-primary text-primary-foreground"
+                    )}>
+                      {cartItemCount}
+                    </span>
+                  )}
+                  {label === 'Wishlist' && wishlist.length > 0 && (
+                    <span className={cn(
+                      "absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold shadow-sm animate-in zoom-in",
+                      isActive ? "bg-background text-primary" : "bg-primary text-primary-foreground"
+                    )}>
+                      {wishlist.length}
+                    </span>
+                  )}
+                </div>
+              );
+
               const ButtonTrigger = (
                 <Button
                   key={label}
@@ -145,31 +168,13 @@ const Header = () => {
                     "rounded-full relative transition-all duration-300 w-10 h-10 md:w-12 md:h-12",
                     !isActive && "text-muted-foreground hover:text-foreground hover:bg-secondary"
                   )}
-                  asChild={label !== 'Cart'}
+                  asChild={label !== 'Cart' && label !== 'Wishlist'}
                 >
-                  {label === 'Cart' ? (
-                    <div className="cursor-pointer">
-                      {Icon && <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />}
-                      {cartItemCount > 0 && (
-                        <span className={cn(
-                          "absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold shadow-sm animate-in zoom-in",
-                          isActive ? "bg-background text-primary" : "bg-primary text-primary-foreground"
-                        )}>
-                          {cartItemCount}
-                        </span>
-                      )}
-                    </div>
+                  {label === 'Cart' || label === 'Wishlist' ? (
+                    content
                   ) : (
                     <Link href={href} aria-label={label}>
                       {Icon && <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />}
-                      {label === 'Wishlist' && wishlist.length > 0 && (
-                        <span className={cn(
-                          "absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold shadow-sm animate-in zoom-in",
-                          isActive ? "bg-background text-primary" : "bg-primary text-primary-foreground"
-                        )}>
-                          {wishlist.length}
-                        </span>
-                      )}
                     </Link>
                   )}
                 </Button>
@@ -180,6 +185,14 @@ const Header = () => {
                   <CartSheet key={label}>
                     {ButtonTrigger}
                   </CartSheet>
+                );
+              }
+
+              if (label === 'Wishlist') {
+                return (
+                  <WishlistSheet key={label}>
+                    {ButtonTrigger}
+                  </WishlistSheet>
                 );
               }
 
@@ -213,8 +226,8 @@ const Header = () => {
             </Link>
           </Button>
         </nav>
-      </div>
-    </header>
+      </div >
+    </header >
   );
 };
 

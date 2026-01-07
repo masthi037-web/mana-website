@@ -4,7 +4,6 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/layout/Header';
 import BottomNavigation from '@/components/layout/BottomNavigation';
-import { WishlistProvider } from '@/context/WishlistContext';
 import { CartProvider } from '@/context/CartContext';
 import { headers } from 'next/headers';
 import { fetchCompanyDetails } from '@/services/company.service';
@@ -37,14 +36,12 @@ export default async function RootLayout({
       <body className="font-body antialiased h-full bg-background">
         {companyDetails && <StoreInitializer companyDetails={companyDetails} />}
         <QueryProvider>
-          <WishlistProvider>
-            <div className="relative flex min-h-full w-full flex-col">
-              <Header />
-              <main className="flex-1 pb-24">{children}</main>
-              <BottomNavigation />
-            </div>
-            <Toaster />
-          </WishlistProvider>
+          <div className="relative flex min-h-full w-full flex-col">
+            <Header companyName={companyDetails?.companyName} />
+            <main className="flex-1 pb-24">{children}</main>
+            <BottomNavigation />
+          </div>
+          <Toaster />
         </QueryProvider>
       </body>
     </html>

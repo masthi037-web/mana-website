@@ -26,7 +26,11 @@ interface CartState {
   isCartOpen: boolean;
   setCartOpen: (isOpen: boolean) => void;
   setCompanyDetails: (details: CompanyDetails) => void;
+  checkExpiration: () => void;
+  timestamp: number;
 }
+
+const EXPIRATION_TIME = 10 * 24 * 60 * 60 * 1000; // 10 days in milliseconds
 
 const findMockProduct = (id: string): ProductWithImage | undefined => {
   // This is a mock function. In a real app, you'd fetch from an API.
@@ -48,6 +52,7 @@ export const useCart = create<CartState>()(
         { ...findMockProduct('p4')!, cartItemId: 'mock-2', quantity: 1, selectedVariants: {} },
       ],
       companyDetails: null,
+      timestamp: Date.now(),
       addToCart: (product, selectedVariants, selectedAddons = []) => {
         const currentCart = get().cart;
 
@@ -88,11 +93,12 @@ export const useCart = create<CartState>()(
           }];
         }
 
-        set({ cart: updatedCart });
+        set({ cart: updatedCart, timestamp: Date.now() });
       },
       removeFromCart: (cartItemId) => {
         set(state => ({
           cart: state.cart.filter(item => item.cartItemId !== cartItemId),
+          timestamp: Date.now()
         }));
       },
       updateQuantity: (cartItemId, quantity) => {
@@ -101,6 +107,7 @@ export const useCart = create<CartState>()(
           cart: state.cart.map(item =>
             item.cartItemId === cartItemId ? { ...item, quantity } : item
           ),
+          timestamp: Date.now()
         }));
       },
       getCartTotal: () => {
@@ -115,10 +122,21 @@ export const useCart = create<CartState>()(
       isCartOpen: false,
       setCartOpen: (isOpen) => set({ isCartOpen: isOpen }),
       setCompanyDetails: (details) => set({ companyDetails: details }),
+      checkExpiration: () => {
+        const { timestamp } = get();
+        const now = Date.now();
+        if (now - timestamp > EXPIRATION_TIME) {
+          // Expired, clear cart
+          set({ cart: [], timestamp: now });
+        }
+      }
     }),
     {
       name: 'cart-storage',
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        state?.checkExpiration();
+      }
     }
   )
 );

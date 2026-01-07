@@ -111,9 +111,11 @@ const AddonRow = ({
 const AddToCartContent = ({
   product,
   close,
+  onAddToCart,
 }: {
   product: ProductWithImage;
   close: () => void;
+  onAddToCart?: () => void;
 }) => {
   const { addToCart, setCartOpen } = useCart();
   const { toast } = useToast();
@@ -172,6 +174,8 @@ const AddToCartContent = ({
     addToCart({ ...product, price: basePrice }, variantsToAdd, selectedAddonsList);
     close();
     setCartOpen(true);
+    // Trigger optional callback
+    if (onAddToCart) onAddToCart();
   };
 
   const hasVariants = (product.variants && product.variants.length > 0) || (product.pricing && product.pricing.length > 0);
@@ -308,18 +312,26 @@ const AddToCartContent = ({
 const AddToCartContentDesktop = ({
   product,
   close,
+  onAddToCart,
 }: {
   product: ProductWithImage;
   close: () => void;
+  onAddToCart?: () => void;
 }) => {
   // Reuse logic (could allow minimal variation)
-  return <AddToCartContent product={product} close={close} />;
+  return <AddToCartContent product={product} close={close} onAddToCart={onAddToCart} />;
 };
 
 
 // --- Main Component ---
 
-export function AddToCartSheet({ product, children }: AddToCartSheetProps) {
+interface AddToCartSheetProps {
+  product: ProductWithImage;
+  children: React.ReactNode;
+  onAddToCart?: () => void;
+}
+
+export function AddToCartSheet({ product, children, onAddToCart }: AddToCartSheetProps) {
   const [open, setOpen] = React.useState(false);
   const isMobile = useIsMobile();
   const { addToCart, setCartOpen } = useCart();
@@ -332,6 +344,8 @@ export function AddToCartSheet({ product, children }: AddToCartSheetProps) {
     e.preventDefault();
     addToCart(product, {});
     setCartOpen(true);
+    // Trigger optional callback
+    if (onAddToCart) onAddToCart();
   };
 
   const handleTriggerClick = (e: React.MouseEvent) => {
@@ -352,9 +366,9 @@ export function AddToCartSheet({ product, children }: AddToCartSheetProps) {
       <>
         {trigger}
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="bottom" className="rounded-t-[20px] p-0 h-[75vh] max-h-[600px] overflow-hidden border-none shadow-2xl">
+          <SheetContent side="bottom" className="rounded-t-[20px] p-0 h-[75vh] max-h-[600px] overflow-hidden border-none shadow-2xl z-[100]">
             <div className="h-full w-full">
-              <AddToCartContent product={product} close={() => setOpen(false)} />
+              <AddToCartContent product={product} close={() => setOpen(false)} onAddToCart={onAddToCart} />
             </div>
           </SheetContent>
         </Sheet>
@@ -364,10 +378,10 @@ export function AddToCartSheet({ product, children }: AddToCartSheetProps) {
 
   // Desktop Popover
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent className="w-[320px] p-0 overflow-hidden border-none shadow-xl rounded-xl" sideOffset={8}>
-        <AddToCartContentDesktop product={product} close={() => setOpen(false)} />
+      <PopoverContent className="w-[320px] p-0 overflow-hidden border-none shadow-xl rounded-xl z-[100]" sideOffset={8}>
+        <AddToCartContentDesktop product={product} close={() => setOpen(false)} onAddToCart={onAddToCart} />
       </PopoverContent>
     </Popover>
   );

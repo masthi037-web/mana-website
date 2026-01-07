@@ -8,13 +8,14 @@ import type { ProductWithImage, ProductVariant, Category } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Star, Heart, Minus, Plus, ArrowLeft, Loader2, Search } from 'lucide-react';
-import { useWishlist } from '@/context/WishlistContext';
+import { useWishlist } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import Recommendations from '@/components/products/Recommendations';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
+import { useProduct } from '@/hooks/use-product';
 // Import mock categories as fallback ONLY
 import { categories as mockCategories } from '@/data/products';
 import { fetchCategories } from '@/services/product.service';
@@ -112,8 +113,22 @@ export default function ProductDetailPage() {
       setLoading(true);
       let foundProduct: ProductWithImage | undefined;
 
-      // 1. Try fetching from API if companyDetails exists
-      if (companyDetails?.companyId) {
+      const globalProducts = useProduct.getState().products;
+      const storeProduct = globalProducts.find(p => String(p.id) === String(id));
+
+      if (storeProduct) {
+        const image = PlaceHolderImages.find(img => img.id === storeProduct.imageId)
+          || PlaceHolderImages.find(img => img.id === 'product-1');
+
+        foundProduct = {
+          ...storeProduct,
+          imageUrl: image?.imageUrl || '',
+          imageHint: image?.imageHint || 'product image',
+        };
+      }
+
+      // 1. Try fetching from API if companyDetails exists AND not found in store
+      if (!foundProduct && companyDetails?.companyId) {
         try {
           // Optimization: Check if we have products in global store first? 
           // For now, fetch transparently or use cache. 
@@ -304,14 +319,22 @@ export default function ProductDetailPage() {
             <div className="space-y-1">
               <span className="text-sm font-bold tracking-widest text-muted-foreground uppercase">PALLETURIPACHALLU</span>
               <h1 className="font-headline text-3xl md:text-5xl font-bold text-foreground leading-tight">
-                {product.name}
               </h1>
             </div>
 
-            <div className="mt-4 flex flex-col gap-1">
+            <div className="flex items-center gap-2 mt-2">
               <h2 className="text-3xl font-bold text-foreground">Rs. {finalPrice.toFixed(2)}</h2>
-              <p className="text-sm text-muted-foreground">Taxes included. Free shipping on orders over 500/-</p>
+              <div className="flex-1" />
+              <Button
+                variant="outline"
+                size="icon"
+                className={cn("rounded-full h-10 w-10 transition-colors", isWishlisted && "text-red-500 bg-red-50 border-red-200")}
+                onClick={() => toggleWishlist(product)}
+              >
+                <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")} />
+              </Button>
             </div>
+            <p className="text-sm text-muted-foreground mt-1">Taxes included. Free shipping on orders over 500/-</p>
 
             {/* Rating simplified */}
             <div className="flex items-center gap-2 mt-3">
@@ -436,8 +459,8 @@ export default function ProductDetailPage() {
 
           <Separator className="bg-border/60" />
 
-          {/* Bottom Bar Actions */}
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border z-20 md:static md:p-0 md:bg-transparent md:border-0">
+          {/* Bottom Bar Actions - Raised to accommodate BottomNavigation on mobile */}
+          <div className="fixed bottom-[60px] left-0 right-0 p-4 bg-background border-t border-border z-20 md:static md:p-0 md:bg-transparent md:border-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
             <div className="container mx-auto md:px-0">
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -454,8 +477,8 @@ export default function ProductDetailPage() {
               </div>
             </div>
           </div>
-          {/* Spacer for fixed bottom bar on mobile */}
-          <div className="h-24 md:hidden"></div>
+          {/* Spacer for fixed bottom bar on mobile (NavHeight + ActionHeight) */}
+          <div className="h-40 md:hidden"></div>
         </div>
       </div>
 

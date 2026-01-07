@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Heart, ShoppingCart, History, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useWishlist } from '@/context/WishlistContext';
+import { useWishlist } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
 
 const navItems = [
