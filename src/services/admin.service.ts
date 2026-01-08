@@ -12,13 +12,15 @@ export const adminService = {
         return apiClient<CreateCategoryResponse>('/category/create', {
             method: 'POST',
             body: JSON.stringify(data),
+            credentials: 'include',
         });
     },
 
     createCatalogue: async (data: CreateCatalogueRequest) => {
-        return apiClient<CreateCatalogueResponse>('/company/catalogue/create', {
+        return apiClient<CreateCatalogueResponse>('/catalogue/create', {
             method: 'POST',
             body: JSON.stringify(data),
+            credentials: 'include',
         });
     },
 
@@ -26,6 +28,7 @@ export const adminService = {
         return apiClient<CreateProductResponse>('/product/create', {
             method: 'POST',
             body: JSON.stringify(data),
+            credentials: 'include',
         });
     },
 
@@ -33,6 +36,7 @@ export const adminService = {
         return apiClient<CreatePricingResponse>('/product/pricing/create', {
             method: 'POST',
             body: JSON.stringify(data),
+            credentials: 'include',
         });
     },
 
@@ -40,34 +44,41 @@ export const adminService = {
         return apiClient<CreateAddonResponse>('/product/addon/create', {
             method: 'POST',
             body: JSON.stringify(data),
+            credentials: 'include',
         });
     },
 
     getAllCategories: async (companyId: string) => {
         return apiClient<any[]>('/category/get-all-by-company', {
-            params: { companyId }
+            params: { companyId },
+            credentials: 'include',
         });
     },
 
     getCataloguesByCategory: async (categoryId: string) => {
-        return apiClient<any[]>(`/company/catalogue/get/all/${categoryId}`);
+        return apiClient<any[]>(`/catalogue/get-all-by-category/${categoryId}`, {
+            credentials: 'include',
+        });
     },
 
     getProductsByCatalogue: async (catalogueId: string) => {
         return apiClient<any[]>('/product/catalogue/all', {
-            params: { catalogueId }
+            params: { catalogueId },
+            credentials: 'include',
         });
     },
 
     getProductPricing: async (productId: string) => {
         return apiClient<any[]>('/product/pricing/get', {
-            params: { productId }
+            params: { productId },
+            credentials: 'include',
         });
     },
 
     getProductAddons: async (productPricingId: string | number) => {
         return apiClient<any[]>('/product/addon/get', {
-            params: { productPricingId: String(productPricingId) }
+            params: { productPricingId: String(productPricingId) },
+            credentials: 'include',
         });
     }
 };

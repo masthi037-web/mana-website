@@ -7,6 +7,7 @@ import { Home, Heart, ShoppingCart, History, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
+import { useEffect, useState } from 'react';
 
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
@@ -20,11 +21,33 @@ const BottomNavigation = () => {
   const pathname = usePathname();
   const { wishlist } = useWishlist();
   const { cart } = useCart();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  const checkAuth = () => {
+    if (typeof window !== 'undefined') {
+      setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+      setUserRole(localStorage.getItem('userRole'));
+    }
+  };
+
+  useEffect(() => {
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    window.addEventListener('auth-change', checkAuth);
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('auth-change', checkAuth);
+    };
+  }, []);
 
   return (
     <div className="fixed bottom-0 left-0 z-40 w-full border-t bg-background/95 backdrop-blur-sm md:hidden">
       <nav className="container mx-auto flex h-16 items-center justify-around px-4">
         {navItems.map(({ href, icon: Icon, label }) => {
+          if (label === 'Admin' && (!isLoggedIn || !userRole?.includes('OWNER'))) return null;
+          if (label === 'History' && (!isLoggedIn || !userRole?.includes('CUSTOMER'))) return null;
+
           const isActive = pathname === href;
           return (
             <Link

@@ -1,0 +1,278 @@
+'use client';
+
+import React from 'react';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { Package, MapPin, LogOut, User, Settings, CreditCard, Heart, Loader2, ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { authService } from '@/services/auth.service';
+
+export function ProfileSheet({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
+    const { toast } = useToast();
+
+    // State for Auth Flow
+    const [view, setView] = React.useState<'profile' | 'login-phone' | 'login-otp'>('login-phone');
+    const [phoneNumber, setPhoneNumber] = React.useState('');
+    const [otp, setOtp] = React.useState('');
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [showSuccess, setShowSuccess] = React.useState(false);
+
+    // Mock logged in state - in real app check cookie/token existence
+    const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+    const [userRole, setUserRole] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        // Check local storage for persistent login state
+        const storedLogin = localStorage.getItem('isLoggedIn');
+        const storedRole = localStorage.getItem('userRole');
+
+        if (storedLogin === 'true') {
+            setIsLoggedIn(true);
+            setView('profile');
+            if (storedRole) setUserRole(storedRole);
+        }
+    }, []);
+
+    const handleSendOtp = async () => {
+        if (!phoneNumber || phoneNumber.length < 10) {
+            toast({ title: "Invalid Phone", description: "Please enter a valid 10-digit number", variant: "destructive" });
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            await authService.sendOtp(phoneNumber);
+            toast({ title: "OTP Sent", description: "Please check your messages" });
+            setView('login-otp');
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to send OTP", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleLogin = async () => {
+        if (!otp || otp.length < 4) {
+            toast({ title: "Invalid OTP", description: "Please enter the 4-digit code", variant: "destructive" });
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const response = await authService.login(phoneNumber, otp);
+            // Show success animation
+            setShowSuccess(true);
+
+            // Save role
+            if (response.role) {
+                localStorage.setItem('userRole', response.role);
+                setUserRole(response.role);
+            }
+
+            // Delay transition to profile
+            setTimeout(() => {
+                setIsLoggedIn(true);
+                localStorage.setItem('isLoggedIn', 'true');
+                window.dispatchEvent(new Event('auth-change'));
+                setShowSuccess(false);
+                setView('profile');
+                toast({ title: "Welcome back!", description: "Logged in successfully" });
+            }, 2000);
+
+        } catch (error) {
+            toast({ title: "Login Failed", description: "Invalid OTP or error occurred", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await authService.logout();
+            toast({ title: "Logged Out", description: "See you soon!" });
+        } catch (error) {
+            console.error("Logout failed:", error);
+        } finally {
+            setIsLoggedIn(false);
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userRole');
+            window.dispatchEvent(new Event('auth-change'));
+            setUserRole(null);
+            setView('login-phone');
+            setPhoneNumber('');
+            setOtp('');
+        }
+    };
+
+    const menuItems = [
+        { label: 'My Orders', icon: Package, href: '/orders' },
+        { label: 'Wishlist', icon: Heart, href: '/wishlist' },
+        { label: 'Addresses', icon: MapPin, href: '/addresses' },
+        { label: 'Payments', icon: CreditCard, href: '/payments' },
+        { label: 'Settings', icon: Settings, href: '/settings' },
+    ];
+
+    return (
+        <Sheet>
+            <SheetTrigger asChild>{children}</SheetTrigger>
+            <SheetContent side="right" className="w-full sm:max-w-md flex flex-col h-full">
+
+                {/* VIEW: SUCCESS ANIMATION */}
+                {showSuccess && (
+                    <div className="flex flex-col items-center justify-center h-full animate-in fade-in duration-500">
+                        <div className="h-24 w-24 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-in zoom-in duration-500">
+                            <div className="h-16 w-16 bg-green-500 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in delay-150 duration-500">
+                                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                        </div>
+                        <h2 className="text-2xl font-bold font-headline text-foreground">Login Successful!</h2>
+                        <p className="text-muted-foreground mt-2">Redirecting to profile...</p>
+                    </div>
+                )}
+
+                {/* VIEW: LOGGED IN PROFILE */}
+                {isLoggedIn && !showSuccess && view === 'profile' && (
+                    <>
+                        <SheetHeader className="pb-6 border-b">
+                            <SheetTitle>Profile</SheetTitle>
+                        </SheetHeader>
+                        <div className="flex-1 overflow-y-auto py-6">
+                            <div className="flex items-center gap-4 mb-8 px-1">
+                                <Avatar className="h-16 w-16 border-2 border-teal-100">
+                                    <AvatarImage src="https://github.com/shadcn.png" alt="@user" />
+                                    <AvatarFallback className="text-lg bg-teal-50 text-teal-600">
+                                        {phoneNumber.slice(-2)}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <h3 className="text-lg font-bold font-headline">User</h3>
+                                    <p className="text-sm text-muted-foreground">+91 {phoneNumber}</p>
+                                    <Button variant="link" className="p-0 h-auto text-teal-600 text-xs mt-1">
+                                        Edit Profile
+                                    </Button>
+                                </div>
+                            </div>
+                            <Separator className="mb-6" />
+                            <div className="space-y-1">
+                                {menuItems.map((item) => {
+                                    // Only show Settings if role contains OWNER
+                                    if (item.label === 'Settings' && !userRole?.includes('OWNER')) return null;
+
+                                    return (
+                                        <Button
+                                            key={item.label}
+                                            variant="ghost"
+                                            className="w-full justify-start gap-3 h-12 text-base font-normal rounded-xl hover:bg-teal-50 hover:text-teal-700 transition-colors"
+                                            onClick={() => router.push(item.href)}
+                                        >
+                                            <item.icon className="h-5 w-5 text-muted-foreground group-hover:text-teal-600" />
+                                            {item.label}
+                                        </Button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <div className="pt-4 mt-auto border-t">
+                            <Button
+                                variant="destructive"
+                                className="w-full gap-2 rounded-xl h-12 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-none shadow-none"
+                                onClick={handleLogout}
+                            >
+                                <LogOut className="h-4 w-4" />
+                                Log Out
+                            </Button>
+                        </div>
+                    </>
+                )}
+
+                {/* VIEW: LOGIN PHONE */}
+                {!isLoggedIn && !showSuccess && view === 'login-phone' && (
+                    <div className="flex flex-col h-full justify-center px-4">
+                        <div className="mb-10 text-center space-y-3">
+                            <div className="h-20 w-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-teal-50/50">
+                                <User className="h-8 w-8 text-teal-600" />
+                            </div>
+                            <h2 className="text-3xl font-bold font-headline text-slate-800">Welcome Back</h2>
+                            <p className="text-slate-500 font-medium">Enter your mobile number to login</p>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold ml-1 text-slate-700">Mobile Number</label>
+                                <Input
+                                    type="tel"
+                                    placeholder="Enter 10 digit number"
+                                    className="h-14 rounded-2xl text-lg tracking-wide border-2 border-slate-100 bg-slate-50/50 focus-visible:ring-teal-500 focus-visible:border-teal-500 transition-all font-medium placeholder:text-slate-300"
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                />
+                            </div>
+                            <Button
+                                className="w-full h-14 rounded-2xl text-lg font-bold bg-teal-500 hover:bg-teal-600 shadow-lg shadow-teal-500/20 transition-all active:scale-[0.98]"
+                                onClick={handleSendOtp}
+                                disabled={isLoading || phoneNumber.length < 10}
+                            >
+                                {isLoading ? <Loader2 className="animate-spin" /> : 'Get OTP'}
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* VIEW: LOGIN OTP */}
+                {!isLoggedIn && !showSuccess && view === 'login-otp' && (
+                    <div className="flex flex-col h-full px-4 pt-12">
+                        <Button variant="ghost" size="sm" className="self-start -ml-2 mb-8 text-slate-500 hover:text-teal-600 hover:bg-teal-50 rounded-full px-4" onClick={() => setView('login-phone')}>
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Change Number
+                        </Button>
+
+                        <div className="mb-10 space-y-3 text-center">
+                            <h2 className="text-3xl font-bold font-headline text-slate-800">Verify OTP</h2>
+                            <div className="text-slate-500 font-medium">
+                                Enter the code sent to <span className="text-teal-600 font-bold">+91 {phoneNumber}</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-8">
+                            <div className="space-y-2">
+                                <Input
+                                    type="text"
+                                    placeholder="0000"
+                                    className="h-16 rounded-2xl text-center text-3xl tracking-[0.5em] font-bold border-2 border-slate-100 bg-slate-50/50 focus-visible:ring-teal-500 focus-visible:border-teal-500 transition-all text-slate-800 placeholder:text-slate-200"
+                                    maxLength={4}
+                                    value={otp}
+                                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                />
+                            </div>
+                            <Button
+                                className="w-full h-14 rounded-2xl text-lg font-bold bg-teal-500 hover:bg-teal-600 shadow-lg shadow-teal-500/20 transition-all active:scale-[0.98]"
+                                onClick={handleLogin}
+                                disabled={isLoading || otp.length < 4}
+                            >
+                                {isLoading ? <Loader2 className="animate-spin" /> : 'Login'}
+                            </Button>
+
+                            <div className="text-center">
+                                <Button variant="link" className="text-sm font-semibold text-slate-400 hover:text-teal-600" onClick={handleSendOtp}>
+                                    Resend OTP
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </SheetContent>
+        </Sheet>
+    );
+}

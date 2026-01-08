@@ -12,6 +12,7 @@ import { FilterSortSheet, FilterState } from '@/components/products/FilterSortSh
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { AddToCartSheet } from '@/components/cart/AddToCartSheet';
 import { ProductCard } from '@/components/products/ProductCard';
+import { FeaturesCarousel } from '@/components/home/FeaturesCarousel';
 
 import { ArrowRight, Sparkles, Star } from 'lucide-react';
 import Link from 'next/link';
@@ -141,178 +142,183 @@ export default function HomeClient({ initialCategories }: HomeClientProps) {
     const famousProducts = allFamousProducts.slice(0, 8); // Showing up to 8 famous products
 
     return (
-        <div className="container mx-auto px-4 pb-20 space-y-24">
+        <div className="space-y-12 pb-20">
+            <div className="animate-in fade-in slide-in-from-top-4 duration-700">
+                <FeaturesCarousel />
+            </div>
+            <div className="container mx-auto px-4 space-y-24">
 
-            {/* Categories Section */}
-            <section>
-                <div className="flex items-center justify-center mb-8 text-center">
-                    <div>
-                        <h2 className="text-3xl font-headline font-bold">Discover Collections</h2>
-                        <p className="text-muted-foreground mt-1">Explore our curated range of products</p>
-                    </div>
-                </div>
-
-                {initialCategories.length > 0 ? (
-                    <div className="space-y-12">
-                        {/* Modern Category Tabs */}
-                        <div className="flex overflow-x-auto pb-4 gap-3 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 scroll-smooth md:justify-center">
-                            {initialCategories.map(category => (
-                                <button
-                                    key={category.id}
-                                    onClick={() => {
-                                        setSelectedCategory(category.id);
-                                        setSelectedCatalogId(initialCategories.find(c => c.id === category.id)?.catalogs[0]?.id || null);
-                                    }}
-                                    className={cn(
-                                        "relative group flex flex-col items-center gap-3 min-w-[100px] p-4 rounded-2xl transition-all duration-300 border border-transparent",
-                                        selectedCategory === category.id
-                                            ? "bg-primary/5 border-primary/20 shadow-sm"
-                                            : "hover:bg-secondary/50 hover:border-border/50"
-                                    )}
-                                >
-                                    <div className={cn(
-                                        "w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300",
-                                        selectedCategory === category.id
-                                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110"
-                                            : "bg-secondary text-muted-foreground group-hover:bg-secondary/80"
-                                    )}>
-                                        {/* Placeholder logic for icons since category object doesn't have icons yet */}
-                                        <Sparkles className="w-6 h-6" />
-                                    </div>
-                                    <span className={cn(
-                                        "text-xs md:text-sm font-semibold transition-colors text-center line-clamp-2 leading-tight max-w-[120px]",
-                                        selectedCategory === category.id ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-                                    )}>
-                                        {category.name}
-                                    </span>
-                                </button>
-                            ))}
+                {/* Categories Section */}
+                <section className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+                    <div className="flex items-center justify-center mb-8 text-center">
+                        <div>
+                            <h2 className="text-3xl font-headline font-bold">Discover Collections</h2>
+                            <p className="text-muted-foreground mt-1">Explore our curated range of products</p>
                         </div>
+                    </div>
 
-                        {/* New Arrivals Block - Premium Horizontal Scroll */}
-                        {newArrivals.length > 0 && (
-                            <div id="new-arrivals" className="mb-16 animate-in fade-in slide-in-from-bottom-6 duration-700 scroll-mt-24">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative flex h-3 w-3">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                    {initialCategories.length > 0 ? (
+                        <div className="space-y-12">
+                            {/* Modern Category Tabs */}
+                            <div className="flex overflow-x-auto pb-4 gap-3 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 scroll-smooth md:justify-center">
+                                {initialCategories.map(category => (
+                                    <button
+                                        key={category.id}
+                                        onClick={() => {
+                                            setSelectedCategory(category.id);
+                                            setSelectedCatalogId(initialCategories.find(c => c.id === category.id)?.catalogs[0]?.id || null);
+                                        }}
+                                        className={cn(
+                                            "relative group flex flex-col items-center gap-3 min-w-[100px] p-4 rounded-2xl transition-all duration-300 border border-transparent",
+                                            selectedCategory === category.id
+                                                ? "bg-primary/5 border-primary/20 shadow-sm"
+                                                : "hover:bg-secondary/50 hover:border-border/50"
+                                        )}
+                                    >
+                                        <div className={cn(
+                                            "w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300",
+                                            selectedCategory === category.id
+                                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110"
+                                                : "bg-secondary text-muted-foreground group-hover:bg-secondary/80"
+                                        )}>
+                                            {/* Placeholder logic for icons since category object doesn't have icons yet */}
+                                            <Sparkles className="w-6 h-6" />
                                         </div>
-                                        <div>
-                                            <h3 className="text-2xl font-bold font-headline text-foreground leading-none">Freshly Dropped</h3>
-                                            <p className="text-sm text-muted-foreground mt-1">Just in: {activeCategory?.name}'s latest</p>
+                                        <span className={cn(
+                                            "text-xs md:text-sm font-semibold transition-colors text-center line-clamp-2 leading-tight max-w-[120px]",
+                                            selectedCategory === category.id ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                                        )}>
+                                            {category.name}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* New Arrivals Block - Premium Horizontal Scroll */}
+                            {newArrivals.length > 0 && (
+                                <div id="new-arrivals" className="mb-16 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200 scroll-mt-24">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative flex h-3 w-3">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-2xl font-bold font-headline text-foreground leading-none">Freshly Dropped</h3>
+                                                <p className="text-sm text-muted-foreground mt-1">Just in: {activeCategory?.name}'s latest</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
-                                    {newArrivals.map((product) => (
-                                        <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
-                                            <ProductCard product={product} />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Famous Products Block - Premium Horizontal Scroll */}
-                        {famousProducts.length > 0 && (
-                            <div className="mb-16 animate-in fade-in slide-in-from-bottom-6 duration-700">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative flex h-3 w-3">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                                        </div>
-                                        <div>
-                                            <h3 className="text-2xl font-bold font-headline text-foreground leading-none">Signature Selection</h3>
-                                            <p className="text-sm text-muted-foreground mt-1">Timeless favorites & bestsellers</p>
-                                        </div>
+                                    <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
+                                        {newArrivals.map((product) => (
+                                            <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
+                                                <ProductCard product={product} />
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
+                            )}
 
-                                <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
-                                    {famousProducts.map((product) => (
-                                        <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
-                                            <ProductCard product={product} />
+                            {/* Famous Products Block - Premium Horizontal Scroll */}
+                            {famousProducts.length > 0 && (
+                                <div className="mb-16 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative flex h-3 w-3">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-2xl font-bold font-headline text-foreground leading-none">Signature Selection</h3>
+                                                <p className="text-sm text-muted-foreground mt-1">Timeless favorites & bestsellers</p>
+                                            </div>
                                         </div>
-                                    ))}
+                                    </div>
+
+                                    <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
+                                        {famousProducts.map((product) => (
+                                            <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
+                                                <ProductCard product={product} />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {/* Catalogs & Products Area */}
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-xl font-semibold flex items-center gap-2">
-                                    <span className="w-1.5 h-6 rounded-full bg-primary/80 block"></span>
-                                    {activeCategory?.name} Catalogs
-                                </h3>
+                            {/* Catalogs & Products Area */}
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-xl font-semibold flex items-center gap-2">
+                                        <span className="w-1.5 h-6 rounded-full bg-primary/80 block"></span>
+                                        {activeCategory?.name} Catalogs
+                                    </h3>
 
-                            </div>
+                                </div>
 
-                            <CatalogGrid
-                                catalogs={catalogs}
-                                selectedCatalogId={selectedCatalogId}
-                                onSelectCatalog={handleSelectCatalog}
-                            />
+                                <CatalogGrid
+                                    catalogs={catalogs}
+                                    selectedCatalogId={selectedCatalogId}
+                                    onSelectCatalog={handleSelectCatalog}
+                                />
 
-                            {selectedCatalog && (
-                                <div className="mt-16 animate-in fade-in zoom-in-95 duration-500">
-                                    <div className="flex items-center justify-between mb-8">
-                                        <div>
-                                            <h3 className="text-2xl font-bold font-headline">{selectedCatalog.name}</h3>
-                                            <p className="text-muted-foreground text-sm mt-1">
-                                                {filteredProducts.length} items {filteredProducts.length !== baseProducts.length ? '(filtered)' : 'available'}
-                                            </p>
-                                        </div>
-                                        {/* <FilterSortSheet
+                                {selectedCatalog && (
+                                    <div className="mt-16 animate-in fade-in zoom-in-95 duration-500">
+                                        <div className="flex items-center justify-between mb-8">
+                                            <div>
+                                                <h3 className="text-2xl font-bold font-headline">{selectedCatalog.name}</h3>
+                                                <p className="text-muted-foreground text-sm mt-1">
+                                                    {filteredProducts.length} items {filteredProducts.length !== baseProducts.length ? '(filtered)' : 'available'}
+                                                </p>
+                                            </div>
+                                            {/* <FilterSortSheet
                                             currentFilters={filters}
                                             onApply={setFilters}
                                             minPrice={minProductPrice}
                                             maxPrice={maxProductPrice}
                                         /> */}
+                                        </div>
+                                        <ProductGrid products={filteredProducts} />
+                                        <div className="mt-12 text-center">
+                                            <Button size="lg" variant="secondary" className="rounded-full px-8">Load More Products</Button>
+                                        </div>
                                     </div>
-                                    <ProductGrid products={filteredProducts} />
-                                    <div className="mt-12 text-center">
-                                        <Button size="lg" variant="secondary" className="rounded-full px-8">Load More Products</Button>
-                                    </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 bg-secondary/20 rounded-3xl border border-dashed border-border">
-                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                            <Sparkles className="w-8 h-8 text-muted-foreground" />
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 bg-secondary/20 rounded-3xl border border-dashed border-border">
+                            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                                <Sparkles className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold">No categories found</h3>
+                                <p className="text-muted-foreground">Please check back later for new arrivals.</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="text-lg font-semibold">No categories found</h3>
-                            <p className="text-muted-foreground">Please check back later for new arrivals.</p>
-                        </div>
-                    </div>
-                )
-                }
-            </section >
+                    )
+                    }
+                </section >
 
-            {/* Recommendations Section */}
-            < section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5 border border-border/50 p-8 md:p-12" >
-                <div className="relative z-10">
-                    <div className="text-center mb-10 max-w-2xl mx-auto">
-                        <span className="text-primary text-sm font-bold uppercase tracking-widest mb-2 block">Personalized</span>
-                        <h2 className="font-headline text-3xl md:text-5xl font-bold mb-4 text-foreground">
-                            Recommended For You
-                        </h2>
-                        <p className="text-muted-foreground">
-                            Handpicked selections based on your taste and preferences.
-                        </p>
+                {/* Recommendations Section */}
+                < section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5 border border-border/50 p-8 md:p-12 hover:scale-[1.01] transition-transform duration-700" >
+                    <div className="relative z-10">
+                        <div className="text-center mb-10 max-w-2xl mx-auto">
+                            <span className="text-primary text-sm font-bold uppercase tracking-widest mb-2 block">Personalized</span>
+                            <h2 className="font-headline text-3xl md:text-5xl font-bold mb-4 text-foreground">
+                                Recommended For You
+                            </h2>
+                            <p className="text-muted-foreground">
+                                Handpicked selections based on your taste and preferences.
+                            </p>
+                        </div>
+                        <Recommendations />
                     </div>
-                    <Recommendations />
-                </div>
-                {/* Decorative background elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-            </section >
-        </div >
+                    {/* Decorative background elements */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 animate-float-slow" />
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 animate-float-slower" />
+                </section >
+            </div>
+        </div>
     );
 }

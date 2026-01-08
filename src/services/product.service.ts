@@ -6,24 +6,46 @@ import { apiClient } from './api-client';
 // Placeholder images map to randomize/match images if needed, or we just use picsum if the API gives filenames
 const PLACEHOLDER_BASE = 'https://picsum.photos/seed';
 
+// ... existing imports
+import { Product } from '@/lib/api-types';
+
 export async function fetchCategories(companyId: string): Promise<AppCategory[]> {
     try {
-        const data = await apiClient<CompanyInventory>('/company/category/catalogue/product/get', {
+        const data = await apiClient<CompanyInventory>('/company/public/category/catalogue/product/get', {
             params: { companyId },
-            next: { revalidate: 900, tags: ['products'] } // 15 minutes cache
+            next: { revalidate: 300, tags: ['products'] } // 15 minutes cache
         });
 
         // The API returns a robust structure, we need to map it to our App's simpler types
-        // Accessing the first item in the array if it's an array, or the object itself.
-        // The user's JSON showed the root as an object, but sometimes these APIs return arrays. 
-        // Types say CompanyInventory has 'categories', so we assume 'data' IS CompanyInventory.
-
         return mapApiCategoriesToAppCategories(data.categories || []);
     } catch (error) {
         console.error('Error fetching categories:', error);
         return [];
     }
 }
+
+export async function fetchProductDetails(productId: string): Promise<AppProduct | null> {
+    try {
+        // Using the company-agnostic product get endpoint if available, or finding it in catalog
+        // Assuming a standard endpoint for now based on user request "call get product details API"
+        // We will guess '/company/public/product/get/{productId}' or similar. 
+        // Given the user gave a specific JSON, let's assume valid response.
+
+        // Actually, to be safe and use existing patterns, checking if there is a direct ID endpoint.
+        // If not, we might need to rely on the user providing the endpoint or use a standard one.
+        // I will use `params` structure similar to others.
+
+        const data = await apiClient<ApiProduct>(`/company/public/product/get/${productId}`, {
+            next: { revalidate: 0 } // No cache for checkout validation
+        });
+
+        return mapApiProductToAppProduct(data);
+    } catch (error) {
+        console.error(`Error fetching product ${productId}:`, error);
+        return null;
+    }
+}
+
 
 function mapApiCategoriesToAppCategories(apiCategories: ApiCategory[]): AppCategory[] {
     return apiCategories.map(cat => ({

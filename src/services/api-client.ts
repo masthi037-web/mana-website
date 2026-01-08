@@ -1,53 +1,88 @@
 export const API_BASE_URL = 'http://localhost:8080/api/v1/rurify-services';
 
 interface ApiRequestOptions extends RequestInit {
-    params?: Record<string, string>;
+    params?: Record<string, string | number | boolean>;
+    _retry?: boolean;
 }
+
+let isRefreshing = false;
+let refreshPromise: Promise<void> | null = null;
 
 /**
  * Centralized API client wrapper for fetch.
  * Handles base URL, default headers, and standard error logging.
+ * Includes:
+ * 1. Robust Token Refresh (401 interception)
  */
-export async function apiClient<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
-    const { params, ...fetchOptions } = options;
+export async function apiClient<T>(
+    endpoint: string,
+    options: ApiRequestOptions = {}
+): Promise<T> {
+    const { params, _retry, ...fetchOptions } = options;
 
-    // improved url construction
     const url = new URL(`${API_BASE_URL}${endpoint}`);
 
     if (params) {
         Object.entries(params).forEach(([key, value]) => {
-            if (value) url.searchParams.append(key, value);
+            if (value !== undefined && value !== null) {
+                url.searchParams.append(key, String(value));
+            }
         });
     }
 
-    console.log(`[API Client] Fetching: ${url.toString()}`);
+    const res = await fetch(url.toString(), {
+        credentials: "include", // 🔥 REQUIRED for cookies
+        cache: fetchOptions.next?.revalidate ? "force-cache" : "no-store",
+        ...fetchOptions,
+        headers: {
+            "Content-Type": "application/json",
+            ...fetchOptions.headers,
+        },
+    });
 
-    try {
-        const res = await fetch(url.toString(), {
-            // Default info, can be overridden by options
-            // In dynamic routes (using headers/cookies), fetch defaults to 'no-store' if cache is undefined.
-            // We must explicitly set 'force-cache' to enable the Data Cache when using revalidation.
-            cache: fetchOptions.next?.revalidate ? 'force-cache' : 'no-store',
-            ...fetchOptions,
-            headers: {
-                'Content-Type': 'application/json',
-                ...fetchOptions.headers,
-            },
-        });
-
-        if (!res.ok) {
-            // We can throw a custom error here with status code etc.
-            // For now, logging and returning/throwing regular error.
-            console.error(`API Error: ${res.status} ${res.statusText} at ${endpoint}`);
-            throw new Error(`API Error: ${res.status} ${res.statusText}`);
+    // ✅ 401 interception (Token Refresh)
+    if (res.status === 401 && !_retry) {
+        if (!isRefreshing) {
+            isRefreshing = true;
+            // Corrected URL: Use API_BASE_URL + /auth/refresh
+            // API_BASE_URL already contains /rurify-services, so we just append /auth/refresh
+            refreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
+                method: "POST",
+                credentials: "include",
+            }).then((refreshRes) => {
+                if (!refreshRes.ok) {
+                    throw new Error("Refresh failed");
+                }
+            }).finally(() => {
+                isRefreshing = false;
+                refreshPromise = null;
+            });
         }
 
-        // Attempt to parse JSON
-        // If response is empty or not JSON, this might fail, so handling parsing errors is good practice
-        // but simplified here for the current known JSON APIs.
-        return (await res.json()) as T;
-    } catch (error) {
-        console.error(`Network or Parsing Error at ${endpoint}:`, error);
-        throw error;
+        try {
+            await refreshPromise;
+            return apiClient<T>(endpoint, { ...options, _retry: true });
+        } catch {
+            // Refresh failed → force logout
+            if (typeof window !== 'undefined') {
+                window.location.href = "/login";
+            }
+            throw new Error("Session expired");
+        }
+    }
+
+    if (!res.ok) {
+        console.error(`API Error: ${res.status} ${res.statusText} at ${endpoint}`);
+        throw new Error(`API Error: ${res.status} ${res.statusText}`);
+    }
+
+    const text = await res.text();
+    try {
+        // Handle empty or text responses gracefully
+        return text ? (JSON.parse(text) as T) : ({} as T);
+    } catch {
+        // If allow text, return text, else warning
+        console.warn(`[API Client] Failed to parse JSON, returning text.`);
+        return text as unknown as T;
     }
 }

@@ -15,6 +15,7 @@ import { WishlistSheet } from '@/components/wishlist/WishlistSheet';
 import { Product } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useProduct } from '@/hooks/use-product';
+import { ProfileSheet } from '@/components/profile/ProfileSheet';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -34,6 +35,26 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const { products: allProducts } = useProduct();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  const checkAuth = () => {
+    if (typeof window !== 'undefined') {
+      setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+      setUserRole(localStorage.getItem('userRole'));
+    }
+  };
+
+  useEffect(() => {
+    checkAuth();
+    // Listen for storage events (cross-tab) and custom auth events (same-tab)
+    window.addEventListener('storage', checkAuth);
+    window.addEventListener('auth-change', checkAuth);
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('auth-change', checkAuth);
+    };
+  }, []);
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -135,6 +156,11 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
         <nav className="flex items-center gap-2 text-sm font-medium">
           <div className='hidden md:flex items-center gap-2'>
             {navItems.map(({ href, label, icon: Icon }) => {
+              // Hide Admin settings if not logged in or not OWNER
+              if (label === 'Admin' && (!isLoggedIn || !userRole?.includes('OWNER'))) {
+                return null;
+              }
+
               const isActive = pathname === href;
 
               const content = (
@@ -198,33 +224,34 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
 
               return ButtonTrigger;
             })}
+            {isLoggedIn && userRole?.includes('CUSTOMER') && (
+              <Button
+                variant={pathname === '/history' ? "default" : "ghost"}
+                size="icon"
+                className={cn(
+                  "rounded-full transition-all duration-300 w-10 h-10 md:w-12 md:h-12",
+                  !pathname.startsWith('/history') && "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                )}
+                asChild
+              >
+                <Link href="/history" aria-label="History">
+                  <History className={cn("h-5 w-5 md:h-6 md:w-6", pathname === '/history' && "fill-current")} strokeWidth={pathname === '/history' ? 2.5 : 2} />
+                </Link>
+              </Button>
+            )}
+          </div>
+          <ProfileSheet>
             <Button
-              variant={pathname === '/history' ? "default" : "ghost"}
+              variant={pathname === '/profile' ? "default" : "ghost"}
               size="icon"
               className={cn(
                 "rounded-full transition-all duration-300 w-10 h-10 md:w-12 md:h-12",
-                !pathname.startsWith('/history') && "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                !pathname.startsWith('/profile') && "text-muted-foreground hover:text-foreground hover:bg-secondary"
               )}
-              asChild
             >
-              <Link href="/history" aria-label="History">
-                <History className={cn("h-5 w-5 md:h-6 md:w-6", pathname === '/history' && "fill-current")} strokeWidth={pathname === '/history' ? 2.5 : 2} />
-              </Link>
-            </Button>
-          </div>
-          <Button
-            variant={pathname === '/profile' ? "default" : "ghost"}
-            size="icon"
-            className={cn(
-              "rounded-full transition-all duration-300 w-10 h-10 md:w-12 md:h-12",
-              !pathname.startsWith('/profile') && "text-muted-foreground hover:text-foreground hover:bg-secondary"
-            )}
-            asChild
-          >
-            <Link href="/profile" aria-label="Profile">
               <User className={cn("h-5 w-5 md:h-6 md:w-6", pathname === '/profile' && "fill-current")} strokeWidth={pathname === '/profile' ? 2.5 : 2} />
-            </Link>
-          </Button>
+            </Button>
+          </ProfileSheet>
         </nav>
       </div >
     </header >

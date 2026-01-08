@@ -1,5 +1,6 @@
-
-import { Confetti } from '@/components/ui/confetti';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import confetti from 'canvas-confetti';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -20,16 +21,27 @@ import {
     ShoppingCart,
     Trash2,
     ArrowRight,
+    Gift,
+    X,
+    AlertTriangle,
+    RefreshCw
 } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
+import { fetchProductDetails } from '@/services/product.service';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-
-// import { Confetti } from '@/components/ui/confetti'; // Assuming Confetti is ready to be used
 
 export function CartSheet({ children }: { children: React.ReactNode }) {
     const { cart, updateQuantity, removeFromCart, getCartTotal, getCartItemsCount, isCartOpen, setCartOpen, companyDetails, lastAddedItemId } = useCart();
     const { toast } = useToast();
+    const router = useRouter();
+    const [celebrated, setCelebrated] = useState(false);
+    const [showFreeDeliveryPopup, setShowFreeDeliveryPopup] = useState(false);
+
+    // Validation State
+    const [isCheckingOut, setIsCheckingOut] = useState(false);
+    const [validationErrors, setValidationErrors] = useState<string[]>([]);
+    const [showValidationPopup, setShowValidationPopup] = useState(false);
 
     const subtotal = getCartTotal();
     const cartItemCount = getCartItemsCount();
@@ -45,14 +57,174 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const canCheckout = subtotal >= minOrder;
     const amountForFreeDelivery = Math.max(0, freeDeliveryThreshold - subtotal);
 
+    const handleCheckout = async () => {
+        setIsCheckingOut(true);
+        try {
+            const latestProducts = await Promise.all(
+                cart.map(async (item) => {
+                    const details = await fetchProductDetails(item.id);
+                    return details;
+                })
+            );
+
+            const validProducts = latestProducts.filter((p): p is NonNullable<typeof p> => p !== null);
+
+            // Sync with server (updates prices, removes deleted)
+            // We need to re-add syncWithServer to useCart, or implement it here locally.
+            // Since we reverted it, I will implement a local check + store update.
+            // Actually, best practice is to call the store action, but I removed it.
+            // I will manually update the store if needed.
+
+            let hasChanges = false;
+            const changes: string[] = [];
+            const newCart = cart.filter(item => {
+                const fresh = validProducts.find(p => p.id === item.id);
+                if (!fresh) {
+                    hasChanges = true;
+                    changes.push(`"${item.name}" is no longer available.`);
+                    return false; // Remove
+                }
+
+                // Compare Price
+                if (fresh.price !== item.price) {
+                    hasChanges = true;
+                    changes.push(`Price of "${item.name}" changed from ₹${item.price} to ₹${fresh.price}.`);
+                    // We will update the item in the store in the next step
+                }
+
+                // Compare Status
+                // Assuming existence implies status OK for now, or check fresh.status
+
+                return true;
+            });
+
+            // Check for potential price updates to existing items
+            const finalCart = newCart.map(item => {
+                const fresh = validProducts.find(p => p.id === item.id);
+                if (fresh && fresh.price !== item.price) {
+                    return { ...item, price: fresh.price, name: fresh.name, imageUrl: fresh.imageUrl || item.imageUrl };
+                }
+                return item;
+            });
+
+            if (hasChanges) {
+                // Update Store Manually (hacky since we removed the action, but works)
+                useCart.setState({ cart: finalCart });
+                setValidationErrors(changes);
+                setShowValidationPopup(true);
+            } else {
+                // All Good
+                setCartOpen(false);
+                router.push('/cart');
+            }
+        } catch (error) {
+            console.error("Checkout validation failed", error);
+            toast({ variant: "destructive", description: "Something went wrong. Please try again." });
+        } finally {
+            setIsCheckingOut(false);
+        }
+    };
+
+    // Free Delivery Celebration
+    useEffect(() => {
+        if (isFreeDelivery && !celebrated && isCartOpen) {
+            const end = Date.now() + 1500;
+            const colors = ['#10B981', '#34D399', '#6EE7B7', '#FFD700'];
+
+            (function frame() {
+                confetti({
+                    particleCount: 2,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: colors,
+                    zIndex: 9999
+                });
+                confetti({
+                    particleCount: 2,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: colors,
+                    zIndex: 9999
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+            setCelebrated(true);
+            setShowFreeDeliveryPopup(true);
+            setTimeout(() => setShowFreeDeliveryPopup(false), 3000);
+        } else if (!isFreeDelivery && celebrated) {
+            setCelebrated(false);
+        }
+    }, [isFreeDelivery, celebrated, isCartOpen]);
+
     return (
         <Sheet open={isCartOpen} onOpenChange={setCartOpen}>
             <SheetTrigger asChild>
                 {children}
             </SheetTrigger>
             <SheetContent className="w-full sm:max-w-md flex flex-col p-0 gap-0 border-l border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-2xl">
-                {/* Confetti Explosion on Open if we have items */}
-                {isCartOpen && cartItemCount > 0 && <Confetti />}
+
+                {/* Free Delivery Popup Overlay */}
+                {showFreeDeliveryPopup && (
+                    <div className="absolute inset-x-4 top-1/4 z-[100] animate-in zoom-in-95 fade-in slide-in-from-bottom-10 duration-500 pointer-events-none">
+                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-6 rounded-3xl shadow-2xl relative overflow-hidden border border-white/20 pointer-events-auto">
+                            {/* Decorative Background */}
+                            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/20 rounded-full blur-2xl" />
+                            <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-black/10 rounded-full blur-xl" />
+
+                            <div className="flex flex-col items-center text-center relative z-10">
+                                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mb-3 backdrop-blur-sm shadow-inner">
+                                    <Gift className="w-7 h-7 text-white animate-bounce" />
+                                </div>
+                                <h3 className="text-2xl font-bold mb-1 tracking-tight">Free Shipment!</h3>
+                                <p className="text-white/90 text-sm font-medium">You've unlocked free delivery for this order.</p>
+                            </div>
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-2 right-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full h-8 w-8"
+                                onClick={() => setShowFreeDeliveryPopup(false)}
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Validation Popup */}
+                {showValidationPopup && (
+                    <div className="absolute inset-0 z-[110] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="bg-background w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 slide-in-from-bottom-5">
+                            <div className="bg-amber-500/10 p-6 flex flex-col items-center text-center border-b border-amber-500/20">
+                                <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-3 text-amber-600 dark:text-amber-500">
+                                    <AlertTriangle className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-lg font-bold text-foreground">Cart Updated</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Some items have changed since you added them.</p>
+                            </div>
+
+                            <div className="p-6 space-y-4">
+                                <ul className="space-y-2 max-h-[150px] overflow-y-auto pr-2">
+                                    {validationErrors.map((err, i) => (
+                                        <li key={i} className="text-sm border-l-2 border-amber-500 pl-3 py-0.5 text-muted-foreground">
+                                            {err}
+                                        </li>
+                                    ))}
+                                </ul>
+
+                                <Button className="w-full" onClick={() => setShowValidationPopup(false)}>
+                                    <RefreshCw className="mr-2 w-4 h-4" />
+                                    Review & Continue
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Header */}
                 <SheetHeader className="px-6 py-5 border-b border-border/40 bg-background/50 backdrop-blur-md sticky top-0 z-20">
@@ -233,30 +405,33 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 </p>
                             )}
 
-                            <SheetClose asChild disabled={!canCheckout}>
-                                <Button
-                                    className={cn(
-                                        "w-full h-12 rounded-full text-base font-bold shadow-lg transition-all duration-300",
-                                        canCheckout
-                                            ? "shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 bg-gradient-to-r from-primary to-primary/90"
-                                            : "bg-muted text-muted-foreground shadow-none cursor-not-allowed"
-                                    )}
-                                    asChild={canCheckout}
-                                    disabled={!canCheckout}
-                                >
-                                    {canCheckout ? (
-                                        <Link href="/cart">
-                                            Checkout securely <ArrowRight className="ml-2 w-4 h-4" />
-                                        </Link>
-                                    ) : (
-                                        <span>Checkout Disabled</span>
-                                    )}
-                                </Button>
-                            </SheetClose>
+                            <Button
+                                className={cn(
+                                    "w-full h-12 rounded-full text-base font-bold shadow-lg transition-all duration-300",
+                                    canCheckout
+                                        ? "shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 bg-gradient-to-r from-primary to-primary/90"
+                                        : "bg-muted text-muted-foreground shadow-none cursor-not-allowed"
+                                )}
+                                disabled={!canCheckout || isCheckingOut}
+                                onClick={canCheckout ? handleCheckout : undefined}
+                            >
+                                {canCheckout ? (
+                                    <div className="flex items-center w-full justify-center">
+                                        {isCheckingOut ? (
+                                            <>Validating <RefreshCw className="ml-2 w-4 h-4 animate-spin" /></>
+                                        ) : (
+                                            <>Checkout securely <ArrowRight className="ml-2 w-4 h-4" /></>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <span>Checkout Disabled</span>
+                                )}
+                            </Button>
                         </div>
                     </>
-                )}
-            </SheetContent>
-        </Sheet>
+                )
+                }
+            </SheetContent >
+        </Sheet >
     );
 }

@@ -16,7 +16,7 @@ interface WishlistState {
     timestamp: number;
 }
 
-const EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+const EXPIRATION_TIME = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
 
 export const useWishlist = create<WishlistState>()(
     persist(
@@ -56,6 +56,30 @@ export const useWishlist = create<WishlistState>()(
             },
 
             setWishlistOpen: (isOpen) => set({ isWishlistOpen: isOpen }),
+
+            syncWithServer: (latestProducts: ProductWithImage[]) => {
+                const { wishlist } = get();
+                let hasChanges = false;
+
+                const updatedWishlist = wishlist.map(item => {
+                    const fresh = latestProducts.find(p => p.id === item.id);
+                    if (fresh) {
+                        if (fresh.price !== item.price || fresh.name !== item.name || fresh.imageUrl !== item.imageUrl) {
+                            hasChanges = true;
+                            return { ...item, ...fresh };
+                        }
+                    }
+                    return item;
+                }).filter(item => {
+                    const exists = latestProducts.some(p => p.id === item.id);
+                    if (!exists) hasChanges = true;
+                    return exists;
+                });
+
+                if (hasChanges) {
+                    set({ wishlist: updatedWishlist, timestamp: Date.now() });
+                }
+            },
 
             checkExpiration: () => {
                 const { timestamp } = get();

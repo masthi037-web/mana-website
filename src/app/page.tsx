@@ -58,41 +58,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Trust Signals */}
-      <section className="container mx-auto px-6 -mt-10 relative z-10 mb-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Card 1 */}
-          <div className="bg-card/50 backdrop-blur-xl border border-border/50 p-6 rounded-2xl shadow-sm flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">100% Authentic</h3>
-              <p className="text-sm text-muted-foreground">Original recipes & ingredients</p>
-            </div>
-          </div>
-          {/* Card 2 */}
-          <div className="bg-card/50 backdrop-blur-xl border border-border/50 p-6 rounded-2xl shadow-sm flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-              <Truck className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Fast Delivery</h3>
-              <p className="text-sm text-muted-foreground">Fresh to your door.</p>
-            </div>
-          </div>
-          {/* Card 3 */}
-          <div className="bg-card/50 backdrop-blur-xl border border-border/50 p-6 rounded-2xl shadow-sm flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-600">
-              <Star className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Premium Quality</h3>
-              <p className="text-sm text-muted-foreground">Hand-picked by experts</p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <ProductInitializer categories={categories} />
       <HomeClient initialCategories={categories} />
