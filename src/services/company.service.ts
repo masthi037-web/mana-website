@@ -6,9 +6,9 @@ export const fetchCompanyDetails = cache(async (companyDomain: string): Promise<
     try {
         const data = await apiClient<CompanyDetails>('/company/public/get', {
             params: { companyDomain },
-            next: { revalidate: 300, tags: ['company'] } // 15 minutes cache
+            next: { revalidate: 300, tags: ['company'] } // 5 minutes cache
         });
-        console.log(data.freeDeliveryCost + " cost");
+        console.log(data.companyCoupon + " coupon");
         return data;
     } catch (error) {
         console.error('Error fetching company details:', error);

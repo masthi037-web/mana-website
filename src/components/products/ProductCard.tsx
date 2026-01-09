@@ -38,43 +38,27 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <Link href={`/product/${product.id}`} className="group block h-full">
       <Card
-        className="w-full h-full overflow-hidden transition-all duration-500 hover:shadow-xl"
+        className="card-root w-full h-full overflow-hidden transition-all duration-500 hover:shadow-xl border-transparent"
         style={{
           backgroundColor: 'var(--card-bg-custom, hsl(var(--card)))',
           borderRadius: 'var(--card-radius-custom, 1.5rem)',
           boxShadow: 'var(--card-shadow-custom, 0 1px 2px 0 rgb(0 0 0 / 0.05))',
           border: 'var(--card-border-custom, 1px solid hsl(var(--border) / 0.5))',
-          // New Motion Logic
           transitionDuration: 'var(--motion-duration, 300ms)',
           transitionTimingFunction: 'var(--motion-easing, cubic-bezier(0.4, 0, 0.2, 1))',
-          // Hover logic needs to be handled via group-hover or cleaner class, 
-          // but for inline dynamic values we might need a wrapper or CSS-in-JS.
-          // Since we can't do hover in inline styles easily without state, 
-          // we'll rely on a global class or just apply variables to local consts if needed.
-          // Actually, we can use the `hover` utility with arbitrary values if we had tailwind 3.x arbitrary properties,
-          // but `transform` in style prop applies always.
-          // Solution: Use a `data-` attribute or CSS variable hook. 
-          // For now, let's keep it simple: We will inject a <style> tag or simpler: 
-          // Just use the style prop for static props.
-          // For Hover: We will use the `group-hover` class with a custom style override if possible,
-          // OR better: use `transform` on the wrapper `Link` which IS a group.
         }}
       >
         <div
           className="relative aspect-[4/3] w-full overflow-hidden bg-secondary/20"
-          style={{
-            // Using the variable for image scale effects or just relying on existing classes + new vars?
-            // Let's rely on standard classes but modify the container.
-          }}
         >
           <Image
             src={product.imageUrl}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="object-cover transition-transform"
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
             style={{
-              transitionDuration: 'var(--motion-duration, 300ms)',
+              transitionDuration: 'var(--motion-duration, 500ms)', // Slower for image
               transitionTimingFunction: 'var(--motion-easing, cubic-bezier(0.4, 0, 0.2, 1))',
             }}
             data-ai-hint={product.imageHint}
@@ -160,9 +144,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </Card>
       {/* Dynamic Hover Style Injection */}
       <style jsx global>{`
-        .group:hover .hover\\:scale-110 {
-            transform: scale(1.1); /* Fallback */
-            transform: var(--motion-card-hover, translateY(-4px) scale(1.01)) !important;
+        .group:hover .card-root {
+            transform: var(--motion-card-hover, translateY(-5px));
         }
       `}</style>
     </Link>

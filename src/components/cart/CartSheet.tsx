@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import {
     Sheet,
@@ -24,24 +25,33 @@ import {
     Gift,
     X,
     AlertTriangle,
-    RefreshCw
+    RefreshCw,
+    Tag
 } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
 import { fetchProductDetails } from '@/services/product.service';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
+import { useTenant } from '@/components/providers/TenantContext';
+
 export function CartSheet({ children }: { children: React.ReactNode }) {
     const { cart, updateQuantity, removeFromCart, getCartTotal, getCartItemsCount, isCartOpen, setCartOpen, companyDetails, lastAddedItemId } = useCart();
     const { toast } = useToast();
+    const { text } = useTenant();
     const router = useRouter();
     const [celebrated, setCelebrated] = useState(false);
     const [showFreeDeliveryPopup, setShowFreeDeliveryPopup] = useState(false);
+    const [showCouponPopup, setShowCouponPopup] = useState(false);
+
+    // Track initial render to prevent confetti on reload
+    const isFirstRender = useRef(true);
 
     // Validation State
     const [isCheckingOut, setIsCheckingOut] = useState(false);
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
     const [showValidationPopup, setShowValidationPopup] = useState(false);
+    const [couponCode, setCouponCode] = useState('');
 
     const subtotal = getCartTotal();
     const cartItemCount = getCartItemsCount();
@@ -52,10 +62,87 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
     // Status Logic
     const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
-    const shipping = isFreeDelivery ? 0 : 50; // Fallback standard shipping
+    const shipping = isFreeDelivery ? 0 : 0; // Calculated at checkout
     const total = subtotal + shipping;
     const canCheckout = subtotal >= minOrder;
     const amountForFreeDelivery = Math.max(0, freeDeliveryThreshold - subtotal);
+
+    // Initial Mount Tracker
+    useEffect(() => {
+        // Small timeout to allow state calculations to settle before un-flagging
+        const timer = setTimeout(() => {
+            isFirstRender.current = false;
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Auto-Apply Best Coupon
+    useEffect(() => {
+        if (!companyDetails?.companyCoupon) return;
+
+        const couponList = companyDetails.companyCoupon.split(',').map(cStr => {
+            const [code, discountStr, minOrderStr] = cStr.split('&&&');
+            return {
+                code,
+                discount: parseFloat(discountStr || '0'),
+                minOrder: parseFloat(minOrderStr || '0')
+            };
+        });
+
+        // Find eligible coupons
+        const eligibleCoupons = couponList.filter(c => subtotal >= c.minOrder);
+
+        // Sort by discount descending
+        eligibleCoupons.sort((a, b) => b.discount - a.discount);
+
+        const bestCoupon = eligibleCoupons[0];
+
+        if (bestCoupon) {
+            // Only apply if it's different (avoids loops)
+            if (couponCode !== bestCoupon.code) {
+                setCouponCode(bestCoupon.code);
+
+                // Trigger Celebration logic
+                if (!isFirstRender.current) {
+                    // Small delay to ensure UI is ready
+                    setTimeout(() => {
+                        const end = Date.now() + 1500;
+                        const colors = ['#8b5cf6', '#d946ef', '#f43f5e', '#ec4899']; // Pink/Purple theme
+
+                        (function frame() {
+                            confetti({
+                                particleCount: 2,
+                                angle: 60,
+                                spread: 55,
+                                origin: { x: 0 },
+                                colors: colors,
+                                zIndex: 9999
+                            });
+                            confetti({
+                                particleCount: 2,
+                                angle: 120,
+                                spread: 55,
+                                origin: { x: 1 },
+                                colors: colors,
+                                zIndex: 9999
+                            });
+
+                            if (Date.now() < end) {
+                                requestAnimationFrame(frame);
+                            }
+                        }());
+                        setShowCouponPopup(true);
+                        setTimeout(() => setShowCouponPopup(false), 3000);
+                    }, 500);
+                }
+            }
+        } else {
+            // If strictly enforced (no manual override allowed below threshold), clear it
+            if (couponCode) {
+                setCouponCode('');
+            }
+        }
+    }, [subtotal, companyDetails?.companyCoupon, couponCode]);
 
     const handleCheckout = async () => {
         setIsCheckingOut(true);
@@ -127,7 +214,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
     // Free Delivery Celebration
     useEffect(() => {
-        if (isFreeDelivery && !celebrated && isCartOpen) {
+        // If already eligible on first render, mark as celebrated silently
+        if (isFreeDelivery && isFirstRender.current) {
+            setCelebrated(true);
+            return;
+        }
+
+        if (isFreeDelivery && !celebrated && isCartOpen && !isFirstRender.current) {
             const end = Date.now() + 1500;
             const colors = ['#10B981', '#34D399', '#6EE7B7', '#FFD700'];
 
@@ -167,6 +260,34 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 {children}
             </SheetTrigger>
             <SheetContent className="w-full sm:max-w-md flex flex-col p-0 gap-0 border-l border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-2xl">
+
+                {/* Coupon Unlocked Popup Overlay */}
+                {showCouponPopup && (
+                    <div className="absolute inset-x-4 top-1/4 z-[100] animate-in zoom-in-95 fade-in slide-in-from-bottom-10 duration-500 pointer-events-none">
+                        <div className="bg-gradient-to-br from-violet-600 to-indigo-600 text-white p-6 rounded-3xl shadow-2xl relative overflow-hidden border border-white/20 pointer-events-auto">
+                            {/* Decorative Background */}
+                            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/20 rounded-full blur-2xl" />
+                            <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-black/10 rounded-full blur-xl" />
+
+                            <div className="flex flex-col items-center text-center relative z-10">
+                                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mb-3 backdrop-blur-sm shadow-inner">
+                                    <Tag className="w-7 h-7 text-white animate-bounce" />
+                                </div>
+                                <h3 className="text-2xl font-bold mb-1 tracking-tight">Coupon Applied!</h3>
+                                <p className="text-white/90 text-sm font-medium">You saved money with <span className="font-bold underline decoration-wavy decoration-white/50 underline-offset-4">{couponCode}</span></p>
+                            </div>
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-2 right-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full h-8 w-8"
+                                onClick={() => setShowCouponPopup(false)}
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Free Delivery Popup Overlay */}
                 {showFreeDeliveryPopup && (
@@ -365,21 +486,160 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                         {/* Footer */}
                         <div className="p-6 bg-background/80 backdrop-blur-xl border-t border-border/50 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] z-20">
-                            {/* Free Delivery Nudge */}
-                            {amountForFreeDelivery > 0 && freeDeliveryThreshold > 0 && (
-                                <div className="mb-4 bg-emerald-50 p-3 rounded-xl border border-emerald-100 shadow-sm">
-                                    <p className="text-xs text-emerald-800 font-bold mb-2 flex items-center gap-2">
-                                        <span className="bg-emerald-500 text-white rounded-full p-0.5"><Plus className="w-3 h-3" /></span>
-                                        Add <span className="font-extrabold text-base">₹{amountForFreeDelivery.toFixed(0)}</span> more for free delivery
-                                    </p>
-                                    <div className="h-1.5 w-full bg-emerald-200 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                                            style={{ width: `${Math.min(100, (subtotal / freeDeliveryThreshold) * 100)}%` }}
-                                        />
+                            {/* Smart Reward Progress Bar (Combined) */}
+                            {(() => {
+                                const milestones = [];
+
+                                // Add Free Delivery Milestone
+                                if (freeDeliveryThreshold > 0) {
+                                    milestones.push({
+                                        type: 'delivery',
+                                        value: freeDeliveryThreshold,
+                                        label: 'Free Delivery',
+                                        icon: Gift
+                                    });
+                                }
+
+                                // Add Coupon Milestones
+                                if (companyDetails?.companyCoupon) {
+                                    companyDetails.companyCoupon.split(',').forEach(c => {
+                                        const [code, , minStr] = c.split('&&&');
+                                        const min = parseInt(minStr || '0');
+                                        if (code && min > 0) {
+                                            milestones.push({
+                                                type: 'coupon',
+                                                value: min,
+                                                label: `Unlock ${code}`,
+                                                icon: Tag
+                                            });
+                                        }
+                                    });
+                                }
+
+                                // Sort by value
+                                milestones.sort((a, b) => a.value - b.value);
+
+                                // Find first unreached milestone
+                                const nextMilestone = milestones.find(m => subtotal < m.value);
+
+                                // If all unlocked (or no milestones), show generic success or nothing
+                                // If some unlocked but all detailed milestones passed, maybe show "All Rewards Unlocked"
+                                if (!nextMilestone) {
+                                    if (milestones.length > 0 && subtotal >= milestones[milestones.length - 1].value) {
+                                        return (
+                                            <div className="mb-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-3 rounded-lg border border-emerald-500/20 text-center">
+                                                <p className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-2">
+                                                    <Gift className="w-3.5 h-3.5 fill-emerald-700" />
+                                                    Awesome! All rewards unlocked on this order.
+                                                </p>
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                }
+
+                                const amountNeeded = nextMilestone.value - subtotal;
+                                const progress = (subtotal / nextMilestone.value) * 100;
+
+                                return (
+                                    <div className="mb-6 bg-secondary/30 p-3 rounded-xl border border-border/60 shadow-sm relative overflow-hidden group">
+                                        {/* Background Shimmer */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
+
+                                        <div className="flex justify-between items-center mb-2 relative z-10">
+                                            <p className="text-xs font-bold text-foreground/80 flex items-center gap-2">
+                                                <div className="bg-primary/10 p-1 rounded-full text-primary">
+                                                    <nextMilestone.icon className="w-3 h-3" />
+                                                </div>
+                                                Add <span className="text-primary text-sm font-extrabold">₹{amountNeeded.toFixed(0)}</span> for <span className="uppercase">{nextMilestone.label}</span>
+                                            </p>
+                                            <span className="text-[10px] font-medium text-muted-foreground">{Math.round(progress)}%</span>
+                                        </div>
+
+                                        <div className="h-1.5 w-full bg-background rounded-full overflow-hidden border border-border/50 relative z-10">
+                                            <div
+                                                className={cn(
+                                                    "h-full rounded-full transition-all duration-700 ease-out",
+                                                    nextMilestone.type === 'delivery' ? "bg-emerald-500" : "bg-primary"
+                                                )}
+                                                style={{ width: `${Math.min(100, progress)}%` }}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                );
+                            })()}
+
+                            {/* Coupon Section */}
+                            <div className="mb-6 space-y-3">
+
+
+                                {/* Available Coupons List (Simple Version) */}
+                                {companyDetails?.companyCoupon && (
+                                    <div className="grid grid-cols-2 gap-2 mt-2">
+                                        {(() => {
+                                            const coupons = companyDetails.companyCoupon.split(',').map((cStr, idx) => {
+                                                const [code, discountStr, minOrderStr] = cStr.split('&&&');
+                                                // Handle potential parsing errors safely
+                                                const discount = parseFloat(discountStr || '0');
+                                                const minOrder = parseFloat(minOrderStr || '0');
+                                                // Ensure valid parsing
+                                                if (!code) return null;
+
+                                                return {
+                                                    code,
+                                                    discount,
+                                                    minOrder,
+                                                    isEligible: subtotal >= minOrder,
+                                                    idx
+                                                };
+                                            }).filter((c): c is NonNullable<typeof c> => c !== null);
+
+                                            // Sort: Lowest Discount First (Progression Ladder)
+                                            coupons.sort((a, b) => a.discount - b.discount);
+
+                                            return coupons.map((coupon) => (
+                                                <button
+                                                    key={coupon.idx}
+                                                    onClick={() => coupon.isEligible && setCouponCode(coupon.code)}
+                                                    disabled={!coupon.isEligible}
+                                                    className={cn(
+                                                        "group relative flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all duration-300 overflow-hidden",
+                                                        coupon.isEligible
+                                                            ? "bg-white border-primary/30 shadow-sm hover:border-primary hover:shadow-md cursor-pointer"
+                                                            : "bg-slate-50 border-slate-200 cursor-not-allowed"
+                                                    )}
+                                                >
+                                                    {/* Selection Glow */}
+                                                    {couponCode === coupon.code && coupon.isEligible && (
+                                                        <div className="absolute inset-0 bg-primary/5 animate-pulse" />
+                                                    )}
+
+                                                    <div className="flex flex-col">
+                                                        <span className={cn(
+                                                            "text-sm font-black tracking-wide font-mono leading-none",
+                                                            coupon.isEligible ? "text-foreground" : "text-slate-400"
+                                                        )}>{coupon.code}</span>
+                                                        <span className="text-[10px] font-medium text-muted-foreground leading-none mt-1">
+                                                            {coupon.isEligible ? `Get ${coupon.discount}% OFF` : `${coupon.discount}% OFF • Orders above ₹${coupon.minOrder}`}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Selection Checkmark */}
+                                                    {couponCode === coupon.code && coupon.isEligible ? (
+                                                        <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
+                                                            <div className="h-1.5 w-1.5 bg-white rounded-full" />
+                                                        </div>
+                                                    ) : (
+                                                        coupon.isEligible && (
+                                                            <div className="h-4 w-4 rounded-full border border-primary/30 group-hover:border-primary transition-colors" />
+                                                        )
+                                                    )}
+                                                </button>
+                                            ));
+                                        })()}
+                                    </div>
+                                )}
+                            </div>
 
                             <div className="space-y-3 mb-6">
                                 <div className="flex justify-between text-sm text-muted-foreground">
@@ -389,13 +649,47 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 <div className="flex justify-between text-sm text-muted-foreground">
                                     <span>Shipping</span>
                                     <span className={cn(isFreeDelivery ? "text-green-600 font-medium" : "")}>
-                                        {isFreeDelivery ? "FREE" : `₹${shipping.toFixed(2)}`}
+                                        {isFreeDelivery ? "FREE" : "Calculated at checkout"}
                                     </span>
                                 </div>
+                                {(() => {
+                                    if (!couponCode || !companyDetails?.companyCoupon) return null;
+                                    const couponData = companyDetails.companyCoupon.split(',').find(c => c.startsWith(couponCode + '&&&'));
+                                    if (!couponData) return null;
+                                    const [, discountStr, minOrderStr] = couponData.split('&&&');
+                                    const discountPercent = parseFloat(discountStr || '0');
+                                    const minOrder = parseFloat(minOrderStr || '0');
+
+                                    if (subtotal < minOrder) return null;
+
+                                    const discountAmount = (subtotal * discountPercent) / 100;
+
+                                    return (
+                                        <div className="flex justify-between text-sm text-emerald-600 font-medium animate-in slide-in-from-left-2">
+                                            <span>Coupon ({couponCode})</span>
+                                            <span>-₹{discountAmount.toFixed(2)}</span>
+                                        </div>
+                                    );
+                                })()}
                                 <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                                 <div className="flex justify-between items-baseline">
                                     <span className="font-semibold text-lg">Total</span>
-                                    <span className="font-bold text-2xl text-primary tracking-tight">₹{total.toFixed(2)}</span>
+                                    <span className="font-bold text-2xl text-primary tracking-tight">₹{(() => {
+                                        let finalTotal = subtotal + shipping;
+                                        if (couponCode && companyDetails?.companyCoupon) {
+                                            const couponData = companyDetails.companyCoupon.split(',').find(c => c.startsWith(couponCode + '&&&'));
+                                            if (couponData) {
+                                                const [, discountStr, minOrderStr] = couponData.split('&&&');
+                                                const discountPercent = parseFloat(discountStr || '0');
+                                                const minOrder = parseFloat(minOrderStr || '0');
+                                                if (subtotal >= minOrder) {
+                                                    const discountAmount = (subtotal * discountPercent) / 100;
+                                                    finalTotal -= discountAmount;
+                                                }
+                                            }
+                                        }
+                                        return Math.max(0, finalTotal).toFixed(2);
+                                    })()}</span>
                                 </div>
                             </div>
 
@@ -420,7 +714,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         {isCheckingOut ? (
                                             <>Validating <RefreshCw className="ml-2 w-4 h-4 animate-spin" /></>
                                         ) : (
-                                            <>Checkout securely <ArrowRight className="ml-2 w-4 h-4" /></>
+                                            <> {text.checkoutButton || "Checkout securely"} <ArrowRight className="ml-2 w-4 h-4" /></>
                                         )}
                                     </div>
                                 ) : (
@@ -429,8 +723,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             </Button>
                         </div>
                     </>
-                )
-                }
+                )}
             </SheetContent >
         </Sheet >
     );

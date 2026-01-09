@@ -8,10 +8,12 @@ import { useWishlist } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
 import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CartSheet } from '@/components/cart/CartSheet';
 import { WishlistSheet } from '@/components/wishlist/WishlistSheet';
+import { HistorySheet } from '@/components/history/HistorySheet';
 import { Product } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useProduct } from '@/hooks/use-product';
@@ -29,7 +31,7 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { wishlist } = useWishlist();
-  const { cart, getCartItemsCount } = useCart();
+  const { cart, getCartItemsCount, companyDetails } = useCart();
   const cartItemCount = getCartItemsCount();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -101,9 +103,26 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-md shadow-sm supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-90">
-          <ShoppingBag className="h-7 w-7 text-primary" />
-          <span className="font-headline text-2xl font-bold text-foreground tracking-tight">
+        <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 duration-300">
+          {companyDetails?.logo ? (
+            <div className="relative h-10 w-10 md:h-12 md:w-12 rounded-full overflow-hidden border-2 border-primary/20 shadow-lg shadow-primary/10 bg-background group">
+              <Image
+                src={companyDetails.logo}
+                alt={companyName}
+                fill
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          ) : (
+            <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/25 text-primary-foreground">
+              <ShoppingBag className="h-5 w-5 md:h-6 md:w-6" />
+            </div>
+          )}
+          <span className={cn(
+            "font-headline text-xl md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80",
+            companyDetails?.logo ? "hidden md:block" : "block"
+          )}>
             {companyName}
           </span>
         </Link>
@@ -165,29 +184,64 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
 
               const isActive = pathname === href;
 
-              const content = (
-                <div className="cursor-pointer">
-                  {Icon && <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />}
-                  {label === 'Cart' && cartItemCount > 0 && (
-                    <span className={cn(
-                      "absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold shadow-sm animate-in zoom-in",
-                      isActive ? "bg-background text-primary" : "bg-primary text-primary-foreground"
-                    )}>
-                      {cartItemCount}
-                    </span>
-                  )}
-                  {label === 'Wishlist' && wishlist.length > 0 && (
-                    <span className={cn(
-                      "absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold shadow-sm animate-in zoom-in",
-                      isActive ? "bg-background text-primary" : "bg-primary text-primary-foreground"
-                    )}>
-                      {wishlist.length}
-                    </span>
-                  )}
-                </div>
-              );
+              // Explicitly handle Cart
+              if (label === 'Cart') {
+                return (
+                  <CartSheet key={label}>
+                    <Button
+                      variant={isActive ? "default" : "ghost"}
+                      size="icon"
+                      className={cn(
+                        "rounded-full relative transition-all duration-300 w-10 h-10 md:w-12 md:h-12",
+                        !isActive && "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      )}
+                    >
+                      <div className="cursor-pointer font-normal">
+                        {Icon && <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />}
+                        {cartItemCount > 0 && (
+                          <span className={cn(
+                            "absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold shadow-sm animate-in zoom-in",
+                            isActive ? "bg-background text-primary" : "bg-primary text-primary-foreground"
+                          )}>
+                            {cartItemCount}
+                          </span>
+                        )}
+                      </div>
+                    </Button>
+                  </CartSheet>
+                );
+              }
 
-              const ButtonTrigger = (
+              // Explicitly handle Wishlist
+              if (label === 'Wishlist') {
+                return (
+                  <WishlistSheet key={label}>
+                    <Button
+                      variant={isActive ? "default" : "ghost"}
+                      size="icon"
+                      className={cn(
+                        "rounded-full relative transition-all duration-300 w-10 h-10 md:w-12 md:h-12",
+                        !isActive && "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      )}
+                    >
+                      <div className="cursor-pointer font-normal">
+                        {Icon && <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />}
+                        {wishlist.length > 0 && (
+                          <span className={cn(
+                            "absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold shadow-sm animate-in zoom-in",
+                            isActive ? "bg-background text-primary" : "bg-primary text-primary-foreground"
+                          )}>
+                            {wishlist.length}
+                          </span>
+                        )}
+                      </div>
+                    </Button>
+                  </WishlistSheet>
+                );
+              }
+
+              // Default Link Button
+              return (
                 <Button
                   key={label}
                   variant={isActive ? "default" : "ghost"}
@@ -196,50 +250,24 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
                     "rounded-full relative transition-all duration-300 w-10 h-10 md:w-12 md:h-12",
                     !isActive && "text-muted-foreground hover:text-foreground hover:bg-secondary"
                   )}
-                  asChild={label !== 'Cart' && label !== 'Wishlist'}
+                  asChild
                 >
-                  {label === 'Cart' || label === 'Wishlist' ? (
-                    content
-                  ) : (
-                    <Link href={href} aria-label={label}>
-                      {Icon && <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />}
-                    </Link>
-                  )}
+                  <Link href={href} aria-label={label}>
+                    {Icon && <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />}
+                  </Link>
                 </Button>
               );
-
-              if (label === 'Cart') {
-                return (
-                  <CartSheet key={label}>
-                    {ButtonTrigger}
-                  </CartSheet>
-                );
-              }
-
-              if (label === 'Wishlist') {
-                return (
-                  <WishlistSheet key={label}>
-                    {ButtonTrigger}
-                  </WishlistSheet>
-                );
-              }
-
-              return ButtonTrigger;
             })}
             {isLoggedIn && userRole?.includes('CUSTOMER') && (
-              <Button
-                variant={pathname === '/history' ? "default" : "ghost"}
-                size="icon"
-                className={cn(
-                  "rounded-full transition-all duration-300 w-10 h-10 md:w-12 md:h-12",
-                  !pathname.startsWith('/history') && "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                )}
-                asChild
-              >
-                <Link href="/history" aria-label="History">
-                  <History className={cn("h-5 w-5 md:h-6 md:w-6", pathname === '/history' && "fill-current")} strokeWidth={pathname === '/history' ? 2.5 : 2} />
-                </Link>
-              </Button>
+              <HistorySheet>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full transition-all duration-300 w-10 h-10 md:w-12 md:h-12 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                >
+                  <History className="h-5 w-5 md:h-6 md:w-6" strokeWidth={2} />
+                </Button>
+              </HistorySheet>
             )}
           </div>
           <ProfileSheet>
@@ -251,7 +279,9 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
                 !pathname.startsWith('/profile') && "text-muted-foreground hover:text-foreground hover:bg-secondary"
               )}
             >
-              <User className={cn("h-5 w-5 md:h-6 md:w-6", pathname === '/profile' && "fill-current")} strokeWidth={pathname === '/profile' ? 2.5 : 2} />
+              <div className="cursor-pointer">
+                <User className={cn("h-5 w-5 md:h-6 md:w-6", pathname === '/profile' && "fill-current")} strokeWidth={pathname === '/profile' ? 2.5 : 2} />
+              </div>
             </Button>
           </ProfileSheet>
         </nav>

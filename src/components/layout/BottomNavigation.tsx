@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
 import { useEffect, useState } from 'react';
+import { HistorySheet } from '@/components/history/HistorySheet';
 
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
@@ -49,6 +50,57 @@ const BottomNavigation = () => {
           if (label === 'History' && (!isLoggedIn || !userRole?.includes('CUSTOMER'))) return null;
 
           const isActive = pathname === href;
+          const isActionItem = label === 'Cart' || label === 'Wishlist';
+
+          if (label === 'History') {
+            return (
+              <HistorySheet key={label}>
+                <button
+                  className={cn(
+                    'flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-primary',
+                    isActive && 'text-primary'
+                  )}
+                >
+                  <div className="relative">
+                    <Icon className={cn("h-6 w-6", isActive ? "fill-current" : "")} strokeWidth={1.5} />
+                  </div>
+                  <span className="text-xs font-medium">{label}</span>
+                </button>
+              </HistorySheet>
+            );
+          }
+
+          if (isActionItem) {
+            return (
+              <button
+                key={label}
+                onClick={() => {
+                  if (label === 'Cart') useCart.getState().setCartOpen(true);
+                  if (label === 'Wishlist') useWishlist.getState().setWishlistOpen(true);
+                }}
+                className={cn(
+                  'flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-primary',
+                  isActive && 'text-primary'
+                )}
+              >
+                <div className="relative">
+                  <Icon className={cn("h-6 w-6", isActive ? "fill-current" : "")} strokeWidth={1.5} />
+                  {label === 'Wishlist' && wishlist.length > 0 && (
+                    <span className="absolute -top-1 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      {wishlist.length}
+                    </span>
+                  )}
+                  {label === 'Cart' && cart.length > 0 && (
+                    <span className="absolute -top-1 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      {cart.length}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs font-medium">{label}</span>
+              </button>
+            )
+          }
+
           return (
             <Link
               key={label}
@@ -60,16 +112,6 @@ const BottomNavigation = () => {
             >
               <div className="relative">
                 <Icon className={cn("h-6 w-6", isActive ? "fill-current" : "")} strokeWidth={1.5} />
-                {label === 'Wishlist' && wishlist.length > 0 && (
-                  <span className="absolute -top-1 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                    {wishlist.length}
-                  </span>
-                )}
-                {label === 'Cart' && cart.length > 0 && (
-                  <span className="absolute -top-1 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                    {cart.length}
-                  </span>
-                )}
               </div>
               <span className="text-xs font-medium">{label}</span>
             </Link>

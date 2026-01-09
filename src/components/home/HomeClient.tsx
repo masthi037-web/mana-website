@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Recommendations from '@/components/products/Recommendations';
 import type { Catalog, ProductWithImage, Category } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -13,35 +14,48 @@ import { ProductGrid } from '@/components/products/ProductGrid';
 import { AddToCartSheet } from '@/components/cart/AddToCartSheet';
 import { ProductCard } from '@/components/products/ProductCard';
 import { FeaturesCarousel } from '@/components/home/FeaturesCarousel';
+import { CouponCarousel } from '@/components/home/CouponCarousel';
 
 import { ArrowRight, Sparkles, Star } from 'lucide-react';
 import Link from 'next/link';
 
 interface HomeClientProps {
     initialCategories: Category[];
+    companyCoupon?: string;
 }
 
-export default function HomeClient({ initialCategories }: HomeClientProps) {
+export default function HomeClient({ initialCategories, companyCoupon }: HomeClientProps) {
     const { toast } = useToast();
+    const router = useRouter();
+    const searchParams = useSearchParams();
 
-    useEffect(() => {
-        if (initialCategories.length === 0) {
-            toast({
-                variant: "destructive",
-                title: "Connection Error",
-                description: "Could not load categories. Please check your internet connection.",
-            });
-        }
-    }, [initialCategories, toast]);
+    // Helper to get category from URL or default
+    const getInitialCategory = () => {
+        const paramCat = searchParams.get('category');
+        if (paramCat && initialCategories.some(c => c.id === paramCat)) return paramCat;
+        return initialCategories.length > 0 ? initialCategories[0].id : "";
+    };
 
-    const [selectedCategory, setSelectedCategory] = useState<string>(
-        initialCategories.length > 0 ? initialCategories[0].id : ""
-    );
-    const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(
-        initialCategories.length > 0 && initialCategories[0].catalogs.length > 0
-            ? initialCategories[0].catalogs[0].id
-            : null
-    );
+    const [selectedCategory, setSelectedCategory] = useState<string>(getInitialCategory);
+
+    const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(() => {
+        const categoryId = getInitialCategory();
+        const category = initialCategories.find(c => c.id === categoryId);
+        return category && category.catalogs.length > 0 ? category.catalogs[0].id : null;
+    });
+
+    // Sync State -> URL when user interacts
+    const updateCategory = (categoryId: string) => {
+        setSelectedCategory(categoryId);
+        const category = initialCategories.find(c => c.id === categoryId);
+        const newCatalogId = category?.catalogs[0]?.id || null;
+        setSelectedCatalogId(newCatalogId);
+
+        // Update URL
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('category', categoryId);
+        router.push(`/?${params.toString()}`, { scroll: false });
+    };
 
     // Filter & Sort State
     const [filters, setFilters] = useState<FilterState>({
@@ -58,6 +72,16 @@ export default function HomeClient({ initialCategories }: HomeClientProps) {
             minRating: null
         });
     }, [selectedCatalogId, selectedCategory]);
+
+    useEffect(() => {
+        if (initialCategories.length === 0) {
+            toast({
+                variant: "destructive",
+                title: "Connection Error",
+                description: "Could not load categories. Please check your internet connection.",
+            });
+        }
+    }, [initialCategories, toast]);
 
     const activeCategory = initialCategories.find(c => c.id === selectedCategory);
     const catalogs: Catalog[] = activeCategory ? activeCategory.catalogs : [];
@@ -143,13 +167,14 @@ export default function HomeClient({ initialCategories }: HomeClientProps) {
 
     return (
         <div className="space-y-12 pb-20">
+            <CouponCarousel companyCoupon={companyCoupon} />
             <div className="animate-in fade-in slide-in-from-top-4 duration-700">
                 <FeaturesCarousel />
             </div>
             <div className="container mx-auto px-4 space-y-24">
 
                 {/* Categories Section */}
-                <section className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+                <section id="shop-now" className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 scroll-mt-24">
                     <div className="flex items-center justify-center mb-8 text-center">
                         <div>
                             <h2 className="text-3xl font-headline font-bold">Discover Collections</h2>
@@ -164,10 +189,7 @@ export default function HomeClient({ initialCategories }: HomeClientProps) {
                                 {initialCategories.map(category => (
                                     <button
                                         key={category.id}
-                                        onClick={() => {
-                                            setSelectedCategory(category.id);
-                                            setSelectedCatalogId(initialCategories.find(c => c.id === category.id)?.catalogs[0]?.id || null);
-                                        }}
+                                        onClick={() => updateCategory(category.id)}
                                         className={cn(
                                             "relative group flex flex-col items-center gap-3 min-w-[100px] p-4 rounded-2xl transition-all duration-300 border border-transparent",
                                             selectedCategory === category.id

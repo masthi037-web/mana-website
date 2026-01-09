@@ -16,6 +16,7 @@ import { Package, MapPin, LogOut, User, Settings, CreditCard, Heart, Loader2, Ar
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/services/auth.service';
+import { HistorySheet } from '@/components/history/HistorySheet';
 
 export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -27,10 +28,21 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const [otp, setOtp] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
     const [showSuccess, setShowSuccess] = React.useState(false);
+    const [resendTimer, setResendTimer] = React.useState(0);
 
     // Mock logged in state - in real app check cookie/token existence
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
     const [userRole, setUserRole] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (resendTimer > 0) {
+            interval = setInterval(() => {
+                setResendTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [resendTimer]);
 
     React.useEffect(() => {
         // Check local storage for persistent login state
@@ -55,6 +67,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
             await authService.sendOtp(phoneNumber);
             toast({ title: "OTP Sent", description: "Please check your messages" });
             setView('login-otp');
+            setResendTimer(60);
         } catch (error) {
             toast({ title: "Error", description: "Failed to send OTP", variant: "destructive" });
         } finally {
@@ -171,6 +184,20 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                                     // Only show Settings if role contains OWNER
                                     if (item.label === 'Settings' && !userRole?.includes('OWNER')) return null;
 
+                                    if (item.label === 'My Orders') {
+                                        return (
+                                            <HistorySheet key={item.label}>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="w-full justify-start gap-3 h-12 text-base font-normal rounded-xl hover:bg-teal-50 hover:text-teal-700 transition-colors"
+                                                >
+                                                    <item.icon className="h-5 w-5 text-muted-foreground group-hover:text-teal-600" />
+                                                    {item.label}
+                                                </Button>
+                                            </HistorySheet>
+                                        );
+                                    }
+
                                     return (
                                         <Button
                                             key={item.label}
@@ -265,8 +292,13 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                             </Button>
 
                             <div className="text-center">
-                                <Button variant="link" className="text-sm font-semibold text-slate-400 hover:text-teal-600" onClick={handleSendOtp}>
-                                    Resend OTP
+                                <Button
+                                    variant="link"
+                                    className="text-sm font-semibold text-slate-400 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={handleSendOtp}
+                                    disabled={isLoading || resendTimer > 0}
+                                >
+                                    {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
                                 </Button>
                             </div>
                         </div>

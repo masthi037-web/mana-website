@@ -13,16 +13,20 @@ import {
   Heart,
   Tag,
   ArrowRight,
+  X,
 } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils'; // Assuming cn utility exists
 
+import { useTenant } from '@/components/providers/TenantContext';
+
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, getCartTotal, companyDetails } = useCart();
   const { wishlist, toggleWishlist } = useWishlist();
   const { toast } = useToast();
+  const { text } = useTenant();
 
   if (cart.length === 0) {
     return (
@@ -52,7 +56,17 @@ export default function CartPage() {
       <div className="container mx-auto px-4 max-w-6xl">
 
         {/* Page Header */}
-        <div className="text-center mb-12 space-y-2">
+        <div className="relative text-center mb-12 space-y-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full h-10 w-10 md:hidden"
+          >
+            <Link href="/">
+              <X className="h-6 w-6" />
+            </Link>
+          </Button>
           <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
             Shopping Cart
           </h1>
@@ -175,7 +189,7 @@ export default function CartPage() {
                 const minOrder = Number(companyDetails?.minimumOrderCost || 0);
                 const freeDeliveryThreshold = Number(companyDetails?.freeDeliveryCost || 0);
                 const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
-                const shipping = isFreeDelivery ? 0 : 50;
+                const shipping = 0; // Calculated later or Free
                 const total = subtotal + shipping;
                 const canCheckout = subtotal >= minOrder;
                 const amountForFreeDelivery = Math.max(0, freeDeliveryThreshold - subtotal);
@@ -206,7 +220,7 @@ export default function CartPage() {
                       <div className="flex justify-between text-muted-foreground">
                         <span>Shipping</span>
                         <span className={cn(isFreeDelivery ? "text-green-600 font-medium" : "")}>
-                          {isFreeDelivery ? "FREE" : `₹${shipping.toFixed(2)}`}
+                          {isFreeDelivery ? "FREE" : "Calculated at checkout"}
                         </span>
                       </div>
 
@@ -249,7 +263,7 @@ export default function CartPage() {
                     >
                       {canCheckout ? (
                         <>
-                          Proceed to Checkout
+                          {text.checkoutButton || "Checkout securely"}
                           <ArrowRight className="ml-2 w-4 h-4" />
                         </>
                       ) : (
@@ -267,7 +281,7 @@ export default function CartPage() {
           </div>
 
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

@@ -9,15 +9,14 @@ import { headers } from 'next/headers';
 import { fetchCompanyDetails } from '@/services/company.service';
 import { StoreInitializer } from '@/components/providers/StoreInitializer';
 import QueryProvider from '@/providers/QueryProvider';
+import { resolveTenantConfig } from '@/config/tenant-config';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { Footer } from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
   title: 'ShopSphere',
   description: 'A modern e-commerce experience.',
 };
-
-// ... imports
-import { resolveTenantConfig } from '@/config/tenant-config';
-import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
 export default async function RootLayout({
   children,
@@ -30,6 +29,7 @@ export default async function RootLayout({
 
   const companyDetails = await fetchCompanyDetails(companyDomain);
   const tenantConfig = resolveTenantConfig(companyDomain);
+  console.log(companyDetails?.companyCoupon);
 
   return (
     <html lang="en" className="h-full scroll-smooth">
@@ -45,6 +45,7 @@ export default async function RootLayout({
             <div className="relative flex min-h-full w-full flex-col">
               <Header companyName={companyDetails?.companyName} />
               <main className="flex-1 pb-24">{children}</main>
+              <Footer companyName={companyDetails?.companyName} />
               <BottomNavigation />
             </div>
             <Toaster />

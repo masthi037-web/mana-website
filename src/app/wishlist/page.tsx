@@ -2,7 +2,7 @@
 
 import { useWishlist } from '@/hooks/use-wishlist';
 import { ProductGrid } from '@/components/products/ProductGrid';
-import { Heart } from 'lucide-react';
+import { Heart, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -11,7 +11,17 @@ export default function WishlistPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="text-center mb-12">
+      <div className="relative text-center mb-12">
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full h-10 w-10 md:hidden"
+        >
+          <Link href="/">
+            <X className="h-6 w-6" />
+          </Link>
+        </Button>
         <h1 className="font-headline text-4xl md:text-5xl font-bold text-foreground">
           My Wishlist
         </h1>

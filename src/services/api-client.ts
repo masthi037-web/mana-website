@@ -32,7 +32,7 @@ export async function apiClient<T>(
 
     const res = await fetch(url.toString(), {
         credentials: "include", // 🔥 REQUIRED for cookies
-        cache: fetchOptions.next?.revalidate ? "force-cache" : "no-store",
+        // cache: fetchOptions.next?.revalidate ? "force-cache" : "no-store", // Let Next.js decide based on 'next' prop
         ...fetchOptions,
         headers: {
             "Content-Type": "application/json",

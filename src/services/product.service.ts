@@ -13,7 +13,7 @@ export async function fetchCategories(companyId: string): Promise<AppCategory[]>
     try {
         const data = await apiClient<CompanyInventory>('/company/public/category/catalogue/product/get', {
             params: { companyId },
-            next: { revalidate: 300, tags: ['products'] } // 15 minutes cache
+            next: { revalidate: 300, tags: ['products'] } // 5 minutes cache
         });
 
         // The API returns a robust structure, we need to map it to our App's simpler types

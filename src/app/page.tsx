@@ -4,9 +4,10 @@ import { fetchCategories } from '@/services/product.service';
 import { fetchCompanyDetails } from '@/services/company.service';
 import HomeClient from '@/components/home/HomeClient';
 import { ProductInitializer } from '@/components/providers/ProductInitializer';
-import { Button } from '@/components/ui/button';
+import { ShopNowButton } from '@/components/home/ShopNowButton';
 import { ArrowRight, ChevronRight, ShieldCheck, Star, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 export default async function Home() {
   const headersList = await headers();
@@ -24,8 +25,8 @@ export default async function Home() {
       {/* Hero Section */}
       <section className="relative w-full h-[85vh] md:h-[600px] overflow-hidden">
         <Image
-          src="https://picsum.photos/seed/homepage-banner/1920/1080"
-          alt="Artisanal Goods Banner"
+          src={company?.banner || "https://picsum.photos/seed/homepage-banner/1920/1080"}
+          alt={company?.companyName || "Artisanal Goods Banner"}
           fill
           className="object-cover animate-in fade-in duration-1000 zoom-in-105"
           data-ai-hint="vibrant spices table"
@@ -48,11 +49,7 @@ export default async function Home() {
               Handcrafted with passion, delivering authentic flavors straight to your doorstep.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button asChild size="lg" className="rounded-full h-12 px-8 text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all">
-                <a href="#new-arrivals">
-                  Shop Now <ArrowRight className="ml-2 w-4 h-4" />
-                </a>
-              </Button>
+              <ShopNowButton />
             </div>
           </div>
         </div>
@@ -60,7 +57,7 @@ export default async function Home() {
 
 
       <ProductInitializer categories={categories} />
-      <HomeClient initialCategories={categories} />
+      <HomeClient initialCategories={categories} companyCoupon={company?.companyCoupon} />
     </div>
   );
 }

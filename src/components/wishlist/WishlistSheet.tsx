@@ -31,7 +31,7 @@ export function WishlistSheet({ children }: { children: React.ReactNode }) {
             <SheetTrigger asChild>
                 {children}
             </SheetTrigger>
-            <SheetContent className="w-full sm:max-w-md flex flex-col p-0 gap-0 border-l border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-2xl">
+            <SheetContent side="right" className="w-full sm:max-w-md flex flex-col p-0 gap-0 border-l border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-2xl">
                 {/* Header */}
                 <SheetHeader className="px-6 py-5 border-b border-border/40 bg-background/50 backdrop-blur-md sticky top-0 z-20">
                     <SheetTitle className="flex items-center gap-2.5 text-xl font-bold tracking-tight">
