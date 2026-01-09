@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   description: 'A modern e-commerce experience.',
 };
 
+// ... imports
+import { resolveTenantConfig } from '@/config/tenant-config';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -25,24 +29,27 @@ export default async function RootLayout({
   const companyDomain = headersList.get('x-company-domain') || 'babaihomefoods';
 
   const companyDetails = await fetchCompanyDetails(companyDomain);
+  const tenantConfig = resolveTenantConfig(companyDomain);
 
   return (
     <html lang="en" className="h-full scroll-smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased h-full bg-background">
-        {companyDetails && <StoreInitializer companyDetails={companyDetails} />}
-        <QueryProvider>
-          <div className="relative flex min-h-full w-full flex-col">
-            <Header companyName={companyDetails?.companyName} />
-            <main className="flex-1 pb-24">{children}</main>
-            <BottomNavigation />
-          </div>
-          <Toaster />
-        </QueryProvider>
+        <ThemeProvider config={tenantConfig}>
+          {companyDetails && <StoreInitializer companyDetails={companyDetails} />}
+          <QueryProvider>
+            <div className="relative flex min-h-full w-full flex-col">
+              <Header companyName={companyDetails?.companyName} />
+              <main className="flex-1 pb-24">{children}</main>
+              <BottomNavigation />
+            </div>
+            <Toaster />
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

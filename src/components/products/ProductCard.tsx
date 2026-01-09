@@ -1,6 +1,6 @@
-
 "use client";
 
+import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, Star, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { useWishlist } from '@/hooks/use-wishlist';
 import type { ProductWithImage } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { AddToCartSheet } from '../cart/AddToCartSheet';
-import Link from 'next/link';
+import { useTenant } from '@/components/providers/TenantContext';
 
 interface ProductCardProps {
   product: ProductWithImage;
@@ -18,7 +18,16 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { text } = useTenant();
   const isWishlisted = isInWishlist(product.id);
+
+  // Hoist Pricing Logic
+  const prices = product.pricing?.map(p => p.price) || [];
+  const hasPricing = prices.length > 0;
+  const minPrice = hasPricing ? Math.min(...prices) : (product.price || 0);
+  const maxPrice = hasPricing ? Math.max(...prices) : (product.price || 0);
+  // Show "Starts from" only if there are multiple pricing options AND they vary in price
+  const showStartsFrom = hasPricing && minPrice !== maxPrice;
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -28,16 +37,49 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <Link href={`/product/${product.id}`} className="group block h-full">
-      <Card className="w-full h-full overflow-hidden rounded-3xl border border-border/50 bg-card text-card-foreground shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-secondary/20">
+      <Card
+        className="w-full h-full overflow-hidden transition-all duration-500 hover:shadow-xl"
+        style={{
+          backgroundColor: 'var(--card-bg-custom, hsl(var(--card)))',
+          borderRadius: 'var(--card-radius-custom, 1.5rem)',
+          boxShadow: 'var(--card-shadow-custom, 0 1px 2px 0 rgb(0 0 0 / 0.05))',
+          border: 'var(--card-border-custom, 1px solid hsl(var(--border) / 0.5))',
+          // New Motion Logic
+          transitionDuration: 'var(--motion-duration, 300ms)',
+          transitionTimingFunction: 'var(--motion-easing, cubic-bezier(0.4, 0, 0.2, 1))',
+          // Hover logic needs to be handled via group-hover or cleaner class, 
+          // but for inline dynamic values we might need a wrapper or CSS-in-JS.
+          // Since we can't do hover in inline styles easily without state, 
+          // we'll rely on a global class or just apply variables to local consts if needed.
+          // Actually, we can use the `hover` utility with arbitrary values if we had tailwind 3.x arbitrary properties,
+          // but `transform` in style prop applies always.
+          // Solution: Use a `data-` attribute or CSS variable hook. 
+          // For now, let's keep it simple: We will inject a <style> tag or simpler: 
+          // Just use the style prop for static props.
+          // For Hover: We will use the `group-hover` class with a custom style override if possible,
+          // OR better: use `transform` on the wrapper `Link` which IS a group.
+        }}
+      >
+        <div
+          className="relative aspect-[4/3] w-full overflow-hidden bg-secondary/20"
+          style={{
+            // Using the variable for image scale effects or just relying on existing classes + new vars?
+            // Let's rely on standard classes but modify the container.
+          }}
+        >
           <Image
             src={product.imageUrl}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-110"
+            className="object-cover transition-transform"
+            style={{
+              transitionDuration: 'var(--motion-duration, 300ms)',
+              transitionTimingFunction: 'var(--motion-easing, cubic-bezier(0.4, 0, 0.2, 1))',
+            }}
             data-ai-hint={product.imageHint}
           />
+
 
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 pointer-events-none">
@@ -45,14 +87,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <div className="w-full pointer-events-auto" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
               <AddToCartSheet product={product}>
                 <Button size="sm" className="w-full rounded-full font-semibold shadow-lg translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                  Quick Add
+                  {text.quickAddButton || "Quick Add"}
                 </Button>
               </AddToCartSheet>
             </div>
           </div>
 
-          {/* New Tag (Mock logic or check createdAt if available in product type later) */}
-          {/* For now keeping Rating/Wishlist as they are valuable */}
           <Button
             variant="ghost"
             size="icon"
@@ -79,10 +119,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
         <CardContent className="p-5">
           <div className="flex justify-between items-start mb-2 gap-2">
-            {/* <h3 className="font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors leading-tight" title={product.name}>{product.name}</h3> */}
-            {/* Keeping title, removing price from top right as requested to move it to bottom */}
-            <h3 className="font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors leading-tight w-full" title={product.name}>{product.name}</h3>
-            {/* <span className="font-bold text-lg whitespace-nowrap">₹{product.price.toFixed(0)}</span> */}
+            <h3
+              className="text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors leading-tight w-full"
+              title={product.name}
+              style={{
+                fontWeight: 'var(--type-product-weight, 500)',
+                letterSpacing: 'var(--type-product-spacing, -0.01em)',
+              }}
+            >
+              {product.name}
+            </h3>
           </div>
 
           <p className="text-muted-foreground text-sm line-clamp-2 mb-4 h-10 leading-relaxed">{product.description}</p>
@@ -96,29 +142,29 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
             {/* Price Block */}
             <div className="flex flex-col items-end">
-              {(() => {
-                const prices = product.pricing?.map(p => p.price) || [];
-                const hasPricing = prices.length > 0;
-                const minPrice = hasPricing ? Math.min(...prices) : (product.price || 0);
-                const maxPrice = hasPricing ? Math.max(...prices) : (product.price || 0);
-                // Show "Starts from" only if there are multiple pricing options AND they vary in price
-                const showStartsFrom = hasPricing && minPrice !== maxPrice;
-
-                return (
-                  <>
-                    {showStartsFrom && (
-                      <span className="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wider">Starts from</span>
-                    )}
-                    <span className="text-lg font-bold font-headline text-primary leading-none mt-0.5">
-                      ₹{minPrice.toFixed(0)}
-                    </span>
-                  </>
-                );
-              })()}
+              {showStartsFrom && (
+                <span className="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wider">{text.startsFrom || "Starts from"}</span>
+              )}
+              <span
+                className="text-lg text-primary leading-none mt-0.5"
+                style={{
+                  fontWeight: 'var(--type-price-weight, 600)',
+                  letterSpacing: 'var(--type-price-tracking, tight)',
+                }}
+              >
+                ₹{minPrice.toFixed(0)}
+              </span>
             </div>
           </div>
         </CardContent>
       </Card>
+      {/* Dynamic Hover Style Injection */}
+      <style jsx global>{`
+        .group:hover .hover\\:scale-110 {
+            transform: scale(1.1); /* Fallback */
+            transform: var(--motion-card-hover, translateY(-4px) scale(1.01)) !important;
+        }
+      `}</style>
     </Link>
   );
 };

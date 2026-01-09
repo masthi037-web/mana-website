@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils'; // Assuming cn utility exists
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, getCartTotal } = useCart();
+  const { cart, updateQuantity, removeFromCart, getCartTotal, companyDetails } = useCart();
   const { wishlist, toggleWishlist } = useWishlist();
   const { toast } = useToast();
 
@@ -170,45 +170,99 @@ export default function CartPage() {
             <div className="bg-card p-6 sm:p-8 rounded-2xl shadow-sm border border-border/50 sticky top-24">
               <h2 className="text-xl font-bold mb-6">Order Summary</h2>
 
-              <div className="space-y-4 text-sm">
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Subtotal</span>
-                  <span className="font-medium text-foreground">₹{subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Shipping</span>
-                  <span className="font-medium text-foreground">₹{shipping.toFixed(2)}</span>
-                </div>
+              {/* Free Delivery Logic */}
+              {(() => {
+                const minOrder = Number(companyDetails?.minimumOrderCost || 0);
+                const freeDeliveryThreshold = Number(companyDetails?.freeDeliveryCost || 0);
+                const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
+                const shipping = isFreeDelivery ? 0 : 50;
+                const total = subtotal + shipping;
+                const canCheckout = subtotal >= minOrder;
+                const amountForFreeDelivery = Math.max(0, freeDeliveryThreshold - subtotal);
 
-                <Separator className="my-2" />
+                return (
+                  <>
+                    {/* Free Delivery Nudge */}
+                    {amountForFreeDelivery > 0 && freeDeliveryThreshold > 0 && (
+                      <div className="mb-6 bg-emerald-50 p-3 rounded-xl border border-emerald-100 shadow-sm">
+                        <p className="text-xs text-emerald-800 font-bold mb-2 flex items-center gap-2">
+                          <span className="bg-emerald-500 text-white rounded-full p-0.5"><Plus className="w-3 h-3" /></span>
+                          Add <span className="font-extrabold text-base">₹{amountForFreeDelivery.toFixed(0)}</span> more for free delivery
+                        </p>
+                        <div className="h-1.5 w-full bg-emerald-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, (subtotal / freeDeliveryThreshold) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
 
-                <div className="flex justify-between items-baseline">
-                  <span className="text-base font-bold">Total</span>
-                  <span className="text-2xl font-bold text-primary">₹{total.toFixed(2)}</span>
-                </div>
-              </div>
+                    <div className="space-y-4 text-sm">
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Subtotal</span>
+                        <span className="font-medium text-foreground">₹{subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Shipping</span>
+                        <span className={cn(isFreeDelivery ? "text-green-600 font-medium" : "")}>
+                          {isFreeDelivery ? "FREE" : `₹${shipping.toFixed(2)}`}
+                        </span>
+                      </div>
 
-              {/* Coupon Section */}
-              <div className="mt-8 space-y-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-1">
-                  <Tag className="w-4 h-4" />
-                  <span>Apply Coupon</span>
-                </div>
-                <div className="flex gap-2">
-                  <Input placeholder="Enter code" className="bg-background/50 h-10 border-dashed focus-visible:ring-primary/20" />
-                  <Button variant="secondary" className="h-10 px-4 font-semibold">Apply</Button>
-                </div>
-              </div>
+                      <Separator className="my-2" />
 
-              {/* Checkout Button */}
-              <Button size="lg" className="w-full mt-6 h-12 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all">
-                Proceed to Checkout
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-base font-bold">Total</span>
+                        <span className="text-2xl font-bold text-primary">₹{total.toFixed(2)}</span>
+                      </div>
+                    </div>
 
-              <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <span className="bg-green-500/10 text-green-600 px-2 py-1 rounded">Secure Checkout</span>
-              </div>
+                    {/* Coupon Section */}
+                    <div className="mt-8 space-y-3">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-1">
+                        <Tag className="w-4 h-4" />
+                        <span>Apply Coupon</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Input placeholder="Enter code" className="bg-background/50 h-10 border-dashed focus-visible:ring-primary/20" />
+                        <Button variant="secondary" className="h-10 px-4 font-semibold">Apply</Button>
+                      </div>
+                    </div>
+
+                    {!canCheckout && (
+                      <p className="mt-4 text-xs text-destructive text-center font-medium bg-destructive/10 py-2 px-3 rounded-lg border border-destructive/20">
+                        Minimum order amount is ₹{minOrder.toFixed(0)}
+                      </p>
+                    )}
+
+                    {/* Checkout Button */}
+                    <Button
+                      size="lg"
+                      disabled={!canCheckout}
+                      className={cn(
+                        "w-full mt-4 h-12 text-base font-bold rounded-xl shadow-lg transition-all",
+                        canCheckout
+                          ? "shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5"
+                          : "bg-muted text-muted-foreground shadow-none opacity-70"
+                      )}
+                    >
+                      {canCheckout ? (
+                        <>
+                          Proceed to Checkout
+                          <ArrowRight className="ml-2 w-4 h-4" />
+                        </>
+                      ) : (
+                        "Checkout Disabled"
+                      )}
+                    </Button>
+
+                    <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                      <span className="bg-green-500/10 text-green-600 px-2 py-1 rounded">Secure Checkout</span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
 

@@ -16,6 +16,7 @@ import { Product } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useProduct } from '@/hooks/use-product';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
+import { useTenant } from '@/components/providers/TenantContext';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -37,6 +38,7 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
   const { products: allProducts } = useProduct();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const { text } = useTenant();
 
   const checkAuth = () => {
     if (typeof window !== 'undefined') {
@@ -108,7 +110,7 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
         <div className="relative hidden w-full max-w-md md:block lg:max-w-lg" ref={searchRef}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search products, brands, and more..."
+            placeholder={text.searchPlaceholder || "Search products, brands, and more..."}
             className="pl-10 rounded-full bg-secondary/50 border-transparent focus:bg-background focus:border-input transition-all duration-300"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

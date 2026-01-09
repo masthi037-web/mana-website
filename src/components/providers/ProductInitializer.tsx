@@ -13,9 +13,7 @@ export function ProductInitializer({ categories }: { categories: Category[] }) {
 
         // Sync Cart and Wishlist with latest server data
         // We use the raw store getState() to avoid needing Hook rules inside this conditional or causing re-renders
-        import('@/hooks/use-cart').then(({ useCart }) => {
-            useCart.getState().syncWithServer(allProducts);
-        });
+
         import('@/hooks/use-wishlist').then(({ useWishlist }) => {
             useWishlist.getState().syncWithServer(allProducts);
         });
