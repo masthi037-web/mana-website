@@ -49,7 +49,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         }}
       >
         <div
-          className="relative aspect-[3/4] w-full overflow-hidden bg-secondary/20"
+          className="relative aspect-square w-full overflow-hidden bg-secondary/20"
         >
           <Image
             src={product.imageUrl}
@@ -101,7 +101,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </Badge>
         </div>
 
-        <CardContent className="p-2 md:p-5">
+        <CardContent className="p-3 md:p-5">
           <div className="flex justify-between items-start mb-1 md:mb-2 gap-2">
             <h3
               className="text-base md:text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors leading-tight w-full font-bold"
