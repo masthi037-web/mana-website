@@ -112,9 +112,13 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
 
                 // Close Login Sidebar and Open Address Sidebar
                 setIsOpen(false);
-                setTimeout(() => {
-                    window.dispatchEvent(new Event('open-address-sidebar'));
-                }, 300);
+
+                // Only open Address Sidebar if NOT owner
+                if (!response.role?.includes('OWNER')) {
+                    setTimeout(() => {
+                        window.dispatchEvent(new Event('open-address-sidebar'));
+                    }, 300);
+                }
 
                 toast({ title: "Welcome back!", description: "Logged in successfully" });
             }, 2000);
@@ -133,6 +137,9 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
         } catch (error) {
             console.error("Logout failed:", error);
         } finally {
+            // Check if OWNER before clearing state
+            const wasOwner = userRole?.includes('OWNER');
+
             setIsLoggedIn(false);
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userRole');
@@ -141,6 +148,11 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
             setView('login-phone');
             setPhoneNumber('');
             setOtp('');
+
+            // Redirect to home if owner
+            if (wasOwner) {
+                router.push('/');
+            }
         }
     };
 

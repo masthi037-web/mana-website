@@ -20,6 +20,7 @@ import { useProduct } from '@/hooks/use-product';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { useTenant } from '@/components/providers/TenantContext';
 import { AddressSheet } from '@/components/address/AddressSheet';
+import { useAuth } from '@/hooks/use-auth';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -39,27 +40,10 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const { products: allProducts } = useProduct();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const { text } = useTenant();
 
-  const checkAuth = () => {
-    if (typeof window !== 'undefined') {
-      setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
-      setUserRole(localStorage.getItem('userRole'));
-    }
-  };
-
-  useEffect(() => {
-    checkAuth();
-    // Listen for storage events (cross-tab) and custom auth events (same-tab)
-    window.addEventListener('storage', checkAuth);
-    window.addEventListener('auth-change', checkAuth);
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-      window.removeEventListener('auth-change', checkAuth);
-    };
-  }, []);
+  // Use shared auth hook
+  const { isLoggedIn, userRole, isOwner } = useAuth();
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -179,7 +163,12 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
           <div className='hidden md:flex items-center gap-2'>
             {navItems.map(({ href, label, icon: Icon }) => {
               // Hide Admin settings if not logged in or not OWNER
-              if (label === 'Admin' && (!isLoggedIn || !userRole?.includes('OWNER'))) {
+              if (label === 'Admin' && (!isLoggedIn || !isOwner)) {
+                return null;
+              }
+
+              // Hide Cart and Wishlist for OWNER
+              if ((label === 'Cart' || label === 'Wishlist') && isOwner) {
                 return null;
               }
 

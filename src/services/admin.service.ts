@@ -52,12 +52,14 @@ export const adminService = {
         return apiClient<any[]>('/category/get-all-by-company', {
             params: { companyId },
             credentials: 'include',
+            next: { revalidate: 300 } // 5 minutes cache
         });
     },
 
     getCataloguesByCategory: async (categoryId: string) => {
         return apiClient<any[]>(`/catalogue/get-all-by-category/${categoryId}`, {
             credentials: 'include',
+            next: { revalidate: 300 }
         });
     },
 
@@ -65,6 +67,7 @@ export const adminService = {
         return apiClient<any[]>('/product/catalogue/all', {
             params: { catalogueId },
             credentials: 'include',
+            next: { revalidate: 300 }
         });
     },
 
@@ -72,6 +75,7 @@ export const adminService = {
         return apiClient<any[]>('/product/pricing/get', {
             params: { productId },
             credentials: 'include',
+            next: { revalidate: 300 }
         });
     },
 
@@ -79,6 +83,7 @@ export const adminService = {
         return apiClient<any[]>('/product/addon/get', {
             params: { productPricingId: String(productPricingId) },
             credentials: 'include',
+            next: { revalidate: 300 }
         });
     }
 };

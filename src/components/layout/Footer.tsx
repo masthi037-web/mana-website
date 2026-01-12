@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
 
 interface FooterProps {
     companyName?: string;
@@ -13,9 +14,9 @@ interface FooterProps {
 }
 
 export function Footer({ companyName = "ShopSphere", socialLinks }: FooterProps) {
+    const { isOwner } = useAuth();
+
     // Parse social links
-    // Assuming format might be comma separated or just a string containing URLs
-    // We will scan for keywords in the string(s)
     const links = socialLinks?.split(',') || [];
 
     const getLink = (keyword: string) => {
@@ -47,8 +48,6 @@ export function Footer({ companyName = "ShopSphere", socialLinks }: FooterProps)
                             We believe in quality, authenticity, and style in every package we deliver.
                         </p>
                         <div className="flex gap-3 pt-2">
-                            {/* Always show icons but disable if no link (or just #) - User asked to "map" them so arguably we should only show valid ones, but to keep layout consistent I'll keep them and just link valid ones. 
-                                Actually, checking if they exist is better UX. */}
                             {links.some(l => l.includes('instagram')) && (
                                 <SocialIcon icon={Instagram} href={instagram} label="Instagram" />
                             )}
@@ -59,13 +58,6 @@ export function Footer({ companyName = "ShopSphere", socialLinks }: FooterProps)
                                 <SocialIcon icon={Twitter} href={twitter} label="Twitter" />
                             )}
 
-                            {/* Fallback: if no specific links found but string exists, maybe just show generic sharing? 
-                                User said "map this all 3 icons". If socialLinks is null/empty, we probably shouldn't break UI.
-                                Let's stick to: If specific link found, use it. If not, hidden OR default #?
-                                User request: "map this all 3 icons w socialMediaLink".
-                                If I hide them, the user might complain they are gone if the data is messy.
-                                SAFEST: Show all, map if found, else #.
-                            */}
                             {!links.some(l => l.includes('instagram')) && <SocialIcon icon={Instagram} href="#" label="Instagram" />}
                             {!links.some(l => l.includes('facebook')) && <SocialIcon icon={Facebook} href="#" label="Facebook" />}
                             {!links.some(l => l.includes('twitter')) && !links.some(l => l.includes('x.com')) && <SocialIcon icon={Twitter} href="#" label="Twitter" />}
@@ -77,8 +69,8 @@ export function Footer({ companyName = "ShopSphere", socialLinks }: FooterProps)
                         <h3 className="font-bold text-xs uppercase tracking-widest text-primary mb-8 font-headline">Explore</h3>
                         <ul className="space-y-4 text-sm text-muted-foreground/80 font-medium">
                             <li><FooterLink href="/">Home</FooterLink></li>
-                            <li><FooterLink href="/wishlist">Wishlist</FooterLink></li>
-                            <li><FooterLink href="/cart">Cart</FooterLink></li>
+                            {!isOwner && <li><FooterLink href="/wishlist">Wishlist</FooterLink></li>}
+                            {!isOwner && <li><FooterLink href="/cart">Cart</FooterLink></li>}
                         </ul>
                     </div>
 
