@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 export default async function Home() {
   const headersList = await headers();
   // Middleware handles extraction and localhost fallback
-  const companyDomain = headersList.get("x-company-domain") || 'babaihomefoods';
+  const headerDomain = headersList.get("x-company-domain");
+  const companyDomain = (headerDomain && headerDomain !== 'localhost') ? headerDomain : 'babaihomefoods';
 
   // Chained Data Fetching: Company -> Products
   const company = await fetchCompanyDetails(companyDomain);
