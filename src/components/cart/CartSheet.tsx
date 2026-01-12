@@ -26,12 +26,14 @@ import {
     X,
     AlertTriangle,
     RefreshCw,
-    Tag
+    Tag,
+    Lock
 } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
 import { fetchProductDetails } from '@/services/product.service';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { ProfileSheet } from '@/components/profile/ProfileSheet';
 
 import { useTenant } from '@/components/providers/TenantContext';
 
@@ -59,6 +61,26 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     // Config Logic
     const minOrder = companyDetails?.minimumOrderCost ? parseFloat(companyDetails.minimumOrderCost) : 0;
     const freeDeliveryThreshold = companyDetails?.freeDeliveryCost ? parseFloat(companyDetails.freeDeliveryCost) : 0;
+
+    // Auth State
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [showLoginPopup, setShowLoginPopup] = useState(false);
+
+    const checkAuth = () => {
+        if (typeof window !== 'undefined') {
+            setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+        }
+    };
+
+    useEffect(() => {
+        checkAuth();
+        window.addEventListener('storage', checkAuth);
+        window.addEventListener('auth-change', checkAuth);
+        return () => {
+            window.removeEventListener('storage', checkAuth);
+            window.removeEventListener('auth-change', checkAuth);
+        };
+    }, []);
 
     // Status Logic
     const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
@@ -145,6 +167,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     }, [subtotal, companyDetails?.companyCoupon, couponCode]);
 
     const handleCheckout = async () => {
+        if (!isLoggedIn) {
+            setShowLoginPopup(true);
+            return;
+        }
+
         setIsCheckingOut(true);
         try {
             const latestProducts = await Promise.all(
@@ -342,6 +369,58 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     <RefreshCw className="mr-2 w-4 h-4" />
                                     Review & Continue
                                 </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Premium Login Required Popup */}
+                {showLoginPopup && (
+                    <div className="absolute inset-0 z-[120] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-background w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border border-border/50 animate-in zoom-in-95 slide-in-from-bottom-5 relative">
+                            {/* Close Button */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-4 right-4 h-8 w-8 rounded-full hover:bg-secondary"
+                                onClick={() => setShowLoginPopup(false)}
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+
+                            <div className="p-8 flex flex-col items-center text-center">
+                                {/* Animated Lock Icon */}
+                                <div className="relative mb-6 group">
+                                    <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+                                    <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-primary/5 rounded-full flex items-center justify-center relative border border-primary/20 shadow-inner">
+                                        <Lock className="w-8 h-8 text-primary group-hover:scale-110 transition-transform duration-500" strokeWidth={2.5} />
+                                    </div>
+                                    <div className="absolute top-0 right-0 w-6 h-6 bg-background rounded-full flex items-center justify-center shadow-sm border border-border z-10">
+                                        <div className="w-2 h-2 bg-rose-500 rounded-full animate-ping" />
+                                    </div>
+                                </div>
+
+                                <h3 className="text-2xl font-bold tracking-tight mb-2">Login Required</h3>
+                                <p className="text-muted-foreground leading-relaxed text-sm mb-8">
+                                    Please log in to your account to verify your identity and secure your order.
+                                </p>
+
+                                <Button
+                                    className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-300 bg-gradient-to-r from-primary to-primary/90"
+                                    onClick={() => {
+                                        setCartOpen(false); // Close Cart Sidebar
+                                        // Small timeout to allow cart close animation to start/finish
+                                        setTimeout(() => {
+                                            window.dispatchEvent(new Event('open-profile-sidebar'));
+                                        }, 300);
+                                    }}
+                                >
+                                    Log In / Sign Up
+                                </Button>
+
+                                <p className="text-xs text-muted-foreground mt-6">
+                                    Don't have an account? No problem, we'll create one for you instantly using your phone number.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -597,45 +676,60 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             // Sort: Lowest Discount First (Progression Ladder)
                                             coupons.sort((a, b) => a.discount - b.discount);
 
-                                            return coupons.map((coupon) => (
-                                                <button
-                                                    key={coupon.idx}
-                                                    onClick={() => coupon.isEligible && setCouponCode(coupon.code)}
-                                                    disabled={!coupon.isEligible}
-                                                    className={cn(
-                                                        "group relative flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all duration-300 overflow-hidden",
-                                                        coupon.isEligible
-                                                            ? "bg-white border-primary/30 shadow-sm hover:border-primary hover:shadow-md cursor-pointer"
-                                                            : "bg-slate-50 border-slate-200 cursor-not-allowed"
-                                                    )}
-                                                >
-                                                    {/* Selection Glow */}
-                                                    {couponCode === coupon.code && coupon.isEligible && (
-                                                        <div className="absolute inset-0 bg-primary/5 animate-pulse" />
-                                                    )}
+                                            // Identify currently selected discount
+                                            const selectedCouponData = coupons.find(c => c.code === couponCode);
+                                            const hasActiveCoupon = !!selectedCouponData;
 
-                                                    <div className="flex flex-col">
-                                                        <span className={cn(
-                                                            "text-sm font-black tracking-wide font-mono leading-none",
-                                                            coupon.isEligible ? "text-foreground" : "text-slate-400"
-                                                        )}>{coupon.code}</span>
-                                                        <span className="text-[10px] font-medium text-muted-foreground leading-none mt-1">
-                                                            {coupon.isEligible ? `Get ${coupon.discount}% OFF` : `${coupon.discount}% OFF • Orders above ₹${coupon.minOrder}`}
-                                                        </span>
-                                                    </div>
+                                            return coupons.map((coupon) => {
+                                                // STRICT Rule: If ANY coupon is selected, block ALL other coupons
+                                                // User must deselect the current one to choose another
+                                                const isBlocked = hasActiveCoupon && coupon.code !== couponCode;
+                                                const isDisabled = !coupon.isEligible || isBlocked;
 
-                                                    {/* Selection Checkmark */}
-                                                    {couponCode === coupon.code && coupon.isEligible ? (
-                                                        <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
-                                                            <div className="h-1.5 w-1.5 bg-white rounded-full" />
+                                                return (
+                                                    <button
+                                                        key={coupon.idx}
+                                                        onClick={() => {
+                                                            if (!isDisabled) {
+                                                                setCouponCode(coupon.code);
+                                                            }
+                                                        }}
+                                                        disabled={isDisabled}
+                                                        className={cn(
+                                                            "group relative flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all duration-300 overflow-hidden",
+                                                            !isDisabled
+                                                                ? "bg-white border-primary/30 shadow-sm hover:border-primary hover:shadow-md cursor-pointer"
+                                                                : "bg-slate-50 border-slate-200 cursor-not-allowed opacity-60"
+                                                        )}
+                                                    >
+                                                        {/* Selection Glow */}
+                                                        {couponCode === coupon.code && coupon.isEligible && (
+                                                            <div className="absolute inset-0 bg-primary/5 animate-pulse" />
+                                                        )}
+
+                                                        <div className="flex flex-col">
+                                                            <span className={cn(
+                                                                "text-sm font-black tracking-wide font-mono leading-none",
+                                                                coupon.isEligible ? "text-foreground" : "text-slate-400"
+                                                            )}>{coupon.code}</span>
+                                                            <span className="text-[10px] font-medium text-muted-foreground leading-none mt-1">
+                                                                {coupon.isEligible ? `Get ${coupon.discount}% OFF` : `${coupon.discount}% OFF • Orders above ₹${coupon.minOrder}`}
+                                                            </span>
                                                         </div>
-                                                    ) : (
-                                                        coupon.isEligible && (
-                                                            <div className="h-4 w-4 rounded-full border border-primary/30 group-hover:border-primary transition-colors" />
-                                                        )
-                                                    )}
-                                                </button>
-                                            ));
+
+                                                        {/* Selection Checkmark */}
+                                                        {couponCode === coupon.code && coupon.isEligible ? (
+                                                            <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
+                                                                <div className="h-1.5 w-1.5 bg-white rounded-full" />
+                                                            </div>
+                                                        ) : (
+                                                            coupon.isEligible && (
+                                                                <div className="h-4 w-4 rounded-full border border-primary/30 group-hover:border-primary transition-colors" />
+                                                            )
+                                                        )}
+                                                    </button>
+                                                );
+                                            });
                                         })()}
                                     </div>
                                 )}

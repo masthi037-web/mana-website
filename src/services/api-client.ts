@@ -30,6 +30,15 @@ export async function apiClient<T>(
         });
     }
 
+    // DEBUG: Check Next.js Cache Config
+    if (fetchOptions.next?.revalidate) {
+        console.log(`[FETCH CONFIG] Caching is ON for ${endpoint} (Revalidate: ${fetchOptions.next.revalidate}s)`);
+    } else {
+        console.log(`[FETCH CONFIG] Caching is OFF for ${endpoint} (Fresh Data)`);
+    }
+
+
+    const startTime = performance.now();
     const res = await fetch(url.toString(), {
         credentials: "include", // 🔥 REQUIRED for cookies
         // cache: fetchOptions.next?.revalidate ? "force-cache" : "no-store", // Let Next.js decide based on 'next' prop
@@ -39,6 +48,8 @@ export async function apiClient<T>(
             ...fetchOptions.headers,
         },
     });
+    const duration = performance.now() - startTime;
+    console.log(`[API LATENCY] ${endpoint}: ${duration.toFixed(2)}ms`);
 
     // ✅ 401 interception (Token Refresh)
     if (res.status === 401 && !_retry) {

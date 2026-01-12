@@ -9,9 +9,24 @@ import { cn } from '@/lib/utils';
 
 interface FooterProps {
     companyName?: string;
+    socialLinks?: string | null;
 }
 
-export function Footer({ companyName = "ShopSphere" }: FooterProps) {
+export function Footer({ companyName = "ShopSphere", socialLinks }: FooterProps) {
+    // Parse social links
+    // Assuming format might be comma separated or just a string containing URLs
+    // We will scan for keywords in the string(s)
+    const links = socialLinks?.split(',') || [];
+
+    const getLink = (keyword: string) => {
+        const found = links.find(l => l.toLowerCase().includes(keyword));
+        return found ? found.trim() : null;
+    };
+
+    const instagram = getLink('instagram') || '#';
+    const facebook = getLink('facebook') || '#';
+    const twitter = getLink('twitter') || getLink('x.com') || '#';
+
     return (
         <footer className="relative bg-background border-t border-border/40 overflow-hidden pt-24 pb-12">
             {/* Decorative Background Elements */}
@@ -32,9 +47,28 @@ export function Footer({ companyName = "ShopSphere" }: FooterProps) {
                             We believe in quality, authenticity, and style in every package we deliver.
                         </p>
                         <div className="flex gap-3 pt-2">
-                            <SocialIcon icon={Instagram} href="#" label="Instagram" />
-                            <SocialIcon icon={Facebook} href="#" label="Facebook" />
-                            <SocialIcon icon={Twitter} href="#" label="Twitter" />
+                            {/* Always show icons but disable if no link (or just #) - User asked to "map" them so arguably we should only show valid ones, but to keep layout consistent I'll keep them and just link valid ones. 
+                                Actually, checking if they exist is better UX. */}
+                            {links.some(l => l.includes('instagram')) && (
+                                <SocialIcon icon={Instagram} href={instagram} label="Instagram" />
+                            )}
+                            {links.some(l => l.includes('facebook')) && (
+                                <SocialIcon icon={Facebook} href={facebook} label="Facebook" />
+                            )}
+                            {(links.some(l => l.includes('twitter')) || links.some(l => l.includes('x.com'))) && (
+                                <SocialIcon icon={Twitter} href={twitter} label="Twitter" />
+                            )}
+
+                            {/* Fallback: if no specific links found but string exists, maybe just show generic sharing? 
+                                User said "map this all 3 icons". If socialLinks is null/empty, we probably shouldn't break UI.
+                                Let's stick to: If specific link found, use it. If not, hidden OR default #?
+                                User request: "map this all 3 icons w socialMediaLink".
+                                If I hide them, the user might complain they are gone if the data is messy.
+                                SAFEST: Show all, map if found, else #.
+                            */}
+                            {!links.some(l => l.includes('instagram')) && <SocialIcon icon={Instagram} href="#" label="Instagram" />}
+                            {!links.some(l => l.includes('facebook')) && <SocialIcon icon={Facebook} href="#" label="Facebook" />}
+                            {!links.some(l => l.includes('twitter')) && !links.some(l => l.includes('x.com')) && <SocialIcon icon={Twitter} href="#" label="Twitter" />}
                         </div>
                     </div>
 
@@ -45,7 +79,6 @@ export function Footer({ companyName = "ShopSphere" }: FooterProps) {
                             <li><FooterLink href="/">Home</FooterLink></li>
                             <li><FooterLink href="/wishlist">Wishlist</FooterLink></li>
                             <li><FooterLink href="/cart">Cart</FooterLink></li>
-                            <li><FooterLink href="/admin/inventory">Admin</FooterLink></li>
                         </ul>
                     </div>
 
@@ -115,7 +148,7 @@ export function Footer({ companyName = "ShopSphere" }: FooterProps) {
 
                     {/* Standard Copyright & Contact */}
                     <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12 opacity-80">
-                        <p>© {new Date().getFullYear()} {companyName}. All rights reserved.</p>
+                        <p>© {new Date().getFullYear()} Mana Buy. All rights reserved.</p>
                         <a href="mailto:masthanmasthi037@gmail.com" className="hover:text-foreground transition-colors flex items-center gap-2">
                             <Mail className="h-4 w-4" />
                             masthanmasthi037@gmail.com

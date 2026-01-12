@@ -34,6 +34,9 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
     const [userRole, setUserRole] = React.useState<string | null>(null);
 
+    // State for Sheet Open
+    const [isOpen, setIsOpen] = React.useState(false);
+
     React.useEffect(() => {
         let interval: NodeJS.Timeout;
         if (resendTimer > 0) {
@@ -43,6 +46,12 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
         }
         return () => clearInterval(interval);
     }, [resendTimer]);
+
+    React.useEffect(() => {
+        const handleOpen = () => setIsOpen(true);
+        window.addEventListener('open-profile-sidebar', handleOpen);
+        return () => window.removeEventListener('open-profile-sidebar', handleOpen);
+    }, []);
 
     React.useEffect(() => {
         // Check local storage for persistent login state
@@ -93,13 +102,20 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                 setUserRole(response.role);
             }
 
-            // Delay transition to profile
+            // Delay transition and Redirect to Address flow
             setTimeout(() => {
                 setIsLoggedIn(true);
                 localStorage.setItem('isLoggedIn', 'true');
                 window.dispatchEvent(new Event('auth-change'));
                 setShowSuccess(false);
                 setView('profile');
+
+                // Close Login Sidebar and Open Address Sidebar
+                setIsOpen(false);
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('open-address-sidebar'));
+                }, 300);
+
                 toast({ title: "Welcome back!", description: "Logged in successfully" });
             }, 2000);
 
@@ -137,7 +153,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     ];
 
     return (
-        <Sheet>
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>{children}</SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-md flex flex-col h-full">
 
@@ -203,7 +219,16 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                                             key={item.label}
                                             variant="ghost"
                                             className="w-full justify-start gap-3 h-12 text-base font-normal rounded-xl hover:bg-teal-50 hover:text-teal-700 transition-colors"
-                                            onClick={() => router.push(item.href)}
+                                            onClick={() => {
+                                                if (item.label === 'Addresses') {
+                                                    setIsOpen(false);
+                                                    setTimeout(() => {
+                                                        window.dispatchEvent(new Event('open-address-sidebar'));
+                                                    }, 300);
+                                                } else {
+                                                    router.push(item.href);
+                                                }
+                                            }}
                                         >
                                             <item.icon className="h-5 w-5 text-muted-foreground group-hover:text-teal-600" />
                                             {item.label}

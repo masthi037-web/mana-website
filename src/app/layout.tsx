@@ -45,7 +45,7 @@ export default async function RootLayout({
             <div className="relative flex min-h-full w-full flex-col">
               <Header companyName={companyDetails?.companyName} />
               <main className="flex-1 pb-24">{children}</main>
-              <Footer companyName={companyDetails?.companyName} />
+              <Footer companyName={companyDetails?.companyName} socialLinks={companyDetails?.socialMediaLink} />
               <BottomNavigation />
             </div>
             <Toaster />

@@ -19,6 +19,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useProduct } from '@/hooks/use-product';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { useTenant } from '@/components/providers/TenantContext';
+import { AddressSheet } from '@/components/address/AddressSheet';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -285,8 +286,9 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
             </Button>
           </ProfileSheet>
         </nav>
-      </div >
-    </header >
+      </div>
+      <AddressSheet />
+    </header>
   );
 };
 
