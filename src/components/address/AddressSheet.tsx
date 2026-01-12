@@ -298,19 +298,19 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                                             onChange={(e) => handleChange('city', e.target.value)}
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="state">State</Label>
+                                    <div className="space-y-3">
+                                        <Label htmlFor="state" className="text-sm font-bold text-slate-700 ml-1">State</Label>
                                         <Select value={formData.state} onValueChange={(val) => handleChange('state', val)}>
-                                            <SelectTrigger className="h-12 bg-secondary/30 border-transparent focus:border-primary focus:bg-background transition-all">
-                                                <SelectValue placeholder="Select" />
+                                            <SelectTrigger className="h-14 rounded-2xl border-2 border-slate-200 bg-white hover:border-teal-500 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 font-bold text-slate-700 px-4 data-[state=open]:border-teal-500 data-[state=open]:ring-4 data-[state=open]:ring-teal-500/10 shadow-sm">
+                                                <SelectValue placeholder="Select your state" />
                                             </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="AP">Andhra Pradesh</SelectItem>
-                                                <SelectItem value="TS">Telangana</SelectItem>
-                                                <SelectItem value="KA">Karnataka</SelectItem>
-                                                <SelectItem value="TN">Tamil Nadu</SelectItem>
-                                                <SelectItem value="MH">Maharashtra</SelectItem>
-                                                <SelectItem value="DL">Delhi</SelectItem>
+                                            <SelectContent className="rounded-2xl border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2">
+                                                <SelectItem value="AP" className="rounded-xl py-3.5 px-4 my-1 font-semibold text-slate-600 focus:bg-teal-50 focus:text-teal-700 cursor-pointer data-[state=checked]:bg-teal-50 data-[state=checked]:text-teal-700">Andhra Pradesh</SelectItem>
+                                                <SelectItem value="TS" className="rounded-xl py-3.5 px-4 my-1 font-semibold text-slate-600 focus:bg-teal-50 focus:text-teal-700 cursor-pointer data-[state=checked]:bg-teal-50 data-[state=checked]:text-teal-700">Telangana</SelectItem>
+                                                <SelectItem value="KA" className="rounded-xl py-3.5 px-4 my-1 font-semibold text-slate-600 focus:bg-teal-50 focus:text-teal-700 cursor-pointer data-[state=checked]:bg-teal-50 data-[state=checked]:text-teal-700">Karnataka</SelectItem>
+                                                <SelectItem value="TN" className="rounded-xl py-3.5 px-4 my-1 font-semibold text-slate-600 focus:bg-teal-50 focus:text-teal-700 cursor-pointer data-[state=checked]:bg-teal-50 data-[state=checked]:text-teal-700">Tamil Nadu</SelectItem>
+                                                <SelectItem value="MH" className="rounded-xl py-3.5 px-4 my-1 font-semibold text-slate-600 focus:bg-teal-50 focus:text-teal-700 cursor-pointer data-[state=checked]:bg-teal-50 data-[state=checked]:text-teal-700">Maharashtra</SelectItem>
+                                                <SelectItem value="DL" className="rounded-xl py-3.5 px-4 my-1 font-semibold text-slate-600 focus:bg-teal-50 focus:text-teal-700 cursor-pointer data-[state=checked]:bg-teal-50 data-[state=checked]:text-teal-700">Delhi</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
