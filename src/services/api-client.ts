@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:8080/api/v1/rurify-services';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1/rurify-services';
 
 interface ApiRequestOptions extends RequestInit {
     params?: Record<string, string | number | boolean>;
