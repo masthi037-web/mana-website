@@ -8,6 +8,12 @@ export const fetchCompanyDetails = cache(async (companyDomain: string): Promise<
             params: { companyDomain },
             next: { revalidate: 300, tags: ['company'] } // 5 minutes cache
         });
+
+        if (!data) {
+            console.warn(`Company details API returned null for domain: ${companyDomain}`);
+            return null;
+        }
+
         console.log(data.companyCoupon + " coupon");
         return data;
     } catch (error) {
