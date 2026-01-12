@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'dummyimage.com' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
       { protocol: 'https', hostname: 'img.freepik.com' }, // Whitelist Freepik
+      { protocol: 'https', hostname: 'static.vecteezy.com' }, // Whitelist Vecteezy
     ],
   },
   serverExternalPackages: [
