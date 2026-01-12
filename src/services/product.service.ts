@@ -1,39 +1,51 @@
 import { Category as AppCategory, Catalog as AppCatalog, Product as AppProduct, ProductVariant } from '@/lib/types';
 import { CompanyInventory, Category as ApiCategory, Catalogue as ApiCatalogue, Product as ApiProduct } from '@/lib/api-types';
 
-const API_BASE_URL = 'http://localhost:8080/api/v1/rurify-services';
+import { apiClient } from './api-client';
+
 // Placeholder images map to randomize/match images if needed, or we just use picsum if the API gives filenames
 const PLACEHOLDER_BASE = 'https://picsum.photos/seed';
 
-export async function fetchCategories(companyName?: string): Promise<AppCategory[]> {
-    try {
-        const url = new URL(`${API_BASE_URL}/product/catalogue/category/get`);
-        if (companyName) {
-            url.searchParams.append('companyName', companyName);
-        }
+// ... existing imports
+import { Product } from '@/lib/api-types';
 
-        const res = await fetch(url.toString(), {
-            cache: 'no-store', // Ensure fresh data for now
+export async function fetchCategories(companyId: string): Promise<AppCategory[]> {
+    try {
+        const data = await apiClient<CompanyInventory>('/company/public/category/catalogue/product/get', {
+            params: { companyId },
+            next: { revalidate: 300, tags: ['products'] } // 5 minutes cache
         });
 
-        if (!res.ok) {
-            console.error('Failed to fetch categories:', res.status, res.statusText);
-            return [];
-        }
-
-        const data: CompanyInventory = await res.json();
-
         // The API returns a robust structure, we need to map it to our App's simpler types
-        // Accessing the first item in the array if it's an array, or the object itself.
-        // The user's JSON showed the root as an object, but sometimes these APIs return arrays. 
-        // Types say CompanyInventory has 'categories', so we assume 'data' IS CompanyInventory.
-
         return mapApiCategoriesToAppCategories(data.categories || []);
     } catch (error) {
         console.error('Error fetching categories:', error);
         return [];
     }
 }
+
+export async function fetchProductDetails(productId: string): Promise<AppProduct | null> {
+    try {
+        // Using the company-agnostic product get endpoint if available, or finding it in catalog
+        // Assuming a standard endpoint for now based on user request "call get product details API"
+        // We will guess '/company/public/product/get/{productId}' or similar. 
+        // Given the user gave a specific JSON, let's assume valid response.
+
+        // Actually, to be safe and use existing patterns, checking if there is a direct ID endpoint.
+        // If not, we might need to rely on the user providing the endpoint or use a standard one.
+        // I will use `params` structure similar to others.
+
+        const data = await apiClient<ApiProduct>(`/company/public/product/get/${productId}`, {
+            next: { revalidate: 0 } // No cache for checkout validation
+        });
+
+        return mapApiProductToAppProduct(data);
+    } catch (error) {
+        console.error(`Error fetching product ${productId}:`, error);
+        return null;
+    }
+}
+
 
 function mapApiCategoriesToAppCategories(apiCategories: ApiCategory[]): AppCategory[] {
     return apiCategories.map(cat => ({
@@ -59,16 +71,8 @@ function mapApiProductToAppProduct(apiProd: ApiProduct): AppProduct {
 
     // Logic to map variants from pricing if available
     const variants: ProductVariant[] = [];
-    if (apiProd.productPricing && apiProd.productPricing.length > 0) {
-        // Example: Create a "Size" or "Quantity" variant based on pricing
-        const quantityOptions = apiProd.productPricing.map(p => p.productQuantity).filter(Boolean);
-        if (quantityOptions.length > 0) {
-            variants.push({
-                name: "Quantity",
-                options: quantityOptions
-            });
-        }
-    }
+    // Redundant "Quantity" variant logic removed to avoid duplicate UI.
+    // Pricing is handled via the 'pricing' field.
 
     // Image handling: The API sends filenames like "mysorepak.jpg". 
     // We need a real URL. For now, we will use a generated placeholder based on the ID 
@@ -76,16 +80,36 @@ function mapApiProductToAppProduct(apiProd: ApiProduct): AppProduct {
     const seed = apiProd.productId.toString();
     const imageUrl = `${PLACEHOLDER_BASE}/${seed}/300/300`;
 
+    // Map pricing options for UI selection
+    const pricingOptions = apiProd.productPricing?.map(p => ({
+        id: String(p.productPricingId),
+        price: p.productPrice,
+        quantity: p.productQuantity,
+        addons: p.productAddons?.map(a => ({
+            id: String(a.productAddonId),
+            name: a.addonName,
+            price: a.addonPrice,
+            mandatory: a.mandatory
+        }))
+    })) || [];
+
     return {
         id: String(apiProd.productId),
         name: apiProd.productName,
         description: apiProd.productInfo,
-        price: firstPricing ? firstPricing.productPrice : apiProd.productDeliveryCost, // Fallback to delivery cost or 0 if no price
-        imageId: String(apiProd.productId), // Used for internal mapping if needed
+        price: firstPricing ? firstPricing.productPrice : apiProd.productDeliveryCost,
+        pricing: pricingOptions,
+        imageId: String(apiProd.productId),
         rating: apiProd.productRatings && apiProd.productRatings.length > 0
             ? apiProd.productRatings.reduce((acc, curr) => acc + curr.productRating, 0) / apiProd.productRatings.length
-            : 4.5, // Default rating if none
-        deliveryTime: '30-45 min', // Hardcoded for now as it's not in API
-        variants: variants.length > 0 ? variants : undefined
+            : 4.5,
+        deliveryTime: '30-45 min',
+        deliveryCost: apiProd.productDeliveryCost,
+        createdAt: apiProd.createdAt,
+        variants: variants.length > 0 ? variants : undefined,
+        famous: apiProd.famous || false,
+        ingredients: apiProd.productIng,
+        bestBefore: apiProd.productBestBefore,
+        instructions: apiProd.productInst
     };
 }
