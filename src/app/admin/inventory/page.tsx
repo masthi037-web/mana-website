@@ -35,7 +35,8 @@ export default function AdminInventoryPage() {
 
     // Fallback to a default if context is missing (though it shouldn't be)
     // or keep the hardcoded for safety? No, user wants dynamic.
-    const companyId = tenantCompanyId;
+    // Fallback to empty string to satisfy type, query enabled check handles the logic
+    const companyId = tenantCompanyId || "";
 
     // --- SELECTION STATE ---
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -66,6 +67,7 @@ export default function AdminInventoryPage() {
     // 1. Categories
     const { data: categories = [], isLoading: catsLoading } = useQuery({
         queryKey: ['categories', companyId],
+        enabled: !!companyId,
         queryFn: async () => {
             const res = await adminService.getAllCategories(companyId);
             return res.map((c: any) => ({
