@@ -20,15 +20,18 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
+import { useTenant } from "@/components/providers/TenantContext";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-const COMPANY_ID = "74f0d689-0ca7-4feb-a123-8e98c151b514";
+// Remove hardcoded COMPANY_ID
+// const COMPANY_ID = "74f0d689-0ca7-4feb-a123-8e98c151b514";
 
 type ViewLevel = 'CATEGORY' | 'CATALOGUE' | 'PRODUCT' | 'PRICING' | 'ADDON';
 
 export default function AdminInventoryPage() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
+    const { id: companyId } = useTenant(); // Get dynamic company ID
 
     // --- SELECTION STATE ---
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -58,9 +61,9 @@ export default function AdminInventoryPage() {
 
     // 1. Categories
     const { data: categories = [], isLoading: catsLoading } = useQuery({
-        queryKey: ['categories', COMPANY_ID],
+        queryKey: ['categories', companyId],
         queryFn: async () => {
-            const res = await adminService.getAllCategories(COMPANY_ID);
+            const res = await adminService.getAllCategories(companyId);
             return res.map((c: any) => ({
                 id: String(c.categoryId),
                 name: c.categoryName,
@@ -141,7 +144,7 @@ export default function AdminInventoryPage() {
         mutationFn: async () => {
             if (level === 'CATEGORY') {
                 return adminService.createCategory({
-                    companyId: COMPANY_ID,
+                    companyId: companyId,
                     categoryName: name,
                     categoryDescription: desc,
                     categoryStatus: "ACTIVE"
