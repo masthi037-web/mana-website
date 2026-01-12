@@ -20,8 +20,8 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import { useTenant } from "@/components/providers/TenantContext";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTenant } from "@/components/providers/TenantContext";
 
 // Remove hardcoded COMPANY_ID
 // const COMPANY_ID = "74f0d689-0ca7-4feb-a123-8e98c151b514";
@@ -31,7 +31,11 @@ type ViewLevel = 'CATEGORY' | 'CATALOGUE' | 'PRODUCT' | 'PRICING' | 'ADDON';
 export default function AdminInventoryPage() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
-    const { id: companyId } = useTenant(); // Get dynamic company ID
+    const { companyId: tenantCompanyId } = useTenant();
+
+    // Fallback to a default if context is missing (though it shouldn't be)
+    // or keep the hardcoded for safety? No, user wants dynamic.
+    const companyId = tenantCompanyId;
 
     // --- SELECTION STATE ---
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);

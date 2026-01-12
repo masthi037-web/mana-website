@@ -49,6 +49,7 @@ export interface TenantBrandTone {
 
 export interface TenantConfig {
     id: string;
+    companyId?: string; // Dynamic DB Company ID
     name: string;
     theme: {
         colors: {

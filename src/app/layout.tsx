@@ -29,6 +29,12 @@ export default async function RootLayout({
 
   const companyDetails = await fetchCompanyDetails(companyDomain);
   const tenantConfig = resolveTenantConfig(companyDomain);
+
+  // Inject dynamic company ID into tenant config
+  if (companyDetails?.companyId) {
+    tenantConfig.companyId = companyDetails.companyId;
+  }
+
   console.log(companyDetails?.companyCoupon);
 
   return (
