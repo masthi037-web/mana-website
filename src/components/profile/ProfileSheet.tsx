@@ -16,6 +16,7 @@ import { Package, MapPin, LogOut, User, Settings, CreditCard, Heart, Loader2, Ar
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/services/auth.service';
+import { customerService } from '@/services/customer.service';
 import { HistorySheet } from '@/components/history/HistorySheet';
 
 export function ProfileSheet({ children }: { children: React.ReactNode }) {
@@ -23,12 +24,17 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const { toast } = useToast();
 
     // State for Auth Flow
-    const [view, setView] = React.useState<'profile' | 'login-phone' | 'login-otp'>('login-phone');
+    const [view, setView] = React.useState<'profile' | 'login-phone' | 'login-otp' | 'edit-profile'>('login-phone');
     const [phoneNumber, setPhoneNumber] = React.useState('');
     const [otp, setOtp] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
     const [showSuccess, setShowSuccess] = React.useState(false);
     const [resendTimer, setResendTimer] = React.useState(0);
+
+    // Profile Edit State
+    const [name, setName] = React.useState('');
+    const [email, setEmail] = React.useState('');
+    const [customerData, setCustomerData] = React.useState<any>(null);
 
     // Mock logged in state - in real app check cookie/token existence
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
@@ -115,6 +121,11 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
 
                 // Only open Address Sidebar if NOT owner
                 if (!response.role?.includes('OWNER')) {
+                    // If CUSTOMER, fetch details to warm cache
+                    if (response.role?.includes('CUSTOMER')) {
+                        customerService.getCustomerDetails().catch(console.error);
+                    }
+
                     setTimeout(() => {
                         window.dispatchEvent(new Event('open-address-sidebar'));
                     }, 300);
@@ -125,6 +136,43 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
 
         } catch (error) {
             toast({ title: "Login Failed", description: "Invalid OTP or error occurred", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleEditProfile = async () => {
+        setIsLoading(true);
+        try {
+            const data = await customerService.getCustomerDetails();
+            setCustomerData(data);
+            setName(data.customerName || '');
+            setEmail(data.customerEmailId || '');
+            setView('edit-profile');
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to load profile", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSaveProfile = async () => {
+        if (!name || !email) {
+            toast({ title: "Validation Error", description: "Name and Email are required", variant: "destructive" });
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            await customerService.updateCustomer({
+                ...customerData,
+                customerName: name,
+                customerEmailId: email
+            });
+            toast({ title: "Success", description: "Profile updated successfully" });
+            setView('profile');
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to update profile", variant: "destructive" });
         } finally {
             setIsLoading(false);
         }
@@ -201,7 +249,10 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                                 <div>
                                     <h3 className="text-lg font-bold font-headline">User</h3>
                                     <p className="text-sm text-muted-foreground">+91 {phoneNumber}</p>
-                                    <Button variant="link" className="p-0 h-auto text-teal-600 text-xs mt-1">
+                                    <Button variant="link"
+                                        className="p-0 h-auto text-teal-600 text-xs mt-1"
+                                        onClick={handleEditProfile}
+                                    >
                                         Edit Profile
                                     </Button>
                                 </div>
@@ -260,6 +311,56 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                             </Button>
                         </div>
                     </>
+                )}
+
+                {/* VIEW: EDIT PROFILE */}
+                {isLoggedIn && !showSuccess && view === 'edit-profile' && (
+                    <div className="flex flex-col h-full px-4 pt-6">
+                        <div className="flex items-center gap-2 mb-6">
+                            <Button variant="ghost" size="icon" onClick={() => setView('profile')} className="rounded-full">
+                                <ArrowLeft className="h-5 w-5" />
+                            </Button>
+                            <h2 className="text-xl font-bold font-headline">Edit Profile</h2>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold ml-1 text-slate-700">Full Name</label>
+                                <Input
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="h-14 rounded-xl"
+                                    placeholder="Enter your name"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold ml-1 text-slate-700">Email Address</label>
+                                <Input
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="h-14 rounded-xl"
+                                    placeholder="Enter your email"
+                                />
+                            </div>
+                            <div className="space-y-2 opacity-60">
+                                <label className="text-sm font-bold ml-1 text-slate-700">Mobile Number</label>
+                                <Input
+                                    value={phoneNumber || customerData?.customerMobileNumber}
+                                    disabled
+                                    className="h-14 rounded-xl bg-slate-100"
+                                />
+                                <p className="text-xs text-muted-foreground ml-1">Mobile number cannot be changed.</p>
+                            </div>
+
+                            <Button
+                                className="w-full h-14 rounded-xl text-lg font-bold bg-teal-500 hover:bg-teal-600 mt-4"
+                                onClick={handleSaveProfile}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? <Loader2 className="animate-spin mr-2" /> : 'Save Changes'}
+                            </Button>
+                        </div>
+                    </div>
                 )}
 
                 {/* VIEW: LOGIN PHONE */}
@@ -342,6 +443,6 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                     </div>
                 )}
             </SheetContent>
-        </Sheet>
+        </Sheet >
     );
 }

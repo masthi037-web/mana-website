@@ -39,6 +39,7 @@ export interface Product {
     productPricing: ProductPricing[];
     productRatings: ProductRating[];
     famous: boolean;
+    productImage?: string;
 }
 
 export interface Catalogue {
@@ -49,6 +50,7 @@ export interface Catalogue {
     catalogueStatus: string; // 'ACTIVE' etc.
     createdAt: string;
     products: Product[];
+    catalogueImage?: string;
 }
 
 export interface CompanyDetails {
@@ -96,6 +98,7 @@ export interface Category {
     catalogues: Catalogue[];
     companyId: string;
     categories: Category[];
+    categoryImage?: string;
 }
 
 // ... existing interfaces ...
@@ -107,6 +110,7 @@ export interface CreateCategoryRequest {
     categoryName: string;
     categoryDescription: string;
     categoryStatus: string;
+    categoryImage?: string;
 }
 
 export interface CreateCategoryResponse {
@@ -115,6 +119,7 @@ export interface CreateCategoryResponse {
     categoryName: string;
     categoryDescription: string;
     categoryStatus: string;
+    categoryImage?: string;
     createdAt: string;
     catalogues: null | Catalogue[];
 }
@@ -123,6 +128,7 @@ export interface CreateCatalogueRequest {
     categoryId: string; // or number? User prompt showed "1" (string) but response has 1 (number). create request says "1".
     catalogueName: string;
     catalogueDescription: string;
+    catalogueImage?: string;
 }
 
 export interface CreateCatalogueResponse {
@@ -131,6 +137,7 @@ export interface CreateCatalogueResponse {
     catalogueName: string;
     catalogueDescription: string;
     catalogueStatus: string;
+    catalogueImage?: string;
     createdAt: string;
     products: null | Product[];
 }
@@ -146,6 +153,7 @@ export interface CreateProductRequest {
     productStatus: string;
     famous: boolean;
     productDeliveryCost: number;
+    productImage?: string;
 }
 
 export interface CreateProductResponse {
@@ -153,6 +161,7 @@ export interface CreateProductResponse {
     catalogueId: number;
     productName: string; // ... other fields same as Product
     productStatus: string;
+    productImage?: string;
     createdAt: string;
 }
 
@@ -185,4 +194,38 @@ export interface CreateAddonResponse {
     addonPrice: number;
     mandatory: boolean;
     active: boolean;
+}
+
+export interface CustomerAddress {
+    customerAddressId: number;
+    addressName: string;
+    customerDrNum: string;
+    customerRoad: string;
+    customerCity: string;
+    customerState: string;
+    customerCountry: string;
+    customerPin: string;
+}
+
+export interface CustomerDetails {
+    customerId: number;
+    companyId: string;
+    customerName: string;
+    customerMobileNumber: string;
+    customerStatus: string;
+    customerEmailId: string;
+    createdAt: string;
+    customerAddress: CustomerAddress[];
+    customerImage?: string;
+}
+
+export interface UpdateCustomerRequest {
+    customerId: number;
+    companyId: string;
+    customerName: string;
+    customerMobileNumber: string;
+    customerStatus: string;
+    customerEmailId: string;
+    createdAt: string;
+    customerImage?: string;
 }
