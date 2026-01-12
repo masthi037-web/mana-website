@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/services/auth.service';
 import { customerService } from '@/services/customer.service';
 import { HistorySheet } from '@/components/history/HistorySheet';
+import { cn } from '@/lib/utils';
 
 export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -30,6 +31,9 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = React.useState(false);
     const [showSuccess, setShowSuccess] = React.useState(false);
     const [resendTimer, setResendTimer] = React.useState(0);
+
+    // State for Feedback
+    const [feedback, setFeedback] = React.useState<{ type: 'success' | 'error', message: string } | null>(null);
 
     // Profile Edit State
     const [name, setName] = React.useState('');
@@ -54,7 +58,10 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     }, [resendTimer]);
 
     React.useEffect(() => {
-        const handleOpen = () => setIsOpen(true);
+        const handleOpen = () => {
+            setIsOpen(true);
+            setFeedback(null); // Clear feedback on open
+        };
         window.addEventListener('open-profile-sidebar', handleOpen);
         return () => window.removeEventListener('open-profile-sidebar', handleOpen);
     }, []);
@@ -78,9 +85,11 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
         }
 
         setIsLoading(true);
+        setFeedback(null);
         try {
             await authService.sendOtp(phoneNumber);
-            toast({ title: "OTP Sent", description: "Please check your messages" });
+            // toast({ title: "OTP Sent", description: "Please check your messages" }); // REMOVED
+            setFeedback({ type: 'success', message: `OTP sent to +91 ${phoneNumber}` });
             setView('login-otp');
             setResendTimer(60);
         } catch (error) {
@@ -97,6 +106,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
         }
 
         setIsLoading(true);
+        setFeedback(null);
         try {
             const response = await authService.login(phoneNumber, otp);
             // Show success animation
@@ -131,11 +141,12 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                     }, 300);
                 }
 
-                toast({ title: "Welcome back!", description: "Logged in successfully" });
+                // toast({ title: "Welcome back!", description: "Logged in successfully" }); // REMOVED
             }, 2000);
 
         } catch (error) {
             toast({ title: "Login Failed", description: "Invalid OTP or error occurred", variant: "destructive" });
+            setFeedback({ type: 'error', message: "Invalid OTP. Please try again." });
         } finally {
             setIsLoading(false);
         }
@@ -181,7 +192,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const handleLogout = async () => {
         try {
             await authService.logout();
-            toast({ title: "Logged Out", description: "See you soon!" });
+            // toast({ title: "Logged Out", description: "See you soon!" }); // REMOVED
         } catch (error) {
             console.error("Logout failed:", error);
         } finally {
@@ -196,6 +207,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
             setView('login-phone');
             setPhoneNumber('');
             setOtp('');
+            setFeedback({ type: 'success', message: "Successfully logged out" });
 
             // Redirect to home if owner
             if (wasOwner) {
@@ -365,7 +377,17 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
 
                 {/* VIEW: LOGIN PHONE */}
                 {!isLoggedIn && !showSuccess && view === 'login-phone' && (
-                    <div className="flex flex-col h-full justify-center px-4">
+                    <div className="flex flex-col h-full justify-center px-4 relative">
+                        {/* INLINE FEEDBACK */}
+                        {feedback && (
+                            <div className={cn(
+                                "absolute top-6 left-4 right-4 p-3 rounded-lg text-sm font-medium animate-in slide-in-from-top-5",
+                                feedback.type === 'success' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                            )}>
+                                {feedback.message}
+                            </div>
+                        )}
+
                         <div className="mb-10 text-center space-y-3">
                             <div className="h-20 w-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-teal-50/50">
                                 <User className="h-8 w-8 text-teal-600" />
@@ -398,7 +420,17 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
 
                 {/* VIEW: LOGIN OTP */}
                 {!isLoggedIn && !showSuccess && view === 'login-otp' && (
-                    <div className="flex flex-col h-full px-4 pt-12">
+                    <div className="flex flex-col h-full px-4 pt-12 relative">
+                        {/* INLINE FEEDBACK */}
+                        {feedback && (
+                            <div className={cn(
+                                "absolute top-2 left-4 right-4 p-3 rounded-lg text-sm font-medium animate-in slide-in-from-top-5 text-center",
+                                feedback.type === 'success' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                            )}>
+                                {feedback.message}
+                            </div>
+                        )}
+
                         <Button variant="ghost" size="sm" className="self-start -ml-2 mb-8 text-slate-500 hover:text-teal-600 hover:bg-teal-50 rounded-full px-4" onClick={() => setView('login-phone')}>
                             <ArrowLeft className="mr-2 h-4 w-4" /> Change Number
                         </Button>

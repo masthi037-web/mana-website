@@ -47,8 +47,6 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
 
     // Form State
     const [formData, setFormData] = useState({
-        fullName: '',
-        phoneNumber: '',
         streetAddress: '',
         pinCode: '',
         city: '',
@@ -92,12 +90,6 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
     const handleEdit = (address: CustomerAddress) => {
         setEditingId(address.customerAddressId);
         setFormData({
-            fullName: 'User', // The API doesn't return name/phone specifically for address, using placeholder or could fetch. 
-            // NOTE: The current address object doesn't have name/phone, assuming they are part of the main customer profile or not stored per address.
-            // For now, retaining existing form logic or using defaults.
-            // If the user expects name/phone per address, the API type might need adjustment, but based on provided JSON, it just has address fields.
-            // I will use placeholder or keep empty if not available in `address`.
-            phoneNumber: '',
             streetAddress: address.customerDrNum || '', // Assuming mapping
             pinCode: address.customerPin,
             city: address.customerCity,
@@ -109,8 +101,6 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
 
     const resetForm = () => {
         setFormData({
-            fullName: '',
-            phoneNumber: '',
             streetAddress: '',
             pinCode: '',
             city: '',
@@ -121,7 +111,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
     };
 
     const handleSubmit = async () => {
-        // Validation (Relaxed for Name/Phone since they might not be in Address Object based on API ref)
+        // Validation
         if (!formData.streetAddress || !formData.pinCode) {
             toast({
                 title: "Missing Details",
@@ -266,45 +256,6 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                         >
                             <Navigation className="h-4 w-4 mr-1 rotate-180" /> Back to List
                         </Button>
-
-                        {/* Contact Details (Optional/Visual if not supported by API) */}
-                        <div className="space-y-4 opacity-50 pointer-events-none grayscale">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Contact Details</h3>
-                                <span className="text-[10px] uppercase bg-slate-100 px-2 py-0.5 rounded text-slate-500">Auto-filled</span>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="fullName">Full Name</Label>
-                                    <div className="relative">
-                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            id="fullName"
-                                            placeholder="e.g. John Doe"
-                                            className="pl-10 h-12 bg-secondary/30 border-transparent focus:border-primary focus:bg-background transition-all"
-                                            value={formData.fullName || 'User'}
-                                            readOnly
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="phone">Phone Number</Label>
-                                    <div className="relative">
-                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            id="phone"
-                                            type="tel"
-                                            placeholder="e.g. +91 9999000000"
-                                            className="pl-10 h-12 bg-secondary/30 border-transparent focus:border-primary focus:bg-background transition-all"
-                                            value={formData.phoneNumber}
-                                            onChange={(e) => handleChange('phoneNumber', e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
                         {/* Location Details */}
                         <div className="space-y-4">

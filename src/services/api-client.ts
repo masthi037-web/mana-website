@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1/rurify-services';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8080/api/v1/rurify-services';
 
 interface ApiRequestOptions extends RequestInit {
     params?: Record<string, string | number | boolean>;
@@ -39,15 +39,21 @@ export async function apiClient<T>(
 
 
     const startTime = performance.now();
-    const res = await fetch(url.toString(), {
-        credentials: "include", // 🔥 REQUIRED for cookies
-        // cache: fetchOptions.next?.revalidate ? "force-cache" : "no-store", // Let Next.js decide based on 'next' prop
-        ...fetchOptions,
-        headers: {
-            "Content-Type": "application/json",
-            ...fetchOptions.headers,
-        },
-    });
+    let res: Response;
+    try {
+        res = await fetch(url.toString(), {
+            credentials: "include", // 🔥 REQUIRED for cookies
+            // cache: fetchOptions.next?.revalidate ? "force-cache" : "no-store", // Let Next.js decide based on 'next' prop
+            ...fetchOptions,
+            headers: {
+                "Content-Type": "application/json",
+                ...fetchOptions.headers,
+            },
+        });
+    } catch (error: any) {
+        console.error(`[API FATAL] Network Error at ${endpoint}:`, error?.cause || error);
+        throw error;
+    }
     const duration = performance.now() - startTime;
     console.log(`[API LATENCY] ${endpoint}: ${duration.toFixed(2)}ms`);
 
