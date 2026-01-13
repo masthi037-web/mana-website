@@ -20,11 +20,13 @@ import { customerService } from '@/services/customer.service';
 import { HistorySheet } from '@/components/history/HistorySheet';
 import { cn } from '@/lib/utils';
 import { useTenant } from '@/components/providers/TenantContext';
+import { useWishlist } from '@/hooks/use-wishlist';
 
 export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const { toast } = useToast();
     const { domain, companyId } = useTenant();
+    const { setWishlistOpen } = useWishlist();
 
     // State for Auth Flow
     const [view, setView] = React.useState<'profile' | 'login-phone' | 'login-otp' | 'edit-profile'>('login-phone');
@@ -325,6 +327,11 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                                                     setIsOpen(false);
                                                     setTimeout(() => {
                                                         window.dispatchEvent(new Event('open-address-sidebar'));
+                                                    }, 300);
+                                                } else if (item.label === 'Wishlist') {
+                                                    setIsOpen(false);
+                                                    setTimeout(() => {
+                                                        setWishlistOpen(true);
                                                     }, 300);
                                                 } else {
                                                     router.push(item.href);

@@ -22,15 +22,13 @@ import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { AddToCartSheet } from '@/components/cart/AddToCartSheet';
 
-export function WishlistSheet({ children }: { children: React.ReactNode }) {
+export function WishlistSheet({ children }: { children?: React.ReactNode }) {
     const { wishlist, removeFromWishlist, isWishlistOpen, setWishlistOpen } = useWishlist();
     const { toast } = useToast();
 
     return (
         <Sheet open={isWishlistOpen} onOpenChange={setWishlistOpen}>
-            <SheetTrigger asChild>
-                {children}
-            </SheetTrigger>
+            {children && <SheetTrigger asChild>{children}</SheetTrigger>}
             <SheetContent side="right" className="w-full sm:max-w-md flex flex-col p-0 gap-0 border-l border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-2xl">
                 {/* Header */}
                 <SheetHeader className="px-6 py-5 border-b border-border/40 bg-background/50 backdrop-blur-md sticky top-0 z-20">

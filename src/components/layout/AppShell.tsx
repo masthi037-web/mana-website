@@ -7,6 +7,7 @@ import QueryProvider from '@/providers/QueryProvider';
 import { resolveTenantConfig } from '@/config/tenant-config';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Footer } from '@/components/layout/Footer';
+import { WishlistSheet } from '@/components/wishlist/WishlistSheet';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -32,6 +33,7 @@ export default async function AppShell({ children, companyDomain }: AppShellProp
                     <Footer companyName={companyDetails?.companyName} socialLinks={companyDetails?.socialMediaLink} />
                     <BottomNavigation />
                 </div>
+                <WishlistSheet />
                 <Toaster />
             </QueryProvider>
         </ThemeProvider>

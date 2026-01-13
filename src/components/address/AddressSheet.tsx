@@ -56,7 +56,73 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
     });
     const [originalData, setOriginalData] = useState<typeof formData | null>(null);
 
-    // ...
+    // Listen for global open event
+    useEffect(() => {
+        const handleOpen = () => {
+            setIsOpen(true);
+            fetchAddresses();
+        };
+        window.addEventListener('open-address-sidebar', handleOpen);
+        return () => window.removeEventListener('open-address-sidebar', handleOpen);
+    }, []);
+
+    // Fetch addresses when sheet opens
+    useEffect(() => {
+        if (isOpen) {
+            fetchAddresses();
+        }
+    }, [isOpen]);
+
+    const fetchAddresses = async () => {
+        setIsLoading(true);
+        try {
+            const details = await customerService.getCustomerDetails();
+            setAddresses(details.customerAddress || []);
+        } catch (error) {
+            console.error("Failed to fetch addresses", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleChange = async (field: string, value: string) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+
+        // Pin Code Lookup Logic
+        if (field === 'pinCode' && value.length === 6) {
+            setIsLoading(true);
+            try {
+                const response = await fetch(`https://api.postalpincode.in/pincode/${value}`);
+                const data = await response.json();
+
+                if (data[0].Status === 'Success') {
+                    const details = data[0].PostOffice[0];
+                    setFormData(prev => ({
+                        ...prev,
+                        city: details.District,
+                        state: details.State,
+                        pinCode: value // Ensure value stays
+                    }));
+                    toast({ description: `Location found: ${details.District}, ${details.State}` });
+                } else {
+                    toast({ title: "Invalid Pincode", description: "Could not find location details.", variant: "destructive" });
+                    setFormData(prev => ({ ...prev, city: '', state: '' })); // Reset if invalid
+                }
+            } catch (error) {
+                console.error("Pin code fetch error:", error);
+                // Don't show error toast here to avoid spamming if network fails, just let them type manually if needed? 
+                // Actually user asked to disable fields, so we fallback to manual if fetch fails? 
+                // For now, let's just toast error.
+                toast({ title: "Error", description: "Failed to fetch location details.", variant: "destructive" });
+            } finally {
+                setIsLoading(false);
+            }
+        } else if (field === 'pinCode' && value.length < 6) {
+            // Reset if they backspace (optional, but good UX if fields are disabled)
+            // setFormData(prev => ({ ...prev, city: '', state: '' })); 
+            // Commenting out reset to avoid annoyance if just editing one digit
+        }
+    };
 
     const handleEdit = (address: CustomerAddress) => {
         setEditingId(address.customerAddressId);
@@ -290,26 +356,21 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                                         <Input
                                             id="city"
                                             placeholder="City"
-                                            className="h-12 bg-secondary/30 border-transparent focus:border-primary focus:bg-background transition-all"
                                             value={formData.city}
                                             onChange={(e) => handleChange('city', e.target.value)}
+                                            readOnly
+                                            className="h-12 bg-slate-50 border-transparent focus:border-primary transition-all text-slate-500 cursor-not-allowed"
                                         />
                                     </div>
                                     <div className="space-y-3">
                                         <Label htmlFor="state" className="text-sm font-bold text-slate-700 ml-1">State</Label>
-                                        <Select value={formData.state} onValueChange={(val) => handleChange('state', val)}>
-                                            <SelectTrigger className="h-14 rounded-2xl border-2 border-slate-200 bg-white hover:border-teal-500 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 font-bold text-slate-700 px-4 data-[state=open]:border-teal-500 data-[state=open]:ring-4 data-[state=open]:ring-teal-500/10 shadow-sm">
-                                                <SelectValue placeholder="Select your state" />
-                                            </SelectTrigger>
-                                            <SelectContent className="rounded-2xl border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2">
-                                                <SelectItem value="AP" className="rounded-xl py-3.5 px-4 my-1 font-semibold text-slate-600 focus:bg-teal-50 focus:text-teal-700 cursor-pointer data-[state=checked]:bg-teal-50 data-[state=checked]:text-teal-700">Andhra Pradesh</SelectItem>
-                                                <SelectItem value="TS" className="rounded-xl py-3.5 px-4 my-1 font-semibold text-slate-600 focus:bg-teal-50 focus:text-teal-700 cursor-pointer data-[state=checked]:bg-teal-50 data-[state=checked]:text-teal-700">Telangana</SelectItem>
-                                                <SelectItem value="KA" className="rounded-xl py-3.5 px-4 my-1 font-semibold text-slate-600 focus:bg-teal-50 focus:text-teal-700 cursor-pointer data-[state=checked]:bg-teal-50 data-[state=checked]:text-teal-700">Karnataka</SelectItem>
-                                                <SelectItem value="TN" className="rounded-xl py-3.5 px-4 my-1 font-semibold text-slate-600 focus:bg-teal-50 focus:text-teal-700 cursor-pointer data-[state=checked]:bg-teal-50 data-[state=checked]:text-teal-700">Tamil Nadu</SelectItem>
-                                                <SelectItem value="MH" className="rounded-xl py-3.5 px-4 my-1 font-semibold text-slate-600 focus:bg-teal-50 focus:text-teal-700 cursor-pointer data-[state=checked]:bg-teal-50 data-[state=checked]:text-teal-700">Maharashtra</SelectItem>
-                                                <SelectItem value="DL" className="rounded-xl py-3.5 px-4 my-1 font-semibold text-slate-600 focus:bg-teal-50 focus:text-teal-700 cursor-pointer data-[state=checked]:bg-teal-50 data-[state=checked]:text-teal-700">Delhi</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <Input
+                                            id="state"
+                                            placeholder="State"
+                                            value={formData.state}
+                                            readOnly
+                                            className="h-14 rounded-xl border-2 border-slate-100 bg-slate-50 text-slate-500 font-bold px-4 cursor-not-allowed"
+                                        />
                                     </div>
                                 </div>
                             </div>
