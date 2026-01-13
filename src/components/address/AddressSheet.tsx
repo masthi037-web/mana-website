@@ -77,14 +77,9 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
         setIsLoading(true);
         try {
             const details = await customerService.getCustomerDetails(forceRefresh);
-            // Filter out addresses with corrupt/missing IDs to prevent UI errors
-            const validAddresses = (details.customerAddress || []).filter(addr =>
-                addr.customerAddressId !== null && addr.customerAddressId !== undefined
-            );
-            if (validAddresses.length < (details.customerAddress || []).length) {
-                console.warn("Filtered out addresses with missing IDs:", details.customerAddress);
-            }
-            setAddresses(validAddresses);
+            // We allow rendering all addresses so the user can at least see them.
+            // Addresses with missing IDs will have editing disabled in the UI.
+            setAddresses(details.customerAddress || []);
         } catch (error) {
             console.error("Failed to fetch addresses", error);
         } finally {
@@ -302,14 +297,20 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                                             <div className="flex-1 min-w-0 pt-0.5">
                                                 <div className="flex items-center justify-between mb-1">
                                                     <h4 className="font-bold text-[15px] font-headline text-slate-800">{addr.addressName}</h4>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 -mr-2 -mt-2 text-slate-300 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-colors"
-                                                        onClick={() => handleEdit(addr)}
-                                                    >
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
+                                                    {addr.customerAddressId ? (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 -mr-2 -mt-2 text-slate-300 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-colors"
+                                                            onClick={() => handleEdit(addr)}
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                    ) : (
+                                                        <div className="h-8 w-8 -mr-2 -mt-2 flex items-center justify-center" title="Cannot edit: Address ID missing">
+                                                            <Pencil className="h-4 w-4 text-slate-200 cursor-not-allowed" />
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <p className="text-[13px] text-slate-500 leading-relaxed font-medium">
                                                     {addr.customerDrNum ? `${addr.customerDrNum}, ` : ''}{addr.customerRoad}
