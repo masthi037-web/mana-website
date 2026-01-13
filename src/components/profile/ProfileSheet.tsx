@@ -80,6 +80,24 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
+    const fetchProfile = async () => {
+        try {
+            const data = await customerService.getCustomerDetails();
+            setCustomerData(data);
+            if (data.customerMobileNumber) setPhoneNumber(data.customerMobileNumber);
+            if (data.customerName) setName(data.customerName);
+            if (data.customerEmailId) setEmail(data.customerEmailId);
+        } catch (error) {
+            console.error("Failed to fetch profile", error);
+        }
+    };
+
+    React.useEffect(() => {
+        if (isLoggedIn) {
+            fetchProfile();
+        }
+    }, [isLoggedIn]);
+
     const handleSendOtp = async () => {
         if (!phoneNumber || phoneNumber.length < 10) {
             toast({ title: "Invalid Phone", description: "Please enter a valid 10-digit number", variant: "destructive" });
@@ -184,6 +202,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                 companyId: String(companyId) // Explicitly inject companyId from context
             });
             toast({ title: "Success", description: "Profile updated successfully" });
+            fetchProfile(); // Refresh local data
             setView('profile');
         } catch (error) {
             toast({ title: "Error", description: "Failed to update profile", variant: "destructive" });
@@ -262,8 +281,12 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                                     </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <h3 className="text-lg font-bold font-headline">User</h3>
-                                    <p className="text-sm text-muted-foreground">+91 {phoneNumber}</p>
+                                    <h3 className="text-lg font-bold font-headline">
+                                        {customerData?.customerName || 'User'}
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        +91 {customerData?.customerMobileNumber || phoneNumber}
+                                    </p>
                                     <Button variant="link"
                                         className="p-0 h-auto text-teal-600 text-xs mt-1"
                                         onClick={handleEditProfile}
