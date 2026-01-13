@@ -29,6 +29,14 @@ const nextConfig: NextConfig = {
     '@genkit-ai/next',
     'genkit',
   ],
+  async rewrites() {
+    return [
+      {
+        source: '/api/proxy/:path*',
+        destination: 'https://mana-buy-services-831914530688.asia-south1.run.app/api/v1/rurify-services/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
