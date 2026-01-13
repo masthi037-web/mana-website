@@ -13,6 +13,7 @@ export default async function Home() {
   const headersList = await headers();
   // Middleware handles extraction and localhost fallback
   const headerDomain = headersList.get("x-company-domain");
+  // FORCE HARDCODED FOR DEBUGGING IF NEEDED
   const companyDomain = (headerDomain && headerDomain !== 'localhost') ? headerDomain : 'babaihomefoods';
 
   // Chained Data Fetching: Company -> Products
@@ -58,7 +59,11 @@ export default async function Home() {
 
 
       <ProductInitializer categories={categories} />
-      <HomeClient initialCategories={categories} companyCoupon={company?.companyCoupon} />
+      <HomeClient
+        initialCategories={categories}
+        companyCoupon={company?.companyCoupon}
+        companyPhone={company?.companyPhone}
+      />
     </div>
   );
 }

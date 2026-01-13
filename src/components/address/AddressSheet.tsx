@@ -200,8 +200,16 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                     return;
                 }
 
+                // Ensure customerId is present for update as well
+                const customerId = localStorage.getItem('customerId');
+                if (!customerId) {
+                    toast({ title: "Error", description: "User ID not found. Please login again.", variant: "destructive" });
+                    return;
+                }
+
                 await customerService.updateAddress({
                     customerAddressId: editingId,
+                    customerId: Number(customerId), // Added customerId
                     addressName: finalAddressName,
                     customerDrNum: formData.streetAddress,
                     customerRoad: formData.streetAddress,

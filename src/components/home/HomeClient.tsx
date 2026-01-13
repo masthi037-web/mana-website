@@ -15,6 +15,7 @@ import { AddToCartSheet } from '@/components/cart/AddToCartSheet';
 import { ProductCard } from '@/components/products/ProductCard';
 import { FeaturesCarousel } from '@/components/home/FeaturesCarousel';
 import { CouponCarousel } from '@/components/home/CouponCarousel';
+import { WhatsAppButton } from '@/components/common/WhatsAppButton';
 
 import { ArrowRight, Sparkles, Star } from 'lucide-react';
 import Link from 'next/link';
@@ -22,9 +23,10 @@ import Link from 'next/link';
 interface HomeClientProps {
     initialCategories: Category[];
     companyCoupon?: string;
+    companyPhone?: string;
 }
 
-export default function HomeClient({ initialCategories, companyCoupon }: HomeClientProps) {
+export default function HomeClient({ initialCategories, companyCoupon, companyPhone }: HomeClientProps) {
     const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -167,6 +169,7 @@ export default function HomeClient({ initialCategories, companyCoupon }: HomeCli
 
     return (
         <div className="space-y-12 pb-20">
+            {companyPhone && <WhatsAppButton phoneNumber={companyPhone} />}
             <CouponCarousel companyCoupon={companyCoupon} />
             <div className="animate-in fade-in slide-in-from-top-4 duration-700">
                 <FeaturesCarousel />
