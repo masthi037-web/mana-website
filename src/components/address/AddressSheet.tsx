@@ -44,6 +44,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
     const [view, setView] = useState<'list' | 'add'>('list');
     const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -60,7 +61,6 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
     useEffect(() => {
         const handleOpen = () => {
             setIsOpen(true);
-            fetchAddresses();
         };
         window.addEventListener('open-address-sidebar', handleOpen);
         return () => window.removeEventListener('open-address-sidebar', handleOpen);
@@ -126,6 +126,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
 
     const handleEdit = (address: CustomerAddress) => {
         setEditingId(address.customerAddressId);
+        setIsEditMode(true);
         const isCustom = !['Home', 'Work'].includes(address.addressName);
         const initialData = {
             streetAddress: address.customerRoad || address.customerDrNum || '',
@@ -150,6 +151,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
             customName: ''
         });
         setEditingId(null);
+        setIsEditMode(false);
         setOriginalData(null);
     };
 
@@ -170,13 +172,13 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
         const finalAddressName = formData.label === 'Other' ? formData.customName : formData.label;
 
         try {
-            if (editingId) {
+            if (isEditMode && editingId !== null) {
                 // UPDATE
                 await customerService.updateAddress({
                     customerAddressId: editingId,
                     addressName: finalAddressName,
                     customerDrNum: formData.streetAddress,
-                    customerRoad: formData.streetAddress, // Duplicating for now as per previous pattern
+                    customerRoad: formData.streetAddress,
                     customerCity: formData.city,
                     customerState: formData.state,
                     customerCountry: 'India',
@@ -228,7 +230,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
             <SheetContent side="right" className="w-full sm:max-w-md flex flex-col h-full overflow-y-auto">
                 <SheetHeader className="pb-6 border-b">
                     <SheetTitle>
-                        {view === 'list' ? 'My Addresses' : (editingId !== null ? 'Edit Address' : 'Add New Address')}
+                        {view === 'list' ? 'My Addresses' : (isEditMode ? 'Edit Address' : 'Add New Address')}
                     </SheetTitle>
                 </SheetHeader>
 
@@ -239,6 +241,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                             <div className="flex justify-center py-12"><Loader2 className="animate-spin text-teal-600" /></div>
                         ) : addresses.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+                                {/* ... (previous content remains same, just ensuring context match) ... */}
                                 <div className="h-20 w-20 bg-teal-50 rounded-full flex items-center justify-center ring-4 ring-teal-50/50">
                                     <MapPin className="h-10 w-10 text-teal-600" />
                                 </div>
@@ -422,7 +425,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                             <Button
                                 className="w-full h-12 rounded-xl text-lg font-bold bg-teal-600 hover:bg-teal-700 shadow-lg shadow-teal-500/20"
                                 onClick={handleSubmit}
-                                disabled={isLoading || (editingId !== null && JSON.stringify(formData) === JSON.stringify(originalData))}
+                                disabled={isLoading || (isEditMode && JSON.stringify(formData) === JSON.stringify(originalData))}
                             >
                                 {isLoading ? (
                                     <>
@@ -432,7 +435,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                                 ) : (
                                     <>
                                         <Check className="w-5 h-5 mr-2" />
-                                        {editingId !== null ? 'Update Address' : 'Save Address'}
+                                        {isEditMode ? 'Update Address' : 'Save Address'}
                                     </>
                                 )}
                             </Button>
