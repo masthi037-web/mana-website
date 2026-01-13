@@ -35,13 +35,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <Link href={`/product/${product.id}`} className="group block h-full">
       <Card
-        className="card-root relative w-full h-full overflow-hidden border-transparent bg-card transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]"
+        className="card-root relative w-full h-full overflow-hidden border-transparent bg-card transition-all duration-500 hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]"
         style={{
-          borderRadius: '1.25rem', // Premium Rounded corners
+          borderRadius: '1.5rem', // Ultra-Premium Rounded corners
         }}
       >
-        {/* Image Container - Classic 4:3 Ratio */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-secondary/10">
+        {/* Image Container - Modern Square Ratio */}
+        <div className="relative aspect-square w-full overflow-hidden bg-secondary/5">
           <Image
             src={product.imageUrl}
             alt={product.name}
@@ -80,11 +80,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             />
           </Button>
 
-          {/* Quick Add Overlay - Static on Mobile, Slide-up on Desktop */}
-          <div className="absolute inset-x-0 bottom-0 p-4 z-20 transition-transform duration-500 ease-out translate-y-0 md:translate-y-full md:group-hover:translate-y-0">
+          {/* Quick Add Overlay - Desktop Only (Slide up) */}
+          <div className="absolute inset-x-0 bottom-0 p-4 transition-transform duration-500 ease-out z-20 translate-y-full group-hover:translate-y-0 hidden md:block">
             <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
               <AddToCartSheet product={product}>
-                <Button className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90 shadow-lg font-semibold h-11">
+                <Button className="w-full rounded-full shadow-lg shadow-primary/25 font-semibold h-11 transition-all hover:shadow-primary/40">
                   {text.quickAddButton || "Quick Add"}
                 </Button>
               </AddToCartSheet>
@@ -92,15 +92,15 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
         </div>
 
-        {/* Content - Classic Layout with Premium Typography */}
-        <CardContent className="p-4 md:p-5 flex flex-col gap-3">
-          {/* Header Row: Title & Price side-by-side (Classic) */}
+        {/* Content - Premium Spacing & Typography */}
+        <CardContent className="p-5 flex flex-col gap-3">
+          {/* Header Row: Title & Price */}
           <div className="flex justify-between items-start gap-3">
-            <h3 className="font-headline font-bold text-base md:text-lg text-foreground leading-snug line-clamp-2" title={product.name}>
+            <h3 className="font-headline font-bold text-lg md:text-xl text-foreground leading-snug line-clamp-2" title={product.name}>
               {product.name}
             </h3>
             <div className="flex flex-col items-end shrink-0">
-              <span className="font-headline font-bold text-base md:text-lg text-primary tracking-tight">
+              <span className="font-headline font-bold text-lg md:text-xl text-primary tracking-tight">
                 ₹{activePrice.toFixed(0)}
               </span>
             </div>
@@ -133,6 +133,15 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               <ShoppingBag className="w-3 h-3" />
               <span>Free Delivery</span>
             </div>
+          </div>
+
+          {/* Mobile Quick Add Button - Content Area */}
+          <div className="mt-1 block md:hidden" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+            <AddToCartSheet product={product}>
+              <Button className="w-full rounded-full shadow-lg shadow-primary/25 font-semibold h-10 transition-all hover:shadow-primary/40">
+                {text.quickAddButton || "Quick Add"}
+              </Button>
+            </AddToCartSheet>
           </div>
         </CardContent>
       </Card>
