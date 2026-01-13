@@ -73,10 +73,10 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
         }
     }, [isOpen]);
 
-    const fetchAddresses = async () => {
+    const fetchAddresses = async (forceRefresh = false) => {
         setIsLoading(true);
         try {
-            const details = await customerService.getCustomerDetails();
+            const details = await customerService.getCustomerDetails(forceRefresh);
             setAddresses(details.customerAddress || []);
         } catch (error) {
             console.error("Failed to fetch addresses", error);
@@ -128,7 +128,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
         setEditingId(address.customerAddressId);
         const isCustom = !['Home', 'Work'].includes(address.addressName);
         const initialData = {
-            streetAddress: address.customerDrNum || '',
+            streetAddress: address.customerRoad || address.customerDrNum || '',
             pinCode: address.customerPin,
             city: address.customerCity,
             state: address.customerState,
@@ -205,7 +205,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
             }
 
             // Refresh and switch to list
-            await fetchAddresses();
+            await fetchAddresses(true); // Force refresh to bypass cache
             setView('list');
             resetForm();
 
@@ -228,7 +228,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
             <SheetContent side="right" className="w-full sm:max-w-md flex flex-col h-full overflow-y-auto">
                 <SheetHeader className="pb-6 border-b">
                     <SheetTitle>
-                        {view === 'list' ? 'My Addresses' : (editingId ? 'Edit Address' : 'Add New Address')}
+                        {view === 'list' ? 'My Addresses' : (editingId !== null ? 'Edit Address' : 'Add New Address')}
                     </SheetTitle>
                 </SheetHeader>
 
@@ -432,7 +432,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                                 ) : (
                                     <>
                                         <Check className="w-5 h-5 mr-2" />
-                                        {editingId ? 'Update Address' : 'Save Address'}
+                                        {editingId !== null ? 'Update Address' : 'Save Address'}
                                     </>
                                 )}
                             </Button>

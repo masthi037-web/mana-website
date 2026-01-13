@@ -2,14 +2,18 @@ import { apiClient } from './api-client';
 import { CustomerDetails, UpdateCustomerRequest, CustomerAddress } from '@/lib/api-types';
 
 export const customerService = {
-    getCustomerDetails: async () => {
+    getCustomerDetails: async (forceRefresh = false) => {
         let customerId = '';
         if (typeof window !== 'undefined') {
             customerId = localStorage.getItem('customerId') || '';
         }
 
         return apiClient<CustomerDetails>('/customer/get-customer-and-address', {
-            cache: 'no-store',
+            // Cache for 10 hours (36000s) by default, unless forceRefresh is true
+            ...(forceRefresh
+                ? { cache: 'no-store' }
+                : { next: { revalidate: 36000 } }
+            ),
             params: { customerId }
         });
     },

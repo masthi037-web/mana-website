@@ -400,7 +400,10 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                             <Button
                                 className="w-full h-14 rounded-xl text-lg font-bold bg-teal-500 hover:bg-teal-600 mt-4"
                                 onClick={handleSaveProfile}
-                                disabled={isLoading}
+                                disabled={isLoading || (
+                                    name === (customerData?.customerName || '') &&
+                                    email === (customerData?.customerEmailId || '')
+                                )}
                             >
                                 {isLoading ? <Loader2 className="animate-spin mr-2" /> : 'Save Changes'}
                             </Button>
