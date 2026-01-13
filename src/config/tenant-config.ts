@@ -49,6 +49,7 @@ export interface TenantBrandTone {
 
 export interface TenantConfig {
     id: string;
+    domain?: string; // Tenant Domain (e.g. localhost, example.com)
     companyId?: string; // Dynamic DB Company ID
     name: string;
     theme: {
@@ -90,6 +91,7 @@ export interface TenantConfig {
 
 export const DEFAULT_CONFIG: TenantConfig = {
     id: "default",
+    domain: "babaihomefoods",
     name: "Digi Turu",
     theme: {
         colors: {
@@ -547,6 +549,7 @@ export function resolveTenantConfig(domain: string): TenantConfig {
     return {
         ...DEFAULT_CONFIG,
         ...specificConfig,
+        domain, // Inject the resolved domain
         theme: baseTheme,
         motion: resolveMotion,
         typography: resolveTypography,

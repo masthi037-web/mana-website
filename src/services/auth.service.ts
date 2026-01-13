@@ -3,6 +3,7 @@ import { apiClient } from './api-client';
 export interface LoginResponse {
     message: string;
     role: string;
+    token?: string; // JWT Token
 }
 
 export const authService = {
@@ -16,14 +17,28 @@ export const authService = {
         console.log("Send OTP Response:", response);
     },
 
-    async login(phone: string, otp: string): Promise<LoginResponse> {
-        return await apiClient<LoginResponse>('/auth/login', {
+    async login(phone: string, otp: string, companyDomain: string): Promise<LoginResponse> {
+        // companyDomain passed from context
+
+        const response = await apiClient<LoginResponse>('/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ phone, otp })
+            body: JSON.stringify({ phone, otp, companyDomain })
         });
+
+        // Store Token
+        if (response.token && typeof window !== 'undefined') {
+            localStorage.setItem('accessToken', response.token);
+        }
+
+        return response;
     },
 
     async logout(): Promise<string> {
+        // Clear Token
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('accessToken');
+        }
+
         return await apiClient<string>('/auth/logout', {
             method: 'POST'
         });

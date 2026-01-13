@@ -38,17 +38,29 @@ export async function apiClient<T>(
     }
 
 
+    // TOKEN HANDLING:
+    // Get token from localStorage if on client
+    let token = '';
+    if (typeof window !== 'undefined') {
+        token = localStorage.getItem('accessToken') || '';
+    }
+
+    const headers: HeadersInit = {
+        "Content-Type": "application/json",
+        ...fetchOptions.headers,
+    };
+
+    if (token) {
+        (headers as any)['Authorization'] = `Bearer ${token}`;
+    }
+
     const startTime = performance.now();
     let res: Response;
     try {
         res = await fetch(url.toString(), {
-            credentials: "include", // 🔥 REQUIRED for cookies
-            // cache: fetchOptions.next?.revalidate ? "force-cache" : "no-store", // Let Next.js decide based on 'next' prop
+            // credentials: "include", // 🔥 REMOVED: Using Bearer Token
             ...fetchOptions,
-            headers: {
-                "Content-Type": "application/json",
-                ...fetchOptions.headers,
-            },
+            headers,
         });
     } catch (error: any) {
         console.error(`[API FATAL] Network Error at ${endpoint}:`, error?.cause || error);
@@ -57,35 +69,15 @@ export async function apiClient<T>(
     const duration = performance.now() - startTime;
     console.log(`[API LATENCY] ${endpoint}: ${duration.toFixed(2)}ms`);
 
-    // ✅ 401 interception (Token Refresh)
+    // ✅ 401 Handling (Simple Logout)
     if (res.status === 401 && !_retry) {
-        if (!isRefreshing) {
-            isRefreshing = true;
-            // Corrected URL: Use API_BASE_URL + /auth/refresh
-            // API_BASE_URL already contains /rurify-services, so we just append /auth/refresh
-            refreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
-                method: "POST",
-                credentials: "include",
-            }).then((refreshRes) => {
-                if (!refreshRes.ok) {
-                    throw new Error("Refresh failed");
-                }
-            }).finally(() => {
-                isRefreshing = false;
-                refreshPromise = null;
-            });
+        // Clear token and redirect
+        if (typeof window !== 'undefined') {
+            console.warn('[Auth] Session expired, clearing token.');
+            localStorage.removeItem('accessToken');
+            window.location.href = "/login";
         }
-
-        try {
-            await refreshPromise;
-            return apiClient<T>(endpoint, { ...options, _retry: true });
-        } catch {
-            // Refresh failed → force logout
-            if (typeof window !== 'undefined') {
-                window.location.href = "/login";
-            }
-            throw new Error("Session expired");
-        }
+        throw new Error("Session expired");
     }
 
     if (!res.ok) {
