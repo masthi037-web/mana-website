@@ -3,16 +3,21 @@ import { cn } from '@/lib/utils';
 
 interface WhatsAppButtonProps {
     phoneNumber: string;
+    companyName?: string;
     message?: string;
     className?: string;
 }
 
-export function WhatsAppButton({ phoneNumber, message = "Hi! I have a query.", className }: WhatsAppButtonProps) {
+export function WhatsAppButton({ phoneNumber, companyName, message, className }: WhatsAppButtonProps) {
+    const finalMessage = message || (companyName
+        ? `Hi ${companyName}! I have a query regarding your latest products.`
+        : "Hi! I have a query regarding your latest products.");
+
     if (!phoneNumber) return null;
 
     // Clean phone number (remove spaces, dashes, parentheses)
     const cleanNumber = phoneNumber.replace(/\D/g, '');
-    const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(finalMessage)}`;
 
     return (
         <Link

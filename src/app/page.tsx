@@ -63,6 +63,7 @@ export default async function Home() {
         initialCategories={categories}
         companyCoupon={company?.companyCoupon}
         companyPhone={company?.companyPhone}
+        companyName={company?.companyName}
       />
     </div>
   );

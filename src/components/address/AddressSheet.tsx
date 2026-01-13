@@ -101,11 +101,11 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                     const details = data[0].PostOffice[0];
                     setFormData(prev => ({
                         ...prev,
-                        city: details.District,
+                        city: details.Division,
                         state: details.State,
                         pinCode: value // Ensure value stays
                     }));
-                    toast({ description: `Location found: ${details.District}, ${details.State}` });
+                    toast({ description: `Location found: ${details.Division}, ${details.State}` });
                 } else {
                     toast({ title: "Invalid Pincode", description: "Could not find location details.", variant: "destructive" });
                     setFormData(prev => ({ ...prev, city: '', state: '' })); // Reset if invalid

@@ -24,9 +24,10 @@ interface HomeClientProps {
     initialCategories: Category[];
     companyCoupon?: string;
     companyPhone?: string;
+    companyName?: string;
 }
 
-export default function HomeClient({ initialCategories, companyCoupon, companyPhone }: HomeClientProps) {
+export default function HomeClient({ initialCategories, companyCoupon, companyPhone, companyName }: HomeClientProps) {
     const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -169,7 +170,7 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
 
     return (
         <div className="space-y-12 pb-20">
-            {companyPhone && <WhatsAppButton phoneNumber={companyPhone} />}
+            {companyPhone && <WhatsAppButton phoneNumber={companyPhone} companyName={companyName} />}
             <CouponCarousel companyCoupon={companyCoupon} />
             <div className="animate-in fade-in slide-in-from-top-4 duration-700">
                 <FeaturesCarousel />
@@ -304,9 +305,9 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
                                         /> */}
                                         </div>
                                         <ProductGrid products={filteredProducts} />
-                                        <div className="mt-12 text-center">
+                                        {/* <div className="mt-12 text-center">
                                             <Button size="lg" variant="secondary" className="rounded-full px-8">Load More Products</Button>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 )}
                             </div>
@@ -325,24 +326,7 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
                     }
                 </section >
 
-                {/* Recommendations Section */}
-                < section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5 border border-border/50 p-8 md:p-12 hover:scale-[1.01] transition-transform duration-700" >
-                    <div className="relative z-10">
-                        <div className="text-center mb-10 max-w-2xl mx-auto">
-                            <span className="text-primary text-sm font-bold uppercase tracking-widest mb-2 block">Personalized</span>
-                            <h2 className="font-headline text-3xl md:text-5xl font-bold mb-4 text-foreground">
-                                Recommended For You
-                            </h2>
-                            <p className="text-muted-foreground">
-                                Handpicked selections based on your taste and preferences.
-                            </p>
-                        </div>
-                        <Recommendations />
-                    </div>
-                    {/* Decorative background elements */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 animate-float-slow" />
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 animate-float-slower" />
-                </section >
+                {/* Recommendations Section Removed as per request */}
             </div>
         </div>
     );
