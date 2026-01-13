@@ -286,7 +286,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             <SheetTrigger asChild>
                 {children}
             </SheetTrigger>
-            <SheetContent className="w-full sm:max-w-md flex flex-col p-0 gap-0 border-l border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-2xl">
+            <SheetContent className="w-full sm:max-w-md h-[100dvh] flex flex-col p-0 gap-0 border-l border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-2xl">
 
                 {/* Coupon Unlocked Popup Overlay */}
                 {showCouponPopup && (
@@ -561,230 +561,222 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     );
                                 })}
                             </ul>
-                        </ScrollArea>
 
-                        {/* Footer */}
-                        <div className="p-6 bg-background/80 backdrop-blur-xl border-t border-border/50 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] z-20">
-                            {/* Smart Reward Progress Bar (Combined) */}
-                            {(() => {
-                                const milestones = [];
-
-                                // Add Free Delivery Milestone
-                                if (freeDeliveryThreshold > 0) {
-                                    milestones.push({
-                                        type: 'delivery',
-                                        value: freeDeliveryThreshold,
-                                        label: 'Free Delivery',
-                                        icon: Gift
-                                    });
-                                }
-
-                                // Add Coupon Milestones
-                                if (companyDetails?.companyCoupon) {
-                                    companyDetails.companyCoupon.split(',').forEach(c => {
-                                        const [code, , minStr] = c.split('&&&');
-                                        const min = parseInt(minStr || '0');
-                                        if (code && min > 0) {
-                                            milestones.push({
-                                                type: 'coupon',
-                                                value: min,
-                                                label: `Unlock ${code}`,
-                                                icon: Tag
-                                            });
-                                        }
-                                    });
-                                }
-
-                                // Sort by value
-                                milestones.sort((a, b) => a.value - b.value);
-
-                                // Find first unreached milestone
-                                const nextMilestone = milestones.find(m => subtotal < m.value);
-
-                                // If all unlocked (or no milestones), show generic success or nothing
-                                // If some unlocked but all detailed milestones passed, maybe show "All Rewards Unlocked"
-                                if (!nextMilestone) {
-                                    if (milestones.length > 0 && subtotal >= milestones[milestones.length - 1].value) {
-                                        return (
-                                            <div className="mb-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-3 rounded-lg border border-emerald-500/20 text-center">
-                                                <p className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-2">
-                                                    <Gift className="w-3.5 h-3.5 fill-emerald-700" />
-                                                    Awesome! All rewards unlocked on this order.
-                                                </p>
-                                            </div>
-                                        );
-                                    }
-                                    return null;
-                                }
-
-                                const amountNeeded = nextMilestone.value - subtotal;
-                                const progress = (subtotal / nextMilestone.value) * 100;
-
-                                return (
-                                    <div className="mb-6 bg-secondary/30 p-3 rounded-xl border border-border/60 shadow-sm relative overflow-hidden group">
-                                        {/* Background Shimmer */}
-                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
-
-                                        <div className="flex justify-between items-center mb-2 relative z-10">
-                                            <p className="text-xs font-bold text-foreground/80 flex items-center gap-2">
-                                                <div className="bg-primary/10 p-1 rounded-full text-primary">
-                                                    <nextMilestone.icon className="w-3 h-3" />
-                                                </div>
-                                                Add <span className="text-primary text-sm font-extrabold">₹{amountNeeded.toFixed(0)}</span> for <span className="uppercase">{nextMilestone.label}</span>
-                                            </p>
-                                            <span className="text-[10px] font-medium text-muted-foreground">{Math.round(progress)}%</span>
-                                        </div>
-
-                                        <div className="h-1.5 w-full bg-background rounded-full overflow-hidden border border-border/50 relative z-10">
-                                            <div
-                                                className={cn(
-                                                    "h-full rounded-full transition-all duration-700 ease-out",
-                                                    nextMilestone.type === 'delivery' ? "bg-emerald-500" : "bg-primary"
-                                                )}
-                                                style={{ width: `${Math.min(100, progress)}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-
-                            {/* Coupon Section */}
-                            <div className="mb-6 space-y-3">
-
-
-                                {/* Available Coupons List (Simple Version) */}
-                                {companyDetails?.companyCoupon && (
-                                    <div className="grid grid-cols-2 gap-2 mt-2">
-                                        {(() => {
-                                            const coupons = companyDetails.companyCoupon.split(',').map((cStr, idx) => {
-                                                const [code, discountStr, minOrderStr] = cStr.split('&&&');
-                                                // Handle potential parsing errors safely
-                                                const discount = parseFloat(discountStr || '0');
-                                                const minOrder = parseFloat(minOrderStr || '0');
-                                                // Ensure valid parsing
-                                                if (!code) return null;
-
-                                                return {
-                                                    code,
-                                                    discount,
-                                                    minOrder,
-                                                    isEligible: subtotal >= minOrder,
-                                                    idx
-                                                };
-                                            }).filter((c): c is NonNullable<typeof c> => c !== null);
-
-                                            // Sort: Lowest Discount First (Progression Ladder)
-                                            coupons.sort((a, b) => a.discount - b.discount);
-
-                                            // Identify currently selected discount
-                                            const selectedCouponData = coupons.find(c => c.code === couponCode);
-                                            const hasActiveCoupon = !!selectedCouponData;
-
-                                            return coupons.map((coupon) => {
-                                                // STRICT Rule: If ANY coupon is selected, block ALL other coupons
-                                                // User must deselect the current one to choose another
-                                                const isBlocked = hasActiveCoupon && coupon.code !== couponCode;
-                                                const isDisabled = !coupon.isEligible || isBlocked;
-
-                                                return (
-                                                    <button
-                                                        key={coupon.idx}
-                                                        onClick={() => {
-                                                            if (!isDisabled) {
-                                                                setCouponCode(coupon.code);
-                                                            }
-                                                        }}
-                                                        disabled={isDisabled}
-                                                        className={cn(
-                                                            "group relative flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all duration-300 overflow-hidden",
-                                                            !isDisabled
-                                                                ? "bg-white border-primary/30 shadow-sm hover:border-primary hover:shadow-md cursor-pointer"
-                                                                : "bg-slate-50 border-slate-200 cursor-not-allowed opacity-60"
-                                                        )}
-                                                    >
-                                                        {/* Selection Glow */}
-                                                        {couponCode === coupon.code && coupon.isEligible && (
-                                                            <div className="absolute inset-0 bg-primary/5 animate-pulse" />
-                                                        )}
-
-                                                        <div className="flex flex-col">
-                                                            <span className={cn(
-                                                                "text-sm font-black tracking-wide font-mono leading-none",
-                                                                coupon.isEligible ? "text-foreground" : "text-slate-400"
-                                                            )}>{coupon.code}</span>
-                                                            <span className="text-[10px] font-medium text-muted-foreground leading-none mt-1">
-                                                                {coupon.isEligible ? `Get ${coupon.discount}% OFF` : `${coupon.discount}% OFF • Orders above ₹${coupon.minOrder}`}
-                                                            </span>
-                                                        </div>
-
-                                                        {/* Selection Checkmark */}
-                                                        {couponCode === coupon.code && coupon.isEligible ? (
-                                                            <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
-                                                                <div className="h-1.5 w-1.5 bg-white rounded-full" />
-                                                            </div>
-                                                        ) : (
-                                                            coupon.isEligible && (
-                                                                <div className="h-4 w-4 rounded-full border border-primary/30 group-hover:border-primary transition-colors" />
-                                                            )
-                                                        )}
-                                                    </button>
-                                                );
-                                            });
-                                        })()}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="space-y-3 mb-6">
-                                <div className="flex justify-between text-sm text-muted-foreground">
-                                    <span>Subtotal</span>
-                                    <span>₹{subtotal.toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between text-sm text-muted-foreground">
-                                    <span>Shipping</span>
-                                    <span className={cn(isFreeDelivery ? "text-green-600 font-medium" : "")}>
-                                        {isFreeDelivery ? "FREE" : "Calculated at checkout"}
-                                    </span>
-                                </div>
+                            {/* Summary Content Moved to ScrollArea */}
+                            <div className="pb-6">
+                                {/* Smart Reward Progress Bar (Combined) */}
                                 {(() => {
-                                    if (!couponCode || !companyDetails?.companyCoupon) return null;
-                                    const couponData = companyDetails.companyCoupon.split(',').find(c => c.startsWith(couponCode + '&&&'));
-                                    if (!couponData) return null;
-                                    const [, discountStr, minOrderStr] = couponData.split('&&&');
-                                    const discountPercent = parseFloat(discountStr || '0');
-                                    const minOrder = parseFloat(minOrderStr || '0');
+                                    const milestones = [];
 
-                                    if (subtotal < minOrder) return null;
+                                    // Add Free Delivery Milestone
+                                    if (freeDeliveryThreshold > 0) {
+                                        milestones.push({
+                                            type: 'delivery',
+                                            value: freeDeliveryThreshold,
+                                            label: 'Free Delivery',
+                                            icon: Gift
+                                        });
+                                    }
 
-                                    const discountAmount = (subtotal * discountPercent) / 100;
+                                    // Add Coupon Milestones
+                                    if (companyDetails?.companyCoupon) {
+                                        companyDetails.companyCoupon.split(',').forEach(c => {
+                                            const [code, , minStr] = c.split('&&&');
+                                            const min = parseInt(minStr || '0');
+                                            if (code && min > 0) {
+                                                milestones.push({
+                                                    type: 'coupon',
+                                                    value: min,
+                                                    label: `Unlock ${code}`,
+                                                    icon: Tag
+                                                });
+                                            }
+                                        });
+                                    }
+
+                                    // Sort by value
+                                    milestones.sort((a, b) => a.value - b.value);
+
+                                    // Find first unreached milestone
+                                    const nextMilestone = milestones.find(m => subtotal < m.value);
+
+                                    // If all unlocked (or no milestones), show generic success or nothing
+                                    if (!nextMilestone) {
+                                        if (milestones.length > 0 && subtotal >= milestones[milestones.length - 1].value) {
+                                            return (
+                                                <div className="mb-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-3 rounded-lg border border-emerald-500/20 text-center">
+                                                    <p className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-2">
+                                                        <Gift className="w-3.5 h-3.5 fill-emerald-700" />
+                                                        Awesome! All rewards unlocked on this order.
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }
+
+                                    const amountNeeded = nextMilestone.value - subtotal;
+                                    const progress = (subtotal / nextMilestone.value) * 100;
 
                                     return (
-                                        <div className="flex justify-between text-sm text-emerald-600 font-medium animate-in slide-in-from-left-2">
-                                            <span>Coupon ({couponCode})</span>
-                                            <span>-₹{discountAmount.toFixed(2)}</span>
+                                        <div className="mb-6 bg-secondary/30 p-3 rounded-xl border border-border/60 shadow-sm relative overflow-hidden group">
+                                            {/* Background Shimmer */}
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
+
+                                            <div className="flex justify-between items-center mb-2 relative z-10">
+                                                <p className="text-xs font-bold text-foreground/80 flex items-center gap-2">
+                                                    <div className="bg-primary/10 p-1 rounded-full text-primary">
+                                                        <nextMilestone.icon className="w-3 h-3" />
+                                                    </div>
+                                                    Add <span className="text-primary text-sm font-extrabold">₹{amountNeeded.toFixed(0)}</span> for <span className="uppercase">{nextMilestone.label}</span>
+                                                </p>
+                                                <span className="text-[10px] font-medium text-muted-foreground">{Math.round(progress)}%</span>
+                                            </div>
+
+                                            <div className="h-1.5 w-full bg-background rounded-full overflow-hidden border border-border/50 relative z-10">
+                                                <div
+                                                    className={cn(
+                                                        "h-full rounded-full transition-all duration-700 ease-out",
+                                                        nextMilestone.type === 'delivery' ? "bg-emerald-500" : "bg-primary"
+                                                    )}
+                                                    style={{ width: `${Math.min(100, progress)}%` }}
+                                                />
+                                            </div>
                                         </div>
                                     );
                                 })()}
-                                <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                                <div className="flex justify-between items-baseline">
-                                    <span className="font-semibold text-lg">Total</span>
-                                    <span className="font-bold text-2xl text-primary tracking-tight">₹{(() => {
-                                        let finalTotal = subtotal + shipping;
-                                        if (couponCode && companyDetails?.companyCoupon) {
-                                            const couponData = companyDetails.companyCoupon.split(',').find(c => c.startsWith(couponCode + '&&&'));
-                                            if (couponData) {
-                                                const [, discountStr, minOrderStr] = couponData.split('&&&');
-                                                const discountPercent = parseFloat(discountStr || '0');
-                                                const minOrder = parseFloat(minOrderStr || '0');
-                                                if (subtotal >= minOrder) {
-                                                    const discountAmount = (subtotal * discountPercent) / 100;
-                                                    finalTotal -= discountAmount;
-                                                }
+
+                                {/* Coupon Section */}
+                                <div className="mb-6 space-y-3">
+                                    {/* Available Coupons List (Simple Version) */}
+                                    {companyDetails?.companyCoupon && (
+                                        <div className="grid grid-cols-2 gap-2 mt-2">
+                                            {(() => {
+                                                const coupons = companyDetails.companyCoupon.split(',').map((cStr, idx) => {
+                                                    const [code, discountStr, minOrderStr] = cStr.split('&&&');
+                                                    const discount = parseFloat(discountStr || '0');
+                                                    const minOrder = parseFloat(minOrderStr || '0');
+                                                    if (!code) return null;
+
+                                                    return {
+                                                        code,
+                                                        discount,
+                                                        minOrder,
+                                                        isEligible: subtotal >= minOrder,
+                                                        idx
+                                                    };
+                                                }).filter((c): c is NonNullable<typeof c> => c !== null);
+
+                                                coupons.sort((a, b) => a.discount - b.discount);
+                                                const selectedCouponData = coupons.find(c => c.code === couponCode);
+                                                const hasActiveCoupon = !!selectedCouponData;
+
+                                                return coupons.map((coupon) => {
+                                                    const isBlocked = hasActiveCoupon && coupon.code !== couponCode;
+                                                    const isDisabled = !coupon.isEligible || isBlocked;
+
+                                                    return (
+                                                        <button
+                                                            key={coupon.idx}
+                                                            onClick={() => {
+                                                                if (!isDisabled) {
+                                                                    setCouponCode(coupon.code);
+                                                                }
+                                                            }}
+                                                            disabled={isDisabled}
+                                                            className={cn(
+                                                                "group relative flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all duration-300 overflow-hidden",
+                                                                !isDisabled
+                                                                    ? "bg-white border-primary/30 shadow-sm hover:border-primary hover:shadow-md cursor-pointer"
+                                                                    : "bg-slate-50 border-slate-200 cursor-not-allowed opacity-60"
+                                                            )}
+                                                        >
+                                                            {couponCode === coupon.code && coupon.isEligible && (
+                                                                <div className="absolute inset-0 bg-primary/5 animate-pulse" />
+                                                            )}
+
+                                                            <div className="flex flex-col">
+                                                                <span className={cn(
+                                                                    "text-sm font-black tracking-wide font-mono leading-none",
+                                                                    coupon.isEligible ? "text-foreground" : "text-slate-400"
+                                                                )}>{coupon.code}</span>
+                                                                <span className="text-[10px] font-medium text-muted-foreground leading-none mt-1">
+                                                                    {coupon.isEligible ? `Get ${coupon.discount}% OFF` : `${coupon.discount}% OFF • Orders above ₹${coupon.minOrder}`}
+                                                                </span>
+                                                            </div>
+
+                                                            {couponCode === coupon.code && coupon.isEligible ? (
+                                                                <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
+                                                                    <div className="h-1.5 w-1.5 bg-white rounded-full" />
+                                                                </div>
+                                                            ) : (
+                                                                coupon.isEligible && (
+                                                                    <div className="h-4 w-4 rounded-full border border-primary/30 group-hover:border-primary transition-colors" />
+                                                                )
+                                                            )}
+                                                        </button>
+                                                    );
+                                                });
+                                            })()}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-3 mb-6">
+                                    <div className="flex justify-between text-sm text-muted-foreground">
+                                        <span>Subtotal</span>
+                                        <span>₹{subtotal.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-muted-foreground">
+                                        <span>Shipping</span>
+                                        <span className={cn(isFreeDelivery ? "text-green-600 font-medium" : "")}>
+                                            {isFreeDelivery ? "FREE" : "Calculated at checkout"}
+                                        </span>
+                                    </div>
+                                    {(() => {
+                                        if (!couponCode || !companyDetails?.companyCoupon) return null;
+                                        const couponData = companyDetails.companyCoupon.split(',').find(c => c.startsWith(couponCode + '&&&'));
+                                        if (!couponData) return null;
+                                        const [, discountStr, minOrderStr] = couponData.split('&&&');
+                                        const discountPercent = parseFloat(discountStr || '0');
+                                        const minOrder = parseFloat(minOrderStr || '0');
+
+                                        if (subtotal < minOrder) return null;
+
+                                        const discountAmount = (subtotal * discountPercent) / 100;
+
+                                        return (
+                                            <div className="flex justify-between text-sm text-emerald-600 font-medium animate-in slide-in-from-left-2">
+                                                <span>Coupon ({couponCode})</span>
+                                                <span>-₹{discountAmount.toFixed(2)}</span>
+                                            </div>
+                                        );
+                                    })()}
+                                    <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                                </div>
+                            </div>
+                        </ScrollArea>
+
+                        {/* Minimal Footer */}
+                        <div className="p-4 bg-background/80 backdrop-blur-xl border-t border-border/50 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] z-20">
+                            <div className="flex justify-between items-baseline mb-4">
+                                <span className="font-semibold text-lg">Total</span>
+                                <span className="font-bold text-2xl text-primary tracking-tight">₹{(() => {
+                                    let finalTotal = subtotal + shipping;
+                                    if (couponCode && companyDetails?.companyCoupon) {
+                                        const couponData = companyDetails.companyCoupon.split(',').find(c => c.startsWith(couponCode + '&&&'));
+                                        if (couponData) {
+                                            const [, discountStr, minOrderStr] = couponData.split('&&&');
+                                            const discountPercent = parseFloat(discountStr || '0');
+                                            const minOrder = parseFloat(minOrderStr || '0');
+                                            if (subtotal >= minOrder) {
+                                                const discountAmount = (subtotal * discountPercent) / 100;
+                                                finalTotal -= discountAmount;
                                             }
                                         }
-                                        return Math.max(0, finalTotal).toFixed(2);
-                                    })()}</span>
-                                </div>
+                                    }
+                                    return Math.max(0, finalTotal).toFixed(2);
+                                })()}</span>
                             </div>
 
                             {!canCheckout && (

@@ -59,6 +59,9 @@ export async function apiClient<T>(
         (headers as any)['Authorization'] = `Bearer ${token}`;
     }
 
+    // 🚀 LOG REQUEST
+    console.log(`[API REQUEST] ${(fetchOptions.method || 'GET').toUpperCase()} ${endpoint}`);
+
     const startTime = performance.now();
     let res: Response;
     try {
@@ -72,7 +75,8 @@ export async function apiClient<T>(
         throw error;
     }
     const duration = performance.now() - startTime;
-    console.log(`[API LATENCY] ${endpoint}: ${duration.toFixed(2)}ms`);
+    // 🚀 LOG RESPONSE
+    console.log(`[API RESPONSE] ${(fetchOptions.method || 'GET').toUpperCase()} ${endpoint} - ${res.status} (${duration.toFixed(0)}ms)`);
 
     // ✅ 401 Handling (Simple Logout)
     if (res.status === 401 && !_retry) {
