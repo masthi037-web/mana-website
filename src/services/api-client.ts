@@ -46,6 +46,8 @@ export async function apiClient<T>(
 
     if (!isAuthEndpoint && typeof window !== 'undefined') {
         token = localStorage.getItem('accessToken') || '';
+        console.log(`[API] token from local storage ${token}`);
+        if (!token) console.warn(`[API] No token found in localStorage for ${endpoint}`);
     }
 
     const headers: HeadersInit = {

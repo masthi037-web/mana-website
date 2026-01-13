@@ -4,7 +4,7 @@ import { CustomerDetails, UpdateCustomerRequest, CustomerAddress } from '@/lib/a
 export const customerService = {
     getCustomerDetails: async () => {
         return apiClient<CustomerDetails>('/customer/get-customer-and-address', {
-            next: { revalidate: 1200 } // 20 minutes cache
+            cache: 'no-store'
         });
     },
 
