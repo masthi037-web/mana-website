@@ -125,7 +125,26 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
     };
 
     const handleEdit = (address: CustomerAddress) => {
-        setEditingId(address.customerAddressId);
+        console.log("Editing Address Full Object:", address); // DEBUG
+
+        // Defensive ID Resolution
+        let id = address.customerAddressId;
+        if (id === undefined || id === null) {
+            // Try common alternatives
+            id = (address as any).id || (address as any).addressId || (address as any).customer_address_id;
+        }
+
+        if (id === undefined || id === null) {
+            console.error("Address ID is truly missing!", address);
+            toast({
+                title: "Error",
+                description: `Invalid Address Data. ID missing. (Keys: ${Object.keys(address).join(', ')})`,
+                variant: "destructive"
+            });
+            return; // Stop here, don't enter edit mode if no ID
+        }
+
+        setEditingId(id);
         setIsEditMode(true);
         const isCustom = !['Home', 'Work'].includes(address.addressName);
         const initialData = {
