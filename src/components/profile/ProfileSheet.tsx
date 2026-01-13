@@ -82,9 +82,9 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    const fetchProfile = async () => {
+    const fetchProfile = async (forceRefresh = false) => {
         try {
-            const data = await customerService.getCustomerDetails();
+            const data = await customerService.getCustomerDetails(forceRefresh);
             setCustomerData(data);
             if (data.customerMobileNumber) setPhoneNumber(data.customerMobileNumber);
             if (data.customerName) setName(data.customerName);
@@ -204,7 +204,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                 companyId: String(companyId) // Explicitly inject companyId from context
             });
             toast({ title: "Success", description: "Profile updated successfully" });
-            fetchProfile(); // Refresh local data
+            fetchProfile(true); // Refresh local data (Force Refresh)
             setView('profile');
         } catch (error) {
             toast({ title: "Error", description: "Failed to update profile", variant: "destructive" });

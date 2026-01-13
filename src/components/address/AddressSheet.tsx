@@ -172,8 +172,13 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
         const finalAddressName = formData.label === 'Other' ? formData.customName : formData.label;
 
         try {
-            if (isEditMode && editingId !== null) {
+            if (isEditMode) {
                 // UPDATE
+                if (editingId === null) {
+                    toast({ title: "Error", description: "Cannot update address: ID missing", variant: "destructive" });
+                    return;
+                }
+
                 await customerService.updateAddress({
                     customerAddressId: editingId,
                     addressName: finalAddressName,
