@@ -15,6 +15,10 @@ import { Separator } from '@/components/ui/separator';
 import { Package, MapPin, LogOut, User, Settings, CreditCard, Heart, Loader2, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { authService } from '@/services/auth.service';
+import { customerService } from '@/services/customer.service';
+import { HistorySheet } from '@/components/history/HistorySheet';
+import { cn } from '@/lib/utils';
 import { useTenant } from '@/components/providers/TenantContext';
 
 export function ProfileSheet({ children }: { children: React.ReactNode }) {
@@ -22,7 +26,80 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const { toast } = useToast();
     const { domain } = useTenant();
 
-    // ... (rest of code) ...
+    // State for Auth Flow
+    const [view, setView] = React.useState<'profile' | 'login-phone' | 'login-otp' | 'edit-profile'>('login-phone');
+    const [phoneNumber, setPhoneNumber] = React.useState('');
+    const [otp, setOtp] = React.useState('');
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [showSuccess, setShowSuccess] = React.useState(false);
+    const [resendTimer, setResendTimer] = React.useState(0);
+
+    // State for Feedback
+    const [feedback, setFeedback] = React.useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+    // Profile Edit State
+    const [name, setName] = React.useState('');
+    const [email, setEmail] = React.useState('');
+    const [customerData, setCustomerData] = React.useState<any>(null);
+
+    // Mock logged in state - in real app check cookie/token existence
+    const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+    const [userRole, setUserRole] = React.useState<string | null>(null);
+
+    // State for Sheet Open
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (resendTimer > 0) {
+            interval = setInterval(() => {
+                setResendTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [resendTimer]);
+
+    React.useEffect(() => {
+        const handleOpen = () => {
+            setIsOpen(true);
+            setFeedback(null); // Clear feedback on open
+        };
+        window.addEventListener('open-profile-sidebar', handleOpen);
+        return () => window.removeEventListener('open-profile-sidebar', handleOpen);
+    }, []);
+
+    React.useEffect(() => {
+        // Check local storage for persistent login state
+        const storedLogin = localStorage.getItem('isLoggedIn');
+        const storedRole = localStorage.getItem('userRole');
+
+        if (storedLogin === 'true') {
+            setIsLoggedIn(true);
+            setView('profile');
+            if (storedRole) setUserRole(storedRole);
+        }
+    }, []);
+
+    const handleSendOtp = async () => {
+        if (!phoneNumber || phoneNumber.length < 10) {
+            toast({ title: "Invalid Phone", description: "Please enter a valid 10-digit number", variant: "destructive" });
+            return;
+        }
+
+        setIsLoading(true);
+        setFeedback(null);
+        try {
+            await authService.sendOtp(phoneNumber);
+            // toast({ title: "OTP Sent", description: "Please check your messages" }); // REMOVED
+            setFeedback({ type: 'success', message: `OTP sent to +91 ${phoneNumber}` });
+            setView('login-otp');
+            setResendTimer(60);
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to send OTP", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleLogin = async () => {
         if (!otp || otp.length < 4) {

@@ -4,7 +4,6 @@ import { CustomerDetails, UpdateCustomerRequest, CustomerAddress } from '@/lib/a
 export const customerService = {
     getCustomerDetails: async () => {
         return apiClient<CustomerDetails>('/customer/get-customer-and-address', {
-            credentials: 'include',
             next: { revalidate: 1200 } // 20 minutes cache
         });
     },
@@ -13,7 +12,6 @@ export const customerService = {
         return apiClient<CustomerDetails>('/customer/update', {
             method: 'PUT',
             body: JSON.stringify(data),
-            credentials: 'include'
         });
     },
 
@@ -21,7 +19,6 @@ export const customerService = {
         return apiClient<CustomerAddress>('/customer/address/create', {
             method: 'POST',
             body: JSON.stringify(data),
-            credentials: 'include'
         });
     },
 
@@ -29,7 +26,6 @@ export const customerService = {
         return apiClient<CustomerAddress>('/customer/address/update', {
             method: 'PUT',
             body: JSON.stringify(data),
-            credentials: 'include'
         });
     }
 };

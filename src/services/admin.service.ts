@@ -12,7 +12,6 @@ export const adminService = {
         return apiClient<CreateCategoryResponse>('/category/create', {
             method: 'POST',
             body: JSON.stringify(data),
-            credentials: 'include',
         });
     },
 
@@ -20,7 +19,6 @@ export const adminService = {
         return apiClient<CreateCatalogueResponse>('/catalogue/create', {
             method: 'POST',
             body: JSON.stringify(data),
-            credentials: 'include',
         });
     },
 
@@ -28,7 +26,6 @@ export const adminService = {
         return apiClient<CreateProductResponse>('/product/create', {
             method: 'POST',
             body: JSON.stringify(data),
-            credentials: 'include',
         });
     },
 
@@ -36,7 +33,6 @@ export const adminService = {
         return apiClient<CreatePricingResponse>('/product/pricing/create', {
             method: 'POST',
             body: JSON.stringify(data),
-            credentials: 'include',
         });
     },
 
@@ -44,21 +40,18 @@ export const adminService = {
         return apiClient<CreateAddonResponse>('/product/addon/create', {
             method: 'POST',
             body: JSON.stringify(data),
-            credentials: 'include',
         });
     },
 
     getAllCategories: async (companyId: string) => {
         return apiClient<any[]>('/category/get-all-by-company', {
             params: { companyId },
-            credentials: 'include',
             next: { revalidate: 300 } // 5 minutes cache
         });
     },
 
     getCataloguesByCategory: async (categoryId: string) => {
         return apiClient<any[]>(`/catalogue/get-all-by-category/${categoryId}`, {
-            credentials: 'include',
             next: { revalidate: 300 }
         });
     },
@@ -66,7 +59,6 @@ export const adminService = {
     getProductsByCatalogue: async (catalogueId: string) => {
         return apiClient<any[]>('/product/catalogue/all', {
             params: { catalogueId },
-            credentials: 'include',
             next: { revalidate: 300 }
         });
     },
@@ -74,7 +66,6 @@ export const adminService = {
     getProductPricing: async (productId: string) => {
         return apiClient<any[]>('/product/pricing/get', {
             params: { productId },
-            credentials: 'include',
             next: { revalidate: 300 }
         });
     },
@@ -82,7 +73,6 @@ export const adminService = {
     getProductAddons: async (productPricingId: string | number) => {
         return apiClient<any[]>('/product/addon/get', {
             params: { productPricingId: String(productPricingId) },
-            credentials: 'include',
             next: { revalidate: 300 }
         });
     }

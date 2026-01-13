@@ -41,7 +41,10 @@ export async function apiClient<T>(
     // TOKEN HANDLING:
     // Get token from localStorage if on client
     let token = '';
-    if (typeof window !== 'undefined') {
+    // Skip token for auth endpoints explicitly
+    const isAuthEndpoint = endpoint.startsWith('/auth/');
+
+    if (!isAuthEndpoint && typeof window !== 'undefined') {
         token = localStorage.getItem('accessToken') || '';
     }
 
