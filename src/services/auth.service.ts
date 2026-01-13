@@ -28,6 +28,16 @@ export const authService = {
         // Store Token
         if (response.accessToken && typeof window !== 'undefined') {
             localStorage.setItem('accessToken', response.accessToken);
+
+            // Extract and store Customer ID (sub)
+            try {
+                const payload = JSON.parse(atob(response.accessToken.split('.')[1]));
+                if (payload.sub) {
+                    localStorage.setItem('customerId', payload.sub);
+                }
+            } catch (e) {
+                console.error("Failed to decode token for customerId", e);
+            }
         }
 
         return response;

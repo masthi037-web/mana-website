@@ -3,8 +3,14 @@ import { CustomerDetails, UpdateCustomerRequest, CustomerAddress } from '@/lib/a
 
 export const customerService = {
     getCustomerDetails: async () => {
+        let customerId = '';
+        if (typeof window !== 'undefined') {
+            customerId = localStorage.getItem('customerId') || '';
+        }
+
         return apiClient<CustomerDetails>('/customer/get-customer-and-address', {
-            cache: 'no-store'
+            cache: 'no-store',
+            params: { customerId }
         });
     },
 
