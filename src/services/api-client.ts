@@ -1,8 +1,4 @@
-// Use proxy on client to handle CORS/Cookies, use direct URL on server
-const isServer = typeof window === 'undefined';
-export const API_BASE_URL = isServer
-    ? (process.env.NEXT_PUBLIC_API_URL || 'https://mana-buy-services-831914530688.asia-south1.run.app/api/v1/rurify-services')
-    : '/api/proxy';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8080/api/v1/rurify-services';
 
 interface ApiRequestOptions extends RequestInit {
     params?: Record<string, string | number | boolean>;
