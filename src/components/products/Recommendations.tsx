@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { ProductWithImage } from '@/lib/types';
 
 const RecommendationSkeleton = () => (
-  <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
     {Array.from({ length: 4 }).map((_, i) => (
       <div key={i} className="space-y-2">
         <Skeleton className="aspect-square w-full" />
