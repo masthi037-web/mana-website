@@ -1,9 +1,9 @@
 import { apiClient } from './api-client';
 
 export interface LoginResponse {
-    message: string;
     role: string;
-    token?: string; // JWT Token
+    accessToken: string; // JWT Token
+    refreshToken: string; // Refresh Token
 }
 
 export const authService = {
@@ -26,11 +26,8 @@ export const authService = {
         });
 
         // Store Token
-        if (response.token && typeof window !== 'undefined') {
-            localStorage.setItem('accessToken', response.token);
-            console.log("✅ Token Stored Successfully:", response.token.substring(0, 10) + "...");
-        } else {
-            console.error("❌ LOGIN SUCCEEDED BUT NO TOKEN IN RESPONSE:", response);
+        if (response.accessToken && typeof window !== 'undefined') {
+            localStorage.setItem('accessToken', response.accessToken);
         }
 
         return response;
