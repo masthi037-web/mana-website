@@ -21,7 +21,7 @@ export const customerService = {
         });
     },
 
-    createAddress: async (data: Omit<CustomerAddress, 'customerAddressId'> & { customerAddressId?: number }) => {
+    createAddress: async (data: Partial<CustomerAddress>) => {
         return apiClient<CustomerAddress>('/customer/address/create', {
             method: 'POST',
             body: JSON.stringify(data),

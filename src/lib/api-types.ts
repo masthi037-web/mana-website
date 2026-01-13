@@ -205,6 +205,7 @@ export interface CustomerAddress {
     customerState: string;
     customerCountry: string;
     customerPin: string;
+    customerId?: number;
 }
 
 export interface CustomerDetails {

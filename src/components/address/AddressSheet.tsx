@@ -139,7 +139,14 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                 toast({ title: "Address Updated", description: "Changes saved successfully" });
             } else {
                 // CREATE
+                const customerId = localStorage.getItem('customerId');
+                if (!customerId) {
+                    toast({ title: "Error", description: "User ID not found. Please login again.", variant: "destructive" });
+                    return;
+                }
+
                 await customerService.createAddress({
+                    customerId: Number(customerId),
                     addressName: formData.label,
                     customerDrNum: formData.streetAddress,
                     customerRoad: formData.streetAddress,

@@ -24,7 +24,7 @@ import { useTenant } from '@/components/providers/TenantContext';
 export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const { toast } = useToast();
-    const { domain } = useTenant();
+    const { domain, companyId } = useTenant();
 
     // State for Auth Flow
     const [view, setView] = React.useState<'profile' | 'login-phone' | 'login-otp' | 'edit-profile'>('login-phone');
@@ -180,7 +180,8 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
             await customerService.updateCustomer({
                 ...customerData,
                 customerName: name,
-                customerEmailId: email
+                customerEmailId: email,
+                companyId: String(companyId) // Explicitly inject companyId from context
             });
             toast({ title: "Success", description: "Profile updated successfully" });
             setView('profile');
