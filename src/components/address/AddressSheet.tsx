@@ -77,7 +77,14 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
         setIsLoading(true);
         try {
             const details = await customerService.getCustomerDetails(forceRefresh);
-            setAddresses(details.customerAddress || []);
+            // Filter out addresses with corrupt/missing IDs to prevent UI errors
+            const validAddresses = (details.customerAddress || []).filter(addr =>
+                addr.customerAddressId !== null && addr.customerAddressId !== undefined
+            );
+            if (validAddresses.length < (details.customerAddress || []).length) {
+                console.warn("Filtered out addresses with missing IDs:", details.customerAddress);
+            }
+            setAddresses(validAddresses);
         } catch (error) {
             console.error("Failed to fetch addresses", error);
         } finally {
