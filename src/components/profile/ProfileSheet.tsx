@@ -102,7 +102,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
 
     const handleSendOtp = async () => {
         if (!phoneNumber || phoneNumber.length < 10) {
-            toast({ title: "Invalid Phone", description: "Please enter a valid 10-digit number", variant: "destructive" });
+            toast({ title: "Invalid Phone", description: "Please enter a valid 10-digit number", variant: "destructive", duration: 2000 });
             return;
         }
 
@@ -115,7 +115,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
             setView('login-otp');
             setResendTimer(60);
         } catch (error) {
-            toast({ title: "Error", description: "Failed to send OTP", variant: "destructive" });
+            toast({ title: "Error", description: "Failed to send OTP", variant: "destructive", duration: 2000 });
         } finally {
             setIsLoading(false);
         }
@@ -123,7 +123,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
 
     const handleLogin = async () => {
         if (!otp || otp.length < 4) {
-            toast({ title: "Invalid OTP", description: "Please enter the 4-digit code", variant: "destructive" });
+            toast({ title: "Invalid OTP", description: "Please enter the 4-digit code", variant: "destructive", duration: 2000 });
             return;
         }
 
@@ -167,7 +167,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
             }, 2000);
 
         } catch (error) {
-            toast({ title: "Login Failed", description: "Invalid OTP or error occurred", variant: "destructive" });
+            toast({ title: "Login Failed", description: "Invalid OTP or error occurred", variant: "destructive", duration: 2000 });
             setFeedback({ type: 'error', message: "Invalid OTP. Please try again." });
         } finally {
             setIsLoading(false);
@@ -183,7 +183,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
             setEmail(data.customerEmailId || '');
             setView('edit-profile');
         } catch (error) {
-            toast({ title: "Error", description: "Failed to load profile", variant: "destructive" });
+            toast({ title: "Error", description: "Failed to load profile", variant: "destructive", duration: 2000 });
         } finally {
             setIsLoading(false);
         }
@@ -191,7 +191,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
 
     const handleSaveProfile = async () => {
         if (!name || !email) {
-            toast({ title: "Validation Error", description: "Name and Email are required", variant: "destructive" });
+            toast({ title: "Validation Error", description: "Name and Email are required", variant: "destructive", duration: 2000 });
             return;
         }
 
@@ -207,7 +207,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
             fetchProfile(true); // Refresh local data (Force Refresh)
             setView('profile');
         } catch (error) {
-            toast({ title: "Error", description: "Failed to update profile", variant: "destructive" });
+            toast({ title: "Error", description: "Failed to update profile", variant: "destructive", duration: 2000 });
         } finally {
             setIsLoading(false);
         }

@@ -28,6 +28,9 @@ export const authService = {
         // Store Token
         if (response.accessToken && typeof window !== 'undefined') {
             localStorage.setItem('accessToken', response.accessToken);
+            if (response.refreshToken) {
+                localStorage.setItem('refreshToken', response.refreshToken);
+            }
 
             // Extract and store Customer ID (sub)
             try {

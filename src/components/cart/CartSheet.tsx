@@ -154,7 +154,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             }
                         }());
                         setShowCouponPopup(true);
-                        setTimeout(() => setShowCouponPopup(false), 3000);
+                        setTimeout(() => setShowCouponPopup(false), 1500);
                     }, 500);
                 }
             }
@@ -233,7 +233,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             }
         } catch (error) {
             console.error("Checkout validation failed", error);
-            toast({ variant: "destructive", description: "Something went wrong. Please try again." });
+            toast({ variant: "destructive", description: "Something went wrong. Please try again.", duration: 2000 });
         } finally {
             setIsCheckingOut(false);
         }
@@ -275,7 +275,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             }());
             setCelebrated(true);
             setShowFreeDeliveryPopup(true);
-            setTimeout(() => setShowFreeDeliveryPopup(false), 3000);
+            setTimeout(() => setShowFreeDeliveryPopup(false), 1500);
         } else if (!isFreeDelivery && celebrated) {
             setCelebrated(false);
         }

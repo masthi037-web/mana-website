@@ -107,7 +107,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                     }));
                     toast({ description: `Location found: ${details.Division}, ${details.State}` });
                 } else {
-                    toast({ title: "Invalid Pincode", description: "Could not find location details.", variant: "destructive" });
+                    toast({ title: "Invalid Pincode", description: "Could not find location details.", variant: "destructive", duration: 2000 });
                     setFormData(prev => ({ ...prev, city: '', state: '' })); // Reset if invalid
                 }
             } catch (error) {
@@ -115,7 +115,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                 // Don't show error toast here to avoid spamming if network fails, just let them type manually if needed? 
                 // Actually user asked to disable fields, so we fallback to manual if fetch fails? 
                 // For now, let's just toast error.
-                toast({ title: "Error", description: "Failed to fetch location details.", variant: "destructive" });
+                toast({ title: "Error", description: "Failed to fetch location details.", variant: "destructive", duration: 2000 });
             } finally {
                 setIsLoading(false);
             }
@@ -179,12 +179,12 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
     const handleSubmit = async () => {
         // Validation
         if (!formData.streetAddress || !formData.pinCode) {
-            toast({ title: "Missing Details", description: "Please fill in address fields.", variant: "destructive" });
+            toast({ title: "Missing Details", description: "Please fill in address fields.", variant: "destructive", duration: 2000 });
             return;
         }
 
         if (formData.label === 'Other' && !formData.customName) {
-            toast({ title: "Missing Name", description: "Please enter a name for this address.", variant: "destructive" });
+            toast({ title: "Missing Name", description: "Please enter a name for this address.", variant: "destructive", duration: 2000 });
             return;
         }
 
@@ -196,14 +196,14 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
             if (isEditMode) {
                 // UPDATE
                 if (editingId === null) {
-                    toast({ title: "Error", description: "Cannot update address: ID missing", variant: "destructive" });
+                    toast({ title: "Error", description: "Cannot update address: ID missing", variant: "destructive", duration: 2000 });
                     return;
                 }
 
                 // Ensure customerId is present for update as well
                 const customerId = localStorage.getItem('customerId');
                 if (!customerId) {
-                    toast({ title: "Error", description: "User ID not found. Please login again.", variant: "destructive" });
+                    toast({ title: "Error", description: "User ID not found. Please login again.", variant: "destructive", duration: 2000 });
                     return;
                 }
 
@@ -223,7 +223,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
                 // CREATE
                 const customerId = localStorage.getItem('customerId');
                 if (!customerId) {
-                    toast({ title: "Error", description: "User ID not found. Please login again.", variant: "destructive" });
+                    toast({ title: "Error", description: "User ID not found. Please login again.", variant: "destructive", duration: 2000 });
                     return;
                 }
 
@@ -246,7 +246,7 @@ export function AddressSheet({ children }: { children?: React.ReactNode }) {
             resetForm();
 
         } catch (error) {
-            toast({ title: "Error", description: "Failed to save address", variant: "destructive" });
+            toast({ title: "Error", description: "Failed to save address", variant: "destructive", duration: 2000 });
         } finally {
             setIsLoading(false);
         }

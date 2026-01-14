@@ -78,13 +78,79 @@ export async function apiClient<T>(
     // 🚀 LOG RESPONSE
     console.log(`[API RESPONSE] ${(fetchOptions.method || 'GET').toUpperCase()} ${endpoint} - ${res.status} (${duration.toFixed(0)}ms)`);
 
-    // ✅ 401 Handling (Simple Logout)
+    // ✅ 401 Handling with Refresh Token
     if (res.status === 401 && !_retry) {
-        // Clear token and redirect
         if (typeof window !== 'undefined') {
-            console.warn('[Auth] Session expired, clearing token.');
-            localStorage.removeItem('accessToken');
-            window.location.href = "/login";
+            if (isRefreshing) {
+                // If already refreshing, wait for it to finish and retry
+                return new Promise((resolve, reject) => {
+                    refreshPromise?.then(async () => {
+                        try {
+                            const retryRes = await apiClient<T>(endpoint, { ...options, _retry: true });
+                            resolve(retryRes);
+                        } catch (e) {
+                            reject(e);
+                        }
+                    }).catch(reject);
+                });
+            }
+
+            const refreshToken = localStorage.getItem('refreshToken');
+
+            if (refreshToken) {
+                isRefreshing = true;
+                refreshPromise = (async () => {
+                    try {
+                        console.log('[Auth] Access token expired, attempting refresh...');
+
+                        // We use fetch directly here to avoid circular dependency or infinite loop
+                        const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ refreshToken })
+                        });
+
+                        if (refreshRes.ok) {
+                            const data = await refreshRes.json();
+                            if (data.accessToken && data.refreshToken) {
+                                console.log('[Auth] Token refresh successful');
+                                localStorage.setItem('accessToken', data.accessToken);
+                                localStorage.setItem('refreshToken', data.refreshToken);
+                                return;
+                            }
+                        }
+
+                        throw new Error('Refresh failed');
+                    } catch (error) {
+                        console.error('[Auth] Refresh token invalid or expired', error);
+                        localStorage.removeItem('accessToken');
+                        localStorage.removeItem('refreshToken');
+                        localStorage.removeItem('customerId');
+                        window.location.href = "/login";
+                        throw error;
+                    } finally {
+                        isRefreshing = false;
+                        refreshPromise = null;
+                    }
+                })();
+
+                // Wait for refresh to complete
+                try {
+                    await refreshPromise;
+                    // Retry original request
+                    return apiClient<T>(endpoint, { ...options, _retry: true });
+                } catch (error) {
+                    // Already handled in catch block above (redirect), just rethrow to stop
+                    throw error;
+                }
+            } else {
+                // No refresh token available
+                console.warn('[Auth] No refresh token found, clearing session.');
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('customerId');
+                window.location.href = "/login";
+                throw new Error("Session expired");
+            }
         }
         throw new Error("Session expired");
     }

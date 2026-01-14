@@ -203,7 +203,7 @@ export default function AdminInventoryPage() {
             if (level === 'ADDON') queryClient.invalidateQueries({ queryKey: ['addons', selectedPricing?.id] });
         },
         onError: () => {
-            toast({ title: "Error", description: "Failed to create item", variant: "destructive" });
+            toast({ title: "Error", description: "Failed to create item", variant: "destructive", duration: 2000 });
         }
     });
 

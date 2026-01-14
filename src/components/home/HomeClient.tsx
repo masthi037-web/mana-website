@@ -80,6 +80,7 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
         if (initialCategories.length === 0) {
             toast({
                 variant: "destructive",
+                duration: 2000,
                 title: "Connection Error",
                 description: "Could not load categories. Please check your internet connection.",
             });
