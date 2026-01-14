@@ -24,6 +24,7 @@ import type { ProductWithImage, ProductVariant, ProductAddonOption } from "@/lib
 import { cn } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
+import { useSheetBackHandler } from "@/hooks/use-sheet-back-handler";
 
 interface AddToCartSheetProps {
   product: ProductWithImage;
@@ -355,6 +356,9 @@ export function AddToCartSheet({ product, children, onAddToCart }: AddToCartShee
   const { addToCart, setCartOpen } = useCart();
   const { toast } = useToast();
   const hasVariants = (product.variants && product.variants.length > 0) || (product.pricing && product.pricing.length > 0);
+
+  // Handle back button on mobile
+  useSheetBackHandler(open, setOpen);
 
   const handleSimpleAddToCart = (e: React.MouseEvent) => {
     if (hasVariants) return;

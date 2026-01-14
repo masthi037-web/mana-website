@@ -12,12 +12,17 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Package, Clock, X } from 'lucide-react';
 
+import { useState } from 'react';
+import { useSheetBackHandler } from '@/hooks/use-sheet-back-handler';
+
 export function HistorySheet({ children }: { children: React.ReactNode }) {
-    // Placeholder state - will likely need a context or simple open state
-    // For now, uncontrolled Sheet is fine, or simple local state if we need it.
+    const [isOpen, setIsOpen] = useState(false);
+
+    // Handle back button on mobile
+    useSheetBackHandler(isOpen, setIsOpen);
 
     return (
-        <Sheet>
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
                 {children}
             </SheetTrigger>

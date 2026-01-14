@@ -21,10 +21,14 @@ import { useWishlist } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { AddToCartSheet } from '@/components/cart/AddToCartSheet';
+import { useSheetBackHandler } from '@/hooks/use-sheet-back-handler';
 
 export function WishlistSheet({ children }: { children?: React.ReactNode }) {
     const { wishlist, removeFromWishlist, isWishlistOpen, setWishlistOpen } = useWishlist();
     const { toast } = useToast();
+
+    // Handle back button on mobile
+    useSheetBackHandler(isWishlistOpen, setWishlistOpen);
 
     return (
         <Sheet open={isWishlistOpen} onOpenChange={setWishlistOpen}>

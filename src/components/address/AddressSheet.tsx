@@ -34,11 +34,15 @@ import {
 import { customerService } from '@/services/customer.service';
 import { CustomerAddress } from '@/lib/api-types';
 import { Plus, Trash2, Pencil } from 'lucide-react';
+import { useSheetBackHandler } from '@/hooks/use-sheet-back-handler';
 
 export function AddressSheet({ children }: { children?: React.ReactNode }) {
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Handle back button on mobile
+    useSheetBackHandler(isOpen, setIsOpen);
 
     // View State
     const [view, setView] = useState<'list' | 'add'>('list');

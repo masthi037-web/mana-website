@@ -21,6 +21,7 @@ import { HistorySheet } from '@/components/history/HistorySheet';
 import { cn } from '@/lib/utils';
 import { useTenant } from '@/components/providers/TenantContext';
 import { useWishlist } from '@/hooks/use-wishlist';
+import { useSheetBackHandler } from '@/hooks/use-sheet-back-handler';
 
 export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -50,6 +51,9 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
 
     // State for Sheet Open
     const [isOpen, setIsOpen] = React.useState(false);
+
+    // Handle back button on mobile
+    useSheetBackHandler(isOpen, setIsOpen);
 
     React.useEffect(() => {
         let interval: NodeJS.Timeout;

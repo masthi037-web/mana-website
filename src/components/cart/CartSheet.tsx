@@ -36,9 +36,14 @@ import { cn } from '@/lib/utils';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 
 import { useTenant } from '@/components/providers/TenantContext';
+import { useSheetBackHandler } from '@/hooks/use-sheet-back-handler';
 
 export function CartSheet({ children }: { children: React.ReactNode }) {
     const { cart, updateQuantity, removeFromCart, getCartTotal, getCartItemsCount, isCartOpen, setCartOpen, companyDetails, lastAddedItemId } = useCart();
+
+    // Handle back button on mobile
+    useSheetBackHandler(isCartOpen, setCartOpen);
+
     const { toast } = useToast();
     const { text } = useTenant();
     const router = useRouter();
