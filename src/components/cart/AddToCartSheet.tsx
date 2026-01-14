@@ -414,7 +414,7 @@ export function AddToCartSheet({ product, children, onAddToCart }: AddToCartShee
       <>
         {trigger}
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="bottom" className="rounded-t-[20px] p-0 h-auto max-h-[85vh] flex flex-col overflow-hidden border-none shadow-2xl z-[100] [&>button]:hidden">
+          <SheetContent side="bottom" className="rounded-t-[20px] p-0 h-auto max-h-[85vh] flex flex-col overflow-hidden border-none shadow-2xl [&>button]:hidden">
             <div className="h-full w-full">
               <AddToCartContent product={product} close={() => setOpen(false)} onAddToCart={onAddToCart} />
             </div>
