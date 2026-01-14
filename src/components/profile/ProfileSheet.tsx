@@ -195,6 +195,13 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
             return;
         }
 
+        // Standard Email Validation Regex
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            toast({ title: "Invalid Email", description: "Please enter a valid email address.", variant: "destructive", duration: 2000 });
+            return;
+        }
+
         setIsLoading(true);
         try {
             await customerService.updateCustomer({

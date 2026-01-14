@@ -111,7 +111,7 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
             {companyName}
           </span>
         </Link>
-        <div className="relative hidden w-full max-w-md md:block lg:max-w-lg" ref={searchRef}>
+        <div className="relative flex-1 mx-2 md:mx-4 w-full max-w-md lg:max-w-lg" ref={searchRef}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={text.searchPlaceholder || "Search products, brands, and more..."}
