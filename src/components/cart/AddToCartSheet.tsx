@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import * as SheetPrimitive from "@radix-ui/react-dialog";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -414,11 +415,22 @@ export function AddToCartSheet({ product, children, onAddToCart }: AddToCartShee
       <>
         {trigger}
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="bottom" className="rounded-t-[20px] p-0 h-auto max-h-[85vh] flex flex-col overflow-hidden border-none shadow-2xl [&>button]:hidden">
-            <div className="h-full w-full">
-              <AddToCartContent product={product} close={() => setOpen(false)} onAddToCart={onAddToCart} />
-            </div>
-          </SheetContent>
+          <SheetPrimitive.Portal>
+            <SheetPrimitive.Overlay
+              className="fixed inset-0 z-[99] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+            />
+            <SheetPrimitive.Content
+              className={cn(
+                "fixed z-[100] gap-4 bg-background shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+                "inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+                "rounded-t-[20px] p-0 h-auto max-h-[85vh] flex flex-col overflow-hidden border-none shadow-2xl [&>button]:hidden"
+              )}
+            >
+              <div className="h-full w-full">
+                <AddToCartContent product={product} close={() => setOpen(false)} onAddToCart={onAddToCart} />
+              </div>
+            </SheetPrimitive.Content>
+          </SheetPrimitive.Portal>
         </Sheet>
       </>
     );
