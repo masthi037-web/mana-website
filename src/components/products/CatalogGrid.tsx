@@ -76,7 +76,7 @@ function CatalogItem({ catalog, imageMap, selectedCatalogId, onSelectCatalog }: 
         isSelected ? "border-primary" : "border-transparent"
       )}>
         <Image
-          src={image?.imageUrl || `https://picsum.photos/seed/${catalog.id}/300/300`}
+          src={catalog.catalogueImage || image?.imageUrl || `https://picsum.photos/seed/${catalog.id}/300/300`}
           alt={catalog.name}
           fill
           className="object-cover"
