@@ -47,13 +47,18 @@ export const authService = {
     },
 
     async logout(): Promise<string> {
-        // Clear Token
+        let refreshToken = '';
         if (typeof window !== 'undefined') {
+            refreshToken = localStorage.getItem('refreshToken') || '';
+            // Clear Tokens
             localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('customerId');
         }
 
         return await apiClient<string>('/auth/logout', {
-            method: 'POST'
+            method: 'POST',
+            body: JSON.stringify({ refreshToken })
         });
     }
 };
