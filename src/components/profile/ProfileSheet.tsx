@@ -425,7 +425,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
 
                 {/* VIEW: LOGIN PHONE */}
                 {!isLoggedIn && !showSuccess && view === 'login-phone' && (
-                    <div className="flex flex-col h-full justify-center px-4 relative">
+                    <div className="flex flex-col h-full justify-start pt-24 px-4 relative overflow-y-auto">
                         {/* INLINE FEEDBACK */}
                         {feedback && (
                             <div className={cn(
@@ -436,7 +436,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                             </div>
                         )}
 
-                        <div className="mb-10 text-center space-y-3">
+                        <div className="mb-8 text-center space-y-3">
                             <div className="h-20 w-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-teal-50/50">
                                 <User className="h-8 w-8 text-teal-600" />
                             </div>
@@ -444,15 +444,29 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                             <p className="text-slate-500 font-medium">Enter your mobile number to login</p>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-6 pb-10">
                             <div className="space-y-2">
                                 <label className="text-sm font-bold ml-1 text-slate-700">Mobile Number</label>
                                 <Input
+                                    ref={(input) => {
+                                        // Auto-focus logic
+                                        if (input && isOpen && view === 'login-phone') {
+                                            // Small timeout to ensure sheet animation doesn't glitch
+                                            setTimeout(() => {
+                                                input.focus();
+                                            }, 300);
+                                        }
+                                    }}
                                     type="tel"
                                     placeholder="Enter 10 digit number"
                                     className="h-14 rounded-2xl text-lg tracking-wide border-2 border-slate-100 bg-slate-50/50 focus-visible:ring-teal-500 focus-visible:border-teal-500 transition-all font-medium placeholder:text-slate-300"
                                     value={phoneNumber}
                                     onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleSendOtp();
+                                        }
+                                    }}
                                 />
                             </div>
                             <Button
@@ -499,6 +513,11 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                                     maxLength={4}
                                     value={otp}
                                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleLogin();
+                                        }
+                                    }}
                                 />
                             </div>
                             <Button

@@ -27,8 +27,19 @@ import {
     AlertTriangle,
     RefreshCw,
     Tag,
-    Lock
+    Lock,
+    Trash
 } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useCart } from '@/hooks/use-cart';
 import { fetchProductDetails } from '@/services/product.service';
 import { useToast } from '@/hooks/use-toast';
@@ -59,6 +70,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
     const [showValidationPopup, setShowValidationPopup] = useState(false);
     const [couponCode, setCouponCode] = useState('');
+    const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
     const subtotal = getCartTotal();
     const cartItemCount = getCartItemsCount();
@@ -379,6 +391,48 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     </div>
                 )}
 
+                {/* Delete Confirmation Popup */}
+                <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+                    <AlertDialogContent className="w-[90%] sm:max-w-[400px] border-none bg-background/80 backdrop-blur-xl shadow-2xl rounded-3xl p-6 gap-0">
+                        <div className="flex flex-col items-center text-center space-y-4 pt-2">
+                            {/* Animated Icon */}
+                            <div className="relative group">
+                                <div className="absolute inset-0 bg-destructive/20 blur-xl rounded-full animate-pulse" />
+                                <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center relative border border-destructive/20 shadow-inner group-hover:scale-105 transition-transform duration-300">
+                                    <Trash className="w-7 h-7 text-destructive animate-bounce" />
+                                </div>
+                            </div>
+
+                            <AlertDialogHeader>
+                                <AlertDialogTitle className="text-xl font-bold tracking-tight">Remove Item?</AlertDialogTitle>
+                                <AlertDialogDescription className="text-muted-foreground text-sm font-medium leading-relaxed max-w-[260px] mx-auto">
+                                    Are you sure you want to remove this item from your cart? This action cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                        </div>
+                        <AlertDialogFooter className="grid grid-cols-2 gap-3 mt-8">
+                            <AlertDialogCancel className="rounded-xl h-11 border-border/50 bg-secondary/50 hover:bg-secondary hover:text-foreground font-semibold transition-all duration-200 mt-0">
+                                Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={() => {
+                                    if (itemToDelete) {
+                                        removeFromCart(itemToDelete);
+                                        setItemToDelete(null);
+                                        toast({
+                                            description: "Item removed from cart",
+                                            className: "bg-background border-border"
+                                        });
+                                    }
+                                }}
+                                className="rounded-xl h-11 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold shadow-lg shadow-destructive/20 transition-all duration-200 hover:shadow-destructive/40 hover:-translate-y-0.5"
+                            >
+                                Remove
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
                 {/* Premium Login Required Popup */}
                 {showLoginPopup && (
                     <div className="absolute inset-0 z-[120] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md animate-in fade-in duration-300">
@@ -413,6 +467,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 <Button
                                     className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-300 bg-gradient-to-r from-primary to-primary/90"
                                     onClick={() => {
+                                        setShowLoginPopup(false); // Clear popup
                                         setCartOpen(false); // Close Cart Sidebar
                                         // Small timeout to allow cart close animation to start/finish
                                         setTimeout(() => {
@@ -553,10 +608,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
-                                                        onClick={() => {
-                                                            removeFromCart(item.cartItemId);
-                                                            toast({ description: "Item removed" });
-                                                        }}
+                                                        onClick={() => setItemToDelete(item.cartItemId)}
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>

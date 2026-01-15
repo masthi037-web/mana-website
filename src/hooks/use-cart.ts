@@ -5,7 +5,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 import type { ProductWithImage, ProductAddonOption } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+
 import { CompanyDetails } from '@/lib/api-types';
 
 export type CartItem = ProductWithImage & {
@@ -33,25 +33,13 @@ interface CartState {
 
 const EXPIRATION_TIME = 10 * 60 * 60 * 1000; // 10 hours in milliseconds
 
-const findMockProduct = (id: string): ProductWithImage | undefined => {
-  // This is a mock function. In a real app, you'd fetch from an API.
-  // For now, let's create some mock data.
-  const mockProducts: ProductWithImage[] = [
-    { id: 'p1', name: 'Mango Pickle', price: 150, imageId: 'product-1', description: 'Spicy and tangy mango pickle', rating: 4.8, deliveryTime: '2-3 days', imageUrl: PlaceHolderImages.find(i => i.id === 'product-1')?.imageUrl || '', imageHint: 'mango pickle', pricing: [], variants: [{ name: 'Weight', options: ['250gm', '500gm', '1kg'] }, { name: 'Bottle', options: ['Bottle', 'Without Bottle'] }], deliveryCost: 50, createdAt: '2024-01-01T00:00:00Z' },
-    { id: 'p4', name: 'Jhumka Earrings', price: 500, imageId: 'product-4', description: 'Traditional gold-plated jhumkas', rating: 4.8, deliveryTime: '5-7 days', imageUrl: PlaceHolderImages.find(i => i.id === 'product-4')?.imageUrl || '', imageHint: 'jhumka earrings', pricing: [], deliveryCost: 50, createdAt: '2024-01-01T00:00:00Z' },
-  ];
-  return mockProducts.find(p => p.id === id);
-}
+
 
 
 export const useCart = create<CartState>()(
   persist(
     (set, get) => ({
-      cart: [
-        // Mock initial cart data
-        { ...findMockProduct('p1')!, cartItemId: 'mock-1', quantity: 2, selectedVariants: { 'Weight': '500gm', 'Bottle': 'Bottle' } as Record<string, string> },
-        { ...findMockProduct('p4')!, cartItemId: 'mock-2', quantity: 1, selectedVariants: {} },
-      ],
+      cart: [],
       companyDetails: null,
       timestamp: Date.now(),
       lastAddedItemId: null,
