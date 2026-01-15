@@ -96,6 +96,22 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
         }
     }, [initialCategories, toast]);
 
+    // Auth State for WhatsApp Button visibility
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userRole, setUserRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        const checkAuth = () => {
+            setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+            setUserRole(localStorage.getItem('userRole'));
+        };
+
+        checkAuth(); // Initial check
+
+        window.addEventListener('auth-change', checkAuth);
+        return () => window.removeEventListener('auth-change', checkAuth);
+    }, []);
+
     const activeCategory = initialCategories.find(c => c.id === selectedCategory);
     const catalogs: Catalog[] = activeCategory ? activeCategory.catalogs : [];
 
@@ -180,7 +196,9 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
 
     return (
         <div className="space-y-12 pb-20">
-            {companyPhone && <WhatsAppButton phoneNumber={companyPhone} companyName={companyName} />}
+            {isLoggedIn && userRole?.includes('CUSTOMER') && companyPhone && (
+                <WhatsAppButton phoneNumber={companyPhone} companyName={companyName} />
+            )}
             <CouponCarousel companyCoupon={companyCoupon} />
             <div className="animate-in fade-in slide-in-from-top-4 duration-700">
                 <FeaturesCarousel />

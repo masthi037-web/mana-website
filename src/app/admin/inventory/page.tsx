@@ -290,7 +290,7 @@ export default function AdminInventoryPage() {
                                 onChange={setImage}
                                 label={`${level.charAt(0) + level.slice(1).toLowerCase()} Image`}
                                 companyDomain={domain || ""}
-                                maxFiles={level === 'CATEGORY' ? 1 : 3}
+                                maxFiles={level === 'CATEGORY' || level === 'CATALOGUE' ? 1 : level === 'PRODUCT' ? 4 : 3}
                             />
                         </div>
                     </>
