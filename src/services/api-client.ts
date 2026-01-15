@@ -52,6 +52,7 @@ export async function apiClient<T>(
 
     const headers: HeadersInit = {
         "Content-Type": "application/json",
+        "Accept": "application/json",
         ...fetchOptions.headers,
     };
 
