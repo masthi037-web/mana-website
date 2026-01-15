@@ -58,6 +58,17 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
         const params = new URLSearchParams(searchParams.toString());
         params.set('category', categoryId);
         router.push(`/?${params.toString()}`, { scroll: false });
+
+        // Scroll to product section after a short delay to ensure rendering
+        setTimeout(() => {
+            const element = document.getElementById('product-catalog-section');
+            if (element) {
+                // On mobile we might want some offset, but block: 'start' is usually good
+                const yOffset = -80; // Header offset
+                const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+        }, 100);
     };
 
     // Filter & Sort State
@@ -282,7 +293,7 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
                             )}
 
                             {/* Catalogs & Products Area */}
-                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
+                            <div id="product-catalog-section" className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-xl font-semibold flex items-center gap-2">
                                         <span className="w-1.5 h-6 rounded-full bg-primary/80 block"></span>
