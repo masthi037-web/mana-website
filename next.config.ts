@@ -22,6 +22,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'img.freepik.com' }, // Whitelist Freepik
       { protocol: 'https', hostname: 'static.vecteezy.com' }, // Whitelist Vecteezy
       { protocol: 'https', hostname: 'storage.googleapis.com' }, // Whitelist GCS
+      { protocol: 'https', hostname: 'png.pngtree.com' }, // Whitelist PngTree
     ],
   },
   serverExternalPackages: [
