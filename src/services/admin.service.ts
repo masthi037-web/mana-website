@@ -75,5 +75,11 @@ export const adminService = {
             params: { productPricingId: String(productPricingId) },
             next: { revalidate: 300 }
         });
+    },
+
+    getSignedUploadUrl: async (companyId: string, fileName: string, contentType: string) => {
+        return apiClient<{ signedUrl: string; filePath: string }>('/company/get-signed-url', {
+            params: { companyId, fileName, contentType }
+        });
     }
 };

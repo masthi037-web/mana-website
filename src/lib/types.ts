@@ -33,6 +33,7 @@ export type Product = {
   ingredients?: string;
   bestBefore?: string;
   instructions?: string;
+  productImage?: string;
 };
 
 export type ProductWithImage = Product & {
@@ -44,10 +45,12 @@ export type Catalog = {
   id: string;
   name: string;
   products: Product[];
+  catalogueImage?: string;
 };
 
 export type Category = {
   id: string;
   name: string;
   catalogs: Catalog[];
+  categoryImage?: string;
 };

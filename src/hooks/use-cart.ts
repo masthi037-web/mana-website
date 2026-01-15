@@ -31,7 +31,7 @@ interface CartState {
   lastAddedItemId: string | null;
 }
 
-const EXPIRATION_TIME = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const EXPIRATION_TIME = 10 * 60 * 60 * 1000; // 10 hours in milliseconds
 
 const findMockProduct = (id: string): ProductWithImage | undefined => {
   // This is a mock function. In a real app, you'd fetch from an API.

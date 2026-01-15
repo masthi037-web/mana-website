@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sheet";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTenant } from "@/components/providers/TenantContext";
+import { ImageUpload } from "@/components/common/ImageUpload";
 
 // Remove hardcoded COMPANY_ID
 // const COMPANY_ID = "74f0d689-0ca7-4feb-a123-8e98c151b514";
@@ -61,6 +62,7 @@ export default function AdminInventoryPage() {
     const [price, setPrice] = useState("");
     const [qty, setQty] = useState("");
     const [isMandatory, setIsMandatory] = useState(false);
+    const [image, setImage] = useState<string | null>(null);
 
     // --- QUERIES ---
 
@@ -73,7 +75,8 @@ export default function AdminInventoryPage() {
             return res.map((c: any) => ({
                 id: String(c.categoryId),
                 name: c.categoryName,
-                catalogs: [] // No deep nesting needed for view, we fetch dynamically
+                catalogs: [], // No deep nesting needed for view, we fetch dynamically
+                categoryImage: c.categoryImage
             }));
         }
     });
@@ -87,7 +90,8 @@ export default function AdminInventoryPage() {
             return res.map((c: any) => ({
                 id: String(c.catalogueId),
                 name: c.catalogueName,
-                products: []
+                products: [],
+                catalogueImage: c.catalogueImage
             }));
         }
     });
@@ -107,6 +111,7 @@ export default function AdminInventoryPage() {
                 // For the list view, we just need basic info.
                 pricing: [],
                 imageId: p.imageId || "",
+                productImage: p.productImage,
                 description: p.productInfo || "",
                 rating: 0
             }));
@@ -153,13 +158,15 @@ export default function AdminInventoryPage() {
                     companyId: companyId,
                     categoryName: name,
                     categoryDescription: desc,
-                    categoryStatus: "ACTIVE"
+                    categoryStatus: "ACTIVE",
+                    categoryImage: image || undefined
                 });
             } else if (level === 'CATALOGUE' && selectedCategory) {
                 return adminService.createCatalogue({
                     categoryId: selectedCategory.id,
                     catalogueName: name,
-                    catalogueDescription: desc
+                    catalogueDescription: desc,
+                    catalogueImage: image || undefined
                 });
             } else if (level === 'PRODUCT' && selectedCatalogue) {
                 return adminService.createProduct({
@@ -172,7 +179,8 @@ export default function AdminInventoryPage() {
                     productPics: "https://cdn.example.com/products/default.jpg",
                     productStatus: "ACTIVE",
                     famous: isFamous,
-                    productDeliveryCost: Number(prodDeliveryCost)
+                    productDeliveryCost: Number(prodDeliveryCost),
+                    productImage: image || undefined
                 });
             } else if (level === 'PRICING' && selectedProduct) {
                 return adminService.createPricing({
@@ -211,6 +219,7 @@ export default function AdminInventoryPage() {
     const resetForm = () => {
         setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst("");
         setProdDeliveryCost("40"); setIsFamous(false); setPrice(""); setQty(""); setIsMandatory(false);
+        setImage(null);
     };
 
     const openCreateSheet = () => {
@@ -270,10 +279,20 @@ export default function AdminInventoryPage() {
                 )}
 
                 {(level === 'CATEGORY' || level === 'CATALOGUE' || level === 'PRODUCT') && (
-                    <div className="space-y-2">
-                        <Label>Description / Info</Label>
-                        <Input placeholder="Description" value={desc} onChange={e => setDesc(e.target.value)} />
-                    </div>
+                    <>
+                        <div className="space-y-2">
+                            <Label>Description / Info</Label>
+                            <Input placeholder="Description" value={desc} onChange={e => setDesc(e.target.value)} />
+                        </div>
+                        <div className="pt-2">
+                            <ImageUpload
+                                value={image || undefined}
+                                onChange={setImage}
+                                label={`${level.charAt(0) + level.slice(1).toLowerCase()} Image`}
+                                companyId={companyId}
+                            />
+                        </div>
+                    </>
                 )}
 
                 {/* Product Extra Fields */}
