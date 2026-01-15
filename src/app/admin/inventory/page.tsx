@@ -32,7 +32,7 @@ type ViewLevel = 'CATEGORY' | 'CATALOGUE' | 'PRODUCT' | 'PRICING' | 'ADDON';
 export default function AdminInventoryPage() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
-    const { companyId: tenantCompanyId } = useTenant();
+    const { companyId: tenantCompanyId, domain } = useTenant();
 
     // Fallback to a default if context is missing (though it shouldn't be)
     // or keep the hardcoded for safety? No, user wants dynamic.
@@ -289,7 +289,8 @@ export default function AdminInventoryPage() {
                                 value={image || undefined}
                                 onChange={setImage}
                                 label={`${level.charAt(0) + level.slice(1).toLowerCase()} Image`}
-                                companyId={companyId}
+                                companyDomain={domain || ""}
+                                maxFiles={level === 'CATEGORY' ? 1 : 3}
                             />
                         </div>
                     </>

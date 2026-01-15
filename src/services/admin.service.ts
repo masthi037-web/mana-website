@@ -77,10 +77,10 @@ export const adminService = {
         });
     },
 
-    getSignedUploadUrl: async (companyId: string, fileName: string, contentType: string) => {
+    getSignedUploadUrl: async (companyDomain: string, fileName: string, contentType: string) => {
         return apiClient<{ signedUrl: string; filePath: string }>('/company/get-signed-url', {
             method: 'POST',
-            params: { companyId, fileName, contentType }
+            params: { companyDomain, fileName, contentType }
         });
     }
 };

@@ -16,7 +16,7 @@ interface ImageUploadProps {
     disabled?: boolean;
     label?: string;
     className?: string;
-    companyId: string;
+    companyDomain: string; // Changed from companyId
     maxFiles?: number;
 }
 
@@ -26,7 +26,7 @@ export function ImageUpload({
     disabled,
     label = "Upload Image",
     className,
-    companyId,
+    companyDomain, // Changed from companyId
     maxFiles = 3,
 }: ImageUploadProps) {
     const [filePaths, setFilePaths] = useState<string[]>([]);
@@ -51,8 +51,8 @@ export function ImageUpload({
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (!companyId) {
-            toast({ title: "Error", description: "Company ID is missing", variant: "destructive" });
+        if (!companyDomain) {
+            toast({ title: "Error", description: "Company Domain is missing", variant: "destructive" });
             return;
         }
 
@@ -73,7 +73,7 @@ export function ImageUpload({
             // 1. Get Signed URL
             const uniqueFileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
             const { signedUrl, filePath } = await adminService.getSignedUploadUrl(
-                companyId,
+                companyDomain,
                 uniqueFileName,
                 file.type
             );
