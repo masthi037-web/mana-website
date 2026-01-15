@@ -87,6 +87,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     }, []);
 
     const fetchProfile = async (forceRefresh = false) => {
+        if (!userRole?.includes('CUSTOMER')) return;
         try {
             const data = await customerService.getCustomerDetails(forceRefresh);
             setCustomerData(data);
@@ -99,10 +100,10 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     };
 
     React.useEffect(() => {
-        if (isLoggedIn) {
+        if (isLoggedIn && userRole?.includes('CUSTOMER')) {
             fetchProfile();
         }
-    }, [isLoggedIn]);
+    }, [isLoggedIn, userRole]);
 
     const handleSendOtp = async () => {
         if (!phoneNumber || phoneNumber.length < 10) {
