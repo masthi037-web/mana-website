@@ -490,7 +490,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             {/* Premium Image Card */}
                                             <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-secondary/30 shadow-sm group-hover:shadow-md transition-all duration-300">
                                                 <Image
-                                                    src={item.imageUrl}
+                                                    src={item.images && item.images.length > 0 ? item.images[0] : item.imageUrl}
                                                     alt={item.name}
                                                     fill
                                                     className="object-cover transition-transform duration-500 group-hover:scale-110"

@@ -86,7 +86,7 @@ export function WishlistSheet({ children }: { children?: React.ReactNode }) {
                                             className="block w-full h-full"
                                         >
                                             <Image
-                                                src={item.imageUrl}
+                                                src={item.images && item.images.length > 0 ? item.images[0] : item.imageUrl}
                                                 alt={item.name}
                                                 fill
                                                 className="object-cover transition-transform duration-500 group-hover:scale-110"

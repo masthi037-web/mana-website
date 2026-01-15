@@ -40,7 +40,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     if (product.images && product.images.length > 1) {
       const interval = setInterval(() => {
         setCurrentImageIndex((prev) => (prev + 1) % (product.images?.length || 1));
-      }, 3000); // Change slide every 3 seconds
+      }, 2000); // Change slide every 2 seconds
       return () => clearInterval(interval);
     }
   }, [product.images]);

@@ -85,6 +85,12 @@ export const useCart = create<CartState>()(
           updatedCart = [...currentCart];
           updatedCart[existingItemIndex] = {
             ...updatedCart[existingItemIndex],
+            // Refresh details in case they changed (e.g. image, name, price)
+            name: product.name,
+            price: product.price,
+            imageUrl: product.imageUrl,
+            images: product.images,
+            description: product.description,
             quantity: updatedCart[existingItemIndex].quantity + 1
           };
           newCartItemId = updatedCart[existingItemIndex].cartItemId;
