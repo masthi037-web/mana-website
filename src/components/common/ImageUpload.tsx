@@ -86,6 +86,7 @@ export function ImageUpload({
                     "Content-Type": file.type,
                 },
                 credentials: 'omit',
+                mode: 'cors',
             });
 
             if (!response.ok) {
