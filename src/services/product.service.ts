@@ -51,7 +51,8 @@ function mapApiCategoriesToAppCategories(apiCategories: ApiCategory[]): AppCateg
     return apiCategories.map(cat => ({
         id: String(cat.categoryId),
         name: cat.categoryName,
-        catalogs: cat.catalogues.map(mapApiCatalogueToAppCatalog)
+        catalogs: cat.catalogues.map(mapApiCatalogueToAppCatalog),
+        categoryImage: cat.categoryImage
     }));
 }
 
@@ -59,7 +60,8 @@ function mapApiCatalogueToAppCatalog(apiCat: ApiCatalogue): AppCatalog {
     return {
         id: String(apiCat.catalogueId),
         name: apiCat.catalogueName,
-        products: apiCat.products.map(mapApiProductToAppProduct)
+        products: apiCat.products.map(mapApiProductToAppProduct),
+        catalogueImage: apiCat.catalogueImage
     };
 }
 
