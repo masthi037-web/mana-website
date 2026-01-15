@@ -85,6 +85,7 @@ export function ImageUpload({
                 headers: {
                     "Content-Type": file.type,
                 },
+                credentials: 'omit',
             });
 
             if (!response.ok) {
