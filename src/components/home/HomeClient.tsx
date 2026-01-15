@@ -206,10 +206,18 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
                                             "w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300",
                                             selectedCategory === category.id
                                                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110"
-                                                : "bg-secondary text-muted-foreground group-hover:bg-secondary/80"
+                                                : "bg-secondary text-muted-foreground group-hover:bg-secondary/80",
+                                            "overflow-hidden"
                                         )}>
-                                            {/* Placeholder logic for icons since category object doesn't have icons yet */}
-                                            <Sparkles className="w-6 h-6" />
+                                            {category.categoryImage ? (
+                                                <img
+                                                    src={category.categoryImage}
+                                                    alt={category.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <Sparkles className="w-6 h-6" />
+                                            )}
                                         </div>
                                         <span className={cn(
                                             "text-xs md:text-sm font-semibold transition-colors text-center line-clamp-2 leading-tight max-w-[120px]",
