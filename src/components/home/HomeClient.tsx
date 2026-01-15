@@ -54,21 +54,20 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
         const newCatalogId = category?.catalogs[0]?.id || null;
         setSelectedCatalogId(newCatalogId);
 
-        // Update URL
+        // Update URL WITHOUT pushing to history stack to avoid scroll reset issues on back
         const params = new URLSearchParams(searchParams.toString());
         params.set('category', categoryId);
-        router.push(`/?${params.toString()}`, { scroll: false });
+        router.replace(`/?${params.toString()}`, { scroll: false });
 
-        // Scroll to product section after a short delay to ensure rendering
+        // Scroll to product section with slightly longer delay to ensure Next.js routing is done
         setTimeout(() => {
             const element = document.getElementById('product-catalog-section');
             if (element) {
-                // On mobile we might want some offset, but block: 'start' is usually good
-                const yOffset = -80; // Header offset
+                const yOffset = -80;
                 const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
                 window.scrollTo({ top: y, behavior: 'smooth' });
             }
-        }, 100);
+        }, 300);
     };
 
     // Filter & Sort State
