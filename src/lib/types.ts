@@ -23,6 +23,8 @@ export type Product = {
   price: number;
   pricing: ProductPriceOption[]; // For quantity-based pricing
   imageId: string;
+  imageUrl?: string; // Kept for backward compatibility, will be first image
+  images?: string[]; // New field for multiple images
   description: string;
   rating: number;
   deliveryTime: string;

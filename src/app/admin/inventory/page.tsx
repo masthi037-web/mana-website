@@ -377,9 +377,19 @@ export default function AdminInventoryPage() {
                     </SheetTrigger>
                     <SheetContent className="sm:max-w-md overflow-y-auto">
                         <SheetHeader>
-                            <SheetTitle>Add New {level.charAt(0) + level.slice(1).toLowerCase()}</SheetTitle>
+                            <SheetTitle>
+                                {level === 'CATEGORY' && "Add New Category"}
+                                {level === 'CATALOGUE' && `Add Catalogue to ${selectedCategory?.name}`}
+                                {level === 'PRODUCT' && `Add Product to ${selectedCatalogue?.name}`}
+                                {level === 'PRICING' && `Add Variant to ${selectedProduct?.name}`}
+                                {level === 'ADDON' && `Add Addon to ${selectedPricing?.quantity}`}
+                            </SheetTitle>
                             <SheetDescription>
-                                Create a new item in the current section.
+                                {level === 'CATEGORY' && "Create a new top-level category."}
+                                {level === 'CATALOGUE' && `Creating a new catalogue under ${selectedCategory?.name}.`}
+                                {level === 'PRODUCT' && `Creating a new product under ${selectedCatalogue?.name}.`}
+                                {level === 'PRICING' && `Adding a pricing variant for ${selectedProduct?.name}.`}
+                                {level === 'ADDON' && `Adding an addon for the ${selectedPricing?.quantity} variant.`}
                             </SheetDescription>
                         </SheetHeader>
                         {renderSheetForm()}

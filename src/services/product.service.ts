@@ -76,11 +76,21 @@ function mapApiProductToAppProduct(apiProd: ApiProduct): AppProduct {
     // Redundant "Quantity" variant logic removed to avoid duplicate UI.
     // Pricing is handled via the 'pricing' field.
 
-    // Image handling: The API sends filenames like "mysorepak.jpg". 
-    // We need a real URL. For now, we will use a generated placeholder based on the ID 
-    // to ensure images always load, as we don't have the static file server base URL yet.
+    // Image handling: parse &&& separated URLs
+    const rawImageField = apiProd.productImage || (apiProd as any).product_image;
+    let images: string[] = [];
+
+    if (rawImageField) {
+        images = rawImageField.split('&&&').filter(Boolean);
+    }
+
     const seed = apiProd.productId.toString();
-    const imageUrl = `${PLACEHOLDER_BASE}/${seed}/300/300`;
+    // Fallback to placeholder if no images
+    if (images.length === 0) {
+        images = [`${PLACEHOLDER_BASE}/${seed}/300/300`];
+    }
+
+    const imageUrl = images[0];
 
     // Map pricing options for UI selection
     const pricingOptions = apiProd.productPricing?.map(p => ({
@@ -102,6 +112,8 @@ function mapApiProductToAppProduct(apiProd: ApiProduct): AppProduct {
         price: firstPricing ? firstPricing.productPrice : apiProd.productDeliveryCost,
         pricing: pricingOptions,
         imageId: String(apiProd.productId),
+        imageUrl: imageUrl,
+        images: images,
         rating: apiProd.productRatings && apiProd.productRatings.length > 0
             ? apiProd.productRatings.reduce((acc, curr) => acc + curr.productRating, 0) / apiProd.productRatings.length
             : 4.5,

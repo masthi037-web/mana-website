@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, Star, Clock, ShoppingBag } from 'lucide-react';
@@ -32,6 +33,18 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     toggleWishlist(product);
   }
 
+  // Carousel Logic
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    if (product.images && product.images.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % (product.images?.length || 1));
+      }, 3000); // Change slide every 3 seconds
+      return () => clearInterval(interval);
+    }
+  }, [product.images]);
+
   return (
     <Link href={`/product/${product.id}`} className="group block h-full">
       <Card
@@ -42,14 +55,39 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       >
         {/* Image Container - 3:2 Ratio (Shorter) */}
         <div className="relative aspect-[3/2] w-full overflow-hidden bg-secondary/5">
-          <Image
-            src={product.imageUrl}
-            alt={product.name}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 25vw, 20vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-            data-ai-hint={product.imageHint}
-          />
+          {/* Slider Container */}
+          <div
+            className="flex h-full transition-transform duration-700 ease-in-out"
+            style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
+          >
+            {(product.images && product.images.length > 0 ? product.images : [product.imageUrl]).map((imgSrc, idx) => (
+              <div key={idx} className="relative w-full h-full flex-shrink-0">
+                <Image
+                  src={imgSrc || `https://picsum.photos/seed/${product.id}/300/300`}
+                  alt={`${product.name} - ${idx + 1}`}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 25vw, 20vw"
+                  className="object-cover"
+                  data-ai-hint={product.imageHint}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Dots Indicator (visible if > 1 image) */}
+          {product.images && product.images.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+              {product.images.map((_, idx) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                    idx === currentImageIndex ? "bg-white w-3" : "bg-white/50"
+                  )}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
@@ -69,7 +107,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-3 right-3 h-8 w-8 rounded-full bg-background/80 backdrop-blur-md hover:bg-background text-muted-foreground transition-all duration-300 shadow-sm"
+            className="absolute top-3 right-3 h-8 w-8 rounded-full bg-background/80 backdrop-blur-md hover:bg-background text-muted-foreground transition-all duration-300 shadow-sm z-20"
             onClick={handleWishlistClick}
           >
             <Heart
