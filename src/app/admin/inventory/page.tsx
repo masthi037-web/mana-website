@@ -315,6 +315,7 @@ export default function AdminInventoryPage() {
                                 <Input type="number" placeholder="40" value={prodDeliveryCost} onChange={e => setProdDeliveryCost(e.target.value)} />
                             </div>
                         </div>
+
                         <div className="space-y-2">
                             <Label>Instructions</Label>
                             <Input placeholder="Storage Instructions" value={prodInst} onChange={e => setProdInst(e.target.value)} />
