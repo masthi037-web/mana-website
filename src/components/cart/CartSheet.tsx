@@ -139,6 +139,21 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const canCheckout = subtotal >= minOrder;
     const amountForFreeDelivery = Math.max(0, freeDeliveryThreshold - subtotal);
 
+    // Centralized Bill Calculation
+    let discountAmount = 0;
+    if (couponCode && companyDetails?.companyCoupon) {
+        const couponData = companyDetails.companyCoupon.split(',').find(c => c.startsWith(couponCode + '&&&'));
+        if (couponData) {
+            const [, discountStr, minOrderStr] = couponData.split('&&&');
+            const discountPercent = parseFloat(discountStr || '0');
+            const minCouponOrder = parseFloat(minOrderStr || '0');
+            if (subtotal >= minCouponOrder) {
+                discountAmount = (subtotal * discountPercent) / 100;
+            }
+        }
+    }
+    const finalTotal = Math.max(0, total - discountAmount);
+
     // Contact Info State
     const [contactInfo, setContactInfo] = useState({
         name: '',
@@ -1067,25 +1082,12 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                 {isFreeDelivery ? "FREE" : "Calculated at checkout"}
                                             </span>
                                         </div>
-                                        {(() => {
-                                            if (!couponCode || !companyDetails?.companyCoupon) return null;
-                                            const couponData = companyDetails.companyCoupon.split(',').find(c => c.startsWith(couponCode + '&&&'));
-                                            if (!couponData) return null;
-                                            const [, discountStr, minOrderStr] = couponData.split('&&&');
-                                            const discountPercent = parseFloat(discountStr || '0');
-                                            const minOrder = parseFloat(minOrderStr || '0');
-
-                                            if (subtotal < minOrder) return null;
-
-                                            const discountAmount = (subtotal * discountPercent) / 100;
-
-                                            return (
-                                                <div className="flex justify-between text-sm text-emerald-600 font-medium animate-in slide-in-from-left-2">
-                                                    <span>Coupon ({couponCode})</span>
-                                                    <span>-₹{discountAmount.toFixed(2)}</span>
-                                                </div>
-                                            );
-                                        })()}
+                                        {discountAmount > 0 && (
+                                            <div className="flex justify-between text-sm text-emerald-600 font-medium animate-in slide-in-from-left-2">
+                                                <span>Coupon ({couponCode})</span>
+                                                <span>-₹{discountAmount.toFixed(2)}</span>
+                                            </div>
+                                        )}
                                         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                                     </div>
                                 </div>
@@ -1095,22 +1097,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             <div className="p-4 bg-background/80 backdrop-blur-xl border-t border-border/50 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] z-20">
                                 <div className="flex justify-between items-baseline mb-4">
                                     <span className="font-semibold text-lg">Total</span>
-                                    <span className="font-bold text-2xl text-primary tracking-tight">₹{(() => {
-                                        let finalTotal = subtotal + shipping;
-                                        if (couponCode && companyDetails?.companyCoupon) {
-                                            const couponData = companyDetails.companyCoupon.split(',').find(c => c.startsWith(couponCode + '&&&'));
-                                            if (couponData) {
-                                                const [, discountStr, minOrderStr] = couponData.split('&&&');
-                                                const discountPercent = parseFloat(discountStr || '0');
-                                                const minOrder = parseFloat(minOrderStr || '0');
-                                                if (subtotal >= minOrder) {
-                                                    const discountAmount = (subtotal * discountPercent) / 100;
-                                                    finalTotal -= discountAmount;
-                                                }
-                                            }
-                                        }
-                                        return Math.max(0, finalTotal).toFixed(2);
-                                    })()}</span>
+                                    <span className="font-bold text-2xl text-primary tracking-tight">₹{finalTotal.toFixed(2)}</span>
                                 </div>
 
                                 {!canCheckout && (
@@ -1382,37 +1369,84 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         <div className="space-y-4">
                                             <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Order Summary</h3>
                                             <div className="bg-background rounded-3xl border shadow-sm overflow-hidden">
-                                                <div className="max-h-[200px] overflow-y-auto">
+                                                <div className="max-h-[300px] overflow-y-auto p-1 space-y-1">
                                                     {cart.map((item) => (
-                                                        <div key={item.cartItemId} className="flex gap-4 p-4 border-b last:border-0 hover:bg-secondary/5 transition-colors">
+                                                        <div key={item.cartItemId} className="flex gap-4 p-4 rounded-2xl border border-transparent hover:border-border/50 hover:bg-white hover:shadow-sm transition-all group/item">
                                                             {/* Image */}
-                                                            <div className="h-14 w-14 rounded-xl bg-secondary overflow-hidden shrink-0 border border-border/50 bg-white relative">
+                                                            <div className="h-16 w-16 rounded-xl bg-secondary overflow-hidden shrink-0 border border-border/50 bg-white relative">
                                                                 {item.images && item.images.length > 0 ? (
-                                                                    <img src={item.images[0]} alt={item.name} className="h-full w-full object-cover" />
+                                                                    <img src={item.images[0]} alt={item.name} className="h-full w-full object-cover group-hover/item:scale-105 transition-transform duration-500" />
                                                                 ) : item.imageUrl ? (
-                                                                    <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                                                                    <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover group-hover/item:scale-105 transition-transform duration-500" />
                                                                 ) : (
                                                                     <div className="h-full w-full flex items-center justify-center text-muted-foreground text-[10px]">No Img</div>
                                                                 )}
                                                             </div>
                                                             {/* Details */}
-                                                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                                <h4 className="font-bold text-xs sm:text-sm truncate pr-2">{item.name}</h4>
-                                                                <p className="text-[10px] text-muted-foreground line-clamp-1">
-                                                                    {Object.entries(item.selectedVariants || {}).map(([k, v]) => `${k}: ${v}`).join(', ')}
-                                                                </p>
-                                                                <div className="flex items-center justify-between mt-1">
-                                                                    <span className="text-[10px] font-semibold bg-secondary px-1.5 py-0.5 rounded-md text-foreground/80">Qty: {item.quantity}</span>
-                                                                    <span className="font-bold text-xs">₹{((item.price + (item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
+                                                            <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                                                                <div>
+                                                                    <div className="flex justify-between items-start gap-2">
+                                                                        <h4 className="font-bold text-sm leading-tight text-foreground/90 line-clamp-2">{item.name}</h4>
+                                                                        <span className="font-bold text-sm whitespace-nowrap">₹{((item.price + (item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
+                                                                    </div>
+
+                                                                    {/* Variants & Addons Chips */}
+                                                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                                                        {Object.entries(item.selectedVariants || {}).map(([k, v]) => (
+                                                                            <span key={k} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-border/50">
+                                                                                {v}
+                                                                            </span>
+                                                                        ))}
+                                                                        {item.selectedAddons?.map((addon) => (
+                                                                            <span key={addon.id} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
+                                                                                <Plus className="w-2 h-2" /> {addon.name}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-2 mt-2">
+                                                                    <span className="text-[10px] font-semibold bg-secondary/50 px-2 py-0.5 rounded text-muted-foreground">
+                                                                        Qty: {item.quantity}
+                                                                    </span>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     ))}
                                                 </div>
-                                                {/* Total Row */}
-                                                <div className="bg-secondary/20 p-4 flex justify-between items-center text-sm border-t border-border/50">
-                                                    <span className="font-semibold text-muted-foreground">Total to Pay</span>
-                                                    <span className="font-bold text-lg text-primary">₹{total.toFixed(2)}</span>
+
+                                                {/* Bill Details */}
+                                                <div className="bg-secondary/10 p-5 space-y-3.5 text-sm border-t border-dashed border-border">
+                                                    <div className="flex justify-between text-muted-foreground">
+                                                        <span>Item Total</span>
+                                                        <span className="font-medium text-foreground">₹{subtotal.toFixed(2)}</span>
+                                                    </div>
+
+                                                    {discountAmount > 0 && (
+                                                        <div className="flex justify-between text-emerald-600 font-medium">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Tag className="w-3.5 h-3.5" />
+                                                                <span>Coupon ({couponCode})</span>
+                                                            </div>
+                                                            <span>-₹{discountAmount.toFixed(2)}</span>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex justify-between text-muted-foreground">
+                                                        <span>Delivery Charge</span>
+                                                        <span className={isFreeDelivery ? "text-emerald-600 font-medium" : "text-foreground"}>
+                                                            {isFreeDelivery ? "FREE" : "₹" + shipping.toFixed(2)}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="h-px bg-border my-1" />
+
+                                                    <div className="flex justify-between items-end">
+                                                        <span className="font-bold text-base">Grand Total</span>
+                                                        <span className="font-bold text-xl text-primary leading-none">
+                                                            ₹{finalTotal.toFixed(2)}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
