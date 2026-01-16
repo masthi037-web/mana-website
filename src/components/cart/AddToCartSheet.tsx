@@ -41,7 +41,7 @@ const OptionCard = ({
   onClick,
 }: {
   label: string;
-  subLabel?: string;
+  subLabel?: React.ReactNode;
   isSelected: boolean;
   onClick: () => void;
 }) => (
@@ -64,7 +64,9 @@ const OptionCard = ({
       {label}
     </span>
     {subLabel && (
-      <span className={cn("text-[10px] font-medium mt-0.5", isSelected ? "text-primary/80" : "text-muted-foreground")}>{subLabel}</span>
+      <div className={cn("mt-0.5", isSelected ? "text-primary/80" : "text-muted-foreground")}>
+        {subLabel}
+      </div>
     )}
   </div>
 );
@@ -174,7 +176,13 @@ const AddToCartContent = ({
       variantsToAdd['Quantity'] = selectedPricingOption.quantity;
     }
     const selectedAddonsList = availableAddons.filter(a => selectedAddonIds.has(a.id));
-    addToCart({ ...product, price: basePrice }, variantsToAdd, selectedAddonsList);
+
+    // Calculate effective price with offer
+    const offerPercentage = product.productOffer ? parseFloat(product.productOffer) : 0;
+    const hasOffer = !isNaN(offerPercentage) && offerPercentage > 0;
+    const effectiveBasePrice = hasOffer ? basePrice - (basePrice * offerPercentage / 100) : basePrice;
+
+    addToCart({ ...product, price: effectiveBasePrice }, variantsToAdd, selectedAddonsList);
 
     // Trigger success confetti
     const triggerConfetti = () => {
@@ -251,15 +259,30 @@ const AddToCartContent = ({
                   // Check if all prices are the same (using a simple strict equality check against the first item)
                   const allPricesSame = prices.every(p => p === prices[0]);
 
-                  return product.pricing.map((option) => (
-                    <OptionCard
-                      key={option.id}
-                      label={option.quantity}
-                      subLabel={!allPricesSame ? `₹${option.price}` : undefined}
-                      isSelected={selectedPricingId === option.id}
-                      onClick={() => setSelectedPricingId(option.id)}
-                    />
-                  ));
+                  return product.pricing.map((option) => {
+                    const offerPercentage = product.productOffer ? parseFloat(product.productOffer) : 0;
+                    const hasOffer = !isNaN(offerPercentage) && offerPercentage > 0;
+                    const finalOptionPrice = hasOffer ? option.price - (option.price * offerPercentage / 100) : option.price;
+
+                    return (
+                      <OptionCard
+                        key={option.id}
+                        label={option.quantity}
+                        subLabel={
+                          !allPricesSame ? (
+                            <div className="flex flex-col items-center leading-none">
+                              {hasOffer && (
+                                <span className="text-[9px] line-through opacity-70 mb-0.5">₹{option.price}</span>
+                              )}
+                              <span className="text-[11px] font-bold">₹{finalOptionPrice.toFixed(0)}</span>
+                            </div>
+                          ) : undefined
+                        }
+                        isSelected={selectedPricingId === option.id}
+                        onClick={() => setSelectedPricingId(option.id)}
+                      />
+                    );
+                  });
                 })()}
               </div>
             </div>
@@ -321,7 +344,20 @@ const AddToCartContent = ({
         <div className="flex items-center gap-3 w-full">
           <div className="flex flex-col min-w-[30%]">
             <span className="text-[10px] font-medium text-muted-foreground uppercase">Total</span>
-            <span className="text-lg font-bold text-primary leading-tight">₹{currentPrice.toFixed(2)}</span>
+            {(() => {
+              const offerPercentage = product.productOffer ? parseFloat(product.productOffer) : 0;
+              const hasOffer = !isNaN(offerPercentage) && offerPercentage > 0;
+              const finalPrice = hasOffer ? currentPrice - (currentPrice * offerPercentage / 100) : currentPrice;
+
+              return (
+                <div className="flex flex-col items-start leading-none">
+                  {hasOffer && (
+                    <span className="text-xs text-muted-foreground line-through font-medium">₹{currentPrice.toFixed(2)}</span>
+                  )}
+                  <span className="text-lg font-bold text-primary leading-tight">₹{finalPrice.toFixed(2)}</span>
+                </div>
+              );
+            })()}
           </div>
           <Button
             onClick={handleAddToCart}

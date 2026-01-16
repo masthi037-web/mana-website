@@ -104,9 +104,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
             {/* Offer Badge */}
             {product.productOffer && (
-              <div className="flex items-center gap-1 bg-rose-500/90 backdrop-blur-md px-2 py-1 rounded-full text-[10px] font-bold text-white shadow-sm animate-in fade-in zoom-in duration-300">
+              <div className="flex items-center gap-1 bg-primary/90 backdrop-blur-md px-2 py-1 rounded-full text-[10px] font-bold text-white shadow-sm animate-in fade-in zoom-in duration-300">
                 <Sparkles className="w-3 h-3 fill-white text-white" />
-                <span>{product.productOffer}</span>
+                <span>{product.productOffer}{!isNaN(Number(product.productOffer)) ? '%' : ''}</span>
               </div>
             )}
           </div>
@@ -146,16 +146,34 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               {product.name}
             </h3>
             <div className="flex flex-col items-end shrink-0">
-              <span className="font-headline font-bold text-base text-primary tracking-tight">
-                {product.pricing && product.pricing.length > 1 ? (
-                  <span className="flex flex-col items-end">
-                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-0.5">Starts from</span>
-                    <span>₹{activePrice.toFixed(0)}</span>
+              {(() => {
+                const offerPercentage = product.productOffer ? parseFloat(product.productOffer) : 0;
+                const hasOffer = !isNaN(offerPercentage) && offerPercentage > 0;
+                const finalPrice = hasOffer ? activePrice - (activePrice * offerPercentage / 100) : activePrice;
+
+                return (
+                  <span className="font-headline font-bold text-base text-primary tracking-tight text-right">
+                    {product.pricing && product.pricing.length > 1 ? (
+                      <span className="flex flex-col items-end">
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-0.5">Starts from</span>
+                        <span className="flex items-center gap-1.5">
+                          {hasOffer && (
+                            <span className="text-xs text-muted-foreground line-through font-medium">₹{activePrice.toFixed(0)}</span>
+                          )}
+                          <span>₹{finalPrice.toFixed(0)}</span>
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="flex flex-col items-end">
+                        {hasOffer && (
+                          <span className="text-xs text-muted-foreground line-through font-medium leading-none mb-0.5">₹{activePrice.toFixed(0)}</span>
+                        )}
+                        <span className="leading-none">₹{finalPrice.toFixed(0)}</span>
+                      </span>
+                    )}
                   </span>
-                ) : (
-                  <span>₹{activePrice.toFixed(0)}</span>
-                )}
-              </span>
+                );
+              })()}
             </div>
           </div>
 
