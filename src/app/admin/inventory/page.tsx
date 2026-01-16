@@ -57,6 +57,7 @@ export default function AdminInventoryPage() {
     const [prodIng, setProdIng] = useState("");
     const [prodBest, setProdBest] = useState("");
     const [prodInst, setProdInst] = useState("");
+    const [prodOffer, setProdOffer] = useState("");
     const [prodDeliveryCost, setProdDeliveryCost] = useState("40");
     const [isFamous, setIsFamous] = useState(false);
     const [price, setPrice] = useState("");
@@ -180,7 +181,8 @@ export default function AdminInventoryPage() {
                     productStatus: "ACTIVE",
                     famous: isFamous,
                     productDeliveryCost: Number(prodDeliveryCost),
-                    productImage: image || undefined
+                    productImage: image || undefined,
+                    productOffer: prodOffer || undefined
                 });
             } else if (level === 'PRICING' && selectedProduct) {
                 return adminService.createPricing({
@@ -217,7 +219,7 @@ export default function AdminInventoryPage() {
 
     // --- NAVIGATION HANDLERS ---
     const resetForm = () => {
-        setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst("");
+        setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst(""); setProdOffer("");
         setProdDeliveryCost("40"); setIsFamous(false); setPrice(""); setQty(""); setIsMandatory(false);
         setImage(null);
     };
@@ -316,6 +318,10 @@ export default function AdminInventoryPage() {
                         <div className="space-y-2">
                             <Label>Instructions</Label>
                             <Input placeholder="Storage Instructions" value={prodInst} onChange={e => setProdInst(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Product Offer (e.g. 50% OFF)</Label>
+                            <Input placeholder="Offer text" value={prodOffer} onChange={e => setProdOffer(e.target.value)} />
                         </div>
                         <div className="flex items-center space-x-2">
                             <Checkbox id="famous" checked={isFamous} onCheckedChange={(c) => setIsFamous(!!c)} />
