@@ -1480,7 +1480,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 </div>
                             </div>
                         )}
-                    </SheetContent>
+                    </>
+                )}
+            </SheetContent>
         </Sheet >
     );
 }
