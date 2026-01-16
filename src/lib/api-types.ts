@@ -40,6 +40,7 @@ export interface Product {
     productRatings: ProductRating[];
     famous: boolean;
     productImage?: string;
+    productOffer?: string;
 }
 
 export interface Catalogue {
@@ -156,6 +157,7 @@ export interface CreateProductRequest {
     famous: boolean;
     productDeliveryCost: number;
     productImage?: string;
+    productOffer?: string;
 }
 
 export interface CreateProductResponse {
@@ -164,7 +166,7 @@ export interface CreateProductResponse {
     productName: string; // ... other fields same as Product
     productStatus: string;
     productImage?: string;
-    createdAt: string;
+    productOffer?: string;
 }
 
 export interface CreatePricingRequest {

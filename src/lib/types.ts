@@ -36,6 +36,7 @@ export type Product = {
   bestBefore?: string;
   instructions?: string;
   productImage?: string;
+  productOffer?: string;
 };
 
 export type ProductWithImage = Product & {

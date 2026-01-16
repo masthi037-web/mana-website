@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Star, Clock, ShoppingBag } from 'lucide-react';
+import { Heart, Star, Clock, ShoppingBag, Sparkles } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -99,6 +99,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               <div className="flex items-center gap-1 bg-background/90 backdrop-blur-md px-2 py-1 rounded-full text-[10px] font-bold text-foreground shadow-sm">
                 <Star className="w-3 h-3 fill-primary text-primary" />
                 <span>{product.rating.toFixed(1)}</span>
+              </div>
+            )}
+
+            {/* Offer Badge */}
+            {product.productOffer && (
+              <div className="flex items-center gap-1 bg-rose-500/90 backdrop-blur-md px-2 py-1 rounded-full text-[10px] font-bold text-white shadow-sm animate-in fade-in zoom-in duration-300">
+                <Sparkles className="w-3 h-3 fill-white text-white" />
+                <span>{product.productOffer}</span>
               </div>
             )}
           </div>

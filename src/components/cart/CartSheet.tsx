@@ -36,7 +36,8 @@ import {
     Check,
     CreditCard,
     Info,
-    User
+    User,
+    Briefcase
 } from 'lucide-react';
 import {
     AlertDialog,
@@ -92,6 +93,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'ONLINE'>('ONLINE');
     const [isInitializingPayment, setIsInitializingPayment] = useState(false);
+    const [savingAddress, setSavingAddress] = useState(false); // Moved from line 214
 
     // Address Form State
     const [newAddress, setNewAddress] = useState<Partial<CustomerAddress>>({
@@ -103,9 +105,47 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         customerDrNum: '',
         customerCountry: 'India'
     });
-    const [savingAddress, setSavingAddress] = useState(false);
-
+    const [addressLabel, setAddressLabel] = useState<'Home' | 'Work' | 'Other'>('Home');
     const subtotal = getCartTotal();
+
+    const handlePincodeChange = async (value: string) => {
+        setNewAddress(prev => ({ ...prev, customerPin: value }));
+
+        if (value.length === 6) {
+            try {
+                const response = await fetch(`https://api.postalpincode.in/pincode/${value}`);
+                const data = await response.json();
+
+                if (data[0].Status === 'Success') {
+                    const details = data[0].PostOffice[0];
+                    setNewAddress(prev => ({
+                        ...prev,
+                        customerPin: value,
+                        customerCity: details.Division,
+                        customerState: details.State,
+                        customerCountry: 'India'
+                    }));
+                    toast({ description: `Location found: ${details.Division}, ${details.State}` });
+                } else {
+                    toast({ variant: "destructive", description: "Invalid Pincode" });
+                    setNewAddress(prev => ({ ...prev, customerCity: '', customerState: '' }));
+                }
+            } catch (error) {
+                console.error("Pin code fetch error:", error);
+            }
+        }
+    };
+
+    // Helper to sync label changes
+    const handleLabelChange = (label: 'Home' | 'Work' | 'Other') => {
+        setAddressLabel(label);
+        if (label !== 'Other') {
+            setNewAddress(prev => ({ ...prev, addressName: label }));
+        } else {
+            setNewAddress(prev => ({ ...prev, addressName: '' })); // Clear for custom input
+        }
+    };
+
     const cartItemCount = getCartItemsCount();
 
     // Config Logic
@@ -211,7 +251,14 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         }
     };
 
+
     const handleSaveAddress = async () => {
+        // Enforce name if Other
+        if (addressLabel === 'Other' && !newAddress.addressName) {
+            toast({ variant: "destructive", description: "Please enter a name for this address." });
+            return;
+        }
+
         if (!newAddress.customerRoad || !newAddress.customerCity || !newAddress.customerPin) {
             toast({ variant: "destructive", description: "Please fill in all required fields." });
             return;
@@ -754,6 +801,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     onClick={() => {
                                         setShowLoginPopup(false); // Clear popup
                                         setCartOpen(false); // Close Cart Sidebar
+                                        // Set flag to reopen cart after login
+                                        if (typeof window !== 'undefined') {
+                                            sessionStorage.setItem('loginRedirect', 'cart');
+                                        }
                                         // Small timeout to allow cart close animation to start/finish
                                         setTimeout(() => {
                                             window.dispatchEvent(new Event('open-profile-sidebar'));
@@ -1156,7 +1207,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Contact Details</h3>
                                             <div className="bg-background p-5 rounded-2xl border shadow-sm space-y-4">
                                                 <div className="grid gap-2">
-                                                    <Label htmlFor="cName">Full Name</Label>
+                                                    <Label htmlFor="cName">
+                                                        Full Name <span className="text-destructive">*</span>
+                                                    </Label>
                                                     <Input
                                                         id="cName"
                                                         placeholder="John Doe"
@@ -1176,7 +1229,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                     />
                                                 </div>
                                                 <div className="grid gap-2">
-                                                    <Label htmlFor="cEmail">Email Address</Label>
+                                                    <Label htmlFor="cEmail">
+                                                        Email Address <span className="text-destructive">*</span>
+                                                    </Label>
                                                     <Input
                                                         id="cEmail"
                                                         placeholder="john@example.com"
@@ -1269,6 +1324,26 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                 </div>
                                             )}
                                         </div>
+
+                                        <div className="pt-4 sticky bottom-0 bg-background/95 backdrop-blur pb-6 mt-auto border-t">
+                                            <Button
+                                                className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] transition-all bg-gradient-to-r from-primary to-primary/90"
+                                                disabled={!selectedAddressId}
+                                                onClick={() => {
+                                                    if (!contactInfo.name || !contactInfo.email) {
+                                                        toast({
+                                                            variant: "destructive",
+                                                            title: "Missing Details",
+                                                            description: "Please enter your Full Name and Email Address."
+                                                        });
+                                                        return;
+                                                    }
+                                                    setView('payment');
+                                                }}
+                                            >
+                                                Proceed to Payment <ArrowRight className="w-5 h-5 ml-2 Group-hover:translate-x-1 transition-transform" />
+                                            </Button>
+                                        </div>
                                     </>
                                 )}
 
@@ -1279,22 +1354,42 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             <div className="grid gap-2">
                                                 <Label>Address Label</Label>
                                                 <div className="flex gap-3">
-                                                    {['Home', 'Work', 'Other'].map(tag => (
+                                                    {[
+                                                        { id: 'Home', icon: Home, label: 'Home' },
+                                                        { id: 'Work', icon: Briefcase, label: 'Work' },
+                                                        { id: 'Other', icon: MapPin, label: 'Other' }
+                                                    ].map((type) => (
                                                         <button
-                                                            key={tag}
-                                                            onClick={() => setNewAddress({ ...newAddress, addressName: tag })}
+                                                            key={type.id}
+                                                            onClick={() => handleLabelChange(type.id as any)}
                                                             className={cn(
-                                                                "flex-1 py-2 text-sm font-semibold rounded-xl border transition-all",
-                                                                newAddress.addressName === tag
-                                                                    ? "bg-primary text-primary-foreground border-primary"
-                                                                    : "bg-secondary/30 hover:bg-secondary border-transparent"
+                                                                "flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-200 text-sm font-medium",
+                                                                addressLabel === type.id
+                                                                    ? "bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-500/20"
+                                                                    : "bg-white text-slate-600 border-slate-200 hover:border-teal-200 hover:bg-teal-50"
                                                             )}
                                                         >
-                                                            {tag}
+                                                            <type.icon className={cn("w-4 h-4", addressLabel === type.id ? "text-white" : "text-slate-400")} />
+                                                            {type.label}
                                                         </button>
                                                     ))}
                                                 </div>
+
+                                                {addressLabel === 'Other' && (
+                                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300 mt-2 relative">
+                                                        <Label htmlFor="customName" className="sr-only">Custom Name</Label>
+                                                        <Input
+                                                            id="customName"
+                                                            placeholder="e.g. Grandma's House, My Office"
+                                                            className="h-12 bg-secondary/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
+                                                            value={newAddress.addressName === 'Other' ? '' : newAddress.addressName}
+                                                            onChange={(e) => setNewAddress({ ...newAddress, addressName: e.target.value })}
+                                                            autoFocus
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
+
                                             <div className="grid gap-4">
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="drNum">Door / Flat No.</Label>
@@ -1323,8 +1418,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                             id="city"
                                                             placeholder="City"
                                                             value={newAddress.customerCity}
-                                                            onChange={e => setNewAddress({ ...newAddress, customerCity: e.target.value })}
-                                                            className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                            readOnly
+                                                            className="bg-secondary/10 border-transparent text-muted-foreground cursor-not-allowed rounded-xl"
                                                         />
                                                     </div>
                                                     <div className="grid gap-2">
@@ -1333,7 +1428,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                             id="pincode"
                                                             placeholder="560001"
                                                             value={newAddress.customerPin}
-                                                            onChange={e => setNewAddress({ ...newAddress, customerPin: e.target.value })}
+                                                            onChange={e => handlePincodeChange(e.target.value)}
                                                             className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
                                                         />
                                                     </div>
@@ -1344,8 +1439,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                         id="state"
                                                         placeholder="State"
                                                         value={newAddress.customerState}
-                                                        onChange={e => setNewAddress({ ...newAddress, customerState: e.target.value })}
-                                                        className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                        readOnly
+                                                        className="bg-secondary/10 border-transparent text-muted-foreground cursor-not-allowed rounded-xl"
                                                     />
                                                 </div>
 
@@ -1354,7 +1449,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                                         <div className="bg-blue-50 text-blue-800 p-4 rounded-2xl text-xs font-medium leading-relaxed border border-blue-100 flex gap-3">
                                             <div className="bg-blue-100 p-1.5 rounded-full h-fit">
-                                                <Building2 className="w-4 h-4" />
+                                                <Info className="w-4 h-4" />
                                             </div>
                                             <p>Ensure your address details are accurate to avoid delivery delays. Pincode is crucial for serviceability checks.</p>
                                         </div>
@@ -1561,30 +1656,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             </div>
                         </ScrollArea>
 
-                        {/* Footer for Address View (Select Address) */}
-                        {view === 'list' && (
-                            <div className="p-6 bg-background pt-4 border-t border-border/50 backdrop-blur-md">
-                                <Button
-                                    size="lg"
-                                    className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                                    onClick={() => {
-                                        if (selectedAddressId) setView('payment');
-                                    }}
-                                    disabled={!selectedAddressId}
-                                >
-                                    {!selectedAddressId ? (
-                                        "Select an Address"
-                                    ) : (
-                                        <span className="flex items-center gap-2">
-                                            Proceed to Pay <ArrowRight className="w-5 h-5" />
-                                        </span>
-                                    )}
-                                </Button>
-                                <p className="text-center text-[10px] text-muted-foreground mt-3 font-medium">
-                                    Secure Encrypted Transaction • 100% Purchase Protection
-                                </p>
-                            </div>
-                        )}
+                        {/* Footer for Address View (Select Address) REMOVED - Moved inside scroll area with validation */}
 
                         {/* Footer for Payment View */}
                         {view === 'payment' && (

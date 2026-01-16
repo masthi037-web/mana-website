@@ -124,7 +124,8 @@ function mapApiProductToAppProduct(apiProd: ApiProduct): AppProduct {
         famous: apiProd.famous || false,
         ingredients: apiProd.productIng,
         bestBefore: apiProd.productBestBefore,
-        instructions: apiProd.productInst
+        instructions: apiProd.productInst,
+        productOffer: apiProd.productOffer
     };
 }
 
@@ -134,7 +135,7 @@ export async function validateCheckout(payload: CheckoutValidationRequest): Prom
         const data = await apiClient<CheckoutValidationResponse>('/product/checkout/check', {
             method: 'POST',
             body: JSON.stringify(payload),
-            next: { revalidate: 0 } // No cache for validation
+            next: { revalidate: 150 } // cache for 2.5 minutes
         });
         return data;
     } catch (error) {

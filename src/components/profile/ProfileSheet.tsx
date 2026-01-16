@@ -22,12 +22,14 @@ import { cn } from '@/lib/utils';
 import { useTenant } from '@/components/providers/TenantContext';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { useSheetBackHandler } from '@/hooks/use-sheet-back-handler';
+import { useCart } from '@/hooks/use-cart';
 
 export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const { toast } = useToast();
     const { domain, companyId } = useTenant();
     const { setWishlistOpen } = useWishlist();
+    const { setCartOpen } = useCart();
 
     // State for Auth Flow
     const [view, setView] = React.useState<'profile' | 'login-phone' | 'login-otp' | 'edit-profile'>('login-phone');
@@ -153,19 +155,28 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                 setShowSuccess(false);
                 setView('profile');
 
-                // Close Login Sidebar and Open Address Sidebar
+                // Close Login Sidebar
                 setIsOpen(false);
 
-                // Only open Address Sidebar if NOT owner
-                if (!response.role?.includes('OWNER')) {
-                    // If CUSTOMER, fetch details to warm cache
-                    if (response.role?.includes('CUSTOMER')) {
-                        customerService.getCustomerDetails().catch(console.error);
-                    }
-
+                // Handle Redirect Logic
+                const redirectTarget = sessionStorage.getItem('loginRedirect');
+                if (redirectTarget === 'cart') {
+                    sessionStorage.removeItem('loginRedirect');
                     setTimeout(() => {
-                        window.dispatchEvent(new Event('open-address-sidebar'));
+                        setCartOpen(true);
                     }, 300);
+                } else {
+                    // Default: Open Address Sidebar if NOT owner
+                    if (!response.role?.includes('OWNER')) {
+                        // If CUSTOMER, fetch details to warm cache
+                        if (response.role?.includes('CUSTOMER')) {
+                            customerService.getCustomerDetails().catch(console.error);
+                        }
+
+                        setTimeout(() => {
+                            window.dispatchEvent(new Event('open-address-sidebar'));
+                        }, 300);
+                    }
                 }
 
                 // toast({ title: "Welcome back!", description: "Logged in successfully" }); // REMOVED

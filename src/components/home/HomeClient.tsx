@@ -308,6 +308,46 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
                                 </div>
                             )}
 
+                            {/* Exclusive Offers Block - Freshly Dropped Signature Selection Style */}
+                            {activeCategory && activeCategory.catalogs.flatMap(c => c.products).filter(p => p.productOffer).length > 0 && (
+                                <div className="mb-16 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-400">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative flex h-3 w-3">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-2xl font-bold font-headline text-foreground leading-none">Exclusive Offers</h3>
+                                                <p className="text-sm text-muted-foreground mt-1">Limited time deals just for you</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
+                                        {(() => {
+                                            const imageMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
+                                            const offerProducts = activeCategory ? activeCategory.catalogs.flatMap(c => c.products)
+                                                .filter(p => p.productOffer)
+                                                .map(p => {
+                                                    const image = imageMap.get(p.imageId);
+                                                    return {
+                                                        ...p,
+                                                        imageHint: image?.imageHint || 'product image',
+                                                        imageUrl: `https://picsum.photos/seed/${p.id}/300/300`
+                                                    };
+                                                }) : [];
+
+                                            return offerProducts.map((product) => (
+                                                <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
+                                                    <ProductCard product={product} />
+                                                </div>
+                                            ));
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Catalogs & Products Area */}
                             <div id="product-catalog-section" className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
                                 <div className="flex items-center justify-between mb-6">
