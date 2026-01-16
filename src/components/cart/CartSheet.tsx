@@ -294,20 +294,31 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 customerName: customerData.customerName,
                 phoneNumber: customerData.customerMobileNumber,
                 domainName: companyDetails?.companyDomain || window.location.hostname,
-                items: cart.map(item => ({
-                    productId: parseInt(item.id),
-                    // pricingId might be null if no variants, but typically we have one. 
-                    // If multiple pricing options exist, we need to find which one matches the selected variant.
-                    // For now, let's assume item.pricing[0].id or similar if using variants.
-                    // However, the selectedVariants object maps "Size" -> "Large". We need to map this back to pricingId.
-                    // This logic depends on how we store pricingId. 
-                    // Looking at `useCart`, we might not be storing `pricingId` explicitly.
-                    // Let's rely on `pricing` array in the item if available.
-                    pricingId: item.pricing && item.pricing.length > 0 ? parseInt(item.pricing[0].id) : null, // Simplified for now, needs rigorous mapping if complex variants
-                    productAddonIds: item.selectedAddons && item.selectedAddons.length > 0
-                        ? item.selectedAddons.map(a => a.id).join('&&&')
-                        : ""
-                }))
+                items: cart.map(item => {
+                    // Logic to find the correct pricing ID based on selected variants (Quantity)
+                    let pricingId: number | null = null;
+                    if (item.pricing && item.pricing.length > 0) {
+                        const quantityVariant = item.selectedVariants['Quantity'];
+                        if (quantityVariant) {
+                            const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
+                            if (matchedPricing) {
+                                pricingId = parseInt(matchedPricing.id);
+                            }
+                        }
+                        // Fallback to first pricing option if no variant match found (e.g. legacy or single option)
+                        if (!pricingId && item.pricing.length > 0) {
+                            pricingId = parseInt(item.pricing[0].id);
+                        }
+                    }
+
+                    return {
+                        productId: parseInt(item.id),
+                        pricingId: pricingId,
+                        productAddonIds: item.selectedAddons && item.selectedAddons.length > 0
+                            ? item.selectedAddons.map(a => a.id).join('&&&')
+                            : ""
+                    };
+                })
             };
 
             // 3. Call Validation API
