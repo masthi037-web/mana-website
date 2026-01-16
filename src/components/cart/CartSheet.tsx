@@ -35,7 +35,8 @@ import {
     Building2,
     Check,
     CreditCard,
-    Info
+    Info,
+    User
 } from 'lucide-react';
 import {
     AlertDialog,
@@ -156,10 +157,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
     // Initial Load
     useEffect(() => {
-        if (open) {
+        if (isCartOpen) {
             loadCustomerData();
         }
-    }, [open]);
+    }, [isCartOpen]);
 
     const loadCustomerData = async () => {
         setLoadingAddresses(true);
@@ -1169,8 +1170,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                         id="cPhone"
                                                         placeholder="9876543210"
                                                         value={contactInfo.mobile}
-                                                        onChange={e => setContactInfo({ ...contactInfo, mobile: e.target.value })}
-                                                        className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                        readOnly
+                                                        className="bg-secondary/10 border-transparent text-muted-foreground focus-visible:ring-0 cursor-not-allowed rounded-xl opacity-90 font-medium"
                                                     />
                                                 </div>
                                                 <div className="grid gap-2">
@@ -1375,7 +1376,89 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                                 {/* View: Payment Method */}
                                 {view === 'payment' && (
-                                    <div className="animate-in slide-in-from-right-8 fade-in duration-300 space-y-6">
+                                    <div className="animate-in slide-in-from-right-8 fade-in duration-300 space-y-8">
+
+                                        {/* Order Summary */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Order Summary</h3>
+                                            <div className="bg-background rounded-3xl border shadow-sm overflow-hidden">
+                                                <div className="max-h-[200px] overflow-y-auto">
+                                                    {cart.map((item) => (
+                                                        <div key={item.cartItemId} className="flex gap-4 p-4 border-b last:border-0 hover:bg-secondary/5 transition-colors">
+                                                            {/* Image */}
+                                                            <div className="h-14 w-14 rounded-xl bg-secondary overflow-hidden shrink-0 border border-border/50 bg-white relative">
+                                                                {item.images && item.images.length > 0 ? (
+                                                                    <img src={item.images[0]} alt={item.name} className="h-full w-full object-cover" />
+                                                                ) : item.imageUrl ? (
+                                                                    <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                                                                ) : (
+                                                                    <div className="h-full w-full flex items-center justify-center text-muted-foreground text-[10px]">No Img</div>
+                                                                )}
+                                                            </div>
+                                                            {/* Details */}
+                                                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                                                <h4 className="font-bold text-xs sm:text-sm truncate pr-2">{item.name}</h4>
+                                                                <p className="text-[10px] text-muted-foreground line-clamp-1">
+                                                                    {Object.entries(item.selectedVariants || {}).map(([k, v]) => `${k}: ${v}`).join(', ')}
+                                                                </p>
+                                                                <div className="flex items-center justify-between mt-1">
+                                                                    <span className="text-[10px] font-semibold bg-secondary px-1.5 py-0.5 rounded-md text-foreground/80">Qty: {item.quantity}</span>
+                                                                    <span className="font-bold text-xs">₹{((item.price + (item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                {/* Total Row */}
+                                                <div className="bg-secondary/20 p-4 flex justify-between items-center text-sm border-t border-border/50">
+                                                    <span className="font-semibold text-muted-foreground">Total to Pay</span>
+                                                    <span className="font-bold text-lg text-primary">₹{total.toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Delivery Details */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Delivery To</h3>
+                                            <div className="bg-background p-5 rounded-3xl border shadow-sm space-y-5 relative overflow-hidden">
+                                                {/* Contact Info */}
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                                                        <User className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="overflow-hidden">
+                                                        <p className="font-bold text-sm truncate">{contactInfo.name}</p>
+                                                        <p className="text-xs text-muted-foreground mt-0.5">{contactInfo.mobile}</p>
+                                                        <p className="text-xs text-muted-foreground truncate">{contactInfo.email}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="h-px bg-border/60 w-full" />
+
+                                                {/* Address */}
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                                                        <MapPin className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="overflow-hidden">
+                                                        {(() => {
+                                                            const addr = addresses.find(a => a.customerAddressId === selectedAddressId);
+                                                            return addr ? (
+                                                                <>
+                                                                    <span className="text-[10px] font-bold bg-secondary px-2 py-0.5 rounded text-foreground/70 mb-1 inline-block uppercase tracking-wider">
+                                                                        {addr.addressName || 'Home'}
+                                                                    </span>
+                                                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                        {addr.customerDrNum}, {addr.customerRoad}, {addr.customerCity} - {addr.customerPin}
+                                                                    </p>
+                                                                </>
+                                                            ) : <p className="text-sm text-destructive">No address selected</p>;
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div className="space-y-4">
                                             <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Payment Method</h3>
 
