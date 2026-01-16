@@ -132,6 +132,15 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         };
     }, []);
 
+    // Reset view on logout
+    useEffect(() => {
+        if (!isLoggedIn) {
+            setView('cart');
+            setSelectedAddressId(null);
+            setCustomer(null);
+        }
+    }, [isLoggedIn]);
+
     // Status Logic
     const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
     const shipping = isFreeDelivery ? 0 : 0; // Calculated at checkout
@@ -171,11 +180,12 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     }, []);
 
     // Initial Load
+    // Initial Load
     useEffect(() => {
-        if (isCartOpen) {
+        if (isCartOpen && isLoggedIn) {
             loadCustomerData();
         }
-    }, [isCartOpen]);
+    }, [isCartOpen, isLoggedIn]);
 
     const loadCustomerData = async () => {
         setLoadingAddresses(true);

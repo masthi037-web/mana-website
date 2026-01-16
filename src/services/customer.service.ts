@@ -11,6 +11,8 @@ export const customerService = {
             customerId = localStorage.getItem('customerId') || '';
         }
 
+        if (!customerId) return null;
+
         if (!forceRefresh) {
             try {
                 const cached = localStorage.getItem(CACHE_KEY);
