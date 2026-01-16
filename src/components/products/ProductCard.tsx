@@ -139,7 +139,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </h3>
             <div className="flex flex-col items-end shrink-0">
               <span className="font-headline font-bold text-base text-primary tracking-tight">
-                ₹{activePrice.toFixed(0)}
+                {product.pricing && product.pricing.length > 1 ? (
+                  <span className="flex flex-col items-end">
+                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-0.5">Starts from</span>
+                    <span>₹{activePrice.toFixed(0)}</span>
+                  </span>
+                ) : (
+                  <span>₹{activePrice.toFixed(0)}</span>
+                )}
               </span>
             </div>
           </div>
