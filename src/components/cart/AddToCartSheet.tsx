@@ -174,7 +174,13 @@ const AddToCartContent = ({
       variantsToAdd['Quantity'] = selectedPricingOption.quantity;
     }
     const selectedAddonsList = availableAddons.filter(a => selectedAddonIds.has(a.id));
-    addToCart({ ...product, price: basePrice }, variantsToAdd, selectedAddonsList);
+
+    // Calculate effective price with offer
+    const offerPercentage = product.productOffer ? parseFloat(product.productOffer) : 0;
+    const hasOffer = !isNaN(offerPercentage) && offerPercentage > 0;
+    const effectiveBasePrice = hasOffer ? basePrice - (basePrice * offerPercentage / 100) : basePrice;
+
+    addToCart({ ...product, price: effectiveBasePrice }, variantsToAdd, selectedAddonsList);
 
     // Trigger success confetti
     const triggerConfetti = () => {
@@ -321,7 +327,20 @@ const AddToCartContent = ({
         <div className="flex items-center gap-3 w-full">
           <div className="flex flex-col min-w-[30%]">
             <span className="text-[10px] font-medium text-muted-foreground uppercase">Total</span>
-            <span className="text-lg font-bold text-primary leading-tight">₹{currentPrice.toFixed(2)}</span>
+            {(() => {
+              const offerPercentage = product.productOffer ? parseFloat(product.productOffer) : 0;
+              const hasOffer = !isNaN(offerPercentage) && offerPercentage > 0;
+              const finalPrice = hasOffer ? currentPrice - (currentPrice * offerPercentage / 100) : currentPrice;
+
+              return (
+                <div className="flex flex-col items-start leading-none">
+                  {hasOffer && (
+                    <span className="text-xs text-muted-foreground line-through font-medium">₹{currentPrice.toFixed(2)}</span>
+                  )}
+                  <span className="text-lg font-bold text-primary leading-tight">₹{finalPrice.toFixed(2)}</span>
+                </div>
+              );
+            })()}
           </div>
           <Button
             onClick={handleAddToCart}
