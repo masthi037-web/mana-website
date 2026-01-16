@@ -34,7 +34,8 @@ import {
     Home,
     Building2,
     Check,
-    CreditCard
+    CreditCard,
+    Info
 } from 'lucide-react';
 import {
     AlertDialog,
@@ -137,6 +138,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const canCheckout = subtotal >= minOrder;
     const amountForFreeDelivery = Math.max(0, freeDeliveryThreshold - subtotal);
 
+    // Contact Info State
+    const [contactInfo, setContactInfo] = useState({
+        name: '',
+        email: '',
+        mobile: ''
+    });
+
     // Initial Mount Tracker
     useEffect(() => {
         // Small timeout to allow state calculations to settle before un-flagging
@@ -146,12 +154,24 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         return () => clearTimeout(timer);
     }, []);
 
+    // Initial Load
+    useEffect(() => {
+        if (open) {
+            loadCustomerData();
+        }
+    }, [open]);
+
     const loadCustomerData = async () => {
         setLoadingAddresses(true);
         try {
             const data = await customerService.getCustomerDetails(false); // use cache if available
             if (data) {
                 setCustomer(data);
+                setContactInfo({
+                    name: data.customerName || '',
+                    email: data.customerEmailId || '',
+                    mobile: data.customerMobileNumber || ''
+                });
                 setAddresses(data.customerAddress || []);
                 // Auto-select first address if none selected
                 if (!selectedAddressId && data.customerAddress?.length > 0) {
@@ -211,6 +231,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             return;
         }
 
+        if (!contactInfo.name || !contactInfo.mobile || !contactInfo.email) {
+            toast({ variant: "destructive", description: "Please fill in all contact details (Name, Phone, Email)." });
+            return;
+        }
+
         const selectedAddress = addresses.find(a => a.customerAddressId === selectedAddressId);
         if (!selectedAddress) {
             toast({ variant: "destructive", description: "Invalid address selected." });
@@ -230,9 +255,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
             // Construct Payload
             const payload: PaymentInitializationRequest = {
-                customerName: customer.customerName,
-                customerPhoneNumber: customer.customerMobileNumber,
-                customerEmailId: customer.customerEmailId,
+                customerName: contactInfo.name,
+                customerPhoneNumber: contactInfo.mobile,
+                customerEmailId: contactInfo.email,
                 domainName: companyDetails?.companyDomain || window.location.hostname,
                 customerAddress: `${selectedAddress.customerDrNum}, ${selectedAddress.customerRoad}`,
                 customerCity: selectedAddress.customerCity,
@@ -1123,80 +1148,126 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             <div className="p-6 space-y-8">
                                 {/* Address List View */}
                                 {view === 'list' && (
-                                    <div className="space-y-4">
-                                        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Saved Addresses</h3>
-
-                                        {loadingAddresses ? (
-                                            <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
-                                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                                <p className="text-xs font-medium">Loading addresses...</p>
-                                            </div>
-                                        ) : addresses.length === 0 ? (
-                                            <div className="text-center py-10 px-4 bg-background rounded-3xl border border-dashed border-border/60">
-                                                <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3">
-                                                    <MapPin className="w-6 h-6" />
+                                    <>
+                                        {/* Contact Details */}
+                                        <div className="space-y-4 mb-6">
+                                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Contact Details</h3>
+                                            <div className="bg-background p-5 rounded-2xl border shadow-sm space-y-4">
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="cName">Full Name</Label>
+                                                    <Input
+                                                        id="cName"
+                                                        placeholder="John Doe"
+                                                        value={contactInfo.name}
+                                                        onChange={e => setContactInfo({ ...contactInfo, name: e.target.value })}
+                                                        className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                    />
                                                 </div>
-                                                <p className="font-semibold text-foreground">No addresses found</p>
-                                                <Button onClick={() => setView('add')} variant="secondary" className="mt-4 rounded-full">
-                                                    Add First Address
-                                                </Button>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="cPhone">Phone Number</Label>
+                                                    <Input
+                                                        id="cPhone"
+                                                        placeholder="9876543210"
+                                                        value={contactInfo.mobile}
+                                                        onChange={e => setContactInfo({ ...contactInfo, mobile: e.target.value })}
+                                                        className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="cEmail">Email Address</Label>
+                                                    <Input
+                                                        id="cEmail"
+                                                        placeholder="john@example.com"
+                                                        value={contactInfo.email}
+                                                        onChange={e => setContactInfo({ ...contactInfo, email: e.target.value })}
+                                                        className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                    />
+                                                    <div className="flex items-center gap-2 mt-2 px-1 opacity-80">
+                                                        <Info className="w-3 h-3 text-primary animate-pulse" />
+                                                        <p className="text-[10px] text-muted-foreground font-medium">
+                                                            Please enter correctly for order confirmation.
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        ) : (
-                                            <div className="grid gap-4">
-                                                {addresses.map((addr) => {
-                                                    const isSelected = selectedAddressId === addr.customerAddressId;
-                                                    return (
-                                                        <div
-                                                            key={addr.customerAddressId}
-                                                            onClick={() => setSelectedAddressId(addr.customerAddressId)}
-                                                            className={cn(
-                                                                "relative group cursor-pointer p-4 rounded-2xl border transition-all duration-300",
-                                                                isSelected
-                                                                    ? "bg-primary/5 border-primary shadow-sm"
-                                                                    : "bg-background border-border hover:border-primary/30 hover:shadow-md"
-                                                            )}
-                                                        >
-                                                            <div className="flex items-start gap-4">
-                                                                <div className={cn(
-                                                                    "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors",
-                                                                    isSelected ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground group-hover:bg-secondary/80"
-                                                                )}>
-                                                                    <Home className="w-5 h-5" />
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="flex items-center justify-between mb-1">
-                                                                        <span className={cn(
-                                                                            "font-bold text-base truncate",
-                                                                            isSelected ? "text-primary" : "text-foreground"
-                                                                        )}>
-                                                                            {addr.addressName}
-                                                                        </span>
-                                                                        {isSelected && (
-                                                                            <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0 text-center rounded-full flex items-center gap-1">
-                                                                                <Check className="w-3 h-3" /> Selected
-                                                                            </span>
-                                                                        )}
+                                        </div>
+
+                                        {/* Saved Addresses */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Saved Addresses</h3>
+
+                                            {loadingAddresses ? (
+                                                <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+                                                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                                    <p className="text-xs font-medium">Loading addresses...</p>
+                                                </div>
+                                            ) : addresses.length === 0 ? (
+                                                <div className="text-center py-10 px-4 bg-background rounded-3xl border border-dashed border-border/60">
+                                                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3">
+                                                        <MapPin className="w-6 h-6" />
+                                                    </div>
+                                                    <p className="font-semibold text-foreground">No addresses found</p>
+                                                    <Button onClick={() => setView('add')} variant="secondary" className="mt-4 rounded-full">
+                                                        Add First Address
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div className="grid gap-4">
+                                                    {addresses.map((addr) => {
+                                                        const isSelected = selectedAddressId === addr.customerAddressId;
+                                                        return (
+                                                            <div
+                                                                key={addr.customerAddressId}
+                                                                onClick={() => setSelectedAddressId(addr.customerAddressId)}
+                                                                className={cn(
+                                                                    "relative group cursor-pointer p-4 rounded-2xl border transition-all duration-300",
+                                                                    isSelected
+                                                                        ? "bg-primary/5 border-primary shadow-sm"
+                                                                        : "bg-background border-border hover:border-primary/30 hover:shadow-md"
+                                                                )}
+                                                            >
+                                                                <div className="flex items-start gap-4">
+                                                                    <div className={cn(
+                                                                        "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors",
+                                                                        isSelected ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground group-hover:bg-secondary/80"
+                                                                    )}>
+                                                                        <Home className="w-5 h-5" />
                                                                     </div>
-                                                                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                                                                        {addr.customerDrNum}, {addr.customerRoad}, {addr.customerCity} - {addr.customerPin}
-                                                                    </p>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center justify-between mb-1">
+                                                                            <span className={cn(
+                                                                                "font-bold text-base truncate",
+                                                                                isSelected ? "text-primary" : "text-foreground"
+                                                                            )}>
+                                                                                {addr.addressName}
+                                                                            </span>
+                                                                            {isSelected && (
+                                                                                <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0 text-center rounded-full flex items-center gap-1">
+                                                                                    <Check className="w-3 h-3" /> Selected
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                                                                            {addr.customerDrNum}, {addr.customerRoad}, {addr.customerCity} - {addr.customerPin}
+                                                                        </p>
+                                                                    </div>
                                                                 </div>
                                                             </div>
+                                                        );
+                                                    })}
+                                                    <button
+                                                        onClick={() => setView('add')}
+                                                        className="flex items-center justify-center gap-2 p-4 rounded-2xl border border-dashed border-border/60 hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                                                    >
+                                                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                                            <Plus className="w-4 h-4" />
                                                         </div>
-                                                    );
-                                                })}
-                                                <button
-                                                    onClick={() => setView('add')}
-                                                    className="flex items-center justify-center gap-2 p-4 rounded-2xl border border-dashed border-border/60 hover:border-primary/50 hover:bg-primary/5 transition-all group"
-                                                >
-                                                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                                                        <Plus className="w-4 h-4" />
-                                                    </div>
-                                                    <span className="font-semibold text-sm text-muted-foreground group-hover:text-primary">Add New Address</span>
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
+                                                        <span className="font-semibold text-sm text-muted-foreground group-hover:text-primary">Add New Address</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
                                 )}
 
                                 {/* Add Address View */}
@@ -1275,10 +1346,29 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                         className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
                                                     />
                                                 </div>
+
                                             </div>
                                         </div>
-                                        <Button className="w-full h-12 rounded-xl text-base font-bold" onClick={handleSaveAddress} disabled={savingAddress}>
-                                            {savingAddress ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Address"}
+
+                                        <div className="bg-blue-50 text-blue-800 p-4 rounded-2xl text-xs font-medium leading-relaxed border border-blue-100 flex gap-3">
+                                            <div className="bg-blue-100 p-1.5 rounded-full h-fit">
+                                                <Building2 className="w-4 h-4" />
+                                            </div>
+                                            <p>Ensure your address details are accurate to avoid delivery delays. Pincode is crucial for serviceability checks.</p>
+                                        </div>
+
+                                        <Button
+                                            className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-primary/20"
+                                            onClick={handleSaveAddress}
+                                            disabled={savingAddress}
+                                        >
+                                            {savingAddress ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                                                </>
+                                            ) : (
+                                                "Save Address"
+                                            )}
                                         </Button>
                                     </div>
                                 )}
@@ -1390,9 +1480,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 </div>
                             </div>
                         )}
-                    </>
-                )}
-            </SheetContent>
-        </Sheet>
+                    </SheetContent>
+        </Sheet >
     );
 }
