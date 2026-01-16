@@ -191,55 +191,96 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
         setIsCheckingOut(true);
         try {
-            const latestProducts = await Promise.all(
-                cart.map(async (item) => {
-                    const details = await fetchProductDetails(item.id);
-                    return details;
-                })
-            );
+            // 1. Get Customer Details (Phone, Name)
+            // We need these for the validation payload
+            // Assuming customerService has a method to get cached details or we fetch fresh
+            const { customerService } = await import('@/services/customer.service');
+            const customerData = await customerService.getCustomerDetails();
 
-            const validProducts = latestProducts.filter((p): p is NonNullable<typeof p> => p !== null);
+            if (!customerData) {
+                toast({ variant: "destructive", description: "Could not fetch user details. Please try again." });
+                return;
+            }
 
-            // Sync with server (updates prices, removes deleted)
-            // We need to re-add syncWithServer to useCart, or implement it here locally.
-            // Since we reverted it, I will implement a local check + store update.
-            // Actually, best practice is to call the store action, but I removed it.
-            // I will manually update the store if needed.
+            // 2. Construct Payload
+            const { validateCheckout } = await import('@/services/product.service');
+            const payload: any = {
+                customerName: customerData.customerName,
+                phoneNumber: customerData.customerMobileNumber,
+                domainName: companyDetails?.companyDomain || window.location.hostname,
+                items: cart.map(item => ({
+                    productId: parseInt(item.id),
+                    // pricingId might be null if no variants, but typically we have one. 
+                    // If multiple pricing options exist, we need to find which one matches the selected variant.
+                    // For now, let's assume item.pricing[0].id or similar if using variants.
+                    // However, the selectedVariants object maps "Size" -> "Large". We need to map this back to pricingId.
+                    // This logic depends on how we store pricingId. 
+                    // Looking at `useCart`, we might not be storing `pricingId` explicitly.
+                    // Let's rely on `pricing` array in the item if available.
+                    pricingId: item.pricing && item.pricing.length > 0 ? parseInt(item.pricing[0].id) : null, // Simplified for now, needs rigorous mapping if complex variants
+                    productAddonIds: item.selectedAddons && item.selectedAddons.length > 0
+                        ? item.selectedAddons.map(a => a.id).join('&&&')
+                        : ""
+                }))
+            };
 
+            // 3. Call Validation API
+            const response = await validateCheckout(payload);
+
+            if (!response || !response.productDetails) {
+                toast({ variant: "destructive", description: "Validation failed. Please try again." });
+                return;
+            }
+
+            // 4. Compare and Validate
             let hasChanges = false;
             const changes: string[] = [];
-            const newCart = cart.filter(item => {
-                const fresh = validProducts.find(p => p.id === item.id);
-                if (!fresh) {
+            const newCart = [...cart];
+
+            // We iterate through response items. Order is preserved? Yes, usually.
+            // But let's verify by index or ID if possible. The API response lacks ID, so we assume index matching.
+
+            response.productDetails.forEach((detail, index) => {
+                const item = newCart[index];
+                if (!item) return;
+
+                // Check Status
+                if (detail.productStatus !== 'ACTIVE') {
                     hasChanges = true;
-                    changes.push(`"${item.name}" is no longer available.`);
-                    return false; // Remove
+                    changes.push(`"${item.name}" is currently unavailable/inactive.`);
+                    // We will remove it later or mark it. For now, let's remove it from the cart to be safe?
+                    item.cartItemId = 'REMOVE_ME'; // Mark for removal
                 }
 
-                // Compare Price
-                if (fresh.price !== item.price) {
+                // Check Product Price
+                if (detail.productPrice !== item.price) {
                     hasChanges = true;
-                    changes.push(`Price of "${item.name}" changed from ₹${item.price} to ₹${fresh.price}.`);
-                    // We will update the item in the store in the next step
+                    changes.push(`Price of "${item.name}" updated from ₹${item.price} to ₹${detail.productPrice}.`);
+                    item.price = detail.productPrice;
                 }
 
-                // Compare Status
-                // Assuming existence implies status OK for now, or check fresh.status
-
-                return true;
+                // Check Addon Prices
+                if (item.selectedAddons && item.selectedAddons.length > 0 && detail.addonAndAddonPrice) {
+                    // detail.addonAndAddonPrice is ["id:price", ...]
+                    detail.addonAndAddonPrice.forEach(str => {
+                        const [idStr, priceStr] = str.split(':');
+                        const addonIndex = item.selectedAddons!.findIndex(a => a.id === idStr);
+                        if (addonIndex > -1) {
+                            const newPrice = parseFloat(priceStr);
+                            if (item.selectedAddons![addonIndex].price !== newPrice) {
+                                hasChanges = true;
+                                changes.push(`Addon price for "${item.name}" updated.`);
+                                item.selectedAddons![addonIndex].price = newPrice;
+                            }
+                        }
+                    });
+                }
             });
 
-            // Check for potential price updates to existing items
-            const finalCart = newCart.map(item => {
-                const fresh = validProducts.find(p => p.id === item.id);
-                if (fresh && fresh.price !== item.price) {
-                    return { ...item, price: fresh.price, name: fresh.name, imageUrl: fresh.imageUrl || item.imageUrl };
-                }
-                return item;
-            });
+            const finalCart = newCart.filter(item => item.cartItemId !== 'REMOVE_ME');
 
             if (hasChanges) {
-                // Update Store Manually (hacky since we removed the action, but works)
+                // Update Store
                 useCart.setState({ cart: finalCart });
                 setValidationErrors(changes);
                 setShowValidationPopup(true);
@@ -248,6 +289,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 setCartOpen(false);
                 router.push('/cart');
             }
+
         } catch (error) {
             console.error("Checkout validation failed", error);
             toast({ variant: "destructive", description: "Something went wrong. Please try again.", duration: 2000 });

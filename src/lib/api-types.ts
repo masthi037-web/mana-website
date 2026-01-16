@@ -230,3 +230,26 @@ export interface UpdateCustomerRequest {
     createdAt: string;
     customerImage?: string;
 }
+
+export interface CheckoutValidationItem {
+    productId: number;
+    pricingId: number | null;
+    productAddonIds: string; // "id1&&&id2"
+}
+
+export interface CheckoutValidationRequest {
+    customerName: string;
+    phoneNumber: string;
+    domainName: string;
+    items: CheckoutValidationItem[];
+}
+
+export interface CheckoutValidationProductDetail {
+    productStatus: string; // 'ACTIVE' | 'INACTIVE'
+    productPrice: number;
+    addonAndAddonPrice: string[]; // ["id:price", "1:20"]
+}
+
+export interface CheckoutValidationResponse {
+    productDetails: CheckoutValidationProductDetail[];
+}
