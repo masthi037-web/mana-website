@@ -58,7 +58,7 @@ export default async function Home() {
       </section>
 
 
-      <ProductInitializer categories={categories} />
+      <ProductInitializer categories={categories} companyDetails={company} />
       <HomeClient
         initialCategories={categories}
         companyCoupon={company?.companyCoupon}

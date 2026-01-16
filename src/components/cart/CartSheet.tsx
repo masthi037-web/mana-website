@@ -314,7 +314,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 })
             };
 
-            const response = await orderService.initializePayment(payload);
+            const response = await orderService.initializePayment(
+                payload,
+                companyDetails?.razorpayKeyId || '',
+                companyDetails?.razorpayKeySecret || ''
+            );
             console.log("PAYMENT INIT RESPONSE:", response);
 
             if (response && response.razorpayOrderId) {

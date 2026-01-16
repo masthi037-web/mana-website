@@ -85,6 +85,8 @@ export interface CompanyDetails {
     freeDeliveryCost: string;
     socialMediaLink: string | null;
     about: string;
+    razorpayKeyId: string;
+    razorpayKeySecret: string;
 }
 
 export interface CompanyInventory {
