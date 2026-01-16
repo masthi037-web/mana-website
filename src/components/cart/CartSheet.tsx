@@ -41,7 +41,6 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useCart } from '@/hooks/use-cart';
-import { fetchProductDetails } from '@/services/product.service';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
@@ -190,6 +189,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         }
 
         setIsCheckingOut(true);
+        console.log("Starting checkout validation process...");
         try {
             // 1. Get Customer Details (Phone, Name)
             // We need these for the validation payload

@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils'; // Assuming cn utility exists
 
 import { useTenant } from '@/components/providers/TenantContext';
+import { CheckoutSheet } from '@/components/checkout/CheckoutSheet';
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, getCartTotal, companyDetails } = useCart();
@@ -251,25 +252,27 @@ export default function CartPage() {
                     )}
 
                     {/* Checkout Button */}
-                    <Button
-                      size="lg"
-                      disabled={!canCheckout}
-                      className={cn(
-                        "w-full mt-4 h-12 text-base font-bold rounded-xl shadow-lg transition-all",
-                        canCheckout
-                          ? "shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5"
-                          : "bg-muted text-muted-foreground shadow-none opacity-70"
-                      )}
-                    >
-                      {canCheckout ? (
-                        <>
-                          {text.checkoutButton || "Checkout securely"}
-                          <ArrowRight className="ml-2 w-4 h-4" />
-                        </>
-                      ) : (
-                        "Checkout Disabled"
-                      )}
-                    </Button>
+                    <CheckoutSheet>
+                      <Button
+                        size="lg"
+                        disabled={!canCheckout}
+                        className={cn(
+                          "w-full mt-4 h-12 text-base font-bold rounded-xl shadow-lg transition-all",
+                          canCheckout
+                            ? "shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5"
+                            : "bg-muted text-muted-foreground shadow-none opacity-70"
+                        )}
+                      >
+                        {canCheckout ? (
+                          <>
+                            {text.checkoutButton || "Checkout securely"}
+                            <ArrowRight className="ml-2 w-4 h-4" />
+                          </>
+                        ) : (
+                          "Checkout Disabled"
+                        )}
+                      </Button>
+                    </CheckoutSheet>
 
                     <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
                       <span className="bg-green-500/10 text-green-600 px-2 py-1 rounded">Secure Checkout</span>
