@@ -244,6 +244,44 @@ export interface CheckoutValidationRequest {
     items: CheckoutValidationItem[];
 }
 
+// --- Order & Payment Interfaces ---
+
+export interface PaymentInitializationItem {
+    productId: number;
+    pricingId: number | null;
+    productAddonIds: string;
+    quantity: number;
+}
+
+export interface PaymentInitializationRequest {
+    customerName: string;
+    customerPhoneNumber: string;
+    customerEmailId: string;
+    domainName: string;
+    customerAddress: string;
+    customerCity: string;
+    customerState: string;
+    customerCountry: string;
+    addressName: string;
+    shipmentAmount: number;
+    discount: string;
+    discountName: string;
+    discountAmount: number;
+    totalCost: number;
+    paymentMethod: string;
+    customerNote: string;
+    items: PaymentInitializationItem[];
+}
+
+export interface PaymentInitializationResponse {
+    razorpayOrderId: string;
+    razorpayKeyId: string;
+    grandTotal: number;
+    amountInPaise: number;
+    currency: string;
+    receiptId: string;
+}
+
 export interface CheckoutValidationProductDetail {
     productStatus: string; // 'ACTIVE' | 'INACTIVE'
     productPrice: number;

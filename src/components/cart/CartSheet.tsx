@@ -33,7 +33,8 @@ import {
     Loader2,
     Home,
     Building2,
-    Check
+    Check,
+    CreditCard
 } from 'lucide-react';
 import {
     AlertDialog,
@@ -50,7 +51,8 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { customerService } from '@/services/customer.service';
-import { CustomerDetails, CustomerAddress } from '@/lib/api-types';
+import { orderService } from '@/services/order.service';
+import { CustomerDetails, CustomerAddress, PaymentInitializationRequest } from '@/lib/api-types';
 import { Label } from '@/components/ui/label';
 
 import { useTenant } from '@/components/providers/TenantContext';
@@ -80,11 +82,14 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
     // Checkout / Address State
-    const [view, setView] = useState<'cart' | 'list' | 'add'>('cart');
+    // Views: 'cart' -> 'list' (Select Address) -> 'add' (New Address) -> 'payment' (Select Payment)
+    const [view, setView] = useState<'cart' | 'list' | 'add' | 'payment'>('cart');
     const [customer, setCustomer] = useState<CustomerDetails | null>(null);
     const [loadingAddresses, setLoadingAddresses] = useState(false);
     const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'ONLINE'>('ONLINE');
+    const [isInitializingPayment, setIsInitializingPayment] = useState(false);
 
     // Address Form State
     const [newAddress, setNewAddress] = useState<Partial<CustomerAddress>>({
@@ -144,7 +149,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const loadCustomerData = async () => {
         setLoadingAddresses(true);
         try {
-            const data = await customerService.getCustomerDetails(true); // force refresh
+            const data = await customerService.getCustomerDetails(false); // use cache if available
             if (data) {
                 setCustomer(data);
                 setAddresses(data.customerAddress || []);
@@ -200,7 +205,93 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         }
     };
 
-    // Auto-Apply Best Coupon
+    const handlePaymentInitialize = async () => {
+        if (!selectedAddressId || !customer) {
+            toast({ variant: "destructive", description: "Please select an address first." });
+            return;
+        }
+
+        const selectedAddress = addresses.find(a => a.customerAddressId === selectedAddressId);
+        if (!selectedAddress) {
+            toast({ variant: "destructive", description: "Invalid address selected." });
+            return;
+        }
+
+        setIsInitializingPayment(true);
+        try {
+            // Calculate Costs
+            const subtotal = getCartTotal();
+            const minOrder = parseFloat(companyDetails?.minimumOrderCost || '0');
+            const freeDeliveryThreshold = parseFloat(companyDetails?.freeDeliveryCost || '0');
+            const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
+            const shipping = isFreeDelivery ? 0 : (companyDetails?.deliveryBetween ? parseFloat(companyDetails.deliveryBetween) : 40); // Fallback to 40 if not set, or parse from string
+            const discountAmount = 0; // Logic for coupon discount to be added later if needed
+            const totalCost = subtotal + shipping - discountAmount;
+
+            // Construct Payload
+            const payload: PaymentInitializationRequest = {
+                customerName: customer.customerName,
+                customerPhoneNumber: customer.customerMobileNumber,
+                customerEmailId: customer.customerEmailId,
+                domainName: companyDetails?.companyDomain || window.location.hostname,
+                customerAddress: `${selectedAddress.customerDrNum}, ${selectedAddress.customerRoad}`,
+                customerCity: selectedAddress.customerCity,
+                customerState: selectedAddress.customerState,
+                customerCountry: selectedAddress.customerCountry,
+                addressName: selectedAddress.addressName,
+                shipmentAmount: shipping,
+                discount: "PERCENTAGE", // Placeholder as per requirement example
+                discountName: "NEWUSER10", // Placeholder
+                discountAmount: 25.00, // Placeholder
+                totalCost: totalCost,
+                paymentMethod: selectedPaymentMethod,
+                customerNote: "Call before delivery", // Placeholder
+                items: cart.map(item => {
+                    // Logic to find the correct pricing ID based on selected variants (Quantity)
+                    let pricingId: number | null = null;
+                    if (item.pricing && item.pricing.length > 0) {
+                        const quantityVariant = item.selectedVariants['Quantity'];
+                        if (quantityVariant) {
+                            const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
+                            if (matchedPricing) {
+                                pricingId = parseInt(matchedPricing.id);
+                            }
+                        }
+                        if (!pricingId && item.pricing.length > 0) {
+                            pricingId = parseInt(item.pricing[0].id);
+                        }
+                    }
+
+                    return {
+                        productId: parseInt(item.id),
+                        pricingId: pricingId,
+                        productAddonIds: item.selectedAddons && item.selectedAddons.length > 0
+                            ? item.selectedAddons.map(a => a.id).join('&&&')
+                            : "",
+                        quantity: item.quantity
+                    };
+                })
+            };
+
+            const response = await orderService.initializePayment(payload);
+            console.log("PAYMENT INIT RESPONSE:", response);
+
+            if (response && response.razorpayOrderId) {
+                toast({
+                    title: "Order Initialized",
+                    description: `Order ID: ${response.razorpayOrderId}`,
+                    duration: 5000
+                });
+                // Logic to open Razorpay modal will go here
+            }
+
+        } catch (error) {
+            console.error("Payment Init Error:", error);
+            toast({ variant: "destructive", description: "Failed to initialize payment." });
+        } finally {
+            setIsInitializingPayment(false);
+        }
+    };
     useEffect(() => {
         if (!companyDetails?.companyCoupon) return;
 
@@ -647,12 +738,16 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 variant="ghost"
                                 size="icon"
                                 className="-ml-2 h-8 w-8 rounded-full"
-                                onClick={() => view === 'add' ? setView('list') : setView('cart')}
+                                onClick={() => {
+                                    if (view === 'add') setView('list');
+                                    else if (view === 'payment') setView('list');
+                                    else setView('cart');
+                                }}
                             >
                                 <ArrowRight className="w-4 h-4 rotate-180" />
                             </Button>
                             <SheetTitle className="text-xl font-bold font-headline flex items-center gap-2">
-                                {view === 'add' ? 'Add New Address' : 'Select Delivery Address'}
+                                {view === 'add' ? 'Add New Address' : view === 'payment' ? 'Select Payment Method' : 'Select Delivery Address'}
                             </SheetTitle>
                         </div>
                     )}
@@ -1128,13 +1223,58 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                 </div>
                                             </div>
                                             <div className="grid gap-4">
-                                                <Input placeholder="Door / Flat No." value={newAddress.customerDrNum} onChange={e => setNewAddress({ ...newAddress, customerDrNum: e.target.value })} className="rounded-xl bg-secondary/20 border-transparent" />
-                                                <Input placeholder="Road / Area" value={newAddress.customerRoad} onChange={e => setNewAddress({ ...newAddress, customerRoad: e.target.value })} className="rounded-xl bg-secondary/20 border-transparent" />
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <Input placeholder="City" value={newAddress.customerCity} onChange={e => setNewAddress({ ...newAddress, customerCity: e.target.value })} className="rounded-xl bg-secondary/20 border-transparent" />
-                                                    <Input placeholder="Pincode" value={newAddress.customerPin} onChange={e => setNewAddress({ ...newAddress, customerPin: e.target.value })} className="rounded-xl bg-secondary/20 border-transparent" />
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="drNum">Door / Flat No.</Label>
+                                                    <Input
+                                                        id="drNum"
+                                                        placeholder="e.g. 402, Green Apartments"
+                                                        value={newAddress.customerDrNum}
+                                                        onChange={e => setNewAddress({ ...newAddress, customerDrNum: e.target.value })}
+                                                        className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                    />
                                                 </div>
-                                                <Input placeholder="State" value={newAddress.customerState} onChange={e => setNewAddress({ ...newAddress, customerState: e.target.value })} className="rounded-xl bg-secondary/20 border-transparent" />
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="road">Road / Area</Label>
+                                                    <Input
+                                                        id="road"
+                                                        placeholder="e.g. MG Road, Indiranagar"
+                                                        value={newAddress.customerRoad}
+                                                        onChange={e => setNewAddress({ ...newAddress, customerRoad: e.target.value })}
+                                                        className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="city">City</Label>
+                                                        <Input
+                                                            id="city"
+                                                            placeholder="City"
+                                                            value={newAddress.customerCity}
+                                                            onChange={e => setNewAddress({ ...newAddress, customerCity: e.target.value })}
+                                                            className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                        />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="pincode">Pincode</Label>
+                                                        <Input
+                                                            id="pincode"
+                                                            placeholder="560001"
+                                                            value={newAddress.customerPin}
+                                                            onChange={e => setNewAddress({ ...newAddress, customerPin: e.target.value })}
+                                                            className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="state">State</Label>
+                                                    <Input
+                                                        id="state"
+                                                        placeholder="State"
+                                                        value={newAddress.customerState}
+                                                        onChange={e => setNewAddress({ ...newAddress, customerState: e.target.value })}
+                                                        className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                         <Button className="w-full h-12 rounded-xl text-base font-bold" onClick={handleSaveAddress} disabled={savingAddress}>
@@ -1142,37 +1282,117 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         </Button>
                                     </div>
                                 )}
+
+                                {/* View: Payment Method */}
+                                {view === 'payment' && (
+                                    <div className="animate-in slide-in-from-right-8 fade-in duration-300 space-y-6">
+                                        <div className="space-y-4">
+                                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Payment Method</h3>
+
+                                            {/* Online Payment Option */}
+                                            <div
+                                                onClick={() => setSelectedPaymentMethod('ONLINE')}
+                                                className={cn(
+                                                    "relative overflow-hidden cursor-pointer p-5 rounded-3xl border-2 transition-all duration-300",
+                                                    selectedPaymentMethod === 'ONLINE'
+                                                        ? "bg-primary/5 border-primary shadow-lg shadow-primary/10"
+                                                        : "bg-background border-border hover:border-primary/30"
+                                                )}
+                                            >
+                                                <div className="flex items-start gap-4 z-10 relative">
+                                                    <div className={cn(
+                                                        "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors",
+                                                        selectedPaymentMethod === 'ONLINE' ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                                                    )}>
+                                                        <CreditCard className="w-6 h-6" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <span className={cn(
+                                                                "font-bold text-lg",
+                                                                selectedPaymentMethod === 'ONLINE' ? "text-primary" : "text-foreground"
+                                                            )}>
+                                                                Online Payment
+                                                            </span>
+                                                            {selectedPaymentMethod === 'ONLINE' && (
+                                                                <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                                    <Check className="w-3 h-3" /> SELECTED
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm text-muted-foreground leading-relaxed">
+                                                            Securely pay via UPI, Credit/Debit Cards, or Netbanking.
+                                                        </p>
+                                                        <div className="mt-3 flex items-center gap-2">
+                                                            <span className="text-[10px] font-bold bg-secondary px-2 py-1 rounded-md text-muted-foreground">Powered by Razorpay</span>
+                                                            <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-md">100% Secure</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* Background Glow */}
+                                                {selectedPaymentMethod === 'ONLINE' && (
+                                                    <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </ScrollArea>
 
-                        {/* Footer for Address View */}
+                        {/* Footer for Address View (Select Address) */}
                         {view === 'list' && (
-                            <div className="p-4 bg-background/80 backdrop-blur-xl border-t border-border/50">
+                            <div className="p-6 bg-background pt-4 border-t border-border/50 backdrop-blur-md">
                                 <Button
                                     size="lg"
-                                    className="w-full h-12 rounded-full text-base font-bold shadow-lg shadow-primary/20 bg-gradient-to-r from-primary to-primary/90 hover:shadow-primary/30"
-                                    disabled={!selectedAddressId}
+                                    className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
                                     onClick={() => {
-                                        setCartOpen(false); // Close Sheet
-                                        toast({ description: "Order Placed Successfully! (Simulation)" });
-                                        // router.push('/checkout/payment');
-                                        confetti({
-                                            particleCount: 100,
-                                            spread: 70,
-                                            origin: { y: 0.6 }
-                                        });
+                                        if (selectedAddressId) setView('payment');
                                     }}
+                                    disabled={!selectedAddressId}
                                 >
-                                    Proceed to Pay <ArrowRight className="ml-2 w-5 h-5" />
+                                    {!selectedAddressId ? (
+                                        "Select an Address"
+                                    ) : (
+                                        <span className="flex items-center gap-2">
+                                            Proceed to Pay <ArrowRight className="w-5 h-5" />
+                                        </span>
+                                    )}
                                 </Button>
-                                <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-muted-foreground/60 font-medium uppercase tracking-widest">
-                                    <Lock className="w-3 h-3" /> Secure Payment
+                                <p className="text-center text-[10px] text-muted-foreground mt-3 font-medium">
+                                    Secure Encrypted Transaction • 100% Purchase Protection
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Footer for Payment View */}
+                        {view === 'payment' && (
+                            <div className="p-6 bg-background pt-4 border-t border-border/50 backdrop-blur-md">
+                                <Button
+                                    size="lg"
+                                    className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                    onClick={handlePaymentInitialize}
+                                    disabled={isInitializingPayment}
+                                >
+                                    {isInitializingPayment ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...
+                                        </>
+                                    ) : (
+                                        <span className="flex items-center gap-2">
+                                            Pay & Place Order <ArrowRight className="w-5 h-5" />
+                                        </span>
+                                    )}
+                                </Button>
+                                <div className="flex items-center justify-center gap-2 mt-3 opacity-60">
+                                    <CreditCard className="w-3 h-3" />
+                                    <span className="text-[10px] font-medium">Safe & Secure Payment</span>
                                 </div>
                             </div>
                         )}
                     </>
                 )}
-            </SheetContent >
-        </Sheet >
+            </SheetContent>
+        </Sheet>
     );
 }
