@@ -68,7 +68,7 @@ export function Footer({ companyName = "ShopSphere", socialLinks }: FooterProps)
                     <div className="md:col-span-2 md:col-start-6">
                         <h3 className="font-bold text-xs uppercase tracking-widest text-primary mb-8 font-headline">Explore</h3>
                         <ul className="space-y-4 text-sm text-muted-foreground/80 font-medium">
-                            <li><FooterLink href="/">Home</FooterLink></li>
+                            {!isOwner && <li><FooterLink href="/">Home</FooterLink></li>}
                             {!isOwner && <li><FooterLink href="/wishlist">Wishlist</FooterLink></li>}
                             {!isOwner && <li><FooterLink href="/cart">Cart</FooterLink></li>}
                         </ul>

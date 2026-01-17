@@ -167,8 +167,8 @@ const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
                 return null;
               }
 
-              // Hide Cart and Wishlist for OWNER
-              if ((label === 'Cart' || label === 'Wishlist') && isOwner) {
+              // Hide Cart and Wishlist and Home for OWNER
+              if ((label === 'Cart' || label === 'Wishlist' || label === 'Home') && isOwner) {
                 return null;
               }
 
