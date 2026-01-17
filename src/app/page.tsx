@@ -3,7 +3,6 @@ import Image from 'next/image';
 import { fetchCategories } from '@/services/product.service';
 import { fetchCompanyDetails } from '@/services/company.service';
 import HomeClient from '@/components/home/HomeClient';
-import { ProductInitializer } from '@/components/providers/ProductInitializer';
 import { ShopNowButton } from '@/components/home/ShopNowButton';
 import { ArrowRight, ChevronRight, ShieldCheck, Star, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -58,12 +57,9 @@ export default async function Home() {
       </section>
 
 
-      <ProductInitializer categories={categories} companyDetails={company} />
       <HomeClient
         initialCategories={categories}
-        companyCoupon={company?.companyCoupon}
-        companyPhone={company?.companyPhone}
-        companyName={company?.companyName}
+        companyDetails={company}
       />
     </div>
   );

@@ -27,12 +27,10 @@ import { ProductInitializer } from '@/components/providers/ProductInitializer';
 
 interface HomeClientProps {
     initialCategories: Category[];
-    companyCoupon?: string;
-    companyPhone?: string;
-    companyName?: string;
+    companyDetails: CompanyDetails | null;
 }
 
-export default function HomeClient({ initialCategories, companyCoupon, companyPhone, companyName }: HomeClientProps) {
+export default function HomeClient({ initialCategories, companyDetails }: HomeClientProps) {
     const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -266,13 +264,13 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
             <div className="space-y-12 pb-20">
                 {/* Initialize Global Store Once Data is Ready */}
                 {categories.length > 0 && (
-                    <ProductInitializer categories={categories} companyDetails={{ companyName, companyPhone, companyCoupon } as any} />
+                    <ProductInitializer categories={categories} companyDetails={companyDetails} />
                 )}
 
-                {isLoggedIn && userRole?.includes('CUSTOMER') && companyPhone && (
-                    <WhatsAppButton phoneNumber={companyPhone} companyName={companyName} />
+                {isLoggedIn && userRole?.includes('CUSTOMER') && companyDetails?.companyPhone && (
+                    <WhatsAppButton phoneNumber={companyDetails.companyPhone} companyName={companyDetails.companyName} />
                 )}
-                <CouponCarousel companyCoupon={companyCoupon} />
+                <CouponCarousel companyCoupon={companyDetails?.companyCoupon} />
                 <div className="animate-in fade-in slide-in-from-top-4 duration-700">
                     <FeaturesCarousel />
                 </div>
