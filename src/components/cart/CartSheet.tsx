@@ -327,6 +327,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         setIsInitializingPayment(true);
         try {
             // Update customer details if changed
+            console.log("Checking for contact updates:", { contactInfo, customer });
             if (customer && (
                 contactInfo.name !== customer.customerName ||
                 contactInfo.email !== customer.customerEmailId ||
@@ -1299,7 +1300,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                 </div>
                                             ) : (
                                                 <div className="grid gap-4">
-                                                    {addresses.map((addr) => {
+                                                    {[...addresses].sort((a, b) => a.customerAddressId === selectedAddressId ? -1 : b.customerAddressId === selectedAddressId ? 1 : 0).map((addr) => {
                                                         const isSelected = selectedAddressId === addr.customerAddressId;
                                                         return (
                                                             <div
@@ -1358,7 +1359,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             <Button
                                                 className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] transition-all bg-gradient-to-r from-primary to-primary/90"
                                                 disabled={!selectedAddressId}
-                                                onClick={() => {
+                                                onClick={async () => {
                                                     if (!contactInfo.name || !contactInfo.email) {
                                                         toast({
                                                             variant: "destructive",
@@ -1367,6 +1368,34 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                         });
                                                         return;
                                                     }
+
+                                                    // Update customer details if changed
+                                                    if (customer && (
+                                                        contactInfo.name !== customer.customerName ||
+                                                        contactInfo.email !== customer.customerEmailId ||
+                                                        contactInfo.mobile !== customer.customerMobileNumber
+                                                    )) {
+                                                        try {
+                                                            await customerService.updateCustomer({
+                                                                customerId: customer.customerId,
+                                                                companyId: customer.companyId,
+                                                                customerName: contactInfo.name,
+                                                                customerEmailId: contactInfo.email,
+                                                                customerMobileNumber: contactInfo.mobile,
+                                                                customerStatus: customer.customerStatus,
+                                                                createdAt: customer.createdAt,
+                                                                customerImage: customer.customerImage
+                                                            });
+                                                            // Build fresh cache so profile reflects changes
+                                                            await loadCustomerData(true);
+                                                            toast({ description: "Profile details updated." });
+                                                        } catch (error) {
+                                                            console.error("Failed to update profile", error);
+                                                            // We continue anyway so they can pay? Or stop? 
+                                                            // Let's continue but warn? Or maybe just log. User wants update, so best to try.
+                                                        }
+                                                    }
+
                                                     setView('payment');
                                                 }}
                                             >
