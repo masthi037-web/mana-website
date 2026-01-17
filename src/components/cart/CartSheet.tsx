@@ -274,6 +274,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
             await customerService.createAddress({
                 ...newAddress,
+                customerDrNum: newAddress.customerRoad, // Duplicate road to drNum for backend compatibility
                 customerId: customer.customerId
             });
 
@@ -1392,24 +1393,17 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                                             <div className="grid gap-4">
                                                 <div className="grid gap-2">
-                                                    <Label htmlFor="drNum">Door / Flat No.</Label>
-                                                    <Input
-                                                        id="drNum"
-                                                        placeholder="e.g. 402, Green Apartments"
-                                                        value={newAddress.customerDrNum}
-                                                        onChange={e => setNewAddress({ ...newAddress, customerDrNum: e.target.value })}
-                                                        className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
-                                                    />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="road">Road / Area</Label>
-                                                    <Input
-                                                        id="road"
-                                                        placeholder="e.g. MG Road, Indiranagar"
-                                                        value={newAddress.customerRoad}
-                                                        onChange={e => setNewAddress({ ...newAddress, customerRoad: e.target.value })}
-                                                        className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
-                                                    />
+                                                    <Label htmlFor="road">Street Address</Label>
+                                                    <div className="relative">
+                                                        <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                                                        <textarea
+                                                            id="road"
+                                                            placeholder="e.g. 123 Main St, Apt 4B"
+                                                            className="w-full min-h-[80px] pl-10 pt-3 rounded-xl border-transparent bg-secondary/20 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all focus:bg-background focus:border-input"
+                                                            value={newAddress.customerRoad}
+                                                            onChange={e => setNewAddress({ ...newAddress, customerRoad: e.target.value })}
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="grid gap-2">
