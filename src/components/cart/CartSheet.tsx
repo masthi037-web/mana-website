@@ -1388,6 +1388,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                             });
                                                             // Build fresh cache so profile reflects changes
                                                             await loadCustomerData(true);
+                                                            // Notify other components (ProfileSheet) to refresh
+                                                            window.dispatchEvent(new Event('refresh-profile'));
                                                             toast({ description: "Profile details updated." });
                                                         } catch (error) {
                                                             console.error("Failed to update profile", error);

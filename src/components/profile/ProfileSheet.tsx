@@ -72,8 +72,16 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
             setIsOpen(true);
             setFeedback(null); // Clear feedback on open
         };
+        const handleRefresh = () => {
+            fetchProfile(true);
+        };
+
         window.addEventListener('open-profile-sidebar', handleOpen);
-        return () => window.removeEventListener('open-profile-sidebar', handleOpen);
+        window.addEventListener('refresh-profile', handleRefresh);
+        return () => {
+            window.removeEventListener('open-profile-sidebar', handleOpen);
+            window.removeEventListener('refresh-profile', handleRefresh);
+        };
     }, []);
 
     React.useEffect(() => {
