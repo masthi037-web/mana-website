@@ -21,68 +21,41 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ShopNowButton } from '@/components/home/ShopNowButton';
 
-// API Services
-import { fetchCategories } from '@/services/product.service';
-import { fetchCompanyDetails } from '@/services/company.service';
+// API Services removed from Client component - passed as props
 import { CompanyDetails } from '@/lib/api-types';
 import { ProductInitializer } from '@/components/providers/ProductInitializer';
 
 interface HomeClientProps {
-    companyDomain: string;
+    initialCategories: Category[];
+    companyCoupon?: string;
+    companyPhone?: string;
+    companyName?: string;
 }
 
-export default function HomeClient({ companyDomain }: HomeClientProps) {
+export default function HomeClient({ initialCategories, companyCoupon, companyPhone, companyName }: HomeClientProps) {
     const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
 
     // Data State
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [companyDetails, setCompanyDetails] = useState<CompanyDetails | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [categories, setCategories] = useState<Category[]>(initialCategories);
 
     // Auth State
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userRole, setUserRole] = useState<string | null>(null);
 
     useEffect(() => {
-        const loadData = async () => {
+        const checkAuth = () => {
             const storedLogin = localStorage.getItem('isLoggedIn') === 'true';
             const storedRole = localStorage.getItem('userRole');
-
             setIsLoggedIn(storedLogin);
             setUserRole(storedRole);
-
-            // BLOCK API CALLS FOR OWNER
-            if (storedRole && storedRole.includes('OWNER')) {
-                console.log("Admin User detected. Skipping public API calls.");
-                setLoading(false);
-                return;
-            }
-
-            try {
-                // Fetch Company First
-                const company = await fetchCompanyDetails(companyDomain);
-                setCompanyDetails(company);
-
-                if (company) {
-                    const cats = await fetchCategories(company.companyId);
-                    setCategories(cats);
-                }
-            } catch (error) {
-                console.error("Failed to load home data", error);
-                toast({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "Failed to load store data."
-                });
-            } finally {
-                setLoading(false);
-            }
         };
 
-        loadData();
-    }, [companyDomain]); // Removed toast to prevent loop
+        checkAuth();
+        window.addEventListener('auth-change', checkAuth);
+        return () => window.removeEventListener('auth-change', checkAuth);
+    }, []);
 
     // Helper to get category from URL or default
     const getInitialCategory = () => {
@@ -91,14 +64,41 @@ export default function HomeClient({ companyDomain }: HomeClientProps) {
         return categories.length > 0 ? categories[0].id : "";
     };
 
-    const [selectedCategory, setSelectedCategory] = useState<string>("");
+    const [selectedCategory, setSelectedCategory] = useState<string>(getInitialCategory());
 
-    // Sync local state when categories load
+    // Sync when initialCategories update (if re-fetched or prop change)
+    useEffect(() => {
+        if (initialCategories.length > 0) {
+            setCategories(initialCategories);
+        }
+    }, [initialCategories]);
+
+    // Update selected category if needed when categories change
     useEffect(() => {
         if (categories.length > 0 && !selectedCategory) {
             setSelectedCategory(getInitialCategory());
         }
     }, [categories]);
+
+    // If OWNER, do not show home screen content
+    if (userRole?.includes('OWNER')) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center text-center p-4">
+                <div className="h-20 w-20 bg-teal-100 rounded-full flex items-center justify-center mb-4">
+                    <Settings className="h-10 w-10 text-teal-600" />
+                </div>
+                <h1 className="text-2xl font-bold font-headline text-slate-800">Admin Dashboard</h1>
+                <p className="text-slate-500 mt-2 max-w-xs mx-auto">
+                    Please use the Profile Sidebar {'>'} Settings to access your admin controls.
+                </p>
+                <div className="mt-8 flex gap-4">
+                    <Button variant="outline" onClick={() => window.dispatchEvent(new Event('open-profile-sidebar'))}>
+                        Open Sidebar
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
 
@@ -261,49 +261,18 @@ export default function HomeClient({ companyDomain }: HomeClientProps) {
 
     return (
         <div className="bg-background min-h-screen">
-            {/* Hero Section - Moved from Server Page for Client Side fetching control */}
-            <section className="relative w-full h-[85vh] md:h-[600px] overflow-hidden">
-                <Image
-                    src={companyDetails?.banner || "https://picsum.photos/seed/homepage-banner/1920/1080"}
-                    alt={companyDetails?.companyName || "Artisanal Goods Banner"}
-                    fill
-                    className="object-cover animate-in fade-in duration-1000 zoom-in-105"
-                    data-ai-hint="vibrant spices table"
-                    priority
-                />
-                {/* Modern Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent md:via-background/20" />
-
-                <div className="relative container mx-auto h-full px-6 flex flex-col justify-center gap-6">
-                    <div className="max-w-xl space-y-4 animate-in slide-in-from-bottom-8 duration-700 fade-in">
-                        <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80">
-                            New Arrivals
-                        </div>
-                        <h1 className="text-5xl md:text-7xl font-bold font-headline tracking-tight text-foreground leading-[1.1]">
-                            Taste of <br />
-                            <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">Tradition</span>
-                        </h1>
-                        <p className="text-xl text-muted-foreground md:text-2xl font-light">
-                            Handcrafted with passion, delivering authentic flavors straight to your doorstep.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                            <ShopNowButton />
-                        </div>
-                    </div>
-                </div>
-            </section>
+            {/* Hero Section - Rendered in Server Component */}
 
             <div className="space-y-12 pb-20">
                 {/* Initialize Global Store Once Data is Ready */}
-                {!loading && categories.length > 0 && (
-                    <ProductInitializer categories={categories} companyDetails={companyDetails} />
+                {categories.length > 0 && (
+                    <ProductInitializer categories={categories} companyDetails={{ companyName, companyPhone, companyCoupon } as any} />
                 )}
 
-                {isLoggedIn && userRole?.includes('CUSTOMER') && companyDetails?.companyPhone && (
-                    <WhatsAppButton phoneNumber={companyDetails.companyPhone} companyName={companyDetails.companyName} />
+                {isLoggedIn && userRole?.includes('CUSTOMER') && companyPhone && (
+                    <WhatsAppButton phoneNumber={companyPhone} companyName={companyName} />
                 )}
-                <CouponCarousel companyCoupon={companyDetails?.companyCoupon} />
+                <CouponCarousel companyCoupon={companyCoupon} />
                 <div className="animate-in fade-in slide-in-from-top-4 duration-700">
                     <FeaturesCarousel />
                 </div>
@@ -318,11 +287,7 @@ export default function HomeClient({ companyDomain }: HomeClientProps) {
                             </div>
                         </div>
 
-                        {loading ? (
-                            <div className="flex justify-center items-center py-20">
-                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                            </div>
-                        ) : categories.length > 0 ? (
+                        {categories.length > 0 ? (
                             <div className="space-y-12">
                                 {/* Modern Category Tabs */}
                                 <div className="flex overflow-x-auto pb-4 gap-3 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 scroll-smooth md:justify-center">
