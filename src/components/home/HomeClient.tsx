@@ -82,7 +82,7 @@ export default function HomeClient({ companyDomain }: HomeClientProps) {
         };
 
         loadData();
-    }, [companyDomain, toast]);
+    }, [companyDomain]); // Removed toast to prevent loop
 
     // Helper to get category from URL or default
     const getInitialCategory = () => {

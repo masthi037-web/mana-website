@@ -13,6 +13,7 @@ interface WishlistState {
     isWishlistOpen: boolean;
     setWishlistOpen: (isOpen: boolean) => void;
     checkExpiration: () => void;
+    syncWithServer: (latestProducts: ProductWithImage[]) => void;
     timestamp: number;
 }
 
