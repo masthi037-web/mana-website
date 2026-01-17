@@ -227,10 +227,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         }
     }, [isCartOpen, isLoggedIn]);
 
-    const loadCustomerData = async () => {
+    const loadCustomerData = async (forceRefresh = false) => {
         setLoadingAddresses(true);
         try {
-            const data = await customerService.getCustomerDetails(false); // use cache if available
+            const data = await customerService.getCustomerDetails(forceRefresh); // use cache if available unless forced
             if (data) {
                 setCustomer(data);
                 setContactInfo({
@@ -239,8 +239,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     mobile: data.customerMobileNumber || ''
                 });
                 setAddresses(data.customerAddress || []);
-                // Auto-select first address if none selected
-                if (!selectedAddressId && data.customerAddress?.length > 0) {
+                // Auto-select first address if none selected and NOT saving (saving handles its own selection)
+                if (!selectedAddressId && data.customerAddress?.length > 0 && !savingAddress) {
                     setSelectedAddressId(data.customerAddress[0].customerAddressId);
                 }
             }
@@ -272,14 +272,22 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 return;
             }
 
-            await customerService.createAddress({
+            const createdAddress = await customerService.createAddress({
                 ...newAddress,
                 customerDrNum: newAddress.customerRoad, // Duplicate road to drNum for backend compatibility
                 customerId: customer.customerId
             });
 
             toast({ description: "Address added successfully" });
-            await loadCustomerData(); // Reload list
+
+            // Force refresh to get latest data from server
+            await loadCustomerData(true);
+
+            // Auto-select the newly created address
+            if (createdAddress && createdAddress.customerAddressId) {
+                setSelectedAddressId(createdAddress.customerAddressId);
+            }
+
             setView('list'); // Go back
             // Reset form
             setNewAddress({
@@ -318,6 +326,26 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
         setIsInitializingPayment(true);
         try {
+            // Update customer details if changed
+            if (customer && (
+                contactInfo.name !== customer.customerName ||
+                contactInfo.email !== customer.customerEmailId ||
+                contactInfo.mobile !== customer.customerMobileNumber
+            )) {
+                await customerService.updateCustomer({
+                    customerId: customer.customerId,
+                    companyId: customer.companyId,
+                    customerName: contactInfo.name,
+                    customerEmailId: contactInfo.email,
+                    customerMobileNumber: contactInfo.mobile,
+                    customerStatus: customer.customerStatus,
+                    createdAt: customer.createdAt,
+                    customerImage: customer.customerImage
+                });
+                // Build fresh cache so profile reflects changes
+                await loadCustomerData(true);
+            }
+
             // Calculate Costs
             const subtotal = getCartTotal();
             const minOrder = parseFloat(companyDetails?.minimumOrderCost || '0');
@@ -1407,16 +1435,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="grid gap-2">
-                                                        <Label htmlFor="city">City</Label>
-                                                        <Input
-                                                            id="city"
-                                                            placeholder="City"
-                                                            value={newAddress.customerCity}
-                                                            readOnly
-                                                            className="bg-secondary/10 border-transparent text-muted-foreground cursor-not-allowed rounded-xl"
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
                                                         <Label htmlFor="pincode">Pincode</Label>
                                                         <Input
                                                             id="pincode"
@@ -1424,6 +1442,16 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                             value={newAddress.customerPin}
                                                             onChange={e => handlePincodeChange(e.target.value)}
                                                             className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                        />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="city">City</Label>
+                                                        <Input
+                                                            id="city"
+                                                            placeholder="City"
+                                                            value={newAddress.customerCity}
+                                                            readOnly
+                                                            className="bg-secondary/10 border-transparent text-muted-foreground cursor-not-allowed rounded-xl"
                                                         />
                                                     </div>
                                                 </div>
