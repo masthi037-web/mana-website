@@ -1378,7 +1378,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                         try {
                                                             await customerService.updateCustomer({
                                                                 customerId: customer.customerId,
-                                                                companyId: customer.companyId,
+                                                                companyId: customer.companyId || companyDetails?.companyId || '',
                                                                 customerName: contactInfo.name,
                                                                 customerEmailId: contactInfo.email,
                                                                 customerMobileNumber: contactInfo.mobile,
