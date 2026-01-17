@@ -72,15 +72,23 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
             setIsOpen(true);
             setFeedback(null); // Clear feedback on open
         };
-        const handleRefresh = () => {
-            fetchProfile(true);
+        const handleProfileUpdate = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            if (customEvent.detail) {
+                console.log("ProfileSheet: Received update event", customEvent.detail);
+                setCustomerData(customEvent.detail);
+                if (customEvent.detail.customerName) setName(customEvent.detail.customerName);
+                if (customEvent.detail.customerEmailId) setEmail(customEvent.detail.customerEmailId);
+            } else {
+                fetchProfile(true);
+            }
         };
 
         window.addEventListener('open-profile-sidebar', handleOpen);
-        window.addEventListener('refresh-profile', handleRefresh);
+        window.addEventListener('profile-updated', handleProfileUpdate);
         return () => {
             window.removeEventListener('open-profile-sidebar', handleOpen);
-            window.removeEventListener('refresh-profile', handleRefresh);
+            window.removeEventListener('profile-updated', handleProfileUpdate);
         };
     }, []);
 
@@ -99,7 +107,9 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const fetchProfile = async (forceRefresh = false) => {
         if (!userRole?.includes('CUSTOMER')) return;
         try {
+            console.log("ProfileSheet: fetchProfile called", { forceRefresh });
             const data = await customerService.getCustomerDetails(forceRefresh);
+            console.log("ProfileSheet: fetched data", data);
             setCustomerData(data);
             if (data.customerMobileNumber) setPhoneNumber(data.customerMobileNumber);
             if (data.customerName) setName(data.customerName);
@@ -331,8 +341,15 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                             <Separator className="mb-6" />
                             <div className="space-y-1">
                                 {menuItems.map((item) => {
-                                    // Only show Settings if role contains OWNER
-                                    if (item.label === 'Settings' && !userRole?.includes('OWNER')) return null;
+                                    // CUSTOMIZATION: OWNER only sees Settings
+                                    const isOwner = userRole?.includes('OWNER');
+
+                                    if (isOwner) {
+                                        if (item.label !== 'Settings') return null;
+                                    } else {
+                                        // Customer/Guest doesn't see Settings
+                                        if (item.label === 'Settings') return null;
+                                    }
 
                                     if (item.label === 'My Orders') {
                                         return (

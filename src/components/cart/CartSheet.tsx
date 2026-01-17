@@ -1376,7 +1376,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                         contactInfo.mobile !== customer.customerMobileNumber
                                                     )) {
                                                         try {
-                                                            await customerService.updateCustomer({
+                                                            const updatedCustomer = await customerService.updateCustomer({
                                                                 customerId: customer.customerId,
                                                                 companyId: customer.companyId || companyDetails?.companyId || '',
                                                                 customerName: contactInfo.name,
@@ -1386,11 +1386,14 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                 createdAt: customer.createdAt,
                                                                 customerImage: customer.customerImage
                                                             });
-                                                            // Build fresh cache so profile reflects changes
-                                                            await loadCustomerData(true);
-                                                            // Notify other components (ProfileSheet) to refresh
-                                                            window.dispatchEvent(new Event('refresh-profile'));
-                                                            toast({ description: "Profile details updated." });
+
+                                                            // Update local state without fetching
+                                                            if (updatedCustomer) {
+                                                                setCustomer(updatedCustomer);
+                                                                // Notify other components with the NEW data
+                                                                window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedCustomer }));
+                                                                toast({ description: "Profile details updated." });
+                                                            }
                                                         } catch (error) {
                                                             console.error("Failed to update profile", error);
                                                             // We continue anyway so they can pay? Or stop? 

@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Recommendations from '@/components/products/Recommendations';
@@ -16,41 +14,109 @@ import { ProductCard } from '@/components/products/ProductCard';
 import { FeaturesCarousel } from '@/components/home/FeaturesCarousel';
 import { CouponCarousel } from '@/components/home/CouponCarousel';
 import { WhatsAppButton } from '@/components/common/WhatsAppButton';
-
-import { ArrowRight, Sparkles, Star } from 'lucide-react';
+import { ArrowRight, Sparkles, Star, Settings, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { ShopNowButton } from '@/components/home/ShopNowButton';
+
+// API Services
+import { fetchCategories } from '@/services/product.service';
+import { fetchCompanyDetails } from '@/services/company.service';
+import { CompanyDetails } from '@/lib/api-types';
+import { ProductInitializer } from '@/components/providers/ProductInitializer';
 
 interface HomeClientProps {
-    initialCategories: Category[];
-    companyCoupon?: string;
-    companyPhone?: string;
-    companyName?: string;
+    companyDomain: string;
 }
 
-export default function HomeClient({ initialCategories, companyCoupon, companyPhone, companyName }: HomeClientProps) {
+export default function HomeClient({ companyDomain }: HomeClientProps) {
     const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
 
+    // Data State
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [companyDetails, setCompanyDetails] = useState<CompanyDetails | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    // Auth State
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userRole, setUserRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        const loadData = async () => {
+            const storedLogin = localStorage.getItem('isLoggedIn') === 'true';
+            const storedRole = localStorage.getItem('userRole');
+
+            setIsLoggedIn(storedLogin);
+            setUserRole(storedRole);
+
+            // BLOCK API CALLS FOR OWNER
+            if (storedRole && storedRole.includes('OWNER')) {
+                console.log("Admin User detected. Skipping public API calls.");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // Fetch Company First
+                const company = await fetchCompanyDetails(companyDomain);
+                setCompanyDetails(company);
+
+                if (company) {
+                    const cats = await fetchCategories(company.companyId);
+                    setCategories(cats);
+                }
+            } catch (error) {
+                console.error("Failed to load home data", error);
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Failed to load store data."
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
+    }, [companyDomain, toast]);
+
     // Helper to get category from URL or default
     const getInitialCategory = () => {
         const paramCat = searchParams.get('category');
-        if (paramCat && initialCategories.some(c => c.id === paramCat)) return paramCat;
-        return initialCategories.length > 0 ? initialCategories[0].id : "";
+        if (paramCat && categories.some(c => c.id === paramCat)) return paramCat;
+        return categories.length > 0 ? categories[0].id : "";
     };
 
-    const [selectedCategory, setSelectedCategory] = useState<string>(getInitialCategory);
+    const [selectedCategory, setSelectedCategory] = useState<string>("");
 
-    const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(() => {
-        const categoryId = getInitialCategory();
-        const category = initialCategories.find(c => c.id === categoryId);
-        return category && category.catalogs.length > 0 ? category.catalogs[0].id : null;
-    });
+    // Sync local state when categories load
+    useEffect(() => {
+        if (categories.length > 0 && !selectedCategory) {
+            setSelectedCategory(getInitialCategory());
+        }
+    }, [categories]);
+
+    const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
+
+    // Update Catalog ID when Category changes or Data Loads
+    useEffect(() => {
+        if (!selectedCategory || categories.length === 0) return;
+
+        const category = categories.find(c => c.id === selectedCategory);
+        if (category && category.catalogs.length > 0) {
+            // Only set if not already set or invalid
+            if (!selectedCatalogId || !category.catalogs.some(c => c.id === selectedCatalogId)) {
+                setSelectedCatalogId(category.catalogs[0].id);
+            }
+        }
+    }, [selectedCategory, categories]);
 
     // Sync State -> URL when user interacts
     const updateCategory = (categoryId: string) => {
         setSelectedCategory(categoryId);
-        const category = initialCategories.find(c => c.id === categoryId);
+        const category = categories.find(c => c.id === categoryId);
         const newCatalogId = category?.catalogs[0]?.id || null;
         setSelectedCatalogId(newCatalogId);
 
@@ -85,34 +151,11 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
         });
     }, [selectedCatalogId, selectedCategory]);
 
-    useEffect(() => {
-        if (initialCategories.length === 0) {
-            toast({
-                variant: "destructive",
-                duration: 2000,
-                title: "Connection Error",
-                description: "Could not load categories. Please check your internet connection.",
-            });
-        }
-    }, [initialCategories, toast]);
+    // Error handling removed here as it's done in loadData
 
-    // Auth State for WhatsApp Button visibility
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userRole, setUserRole] = useState<string | null>(null);
+    // Auth State moved to top
 
-    useEffect(() => {
-        const checkAuth = () => {
-            setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
-            setUserRole(localStorage.getItem('userRole'));
-        };
-
-        checkAuth(); // Initial check
-
-        window.addEventListener('auth-change', checkAuth);
-        return () => window.removeEventListener('auth-change', checkAuth);
-    }, []);
-
-    const activeCategory = initialCategories.find(c => c.id === selectedCategory);
+    const activeCategory = categories.find(c => c.id === selectedCategory);
     const catalogs: Catalog[] = activeCategory ? activeCategory.catalogs : [];
 
     const handleSelectCatalog = (catalogId: string) => {
@@ -194,228 +237,292 @@ export default function HomeClient({ initialCategories, companyCoupon, companyPh
 
     const famousProducts = allFamousProducts.slice(0, 8); // Showing up to 8 famous products
 
-    return (
-        <div className="space-y-12 pb-20">
-            {isLoggedIn && userRole?.includes('CUSTOMER') && companyPhone && (
-                <WhatsAppButton phoneNumber={companyPhone} companyName={companyName} />
-            )}
-            <CouponCarousel companyCoupon={companyCoupon} />
-            <div className="animate-in fade-in slide-in-from-top-4 duration-700">
-                <FeaturesCarousel />
+    // If OWNER, do not show home screen content
+    if (userRole?.includes('OWNER')) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center text-center p-4">
+                <div className="h-20 w-20 bg-teal-100 rounded-full flex items-center justify-center mb-4">
+                    <Settings className="h-10 w-10 text-teal-600" />
+                </div>
+                <h1 className="text-2xl font-bold font-headline text-slate-800">Admin Dashboard</h1>
+                <p className="text-slate-500 mt-2 max-w-xs mx-auto">
+                    Please use the Profile Sidebar {'>'} Settings to access your admin controls.
+                </p>
+                <div className="mt-8 flex gap-4">
+                    <Button variant="outline" onClick={() => window.dispatchEvent(new Event('open-profile-sidebar'))}>
+                        Open Sidebar
+                    </Button>
+                </div>
             </div>
-            <div className="container mx-auto px-4 space-y-24">
+        );
+    }
 
-                {/* Categories Section */}
-                <section id="shop-now" className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 scroll-mt-24">
-                    <div className="flex items-center justify-center mb-8 text-center">
-                        <div>
-                            <h2 className="text-3xl font-headline font-bold">Discover Collections</h2>
-                            <p className="text-muted-foreground mt-1">Explore our curated range of products</p>
+    return (
+        <div className="bg-background min-h-screen">
+            {/* Hero Section - Moved from Server Page for Client Side fetching control */}
+            <section className="relative w-full h-[85vh] md:h-[600px] overflow-hidden">
+                <Image
+                    src={companyDetails?.banner || "https://picsum.photos/seed/homepage-banner/1920/1080"}
+                    alt={companyDetails?.companyName || "Artisanal Goods Banner"}
+                    fill
+                    className="object-cover animate-in fade-in duration-1000 zoom-in-105"
+                    data-ai-hint="vibrant spices table"
+                    priority
+                />
+                {/* Modern Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent md:via-background/20" />
+
+                <div className="relative container mx-auto h-full px-6 flex flex-col justify-center gap-6">
+                    <div className="max-w-xl space-y-4 animate-in slide-in-from-bottom-8 duration-700 fade-in">
+                        <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80">
+                            New Arrivals
+                        </div>
+                        <h1 className="text-5xl md:text-7xl font-bold font-headline tracking-tight text-foreground leading-[1.1]">
+                            Taste of <br />
+                            <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">Tradition</span>
+                        </h1>
+                        <p className="text-xl text-muted-foreground md:text-2xl font-light">
+                            Handcrafted with passion, delivering authentic flavors straight to your doorstep.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                            <ShopNowButton />
                         </div>
                     </div>
+                </div>
+            </section>
 
-                    {initialCategories.length > 0 ? (
-                        <div className="space-y-12">
-                            {/* Modern Category Tabs */}
-                            <div className="flex overflow-x-auto pb-4 gap-3 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 scroll-smooth md:justify-center">
-                                {initialCategories.map(category => (
-                                    <button
-                                        key={category.id}
-                                        onClick={() => updateCategory(category.id)}
-                                        className={cn(
-                                            "relative group flex flex-col items-center gap-3 min-w-[100px] p-4 rounded-2xl transition-all duration-300 border border-transparent",
-                                            selectedCategory === category.id
-                                                ? "bg-primary/5 border-primary/20 shadow-sm"
-                                                : "hover:bg-secondary/50 hover:border-border/50"
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            "w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300",
-                                            selectedCategory === category.id
-                                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110"
-                                                : "bg-secondary text-muted-foreground group-hover:bg-secondary/80",
-                                            "overflow-hidden"
-                                        )}>
-                                            {category.categoryImage ? (
-                                                <img
-                                                    src={category.categoryImage}
-                                                    alt={category.name}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <Sparkles className="w-6 h-6" />
-                                            )}
-                                        </div>
-                                        <span className={cn(
-                                            "text-xs md:text-sm font-semibold transition-colors text-center line-clamp-2 leading-tight max-w-[120px]",
-                                            selectedCategory === category.id ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-                                        )}>
-                                            {category.name}
-                                        </span>
-                                    </button>
-                                ))}
+            <div className="space-y-12 pb-20">
+                {/* Initialize Global Store Once Data is Ready */}
+                {!loading && categories.length > 0 && (
+                    <ProductInitializer categories={categories} companyDetails={companyDetails} />
+                )}
+
+                {isLoggedIn && userRole?.includes('CUSTOMER') && companyDetails?.companyPhone && (
+                    <WhatsAppButton phoneNumber={companyDetails.companyPhone} companyName={companyDetails.companyName} />
+                )}
+                <CouponCarousel companyCoupon={companyDetails?.companyCoupon} />
+                <div className="animate-in fade-in slide-in-from-top-4 duration-700">
+                    <FeaturesCarousel />
+                </div>
+                <div className="container mx-auto px-4 space-y-24">
+
+                    {/* Categories Section */}
+                    <section id="shop-now" className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 scroll-mt-24">
+                        <div className="flex items-center justify-center mb-8 text-center">
+                            <div>
+                                <h2 className="text-3xl font-headline font-bold">Discover Collections</h2>
+                                <p className="text-muted-foreground mt-1">Explore our curated range of products</p>
                             </div>
+                        </div>
 
-                            {/* Exclusive Offers Block - Freshly Dropped Signature Selection Style */}
-                            {activeCategory && activeCategory.catalogs.flatMap(c => c.products).filter(p => p.productOffer).length > 0 && (
-                                <div className="mb-16 relative">
-                                    {/* Ambient Background Glow */}
-                                    <div className="absolute -top-10 -left-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none animate-pulse" />
+                        {loading ? (
+                            <div className="flex justify-center items-center py-20">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                            </div>
+                        ) : categories.length > 0 ? (
+                            <div className="space-y-12">
+                                {/* Modern Category Tabs */}
+                                <div className="flex overflow-x-auto pb-4 gap-3 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 scroll-smooth md:justify-center">
+                                    {categories.map(category => (
+                                        <button
+                                            key={category.id}
+                                            onClick={() => updateCategory(category.id)}
+                                            className={cn(
+                                                "relative group flex flex-col items-center gap-3 min-w-[100px] p-4 rounded-2xl transition-all duration-300 border border-transparent",
+                                                selectedCategory === category.id
+                                                    ? "bg-primary/5 border-primary/20 shadow-sm"
+                                                    : "hover:bg-secondary/50 hover:border-border/50"
+                                            )}
+                                        >
+                                            <div className={cn(
+                                                "w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300",
+                                                selectedCategory === category.id
+                                                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110"
+                                                    : "bg-secondary text-muted-foreground group-hover:bg-secondary/80",
+                                                "overflow-hidden"
+                                            )}>
+                                                {category.categoryImage ? (
+                                                    <img
+                                                        src={category.categoryImage}
+                                                        alt={category.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <Sparkles className="w-6 h-6" />
+                                                )}
+                                            </div>
+                                            <span className={cn(
+                                                "text-xs md:text-sm font-semibold transition-colors text-center line-clamp-2 leading-tight max-w-[120px]",
+                                                selectedCategory === category.id ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                                            )}>
+                                                {category.name}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
 
-                                    <div className="flex items-center justify-between mb-6 relative">
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative flex h-3 w-3">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 duration-1000"></span>
-                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                {/* Exclusive Offers Block - Freshly Dropped Signature Selection Style */}
+                                {activeCategory && activeCategory.catalogs.flatMap(c => c.products).filter(p => p.productOffer).length > 0 && (
+                                    <div className="mb-16 relative">
+                                        {/* Ambient Background Glow */}
+                                        <div className="absolute -top-10 -left-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none animate-pulse" />
+
+                                        <div className="flex items-center justify-between mb-6 relative">
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative flex h-3 w-3">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 duration-1000"></span>
+                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-2xl font-bold font-headline text-foreground leading-none animate-in slide-in-from-left-4 duration-500">
+                                                        Exclusive Offers
+                                                    </h3>
+                                                    <p className="text-sm text-muted-foreground mt-1 animate-in slide-in-from-left-4 duration-500 delay-100">
+                                                        Limited time deals just for you
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 className="text-2xl font-bold font-headline text-foreground leading-none animate-in slide-in-from-left-4 duration-500">
-                                                    Exclusive Offers
-                                                </h3>
-                                                <p className="text-sm text-muted-foreground mt-1 animate-in slide-in-from-left-4 duration-500 delay-100">
-                                                    Limited time deals just for you
-                                                </p>
-                                            </div>
+                                        </div>
+
+                                        <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
+                                            {(() => {
+                                                const imageMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
+                                                const offerProducts = activeCategory ? activeCategory.catalogs.flatMap(c => c.products)
+                                                    .filter(p => p.productOffer)
+                                                    .map(p => {
+                                                        const image = imageMap.get(p.imageId);
+                                                        return {
+                                                            ...p,
+                                                            imageHint: image?.imageHint || 'product image',
+                                                            imageUrl: `https://picsum.photos/seed/${p.id}/300/300`
+                                                        };
+                                                    }) : [];
+
+                                                return offerProducts.map((product, index) => (
+                                                    <div
+                                                        key={product.id}
+                                                        className="min-w-[280px] md:min-w-[320px] snap-center h-full animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
+                                                        style={{ animationDelay: `${index * 100}ms` }}
+                                                    >
+                                                        <ProductCard product={product} />
+                                                    </div>
+                                                ));
+                                            })()}
                                         </div>
                                     </div>
+                                )}
 
-                                    <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
-                                        {(() => {
-                                            const imageMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
-                                            const offerProducts = activeCategory ? activeCategory.catalogs.flatMap(c => c.products)
-                                                .filter(p => p.productOffer)
-                                                .map(p => {
-                                                    const image = imageMap.get(p.imageId);
-                                                    return {
-                                                        ...p,
-                                                        imageHint: image?.imageHint || 'product image',
-                                                        imageUrl: `https://picsum.photos/seed/${p.id}/300/300`
-                                                    };
-                                                }) : [];
+                                {/* New Arrivals Block - Premium Horizontal Scroll */}
+                                {newArrivals.length > 0 && (
+                                    <div id="new-arrivals" className="mb-16 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200 scroll-mt-24">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative flex h-3 w-3">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-2xl font-bold font-headline text-foreground leading-none">Freshly Dropped</h3>
+                                                    <p className="text-sm text-muted-foreground mt-1">Just in: {activeCategory?.name}'s latest</p>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                            return offerProducts.map((product, index) => (
-                                                <div
-                                                    key={product.id}
-                                                    className="min-w-[280px] md:min-w-[320px] snap-center h-full animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
-                                                    style={{ animationDelay: `${index * 100}ms` }}
-                                                >
+                                        <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
+                                            {newArrivals.map((product) => (
+                                                <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
                                                     <ProductCard product={product} />
                                                 </div>
-                                            ));
-                                        })()}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* New Arrivals Block - Premium Horizontal Scroll */}
-                            {newArrivals.length > 0 && (
-                                <div id="new-arrivals" className="mb-16 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200 scroll-mt-24">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative flex h-3 w-3">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                                            </div>
-                                            <div>
-                                                <h3 className="text-2xl font-bold font-headline text-foreground leading-none">Freshly Dropped</h3>
-                                                <p className="text-sm text-muted-foreground mt-1">Just in: {activeCategory?.name}'s latest</p>
-                                            </div>
+                                            ))}
                                         </div>
                                     </div>
+                                )}
 
-                                    <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
-                                        {newArrivals.map((product) => (
-                                            <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
-                                                <ProductCard product={product} />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Famous Products Block - Premium Horizontal Scroll */}
-                            {famousProducts.length > 0 && (
-                                <div className="mb-16 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative flex h-3 w-3">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                                            </div>
-                                            <div>
-                                                <h3 className="text-2xl font-bold font-headline text-foreground leading-none">Signature Selection</h3>
-                                                <p className="text-sm text-muted-foreground mt-1">Timeless favorites & bestsellers</p>
+                                {/* Famous Products Block - Premium Horizontal Scroll */}
+                                {famousProducts.length > 0 && (
+                                    <div className="mb-16 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative flex h-3 w-3">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-2xl font-bold font-headline text-foreground leading-none">Signature Selection</h3>
+                                                    <p className="text-sm text-muted-foreground mt-1">Timeless favorites & bestsellers</p>
+                                                </div>
                                             </div>
                                         </div>
+
+                                        <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
+                                            {famousProducts.map((product) => (
+                                                <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
+                                                    <ProductCard product={product} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+
+
+                                {/* Catalogs & Products Area */}
+                                <div id="product-catalog-section" className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="text-xl font-semibold flex items-center gap-2">
+                                            <span className="w-1.5 h-6 rounded-full bg-primary/80 block"></span>
+                                            {activeCategory?.name} Catalogs
+                                        </h3>
+
                                     </div>
 
-                                    <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
-                                        {famousProducts.map((product) => (
-                                            <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
-                                                <ProductCard product={product} />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                                    <CatalogGrid
+                                        catalogs={catalogs}
+                                        selectedCatalogId={selectedCatalogId}
+                                        onSelectCatalog={handleSelectCatalog}
+                                    />
 
-
-
-                            {/* Catalogs & Products Area */}
-                            <div id="product-catalog-section" className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-xl font-semibold flex items-center gap-2">
-                                        <span className="w-1.5 h-6 rounded-full bg-primary/80 block"></span>
-                                        {activeCategory?.name} Catalogs
-                                    </h3>
-
-                                </div>
-
-                                <CatalogGrid
-                                    catalogs={catalogs}
-                                    selectedCatalogId={selectedCatalogId}
-                                    onSelectCatalog={handleSelectCatalog}
-                                />
-
-                                {selectedCatalog && (
-                                    <div className="mt-16 animate-in fade-in zoom-in-95 duration-500">
-                                        <div className="flex items-center justify-between mb-8">
-                                            <div>
-                                                <h3 className="text-2xl font-bold font-headline">{selectedCatalog.name}</h3>
-                                                <p className="text-muted-foreground text-sm mt-1">
-                                                    {filteredProducts.length} items {filteredProducts.length !== baseProducts.length ? '(filtered)' : 'available'}
-                                                </p>
-                                            </div>
-                                            {/* <FilterSortSheet
+                                    {selectedCatalog && (
+                                        <div className="mt-16 animate-in fade-in zoom-in-95 duration-500">
+                                            <div className="flex items-center justify-between mb-8">
+                                                <div>
+                                                    <h3 className="text-2xl font-bold font-headline">{selectedCatalog.name}</h3>
+                                                    <p className="text-muted-foreground text-sm mt-1">
+                                                        {filteredProducts.length} items {filteredProducts.length !== baseProducts.length ? '(filtered)' : 'available'}
+                                                    </p>
+                                                </div>
+                                                {/* <FilterSortSheet
                                             currentFilters={filters}
                                             onApply={setFilters}
                                             minPrice={minProductPrice}
                                             maxPrice={maxProductPrice}
                                         /> */}
-                                        </div>
-                                        <ProductGrid products={filteredProducts} />
-                                        {/* <div className="mt-12 text-center">
+                                            </div>
+                                            <ProductGrid products={filteredProducts} />
+                                            {/* <div className="mt-12 text-center">
                                             <Button size="lg" variant="secondary" className="rounded-full px-8">Load More Products</Button>
                                         </div> */}
-                                    </div>
-                                )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 bg-secondary/20 rounded-3xl border border-dashed border-border">
-                            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                                <Sparkles className="w-8 h-8 text-muted-foreground" />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 bg-secondary/20 rounded-3xl border border-dashed border-border">
+                                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                                    <Sparkles className="w-8 h-8 text-muted-foreground" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold">No categories found</h3>
+                                    <p className="text-muted-foreground">Please check back later for new arrivals.</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-lg font-semibold">No categories found</h3>
-                                <p className="text-muted-foreground">Please check back later for new arrivals.</p>
-                            </div>
-                        </div>
-                    )
-                    }
-                </section >
+                        )
+                        }
+                    </section >
 
-                {/* Recommendations Section Removed as per request */}
+                    {/* Recommendations Section Removed as per request */}
+                </div>
             </div>
         </div>
     );
