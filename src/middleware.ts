@@ -16,7 +16,9 @@ export function middleware(request: NextRequest) {
     if (companyDomain === 'localhost' || companyDomain.match('mana-website-two')) {
         companyDomain = 'babaihomefoods';
     }
-
+    else if (companyDomain.match('mana-website-toone')) {
+        companyDomain = 'bavahomefoods';
+    }
     // Clone the request headers and set the company domain
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-company-domain', companyDomain);
