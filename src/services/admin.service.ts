@@ -19,7 +19,7 @@ export const adminService = {
 
     updateCategory: async (data: UpdateCategoryRequest) => {
         return apiClient<UpdateCategoryResponse>('/category/update', {
-            method: 'POST',
+            method: 'PUT',
             body: JSON.stringify(data),
         });
     },
