@@ -208,7 +208,7 @@ export default function AdminInventoryPage() {
                         categoryName: name,
                         categoryDescription: desc,
                         categoryStatus: editingItem.status || "ACTIVE",
-                        categoryImage: image || editingItem.categoryImage,
+                        categoryImage: image ?? undefined, // Handle null -> undefined, keep ""
                         createdAt: editingItem.createdAt
                     });
                 } else {
@@ -227,7 +227,7 @@ export default function AdminInventoryPage() {
                         catalogueId: Number(editingItem.id),
                         catalogueName: name,
                         catalogueDescription: desc,
-                        catalogueImage: image || editingItem.catalogueImage,
+                        catalogueImage: image ?? undefined, // Handle null -> undefined, keep ""
                         catalogueStatus: editingItem.status || "ACTIVE",
                         createdAt: editingItem.createdAt
                     });
@@ -331,7 +331,7 @@ export default function AdminInventoryPage() {
         setEditingItem(cat);
         setName(cat.name);
         setDesc(cat.description || "");
-        setImage(cat.categoryImage);
+        setImage(cat.categoryImage || ""); // Initialize with empty string if null
         setLevel('CATEGORY'); // Ensure we are in category mode
         setIsSheetOpen(true);
     };
@@ -341,7 +341,7 @@ export default function AdminInventoryPage() {
         setEditingItem(catlg);
         setName(catlg.name);
         setDesc(catlg.description || "");
-        setImage(catlg.catalogueImage);
+        setImage(catlg.catalogueImage || ""); // Initialize with empty string if null
         setLevel('CATALOGUE'); // Ensure we are in catalogue mode
         setIsSheetOpen(true);
     };
