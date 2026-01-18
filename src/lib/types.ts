@@ -13,6 +13,7 @@ export type ProductAddonOption = {
 export type ProductPriceOption = {
   id: string;
   price: number;
+  priceAfterDiscount?: number;
   quantity: string;
   addons?: ProductAddonOption[];
 };
@@ -21,6 +22,7 @@ export type Product = {
   id: string;
   name: string;
   price: number;
+  priceAfterDiscount?: number;
   pricing: ProductPriceOption[]; // For quantity-based pricing
   imageId: string;
   imageUrl?: string; // Kept for backward compatibility, will be first image

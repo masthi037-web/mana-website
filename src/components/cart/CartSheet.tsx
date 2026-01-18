@@ -579,6 +579,15 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     item.price = detail.productPrice;
                 }
 
+                // Check Product Price After Discount
+                if (detail.productPriceAfterDiscount !== undefined && detail.productPriceAfterDiscount !== item.priceAfterDiscount) {
+                    hasChanges = true;
+                    // If item didn't have a discount before
+                    const oldPrice = item.priceAfterDiscount !== undefined ? item.priceAfterDiscount : item.price;
+                    changes.push(`Discounted price of "${item.name}" updated from ₹${oldPrice} to ₹${detail.productPriceAfterDiscount}.`);
+                    item.priceAfterDiscount = detail.productPriceAfterDiscount;
+                }
+
                 // Check Addon Prices
                 if (item.selectedAddons && item.selectedAddons.length > 0 && detail.addonAndAddonPrice) {
                     // detail.addonAndAddonPrice is ["id:price", ...]
@@ -946,9 +955,22 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                             <Link href={`/product/${item.id}`} className="font-bold text-base leading-snug hover:text-primary transition-colors line-clamp-2">
                                                                 {item.name}
                                                             </Link>
-                                                            <p className="font-bold text-base text-primary whitespace-nowrap">
-                                                                ₹{((item.price + (item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0)) * item.quantity).toFixed(0)}
-                                                            </p>
+                                                            <div className="flex flex-col items-end">
+                                                                {item.priceAfterDiscount ? (
+                                                                    <>
+                                                                        <span className="text-xs text-muted-foreground line-through">
+                                                                            ₹{((item.price + (item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0)) * item.quantity).toFixed(0)}
+                                                                        </span>
+                                                                        <p className="font-bold text-base text-primary whitespace-nowrap">
+                                                                            ₹{((item.priceAfterDiscount + (item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0)) * item.quantity).toFixed(0)}
+                                                                        </p>
+                                                                    </>
+                                                                ) : (
+                                                                    <p className="font-bold text-base text-primary whitespace-nowrap">
+                                                                        ₹{((item.price + (item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0)) * item.quantity).toFixed(0)}
+                                                                    </p>
+                                                                )}
+                                                            </div>
                                                         </div>
 
                                                         {/* Variants & Addons Pills */}
@@ -1286,7 +1308,14 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             {loadingAddresses ? (
                                                 <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
                                                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                                    <p className="text-xs font-medium">Loading addresses...</p>
+                                                    <div className="flex items-baseline gap-2">
+                                                        <span className={cn("font-medium", item.priceAfterDiscount ? "text-muted-foreground line-through text-xs" : "text-sm")}>₹{item.price * item.quantity}</span>
+                                                        {item.priceAfterDiscount && (
+                                                            <span className="text-sm font-bold text-primary">
+                                                                ₹{item.priceAfterDiscount * item.quantity}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ) : addresses.length === 0 ? (
                                                 <div className="text-center py-10 px-4 bg-background rounded-3xl border border-dashed border-border/60">

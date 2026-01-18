@@ -11,6 +11,7 @@ export interface ProductPricing {
     productPricingId: number;
     productId: number;
     productPrice: number;
+    productPriceAfterDiscount: number;
     productQuantity: string;
     productAddons: ProductAddon[];
 }
@@ -172,6 +173,7 @@ export interface CreateProductResponse {
 export interface CreatePricingRequest {
     productId: number;
     productPrice: number;
+    productPriceAfterDiscount: number;
     productQuantity: string;
 }
 
@@ -179,6 +181,7 @@ export interface CreatePricingResponse {
     productPricingId: number;
     productId: number;
     productPrice: number;
+    productPriceAfterDiscount: number;
     productQuantity: string;
     productAddons: ProductAddon[];
 }
@@ -289,6 +292,7 @@ export interface PaymentInitializationResponse {
 export interface CheckoutValidationProductDetail {
     productStatus: string; // 'ACTIVE' | 'INACTIVE'
     productPrice: number;
+    productPriceAfterDiscount?: number;
     addonAndAddonPrice: string[]; // ["id:price", "1:20"]
 }
 

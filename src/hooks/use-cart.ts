@@ -13,6 +13,7 @@ export type CartItem = ProductWithImage & {
   quantity: number;
   selectedVariants: Record<string, string>;
   selectedAddons?: ProductAddonOption[];
+  priceAfterDiscount?: number;
 };
 
 interface CartState {
@@ -76,6 +77,7 @@ export const useCart = create<CartState>()(
             // Refresh details in case they changed (e.g. image, name, price)
             name: product.name,
             price: product.price,
+            priceAfterDiscount: product.priceAfterDiscount,
             imageUrl: product.imageUrl,
             images: product.images,
             description: product.description,
@@ -115,7 +117,8 @@ export const useCart = create<CartState>()(
       getCartTotal: () => {
         return get().cart.reduce((total, item) => {
           const addonsPrice = (item.selectedAddons || []).reduce((acc, addon) => acc + addon.price, 0);
-          return total + (item.price + addonsPrice) * item.quantity;
+          const itemPrice = item.priceAfterDiscount !== undefined ? item.priceAfterDiscount : item.price;
+          return total + (itemPrice + addonsPrice) * item.quantity;
         }, 0);
       },
       getCartItemsCount: () => {

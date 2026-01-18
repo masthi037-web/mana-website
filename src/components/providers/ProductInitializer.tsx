@@ -15,7 +15,11 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
     const initialized = useRef(false);
 
     if (!initialized.current) {
-        const allProducts = categories.flatMap(cat => cat.catalogs.flatMap(c => c.products));
+        const allProducts = categories.flatMap(cat => cat.catalogs.flatMap(c => c.products)).map(p => ({
+            ...p,
+            imageHint: "", // Default value as API doesn't provide it yet
+            imageUrl: p.productImage || "" // Map API field
+        }));
         useProduct.setState({ products: allProducts });
         if (companyDetails) {
             useCart.setState({ companyDetails });

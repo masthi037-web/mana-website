@@ -114,7 +114,8 @@ export default function AdminInventoryPage() {
                 imageId: p.imageId || "",
                 productImage: p.productImage,
                 description: p.productInfo || "",
-                rating: 0
+                rating: 0,
+                productOffer: p.productOffer
             }));
         }
     });
@@ -185,9 +186,19 @@ export default function AdminInventoryPage() {
                     productOffer: prodOffer || undefined
                 });
             } else if (level === 'PRICING' && selectedProduct) {
+                let finalPrice = Number(price);
+                if (selectedProduct.productOffer) {
+                    const match = selectedProduct.productOffer.match(/(\d+)%/);
+                    if (match) {
+                        const discount = Number(match[1]);
+                        finalPrice = finalPrice - (finalPrice * discount / 100);
+                    }
+                }
+
                 return adminService.createPricing({
                     productId: Number(selectedProduct.id),
                     productPrice: Number(price),
+                    productPriceAfterDiscount: Math.round(finalPrice),
                     productQuantity: qty
                 });
             } else if (level === 'ADDON' && selectedPricing) {
