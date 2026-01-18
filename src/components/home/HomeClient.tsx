@@ -160,6 +160,14 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
 
     const handleSelectCatalog = (catalogId: string) => {
         setSelectedCatalogId(catalogId);
+        setTimeout(() => {
+            const element = document.getElementById('products-anchor');
+            if (element) {
+                const yOffset = -100;
+                const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+        }, 100);
     };
 
     const selectedCatalog = catalogs.find(c => c.id === selectedCatalogId);
@@ -449,7 +457,7 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
                                     />
 
                                     {selectedCatalog && (
-                                        <div className="mt-16 animate-in fade-in zoom-in-95 duration-500">
+                                        <div id="products-anchor" className="mt-16 animate-in fade-in zoom-in-95 duration-500">
                                             <div className="flex items-center justify-between mb-8">
                                                 <div>
                                                     <h3 className="text-2xl font-bold font-headline">{selectedCatalog.name}</h3>

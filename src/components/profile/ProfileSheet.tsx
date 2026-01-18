@@ -477,12 +477,12 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                                 <User className="h-8 w-8 text-teal-600" />
                             </div>
                             <h2 className="text-3xl font-bold font-headline text-slate-800">Welcome Back</h2>
-                            <p className="text-slate-500 font-medium">Enter your mobile number to login</p>
+                            <p className="text-slate-500 font-medium">Enter your WhatsApp number to login. <br />OTP will be sent to WhatsApp.</p>
                         </div>
 
                         <div className="space-y-6 pb-10">
                             <div className="space-y-2">
-                                <label className="text-sm font-bold ml-1 text-slate-700">Mobile Number</label>
+                                <label className="text-sm font-bold ml-1 text-slate-700">WhatsApp Number</label>
                                 <Input
                                     ref={(input) => {
                                         // Auto-focus logic
@@ -494,7 +494,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                                         }
                                     }}
                                     type="tel"
-                                    placeholder="Enter 10 digit number"
+                                    placeholder="Enter 10 digit WhatsApp number"
                                     className="h-14 rounded-2xl text-lg tracking-wide border-2 border-slate-100 bg-slate-50/50 focus-visible:ring-teal-500 focus-visible:border-teal-500 transition-all font-medium placeholder:text-slate-300"
                                     value={phoneNumber}
                                     onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
