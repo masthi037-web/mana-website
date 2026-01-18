@@ -10,7 +10,7 @@ import { adminService } from "@/services/admin.service";
 import { Category, Catalog, Product, ProductPriceOption } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-    Loader2, Plus, Folder, Package, Tag, Layers, ChevronRight, Home
+    Loader2, Plus, Folder, Package, Tag, Layers, ChevronRight, Home, Star, Sparkles, Pencil
 } from 'lucide-react';
 import {
     Sheet,
@@ -50,6 +50,7 @@ export default function AdminInventoryPage() {
 
     // --- SHEET STATE ---
     const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [isManageSheetOpen, setIsManageSheetOpen] = useState(false);
 
     // --- FORM STATES ---
     const [name, setName] = useState("");
@@ -66,6 +67,11 @@ export default function AdminInventoryPage() {
     const [isMandatory, setIsMandatory] = useState(false);
     const [image, setImage] = useState<string | null>(null);
 
+    // --- MANAGE SHEET STATE ---
+    const [manageMode, setManageMode] = useState<'VIEW' | 'ADD_PRICING' | 'ADD_ADDON'>('VIEW');
+    const [expandedPricingId, setExpandedPricingId] = useState<string | null>(null);
+    const [editingItem, setEditingItem] = useState<any | null>(null);
+
     // --- QUERIES ---
 
     // 1. Categories
@@ -77,6 +83,9 @@ export default function AdminInventoryPage() {
             return res.map((c: any) => ({
                 id: String(c.categoryId),
                 name: c.categoryName,
+                description: c.categoryDescription,
+                createdAt: c.createdAt,
+                status: c.categoryStatus,
                 catalogs: [], // No deep nesting needed for view, we fetch dynamically
                 categoryImage: c.categoryImage
             }));
@@ -92,6 +101,9 @@ export default function AdminInventoryPage() {
             return res.map((c: any) => ({
                 id: String(c.catalogueId),
                 name: c.catalogueName,
+                description: c.catalogueDescription,
+                createdAt: c.createdAt,
+                status: c.catalogueStatus,
                 products: [],
                 catalogueImage: c.catalogueImage
             }));
@@ -109,7 +121,7 @@ export default function AdminInventoryPage() {
                 name: p.productName,
                 price: p.productPrice || 0,
                 // We'll need pricing for the drill down, but we fetch it fresh on click essentially or here?
-                // Actually the API returns some, but we decided to fetch fresh pricing on click. 
+                // Actually the API returns some, but we decided to fetch fresh pricing on click.
                 // For the list view, we just need basic info.
                 pricing: [],
                 imageId: p.imageId || "",
@@ -130,18 +142,20 @@ export default function AdminInventoryPage() {
             return res.map((p: any) => ({
                 id: String(p.productPricingId),
                 price: p.productPrice,
+                priceAfterDiscount: p.productPriceAfterDiscount,
                 quantity: p.productQuantity,
                 addons: []
             }));
         }
     });
 
-    // 5. Addons (Fetch addons only when Pricing is selected)
+    // 5. Addons (Fetch addons only when activePricingId is set)
+    // We use expandedPricingId to control this query
     const { data: addons = [], isLoading: addonsLoading } = useQuery({
-        queryKey: ['addons', selectedPricing?.id],
-        enabled: !!selectedPricing?.id,
+        queryKey: ['addons', expandedPricingId],
+        enabled: !!expandedPricingId,
         queryFn: async () => {
-            const apiAddons = await adminService.getProductAddons(selectedPricing!.id);
+            const apiAddons = await adminService.getProductAddons(expandedPricingId!);
             return apiAddons.map((a: any) => ({
                 id: String(a.productAddonId),
                 name: a.addonName,
@@ -187,20 +201,44 @@ export default function AdminInventoryPage() {
     const createMutation = useMutation({
         mutationFn: async () => {
             if (level === 'CATEGORY') {
-                return adminService.createCategory({
-                    companyId: companyId,
-                    categoryName: name,
-                    categoryDescription: desc,
-                    categoryStatus: "ACTIVE",
-                    categoryImage: image || undefined
-                });
+                if (editingItem) {
+                    return adminService.updateCategory({
+                        companyId: companyId,
+                        categoryId: Number(editingItem.id),
+                        categoryName: name,
+                        categoryDescription: desc,
+                        categoryStatus: editingItem.status || "ACTIVE",
+                        categoryImage: image || editingItem.categoryImage,
+                        createdAt: editingItem.createdAt
+                    });
+                } else {
+                    return adminService.createCategory({
+                        companyId: companyId,
+                        categoryName: name,
+                        categoryDescription: desc,
+                        categoryStatus: "ACTIVE",
+                        categoryImage: image || undefined
+                    });
+                }
             } else if (level === 'CATALOGUE' && selectedCategory) {
-                return adminService.createCatalogue({
-                    categoryId: selectedCategory.id,
-                    catalogueName: name,
-                    catalogueDescription: desc,
-                    catalogueImage: image || undefined
-                });
+                if (editingItem) {
+                    return adminService.updateCatalogue({
+                        categoryId: Number(selectedCategory.id),
+                        catalogueId: Number(editingItem.id),
+                        catalogueName: name,
+                        catalogueDescription: desc,
+                        catalogueImage: image || editingItem.catalogueImage,
+                        catalogueStatus: editingItem.status || "ACTIVE",
+                        createdAt: editingItem.createdAt
+                    });
+                } else {
+                    return adminService.createCatalogue({
+                        categoryId: selectedCategory.id,
+                        catalogueName: name,
+                        catalogueDescription: desc,
+                        catalogueImage: image || undefined
+                    });
+                }
             } else if (level === 'PRODUCT' && selectedCatalogue) {
                 return adminService.createProduct({
                     catalogueId: Number(selectedCatalogue.id),
@@ -216,15 +254,16 @@ export default function AdminInventoryPage() {
                     productImage: image || undefined,
                     productOffer: prodOffer || undefined
                 });
-            } else if (level === 'PRICING' && selectedProduct) {
+            } else if (level === 'PRICING' && selectedProduct && !isManageSheetOpen) {
+                // Classic Flow
                 return adminService.createPricing({
                     productId: Number(selectedProduct.id),
                     productPrice: Number(price),
-                    // Use the explicitly visible discounted price, fallback to price if empty (safety)
                     productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
                     productQuantity: qty
                 });
-            } else if (level === 'ADDON' && selectedPricing) {
+            } else if (level === 'ADDON' && selectedPricing && !isManageSheetOpen) {
+                // Classic Flow
                 return adminService.createAddon({
                     productPricingId: Number(selectedPricing.id),
                     addonName: name,
@@ -232,10 +271,28 @@ export default function AdminInventoryPage() {
                     mandatory: isMandatory,
                     active: true
                 });
+            } else if (isManageSheetOpen) {
+                // Manage Sheet Flow
+                if (manageMode === 'ADD_PRICING' && selectedProduct) {
+                    return adminService.createPricing({
+                        productId: Number(selectedProduct.id),
+                        productPrice: Number(price),
+                        productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
+                        productQuantity: qty
+                    });
+                } else if (manageMode === 'ADD_ADDON' && expandedPricingId) {
+                    return adminService.createAddon({
+                        productPricingId: Number(expandedPricingId),
+                        addonName: name,
+                        addonPrice: Number(price),
+                        mandatory: isMandatory,
+                        active: true
+                    });
+                }
             }
         },
         onSuccess: () => {
-            toast({ title: "Success", description: "Item created successfully" });
+            toast({ title: "Success", description: editingItem ? "Item updated successfully" : "Item created successfully" });
             setIsSheetOpen(false);
             resetForm();
 
@@ -243,8 +300,18 @@ export default function AdminInventoryPage() {
             if (level === 'CATEGORY') queryClient.invalidateQueries({ queryKey: ['categories'] });
             if (level === 'CATALOGUE') queryClient.invalidateQueries({ queryKey: ['catalogues', selectedCategory?.id] });
             if (level === 'PRODUCT') queryClient.invalidateQueries({ queryKey: ['products', selectedCatalogue?.id] });
-            if (level === 'PRICING') queryClient.invalidateQueries({ queryKey: ['pricing', selectedProduct?.id] });
-            if (level === 'ADDON') queryClient.invalidateQueries({ queryKey: ['addons', selectedPricing?.id] });
+
+            // Refresh pricing if managing
+            if (level === 'PRICING' || isManageSheetOpen) queryClient.invalidateQueries({ queryKey: ['pricing', selectedProduct?.id] });
+
+            // Refresh addons if managing (using expandedPricingId)
+            if (expandedPricingId) queryClient.invalidateQueries({ queryKey: ['addons', expandedPricingId] });
+
+            // If in Manage Sheet, return to VIEW mode, don't close sheet
+            if (isManageSheetOpen) {
+                setManageMode('VIEW');
+                resetForm(); // Clear inputs but keep sheet open
+            }
         },
         onError: () => {
             toast({ title: "Error", description: "Failed to create item", variant: "destructive", duration: 2000 });
@@ -256,6 +323,27 @@ export default function AdminInventoryPage() {
         setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst(""); setProdOffer("");
         setProdDeliveryCost("40"); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setIsMandatory(false);
         setImage(null);
+        setEditingItem(null);
+    };
+
+    const handleEditCategory = (cat: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditingItem(cat);
+        setName(cat.name);
+        setDesc(cat.description || "");
+        setImage(cat.categoryImage);
+        setLevel('CATEGORY'); // Ensure we are in category mode
+        setIsSheetOpen(true);
+    };
+
+    const handleEditCatalogue = (catlg: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditingItem(catlg);
+        setName(catlg.name);
+        setDesc(catlg.description || "");
+        setImage(catlg.catalogueImage);
+        setLevel('CATALOGUE'); // Ensure we are in catalogue mode
+        setIsSheetOpen(true);
     };
 
     const openCreateSheet = () => {
@@ -408,7 +496,7 @@ export default function AdminInventoryPage() {
 
                 <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="w-full mt-6">
                     {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create {level.charAt(0) + level.slice(1).toLowerCase()}
+                    {editingItem ? "Update" : "Create"} {level === 'PRICING' ? 'Variant' : level.charAt(0) + level.slice(1).toLowerCase()}
                 </Button>
             </div>
         );
@@ -432,21 +520,188 @@ export default function AdminInventoryPage() {
                     <SheetContent className="sm:max-w-md overflow-y-auto">
                         <SheetHeader>
                             <SheetTitle>
-                                {level === 'CATEGORY' && "Add New Category"}
-                                {level === 'CATALOGUE' && `Add Catalogue to ${selectedCategory?.name}`}
+                                {level === 'CATEGORY' && (editingItem ? "Edit Category" : "Add New Category")}
+                                {level === 'CATALOGUE' && (editingItem ? "Edit Catalogue" : `Add Catalogue to ${selectedCategory?.name}`)}
                                 {level === 'PRODUCT' && `Add Product to ${selectedCatalogue?.name}`}
                                 {level === 'PRICING' && `Add Variant to ${selectedProduct?.name}`}
                                 {level === 'ADDON' && `Add Addon to ${selectedPricing?.quantity}`}
                             </SheetTitle>
                             <SheetDescription>
-                                {level === 'CATEGORY' && "Create a new top-level category."}
-                                {level === 'CATALOGUE' && `Creating a new catalogue under ${selectedCategory?.name}.`}
+                                {level === 'CATEGORY' && (editingItem ? "Update category details." : "Create a new top-level category.")}
+                                {level === 'CATALOGUE' && (editingItem ? "Update catalogue details." : `Creating a new catalogue under ${selectedCategory?.name}.`)}
                                 {level === 'PRODUCT' && `Creating a new product under ${selectedCatalogue?.name}.`}
                                 {level === 'PRICING' && `Adding a pricing variant for ${selectedProduct?.name}.`}
                                 {level === 'ADDON' && `Adding an addon for the ${selectedPricing?.quantity} variant.`}
                             </SheetDescription>
                         </SheetHeader>
                         {renderSheetForm()}
+                    </SheetContent>
+                </Sheet>
+
+                {/* MANAGE PRODUCT SHEET */}
+                <Sheet open={isManageSheetOpen} onOpenChange={(open) => {
+                    setIsManageSheetOpen(open);
+                    if (!open) { setManageMode('VIEW'); setExpandedPricingId(null); }
+                }}>
+                    <SheetContent className="overflow-y-auto sm:max-w-xl w-full">
+                        <SheetHeader className="mb-6">
+                            <SheetTitle className="flex items-center gap-3 text-2xl">
+                                {selectedProduct?.productImage ? (
+                                    <img src={selectedProduct.productImage} className="w-10 h-10 rounded-lg object-cover shadow-sm" alt="" />
+                                ) : <Package className="w-8 h-8 text-primary/80" />}
+                                {selectedProduct?.name}
+                            </SheetTitle>
+                            <SheetDescription>
+                                Manage pricing variants and addons.
+                            </SheetDescription>
+                        </SheetHeader>
+
+                        {/* PRODUCT BADGES OVERVIEW */}
+                        {selectedProduct && (
+                            <div className="flex gap-2 mb-8">
+                                {selectedProduct.famous && (
+                                    <div className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold border border-yellow-200">
+                                        <Star className="w-3 h-3 fill-yellow-700" /> FAMOUS
+                                    </div>
+                                )}
+                                {selectedProduct.productOffer && (
+                                    <div className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200">
+                                        <Sparkles className="w-3 h-3" /> {selectedProduct.productOffer}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="space-y-6">
+                            {/* PRICING SECTION */}
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-bold flex items-center gap-2">
+                                    <Tag className="w-4 h-4 text-primary" /> Pricing Variants
+                                </h3>
+                                {manageMode !== 'ADD_PRICING' && (
+                                    <Button size="sm" onClick={() => { setManageMode('ADD_PRICING'); resetForm(); }} variant="outline" className="h-8 rounded-full">
+                                        <Plus className="w-3 h-3 mr-1" /> Add Variant
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* ADD PRICING FORM */}
+                            {manageMode === 'ADD_PRICING' && (
+                                <div className="bg-muted/30 p-4 rounded-xl border border-dashed border-primary/30 animate-in fade-in zoom-in-95 duration-300">
+                                    <h4 className="font-semibold text-sm mb-3 text-primary">New Pricing Variant</h4>
+                                    <div className="space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-1">
+                                                <Label className="text-xs">Quantity (e.g. 1kg)</Label>
+                                                <Input value={qty} onChange={e => setQty(e.target.value)} className="h-8 bg-background" placeholder="Qty" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-xs">Price</Label>
+                                                <Input type="number" value={price} onChange={e => setPrice(e.target.value)} className="h-8 bg-background" placeholder="0" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Discounted Price (Auto)</Label>
+                                            <Input type="number" value={discountedPrice} onChange={e => setDiscountedPrice(e.target.value)} className="h-8 bg-background border-dashed" placeholder="Auto" />
+                                        </div>
+                                        <div className="flex gap-2 pt-2">
+                                            <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="flex-1">
+                                                {createMutation.isPending && <Loader2 className="w-3 h-3 mr-2 animate-spin" />} Save
+                                            </Button>
+                                            <Button size="sm" variant="ghost" onClick={() => setManageMode('VIEW')} className="flex-1">Cancel</Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* PRICING LIST */}
+                            <div className="space-y-3">
+                                {pricingOptions.map((p: any) => (
+                                    <div key={p.id} className="border rounded-xl p-0 overflow-hidden bg-card shadow-sm transition-all hover:shadow-md">
+                                        <div
+                                            className="p-3 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors"
+                                            onClick={() => setExpandedPricingId(expandedPricingId === p.id ? null : p.id)}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-full ${expandedPricingId === p.id ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                                    {expandedPricingId === p.id ? <Layers className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-sm">{p.quantity}</div>
+                                                    <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                                        {p.priceAfterDiscount && p.priceAfterDiscount < p.price ? (
+                                                            <>
+                                                                <span className="line-through">₹{p.price}</span>
+                                                                <span className="font-bold text-primary">₹{p.priceAfterDiscount}</span>
+                                                            </>
+                                                        ) : (
+                                                            <span>₹{p.price}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${expandedPricingId === p.id ? 'rotate-90' : ''}`} />
+                                        </div>
+
+                                        {/* ADDONS SECTION (EXPANDED) */}
+                                        {expandedPricingId === p.id && (
+                                            <div className="bg-muted/20 border-t p-4 animate-in slide-in-from-top-2 duration-300">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Addons</h5>
+                                                    {manageMode !== 'ADD_ADDON' && (
+                                                        <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => { setManageMode('ADD_ADDON'); resetForm(); }}>
+                                                            <Plus className="w-4 h-4" />
+                                                        </Button>
+                                                    )}
+                                                </div>
+
+                                                {/* ADD ADDON FORM */}
+                                                {manageMode === 'ADD_ADDON' && (
+                                                    <div className="bg-background p-3 rounded-lg border mb-3 shadow-sm animate-in zoom-in-95">
+                                                        <div className="space-y-3">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Name</Label>
+                                                                <Input value={name} onChange={e => setName(e.target.value)} className="h-7" placeholder="e.g. Extra Cheese" />
+                                                            </div>
+                                                            <div className="flex gap-3">
+                                                                <div className="space-y-1 flex-1">
+                                                                    <Label className="text-xs">Price</Label>
+                                                                    <Input type="number" value={price} onChange={e => setPrice(e.target.value)} className="h-7" placeholder="10" />
+                                                                </div>
+                                                                <div className="pt-6 flex items-center space-x-2">
+                                                                    <Checkbox id="man" checked={isMandatory} onCheckedChange={(c) => setIsMandatory(!!c)} />
+                                                                    <Label htmlFor="man" className="text-xs">Mandatory</Label>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex gap-2 pt-1">
+                                                                <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="h-7 text-xs w-full">Save Addon</Button>
+                                                                <Button size="sm" variant="ghost" onClick={() => setManageMode('VIEW')} className="h-7 text-xs w-full">Cancel</Button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <div className="space-y-2">
+                                                    {addonsLoading ? <div className="text-xs text-center py-2 text-muted-foreground">Loading addons...</div> :
+                                                        addons.length === 0 ? <div className="text-xs text-center py-2 text-muted-foreground italic">No addons configured.</div> :
+                                                            addons.map((addon: any) => (
+                                                                <div key={addon.id} className="bg-background/80 border rounded p-2 flex justify-between items-center text-sm">
+                                                                    <span>{addon.name}</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        {addon.mandatory && <span className="text-[10px] bg-red-100 text-red-600 px-1 rounded font-bold">REQ</span>}
+                                                                        <span className="font-mono font-bold text-xs text-emerald-600">+₹{addon.price}</span>
+                                                                    </div>
+                                                                </div>
+                                                            ))
+                                                    }
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                                {pricingOptions.length === 0 && <div className="text-center py-8 text-muted-foreground text-sm">No pricing variants found. Add one to get started.</div>}
+                            </div>
+                        </div>
                     </SheetContent>
                 </Sheet>
             </div>
@@ -465,7 +720,12 @@ export default function AdminInventoryPage() {
                             onClick={() => { setSelectedCategory(cat); setLevel('CATALOGUE'); }}>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-base font-bold">{cat.name}</CardTitle>
-                                <Folder className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                <div className="flex items-center gap-2">
+                                    <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditCategory(cat, e)}>
+                                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                                    </Button>
+                                    <Folder className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                </div>
                             </CardHeader>
                         </Card>
                     ))}
@@ -477,7 +737,12 @@ export default function AdminInventoryPage() {
                             onClick={() => { setSelectedCatalogue(catlg); setLevel('PRODUCT'); }}>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-base font-bold">{catlg.name}</CardTitle>
-                                <Layers className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                <div className="flex items-center gap-2">
+                                    <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditCatalogue(catlg, e)}>
+                                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                                    </Button>
+                                    <Layers className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <p className="text-xs text-muted-foreground truncate">{catlg.products?.map((p: any) => p.name).join(', ')}</p>
@@ -488,13 +753,34 @@ export default function AdminInventoryPage() {
                     {/* LEVEL 2: PRODUCTS */}
                     {level === 'PRODUCT' && products.map((prod: any) => (
                         <Card key={prod.id}
-                            className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md group"
-                            onClick={() => { setSelectedProduct(prod); setLevel('PRICING'); }}>
+                            className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md group relative overflow-hidden"
+                            onClick={() => { setSelectedProduct(prod); setIsManageSheetOpen(true); }}>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-base font-bold truncate">{prod.name}</CardTitle>
-                                <Package className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                <CardTitle className="text-base font-bold truncate pr-6">{prod.name}</CardTitle>
+                                <div className="flex items-center gap-2">
+                                    <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => { e.stopPropagation(); toast({ description: "Coming soon" }); }}>
+                                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                                    </Button>
+                                    <Package className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                </div>
                             </CardHeader>
-
+                            <CardContent>
+                                <div className="absolute top-0 right-0 p-2 flex flex-col gap-1 items-end">
+                                    {prod.famous && (
+                                        <div className="bg-yellow-100 text-yellow-700 p-1 rounded-full shadow-sm">
+                                            <Star className="w-3 h-3 fill-yellow-700" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="mt-2 flex items-center gap-2">
+                                    {prod.productOffer && (
+                                        <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                            <Sparkles className="w-3 h-3" />
+                                            {prod.productOffer}
+                                        </span>
+                                    )}
+                                </div>
+                            </CardContent>
                         </Card>
                     ))}
 
@@ -508,7 +794,16 @@ export default function AdminInventoryPage() {
                                 <Tag className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold text-primary mb-2">₹{p.price}</div>
+                                <div className="mb-2">
+                                    {p.priceAfterDiscount && p.priceAfterDiscount < p.price ? (
+                                        <div className="flex flex-col">
+                                            <span className="text-2xl font-bold text-primary">₹{p.priceAfterDiscount}</span>
+                                            <span className="text-sm text-muted-foreground line-through decoration-destructive/50">₹{p.price}</span>
+                                        </div>
+                                    ) : (
+                                        <div className="text-2xl font-bold text-primary">₹{p.price}</div>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
                     ))}

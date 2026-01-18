@@ -128,6 +128,26 @@ export interface CreateCategoryResponse {
     catalogues: null | Catalogue[];
 }
 
+export interface UpdateCategoryRequest {
+    companyId: string;
+    categoryId: number;
+    categoryName: string;
+    categoryDescription: string;
+    categoryStatus: string;
+    categoryImage?: string;
+    createdAt: string;
+}
+
+export interface UpdateCategoryResponse {
+    companyId: string;
+    categoryId: number;
+    categoryName: string;
+    categoryDescription: string;
+    categoryStatus: string;
+    categoryImage?: string;
+    createdAt: string;
+}
+
 export interface CreateCatalogueRequest {
     categoryId: string; // or number? User prompt showed "1" (string) but response has 1 (number). create request says "1".
     catalogueName: string;
@@ -144,6 +164,26 @@ export interface CreateCatalogueResponse {
     catalogueImage?: string;
     createdAt: string;
     products: null | Product[];
+}
+
+export interface UpdateCatalogueRequest {
+    categoryId: number;
+    catalogueId: number;
+    catalogueName: string;
+    catalogueDescription: string;
+    catalogueImage?: string;
+    catalogueStatus: string;
+    createdAt: string;
+}
+
+export interface UpdateCatalogueResponse {
+    categoryId: number;
+    catalogueId: number;
+    catalogueName: string;
+    catalogueDescription: string;
+    catalogueStatus: string;
+    catalogueImage?: string;
+    createdAt: string;
 }
 
 export interface CreateProductRequest {

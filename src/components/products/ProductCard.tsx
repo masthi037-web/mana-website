@@ -147,28 +147,46 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </h3>
             <div className="flex flex-col items-end shrink-0">
               {(() => {
-                const offerPercentage = product.productOffer ? parseFloat(product.productOffer) : 0;
-                const hasOffer = !isNaN(offerPercentage) && offerPercentage > 0;
-                const finalPrice = hasOffer ? activePrice - (activePrice * offerPercentage / 100) : activePrice;
+                // Find the option with the lowest FINAL price
+                const pricingOptions = product.pricing || [];
+                let bestOption: typeof pricingOptions[0] | null = null;
+                let minFinalPrice = Infinity;
+
+                if (pricingOptions.length > 0) {
+                  pricingOptions.forEach(p => {
+                    const final = (p.priceAfterDiscount && p.priceAfterDiscount > 0) ? p.priceAfterDiscount : p.price;
+                    if (final < minFinalPrice) {
+                      minFinalPrice = final;
+                      bestOption = p;
+                    }
+                  });
+                } else {
+                  // Fallback for Products without pricing variants (shouldn't happen for active products)
+                  minFinalPrice = product.price || 0;
+                }
+
+                // If we found a variant, check if it has a discount
+                const originalPrice = bestOption ? bestOption.price : (product.price || 0);
+                const hasDiscount = bestOption && bestOption.priceAfterDiscount && bestOption.priceAfterDiscount < bestOption.price;
 
                 return (
                   <span className="font-headline font-bold text-base text-primary tracking-tight text-right">
-                    {product.pricing && product.pricing.length > 1 ? (
+                    {pricingOptions.length > 1 ? (
                       <span className="flex flex-col items-end">
                         <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-0.5">Starts from</span>
                         <span className="flex items-center gap-1.5">
-                          {hasOffer && (
-                            <span className="text-xs text-muted-foreground line-through font-medium">₹{activePrice.toFixed(0)}</span>
+                          {hasDiscount && (
+                            <span className="text-xs text-muted-foreground line-through font-medium">₹{originalPrice}</span>
                           )}
-                          <span>₹{finalPrice.toFixed(0)}</span>
+                          <span>₹{minFinalPrice}</span>
                         </span>
                       </span>
                     ) : (
                       <span className="flex flex-col items-end">
-                        {hasOffer && (
-                          <span className="text-xs text-muted-foreground line-through font-medium leading-none mb-0.5">₹{activePrice.toFixed(0)}</span>
+                        {hasDiscount && (
+                          <span className="text-xs text-muted-foreground line-through font-medium leading-none mb-0.5">₹{originalPrice}</span>
                         )}
-                        <span className="leading-none">₹{finalPrice.toFixed(0)}</span>
+                        <span className="leading-none">₹{minFinalPrice}</span>
                       </span>
                     )}
                   </span>

@@ -4,7 +4,9 @@ import {
     CreateCatalogueRequest, CreateCatalogueResponse,
     CreateProductRequest, CreateProductResponse,
     CreatePricingRequest, CreatePricingResponse,
-    CreateAddonRequest, CreateAddonResponse
+    CreateAddonRequest, CreateAddonResponse,
+    UpdateCategoryRequest, UpdateCategoryResponse,
+    UpdateCatalogueRequest, UpdateCatalogueResponse
 } from '@/lib/api-types';
 
 export const adminService = {
@@ -15,9 +17,23 @@ export const adminService = {
         });
     },
 
+    updateCategory: async (data: UpdateCategoryRequest) => {
+        return apiClient<UpdateCategoryResponse>('/category/update', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    },
+
     createCatalogue: async (data: CreateCatalogueRequest) => {
         return apiClient<CreateCatalogueResponse>('/catalogue/create', {
             method: 'POST',
+            body: JSON.stringify(data),
+        });
+    },
+
+    updateCatalogue: async (data: UpdateCatalogueRequest) => {
+        return apiClient<UpdateCatalogueResponse>('/catalogue/update', {
+            method: 'PUT',
             body: JSON.stringify(data),
         });
     },
