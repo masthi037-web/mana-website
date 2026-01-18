@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,7 @@ export default function AdminInventoryPage() {
     const [prodDeliveryCost, setProdDeliveryCost] = useState("40");
     const [isFamous, setIsFamous] = useState(false);
     const [price, setPrice] = useState("");
+    const [discountedPrice, setDiscountedPrice] = useState("");
     const [qty, setQty] = useState("");
     const [isMandatory, setIsMandatory] = useState(false);
     const [image, setImage] = useState<string | null>(null);
@@ -150,6 +151,36 @@ export default function AdminInventoryPage() {
         }
     });
 
+    // --- EFFECTS ---
+    // Auto-calculate discounted price when Price or Product (Offer) changes
+    // Only run if we are in PRICING mode and have a selected product
+    useEffect(() => {
+        if (level === 'PRICING' && selectedProduct && price) {
+            const rawPrice = parseFloat(price);
+            if (isNaN(rawPrice)) return;
+
+            // Extract percentage from offer string like "50% OFF", "50 %", "FLAT 50% OFF"
+            // Regex: Look for digits followed optionally by % or space+OFF
+            const offer = selectedProduct.productOffer || "";
+            const match = offer.match(/(\d+)\s*%?|(\d+)\s+OFF/i);
+
+            if (match) {
+                // match[1] or match[2] will have the number
+                const percentage = parseFloat(match[1] || match[2]);
+                if (!isNaN(percentage)) {
+                    const discountValue = (rawPrice * percentage) / 100;
+                    const final = Math.round(rawPrice - discountValue);
+                    setDiscountedPrice(String(final));
+                    return;
+                }
+            }
+            // Fallback: No offer or invalid format -> Discounted Price = Price
+            setDiscountedPrice(price);
+        } else if (level === 'PRICING' && !price) {
+            setDiscountedPrice("");
+        }
+    }, [price, selectedProduct, level]);
+
 
 
     // --- MUTATIONS ---
@@ -186,19 +217,11 @@ export default function AdminInventoryPage() {
                     productOffer: prodOffer || undefined
                 });
             } else if (level === 'PRICING' && selectedProduct) {
-                let finalPrice = Number(price);
-                if (selectedProduct.productOffer) {
-                    const match = selectedProduct.productOffer.match(/(\d+)%/);
-                    if (match) {
-                        const discount = Number(match[1]);
-                        finalPrice = finalPrice - (finalPrice * discount / 100);
-                    }
-                }
-
                 return adminService.createPricing({
                     productId: Number(selectedProduct.id),
                     productPrice: Number(price),
-                    productPriceAfterDiscount: Math.round(finalPrice),
+                    // Use the explicitly visible discounted price, fallback to price if empty (safety)
+                    productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
                     productQuantity: qty
                 });
             } else if (level === 'ADDON' && selectedPricing) {
@@ -231,7 +254,7 @@ export default function AdminInventoryPage() {
     // --- NAVIGATION HANDLERS ---
     const resetForm = () => {
         setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst(""); setProdOffer("");
-        setProdDeliveryCost("40"); setIsFamous(false); setPrice(""); setQty(""); setIsMandatory(false);
+        setProdDeliveryCost("40"); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setIsMandatory(false);
         setImage(null);
     };
 
@@ -352,6 +375,19 @@ export default function AdminInventoryPage() {
                         <div className="space-y-2">
                             <Label>Price</Label>
                             <Input type="number" placeholder="100" value={price} onChange={e => setPrice(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Discounted Price (Calculated)</Label>
+                            <Input
+                                type="number"
+                                placeholder="80"
+                                value={discountedPrice}
+                                onChange={e => setDiscountedPrice(e.target.value)}
+                                className="bg-muted/30 border-dashed"
+                            />
+                            <p className="text-[10px] text-muted-foreground">
+                                Auto-calculated from Product Offer ({selectedProduct?.productOffer || "None"}). You can override this.
+                            </p>
                         </div>
                     </>
                 )}
