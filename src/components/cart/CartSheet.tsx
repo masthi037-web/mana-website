@@ -57,18 +57,20 @@ import { customerService } from '@/services/customer.service';
 import { orderService } from '@/services/order.service';
 import { CustomerDetails, CustomerAddress, PaymentInitializationRequest } from '@/lib/api-types';
 import { Label } from '@/components/ui/label';
+import { useRazorpay } from '@/hooks/use-razorpay';
 
 import { useTenant } from '@/components/providers/TenantContext';
 import { useSheetBackHandler } from '@/hooks/use-sheet-back-handler';
 
 export function CartSheet({ children }: { children: React.ReactNode }) {
-    const { cart, updateQuantity, removeFromCart, getCartTotal, getCartItemsCount, isCartOpen, setCartOpen, companyDetails, lastAddedItemId } = useCart();
+    const { cart, updateQuantity, removeFromCart, getCartTotal, getCartItemsCount, isCartOpen, setCartOpen, companyDetails, lastAddedItemId, clearCart } = useCart();
+    const isRazorpayLoaded = useRazorpay();
 
     // Handle back button on mobile
     useSheetBackHandler(isCartOpen, setCartOpen);
 
     const { toast } = useToast();
-    const { text } = useTenant();
+    const { text, theme } = useTenant();
     const router = useRouter();
     const [celebrated, setCelebrated] = useState(false);
     const [showFreeDeliveryPopup, setShowFreeDeliveryPopup] = useState(false);
@@ -409,12 +411,77 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             console.log("PAYMENT INIT RESPONSE:", response);
 
             if (response && response.razorpayOrderId) {
-                toast({
-                    title: "Order Initialized",
-                    description: `Order ID: ${response.razorpayOrderId}`,
-                    duration: 5000
-                });
-                // Logic to open Razorpay modal will go here
+                if (!isRazorpayLoaded) {
+                    toast({ variant: "destructive", description: "Payment gateway is loading. Please try again in a moment." });
+                    return;
+                }
+
+                const options = {
+                    key: response.razorpayKeyId,
+                    amount: response.amountInPaise,
+                    currency: response.currency,
+                    name: companyDetails?.companyName,
+                    description: "Order Payment",
+                    order_id: response.razorpayOrderId,
+                    handler: async function (response: any) {
+                        try {
+                            const verifyRes = await orderService.verifyPayment({
+                                razorpayOrderId: response.razorpay_order_id,
+                                razorpayPaymentId: response.razorpay_payment_id,
+                                razorpaySignature: response.razorpay_signature
+                            });
+
+                            if (verifyRes.status === 'success') {
+                                toast({
+                                    title: "Payment Successful ✅",
+                                    description: `Order Confirmed! Order ID: ${verifyRes.orderId || 'N/A'}`,
+                                    className: "bg-green-50 border-green-200 text-green-800",
+                                    duration: 5000
+                                });
+
+                                // Clear cart and close
+                                clearCart();
+                                setCartOpen(false);
+                                setView('cart');
+
+                                // Reset state
+                                setContactInfo({ name: '', email: '', mobile: '' });
+                                setSelectedAddressId(null);
+
+                            } else {
+                                toast({
+                                    variant: "destructive",
+                                    title: "Verification Failed ❌",
+                                    description: verifyRes.message || "Payment verification failed."
+                                });
+                            }
+                        } catch (err) {
+                            console.error("Verification Error", err);
+                            toast({
+                                variant: "destructive",
+                                title: "Error ❌",
+                                description: "Failed to verify payment."
+                            });
+                        }
+                    },
+                    prefill: {
+                        name: contactInfo.name,
+                        email: contactInfo.email,
+                        contact: contactInfo.mobile
+                    },
+                    theme: {
+                        color: theme?.colors?.primary || "#3399cc"
+                    },
+                    modal: {
+                        ondismiss: function () {
+                            setIsInitializingPayment(false);
+                            toast({ description: "Payment cancelled" });
+                        }
+                    }
+                };
+
+                const rzp = new (window as any).Razorpay(options);
+                rzp.open();
             }
 
         } catch (error) {
@@ -553,12 +620,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             }
 
             // 4. Compare and Validate
-            let hasChanges = false;
+            let blockingChanges = false;
             const changes: string[] = [];
-            const newCart = [...cart];
 
-            // We iterate through response items. Order is preserved? Yes, usually.
-            // But let's verify by index or ID if possible. The API response lacks ID, so we assume index matching.
+            // Create a deep copy to avoid mutating state directly before setState
+            const newCart = cart.map(item => ({ ...item, selectedAddons: item.selectedAddons ? [...item.selectedAddons] : [] }));
 
             response.productDetails.forEach((detail, index) => {
                 const item = newCart[index];
@@ -566,38 +632,38 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 // Check Status
                 if (detail.productStatus !== 'ACTIVE') {
-                    hasChanges = true;
-                    changes.push(`"${item.name}" is currently unavailable/inactive.`);
-                    // We will remove it later or mark it. For now, let's remove it from the cart to be safe?
-                    item.cartItemId = 'REMOVE_ME'; // Mark for removal
+                    blockingChanges = true;
+                    changes.push(`"${item.name}" is currently unavailable/inactive and has been removed.`);
+                    item.cartItemId = 'REMOVE_ME';
+                    return;
                 }
 
-                // Check Product Price
-                if (detail.productPrice !== item.price) {
-                    hasChanges = true;
-                    changes.push(`Price of "${item.name}" updated from ₹${item.price} to ₹${detail.productPrice}.`);
-                    item.price = detail.productPrice;
-                }
+                // Calculate Effective Prices
+                const oldEffectivePrice = item.priceAfterDiscount !== undefined ? item.priceAfterDiscount : item.price;
+                const newEffectivePrice = detail.productPriceAfterDiscount !== undefined ? detail.productPriceAfterDiscount : detail.productPrice;
 
-                // Check Product Price After Discount
-                if (detail.productPriceAfterDiscount !== undefined && detail.productPriceAfterDiscount !== item.priceAfterDiscount) {
-                    hasChanges = true;
-                    // If item didn't have a discount before
-                    const oldPrice = item.priceAfterDiscount !== undefined ? item.priceAfterDiscount : item.price;
-                    changes.push(`Discounted price of "${item.name}" updated from ₹${oldPrice} to ₹${detail.productPriceAfterDiscount}.`);
-                    item.priceAfterDiscount = detail.productPriceAfterDiscount;
+                // Update Item Properties (Always sync with server)
+                const priceChanged = detail.productPrice !== item.price;
+                const discountChanged = detail.productPriceAfterDiscount !== item.priceAfterDiscount;
+
+                item.price = detail.productPrice;
+                item.priceAfterDiscount = detail.productPriceAfterDiscount;
+
+                // Only notify if the amount the user pays has changed
+                if (oldEffectivePrice !== newEffectivePrice) {
+                    blockingChanges = true;
+                    changes.push(`Price of "${item.name}" updated from ₹${oldEffectivePrice} to ₹${newEffectivePrice}.`);
                 }
 
                 // Check Addon Prices
                 if (item.selectedAddons && item.selectedAddons.length > 0 && detail.addonAndAddonPrice) {
-                    // detail.addonAndAddonPrice is ["id:price", ...]
                     detail.addonAndAddonPrice.forEach(str => {
                         const [idStr, priceStr] = str.split(':');
                         const addonIndex = item.selectedAddons!.findIndex(a => a.id === idStr);
                         if (addonIndex > -1) {
                             const newPrice = parseFloat(priceStr);
                             if (item.selectedAddons![addonIndex].price !== newPrice) {
-                                hasChanges = true;
+                                blockingChanges = true;
                                 changes.push(`Addon price for "${item.name}" updated.`);
                                 item.selectedAddons![addonIndex].price = newPrice;
                             }
@@ -608,9 +674,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
             const finalCart = newCart.filter(item => item.cartItemId !== 'REMOVE_ME');
 
-            if (hasChanges) {
-                // Update Store
-                useCart.setState({ cart: finalCart });
+            // Always update cart to reflect latest server data (silent updates included)
+            useCart.setState({ cart: finalCart });
+
+            if (blockingChanges && changes.length > 0) {
                 setValidationErrors(changes);
                 setShowValidationPopup(true);
             } else {
@@ -1308,14 +1375,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             {loadingAddresses ? (
                                                 <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
                                                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                                    <div className="flex items-baseline gap-2">
-                                                        <span className={cn("font-medium", item.priceAfterDiscount ? "text-muted-foreground line-through text-xs" : "text-sm")}>₹{item.price * item.quantity}</span>
-                                                        {item.priceAfterDiscount && (
-                                                            <span className="text-sm font-bold text-primary">
-                                                                ₹{item.priceAfterDiscount * item.quantity}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                    <p className="text-xs font-medium">Loading addresses...</p>
                                                 </div>
                                             ) : addresses.length === 0 ? (
                                                 <div className="text-center py-10 px-4 bg-background rounded-3xl border border-dashed border-border/60">
