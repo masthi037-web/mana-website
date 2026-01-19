@@ -120,6 +120,7 @@ function mapApiProductToAppProduct(apiProd: ApiProduct): AppProduct {
         deliveryTime: '30-45 min',
         deliveryCost: apiProd.productDeliveryCost,
         createdAt: apiProd.createdAt,
+        updatedAt: apiProd.updatedAt,
         variants: variants.length > 0 ? variants : undefined,
         famous: apiProd.famous || false,
         ingredients: apiProd.productIng,

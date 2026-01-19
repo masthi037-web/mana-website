@@ -37,6 +37,7 @@ export interface Product {
     productStatus: string; // 'ACTIVE' | 'INACTIVE' etc.
     productDeliveryCost: number;
     createdAt: string;
+    updatedAt: string;
     productPricing: ProductPricing[];
     productRatings: ProductRating[];
     famous: boolean;

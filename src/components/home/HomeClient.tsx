@@ -202,7 +202,7 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
                 case 'price_asc': return a.price - b.price;
                 case 'price_desc': return b.price - a.price;
                 case 'rating_desc': return b.rating - a.rating;
-                case 'newest': return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                case 'newest': return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
                 default: return 0;
             }
         });
@@ -225,6 +225,7 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
                     imageUrl: `https://picsum.photos/seed/${p.id}/300/300`
                 }
             })
+            .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
         : [];
 
     const newArrivals = allNewArrivals.slice(0, 5);
@@ -241,6 +242,7 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
                     imageUrl: `https://picsum.photos/seed/${p.id}/300/300`
                 }
             })
+            .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
         : [];
 
     const famousProducts = allFamousProducts.slice(0, 8); // Showing up to 8 famous products
@@ -363,6 +365,13 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
                                                 const imageMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
                                                 const offerProducts = activeCategory ? activeCategory.catalogs.flatMap(c => c.products)
                                                     .filter(p => p.productOffer)
+                                                    .sort((a, b) => {
+                                                        const getVal = (s?: string) => {
+                                                            const m = s?.match(/(\d+)/);
+                                                            return m ? parseInt(m[0]) : 0;
+                                                        };
+                                                        return getVal(b.productOffer) - getVal(a.productOffer);
+                                                    })
                                                     .map(p => {
                                                         const image = imageMap.get(p.imageId);
                                                         return {

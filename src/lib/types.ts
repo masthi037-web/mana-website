@@ -32,6 +32,7 @@ export type Product = {
   deliveryTime: string;
   deliveryCost: number;
   createdAt: string;
+  updatedAt: string;
   variants?: ProductVariant[];
   famous?: boolean;
   ingredients?: string;
