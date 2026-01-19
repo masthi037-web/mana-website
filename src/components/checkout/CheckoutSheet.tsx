@@ -47,7 +47,7 @@ export function CheckoutSheet({ children }: { children: React.ReactNode }) {
     const { cart, getCartTotal, companyDetails, clearCart } = useCart();
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
-    const isRazorpayLoaded = useRazorpay();
+    const { isLoaded: isRazorpayLoaded, loadRazorpay } = useRazorpay();
 
     // Data State
     const [customer, setCustomer] = useState<CustomerDetails | null>(null);
@@ -143,7 +143,8 @@ export function CheckoutSheet({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        if (!isRazorpayLoaded) {
+        const loaded = await loadRazorpay();
+        if (!loaded) {
             toast({ variant: "destructive", description: "Payment gateway not loaded. Please ensure you are online." });
             return;
         }

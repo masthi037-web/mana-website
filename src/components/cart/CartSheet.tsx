@@ -64,7 +64,7 @@ import { useSheetBackHandler } from '@/hooks/use-sheet-back-handler';
 
 export function CartSheet({ children }: { children: React.ReactNode }) {
     const { cart, updateQuantity, removeFromCart, getCartTotal, getCartItemsCount, isCartOpen, setCartOpen, companyDetails, lastAddedItemId, clearCart } = useCart();
-    const isRazorpayLoaded = useRazorpay();
+    const { isLoaded: isRazorpayLoaded, loadRazorpay } = useRazorpay();
 
     // Handle back button on mobile
     useSheetBackHandler(isCartOpen, setCartOpen);
@@ -411,8 +411,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             console.log("PAYMENT INIT RESPONSE:", response);
 
             if (response && response.razorpayOrderId) {
-                if (!isRazorpayLoaded) {
-                    toast({ variant: "destructive", description: "Payment gateway is loading. Please try again in a moment." });
+                const loaded = await loadRazorpay();
+                if (!loaded) {
+                    toast({ variant: "destructive", description: "Failed to load payment gateway. Please check your internet connection." });
                     return;
                 }
 
