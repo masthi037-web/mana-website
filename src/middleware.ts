@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
     const hostHeader = request.headers.get('host') || '';
+    console.log("HOST :- " + hostHeader);
 
     // Remove port if present (e.g. localhost:3000 -> localhost)
     const hostname = hostHeader.split(':')[0];
