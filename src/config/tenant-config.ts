@@ -155,7 +155,7 @@ export const DEFAULT_CONFIG: TenantConfig = {
 
 const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     // 1. Organic Greens (Fresh, Friendly)
-    "mashallah": {
+    "bavahomefoods": {
         id: "organic-greens",
         name: "Home Foods",
         theme: {
