@@ -11,10 +11,10 @@ export function middleware(request: NextRequest) {
     // Extract subdomain (tenant)
     // Example: babaihomefoods.mana.com -> babaihomefoods
     // Example: localhost -> localhost
-    let companyDomain = hostname.split('.')[0];
+    let companyDomain = hostname.split('.')[1];
 
     // Localhost fallback for development
-    if (companyDomain === 'localhost' || companyDomain.match('manabuy')) {
+    if (companyDomain === 'localhost' || companyDomain.match('mashallah')) {
         companyDomain = 'babaihomefoods';
     }
     else if (companyDomain.match('mana-website-toone')) {
