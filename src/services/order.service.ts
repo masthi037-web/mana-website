@@ -13,5 +13,13 @@ export const orderService = {
             // No cache for payment initialization
             next: { revalidate: 0 }
         });
+    },
+
+    verifyPayment: async (data: { razorpayOrderId: string; razorpayPaymentId: string; razorpaySignature: string }) => {
+        return apiClient<{ status: string; orderId?: string; message?: string }>('/payments/verify', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            next: { revalidate: 0 }
+        });
     }
 };

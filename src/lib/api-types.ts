@@ -340,3 +340,15 @@ export interface CheckoutValidationProductDetail {
 export interface CheckoutValidationResponse {
     productDetails: CheckoutValidationProductDetail[];
 }
+
+export interface PaymentVerificationRequest {
+    razorpayOrderId: string;
+    razorpayPaymentId: string;
+    razorpaySignature: string;
+}
+
+export interface PaymentVerificationResponse {
+    status: string; // 'success' | 'failed'
+    orderId?: string;
+    message?: string;
+}

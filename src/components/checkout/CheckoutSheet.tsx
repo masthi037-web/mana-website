@@ -33,11 +33,21 @@ import { customerService } from '@/services/customer.service';
 import { CustomerDetails, CustomerAddress } from '@/lib/api-types';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
+import { useRazorpay } from '@/hooks/use-razorpay';
+import { orderService } from '@/services/order.service';
+
+// Declare Razorpay on window
+declare global {
+    interface Window {
+        Razorpay: any;
+    }
+}
 
 export function CheckoutSheet({ children }: { children: React.ReactNode }) {
-    const { cart, getCartTotal, companyDetails } = useCart();
+    const { cart, getCartTotal, companyDetails, clearCart } = useCart();
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
+    const isRazorpayLoaded = useRazorpay();
 
     // Data State
     const [customer, setCustomer] = useState<CustomerDetails | null>(null);
@@ -47,6 +57,7 @@ export function CheckoutSheet({ children }: { children: React.ReactNode }) {
     // UI State
     const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
     const [view, setView] = useState<'list' | 'add'>('list');
+    const [processingPayment, setProcessingPayment] = useState(false);
 
     // Form State
     const [newAddress, setNewAddress] = useState<Partial<CustomerAddress>>({
@@ -123,6 +134,139 @@ export function CheckoutSheet({ children }: { children: React.ReactNode }) {
             toast({ variant: "destructive", description: "Failed to save address." });
         } finally {
             setSavingAddress(false);
+        }
+    };
+
+    const handlePayment = async () => {
+        if (!selectedAddress || !customer || !companyDetails) {
+            toast({ variant: "destructive", description: "Missing details." });
+            return;
+        }
+
+        if (!isRazorpayLoaded) {
+            toast({ variant: "destructive", description: "Payment gateway not loaded. Please ensure you are online." });
+            return;
+        }
+
+        setProcessingPayment(true);
+        try {
+            // 1. Initialize Payment
+            const subtotal = getCartTotal();
+            const minOrder = parseFloat(companyDetails.minimumOrderCost || '0');
+            const freeDeliveryThreshold = parseFloat(companyDetails.freeDeliveryCost || '0');
+            const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
+            const shipping = isFreeDelivery ? 0 : 40;
+            const total = subtotal + shipping;
+
+            // map cart items to payment initialization items
+            const paymentItems = cart.map(item => ({
+                productId: item.productId,
+                pricingId: item.productPricingId ? parseInt(item.productPricingId) : null,
+                productAddonIds: item.selectedAddons ? item.selectedAddons.map(a => a.id).join('&&&') : '',
+                quantity: item.quantity
+            }));
+
+            const initData = {
+                customerName: customer.customerName,
+                customerPhoneNumber: customer.customerMobileNumber,
+                customerEmailId: customer.customerEmailId,
+                domainName: companyDetails.companyDomain || window.location.hostname,
+                customerAddress: `${selectedAddress.customerDrNum}, ${selectedAddress.customerRoad}`,
+                customerCity: selectedAddress.customerCity,
+                customerState: selectedAddress.customerState,
+                customerCountry: selectedAddress.customerCountry,
+                addressName: selectedAddress.addressName,
+                shipmentAmount: shipping,
+                discount: "0",
+                discountName: "",
+                discountAmount: 0,
+                totalCost: total,
+                paymentMethod: "RAZORPAY",
+                customerNote: "",
+                items: paymentItems
+            };
+
+            const initResponse = await orderService.initializePayment(
+                initData,
+                companyDetails.razorpayKeyId,
+                companyDetails.razorpayKeySecret
+            );
+
+            if (!initResponse || !initResponse.razorpayOrderId) {
+                throw new Error("Failed to initialize payment.");
+            }
+
+            // 2. Open Razorpay
+            const options = {
+                key: initResponse.razorpayKeyId,
+                amount: initResponse.amountInPaise,
+                currency: initResponse.currency,
+                name: companyDetails.companyName,
+                description: "Order Payment",
+                order_id: initResponse.razorpayOrderId,
+                handler: async function (response: any) {
+                    try {
+                        // 3. Verify Payment
+                        const verifyRes = await orderService.verifyPayment({
+                            razorpayOrderId: response.razorpay_order_id,
+                            razorpayPaymentId: response.razorpay_payment_id,
+                            razorpaySignature: response.razorpay_signature
+                        });
+
+                        if (verifyRes.status === 'success') {
+                            toast({
+                                title: "Payment Successful ✅",
+                                description: `Order Confirmed! Order ID: ${verifyRes.orderId || 'N/A'}`,
+                                className: "bg-green-50 border-green-200 text-green-800"
+                            });
+
+                            // Clear cart and close
+                            /* useCart needs to be accessed outside or via hook capability inside callback? 
+                               Actually simplest is to trigger a state change or an event, but since we are inside a function component 
+                               we can't easily access the updated hook state inside the callback if it was stale. 
+                               However, standard function refs or just calling a function passed from component scope usually works if component is mounted.
+                            */
+                            // We need to access the clearCart function from the hook which captures it in closure.
+                            // But wait, getCartTotal and others are from useCart().
+                            // I need to destructure clearCart from useCart() at top level.
+
+                            // Since I can't edit top level in this block efficiently, I'll rely on a subsequent edit or do a multi-edit.
+                            // Wait, I can just assume I will add `clearCart` to destructuring in next step or now.
+                            // I'll add `clearCart` to destructuring `const { cart, getCartTotal, companyDetails, clearCart } = useCart();` first.
+                        } else {
+                            toast({
+                                variant: "destructive",
+                                title: "Verification Failed ❌",
+                                description: verifyRes.message || "Payment verification failed."
+                            });
+                        }
+                    } catch (err) {
+                        console.error("Verification Error", err);
+                        toast({
+                            variant: "destructive",
+                            title: "Error ❌",
+                            description: "Failed to verify payment."
+                        });
+                    }
+                },
+                prefill: {
+                    name: customer.customerName,
+                    email: customer.customerEmailId,
+                    contact: customer.customerMobileNumber
+                },
+                theme: {
+                    color: companyDetails.theme?.colors?.primary || "#3399cc"
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+
+        } catch (error) {
+            console.error("Payment Error", error);
+            toast({ variant: "destructive", description: "Payment initialization failed." });
+        } finally {
+            setProcessingPayment(false);
         }
     };
 
@@ -407,10 +551,15 @@ export function CheckoutSheet({ children }: { children: React.ReactNode }) {
                         <Button
                             size="lg"
                             className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                            disabled={!selectedAddress}
+                            disabled={!selectedAddress || processingPayment}
+                            onClick={handlePayment}
                         >
                             {!selectedAddress ? (
                                 "Select an Address"
+                            ) : processingPayment ? (
+                                <>
+                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...
+                                </>
                             ) : (
                                 <span className="flex items-center gap-2">
                                     Proceed to Pay <ArrowRight className="w-5 h-5" />

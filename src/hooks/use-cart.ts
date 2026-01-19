@@ -28,6 +28,7 @@ interface CartState {
   setCartOpen: (isOpen: boolean) => void;
   setCompanyDetails: (details: CompanyDetails) => void;
   checkExpiration: () => void;
+  clearCart: () => void;
   timestamp: number;
   lastAddedItemId: string | null;
 }
@@ -134,7 +135,8 @@ export const useCart = create<CartState>()(
           // Expired, clear cart
           set({ cart: [], timestamp: now });
         }
-      }
+      },
+      clearCart: () => set({ cart: [], timestamp: Date.now() })
     }),
     {
       name: 'cart-storage',
