@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
     // Extract subdomain (tenant)
     // Example: babaihomefoods.mana.com -> babaihomefoods
     // Example: localhost -> localhost
-    let companyDomain = hostname.split('.')[1];
+    let companyDomain = hostname.split('.')[0];
 
     // Localhost fallback for development
     if (companyDomain === 'localhost' || companyDomain.match('mashallah')) {
