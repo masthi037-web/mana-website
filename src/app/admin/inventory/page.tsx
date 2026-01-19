@@ -318,6 +318,24 @@ export default function AdminInventoryPage() {
         }
     });
 
+    const hasChanges = () => {
+        if (!editingItem) return true; // Creating new item
+
+        const safeImage = image || "";
+
+        if (level === 'CATEGORY') {
+            return name !== editingItem.name ||
+                desc !== (editingItem.description || "") ||
+                safeImage !== (editingItem.categoryImage || "");
+        }
+        if (level === 'CATALOGUE') {
+            return name !== editingItem.name ||
+                desc !== (editingItem.description || "") ||
+                safeImage !== (editingItem.catalogueImage || "");
+        }
+        return true; // Default allow for other levels if any
+    };
+
     // --- NAVIGATION HANDLERS ---
     const resetForm = () => {
         setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst(""); setProdOffer("");
@@ -494,7 +512,7 @@ export default function AdminInventoryPage() {
                     </>
                 )}
 
-                <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="w-full mt-6">
+                <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !hasChanges()} className="w-full mt-6">
                     {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {editingItem ? "Update" : "Create"} {level === 'PRICING' ? 'Variant' : level.charAt(0) + level.slice(1).toLowerCase()}
                 </Button>

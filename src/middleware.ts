@@ -13,7 +13,7 @@ export function middleware(request: NextRequest) {
     let companyDomain = hostname.split('.')[0];
 
     // Localhost fallback for development
-    if (companyDomain === 'localhost' || companyDomain.match('mana-website-two')) {
+    if (companyDomain === 'localhost' || companyDomain.match('manabuy')) {
         companyDomain = 'babaihomefoods';
     }
     else if (companyDomain.match('mana-website-toone')) {
