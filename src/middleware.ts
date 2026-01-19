@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
     console.log("COMPANY DOMAIN :- " + companyDomain);
 
     // Localhost fallback for development
-    if (companyDomain === 'localhost' || companyDomain.match('mashallah')) {
+    if (companyDomain === 'localhost' || companyDomain.match('manabuy')) {
         companyDomain = 'bavahomefoods';
     }
     // Clone the request headers and set the company domain
