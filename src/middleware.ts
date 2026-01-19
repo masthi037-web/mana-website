@@ -21,7 +21,6 @@ export function middleware(request: NextRequest) {
     }
     // Clone the request headers and set the company domain
     const requestHeaders = new Headers(request.headers);
-    companyDomain = hostname.split('.')[2];
     requestHeaders.set('x-company-domain', companyDomain);
 
     // Return response with modified headers
