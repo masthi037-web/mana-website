@@ -119,12 +119,12 @@ export function Footer({ companyName = "ShopSphere", socialLinks }: FooterProps)
                         <div className="flex flex-col leading-none gap-0.5">
                             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Developed by</span>
                             <a
-                                href="https://www.manabuy.com"
+                                href="https://www.manabuy.in"
                                 target="_blank"
                                 rel="noreferrer"
                                 className="font-bold text-foreground hover:text-primary transition-colors flex items-center gap-1.5"
                             >
-                                Mastan
+                                Mana Buy Team
                                 <ArrowRight className="h-3 w-3 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300" />
                             </a>
                         </div>

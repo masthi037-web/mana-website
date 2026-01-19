@@ -155,7 +155,7 @@ export const DEFAULT_CONFIG: TenantConfig = {
 
 const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     // 1. Organic Greens (Fresh, Friendly)
-    "organicgreens.com": {
+    "bavahomefoods": {
         id: "organic-greens",
         name: "Organic Greens",
         theme: {
@@ -479,9 +479,9 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     },
 
     // Existing Clients
-    "babaihomefoods": {
-        id: "babai-home-foods",
-        name: "Babai Home Foods",
+    "sandhyacollections": {
+        id: "sandhyacollections",
+        name: "Sandhya Collections",
         theme: {
             colors: {
                 primary: "180 80% 35%",
