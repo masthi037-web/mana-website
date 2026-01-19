@@ -7,11 +7,13 @@ export function middleware(request: NextRequest) {
 
     // Remove port if present (e.g. localhost:3000 -> localhost)
     const hostname = hostHeader.split(':')[0];
+    console.log("HOSTNAME :- " + hostname);
 
     // Extract subdomain (tenant)
     // Example: babaihomefoods.mana.com -> babaihomefoods
     // Example: localhost -> localhost
     let companyDomain = hostname.split('.')[0];
+    console.log("COMPANY DOMAIN :- " + companyDomain);
 
     // Localhost fallback for development
     if (companyDomain === 'localhost' || companyDomain.match('mashallah')) {
