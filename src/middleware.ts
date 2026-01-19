@@ -12,7 +12,7 @@ export function middleware(request: NextRequest) {
     // Extract subdomain (tenant)
     // Example: babaihomefoods.mana.com -> babaihomefoods
     // Example: localhost -> localhost
-    let companyDomain = hostname.split('.')[0];
+    let companyDomain = hostname.split('.')[1];
     console.log("COMPANY DOMAIN :- " + companyDomain);
 
     // Localhost fallback for development
@@ -21,6 +21,7 @@ export function middleware(request: NextRequest) {
     }
     // Clone the request headers and set the company domain
     const requestHeaders = new Headers(request.headers);
+    companyDomain = hostname.split('.')[2];
     requestHeaders.set('x-company-domain', companyDomain);
 
     // Return response with modified headers
