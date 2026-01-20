@@ -13,7 +13,7 @@ interface FooterProps {
     socialLinks?: string | null;
 }
 
-export function Footer({ companyName = "ShopSphere", socialLinks }: FooterProps) {
+export function Footer({ companyName = "ManaBuy", socialLinks }: FooterProps) {
     const { isOwner } = useAuth();
 
     // Parse social links

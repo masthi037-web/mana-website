@@ -29,7 +29,7 @@ const navItems = [
   { href: '/admin/inventory', label: 'Admin', icon: Settings },
 ];
 
-const Header = ({ companyName = "ShopSphere" }: { companyName?: string }) => {
+const Header = ({ companyName = "ManaBuy" }: { companyName?: string }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { wishlist } = useWishlist();

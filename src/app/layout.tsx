@@ -7,7 +7,7 @@ import Loading from './loading';
 import AppShell from '@/components/layout/AppShell';
 
 export const metadata: Metadata = {
-  title: 'ShopSphere',
+  title: 'ManaBuy',
   description: 'A modern e-commerce experience.',
 };
 

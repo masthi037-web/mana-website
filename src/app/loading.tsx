@@ -14,7 +14,7 @@ export default function Loading() {
             {/* Text */}
             <div className="flex flex-col items-center gap-2">
                 <h1 className="font-headline text-2xl font-bold tracking-tight text-foreground">
-                    ShopSphere
+                    ManaBuy
                 </h1>
                 <p className="text-sm font-medium text-muted-foreground animate-pulse">
                     Curating your experience...
