@@ -79,9 +79,10 @@ export function Footer({ companyName = "ManaBuy", socialLinks }: FooterProps) {
                         <h3 className="font-bold text-xs uppercase tracking-widest text-primary mb-8 font-headline">Support</h3>
                         <ul className="space-y-4 text-sm text-muted-foreground/80 font-medium">
                             <li><FooterLink href="#">Help Center</FooterLink></li>
-                            <li><FooterLink href="#">Shipping & Returns</FooterLink></li>
-                            <li><FooterLink href="#">Privacy Policy</FooterLink></li>
-                            <li><FooterLink href="#">Terms of Service</FooterLink></li>
+                            <li><FooterLink href="/shipping-delivery">Shipping & Delivery</FooterLink></li>
+                            <li><FooterLink href="/cancellation-refund">Cancellation & Refund</FooterLink></li>
+                            <li><FooterLink href="/privacy-policy">Privacy Policy</FooterLink></li>
+                            <li><FooterLink href="/terms-conditions">Terms & Conditions</FooterLink></li>
                             <li><FooterLink href="#">Track Order</FooterLink></li>
                         </ul>
                     </div>
@@ -124,7 +125,7 @@ export function Footer({ companyName = "ManaBuy", socialLinks }: FooterProps) {
                                 rel="noreferrer"
                                 className="font-bold text-foreground hover:text-primary transition-colors flex items-center gap-1.5"
                             >
-                                Mana Buy Team
+                                ManaBuy
                                 <ArrowRight className="h-3 w-3 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300" />
                             </a>
                         </div>

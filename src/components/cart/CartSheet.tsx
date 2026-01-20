@@ -235,11 +235,15 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             const data = await customerService.getCustomerDetails(forceRefresh); // use cache if available unless forced
             if (data) {
                 setCustomer(data);
-                setContactInfo({
-                    name: data.customerName || '',
-                    email: data.customerEmailId || '',
-                    mobile: data.customerMobileNumber || ''
-                });
+                setCustomer(data);
+
+                // Only overwrite contact info if it's empty (initial load) so we don't wipe user input
+                // Or if the server has data and we have nothing.
+                setContactInfo(prev => ({
+                    name: prev.name || data.customerName || '',
+                    email: prev.email || data.customerEmailId || '',
+                    mobile: prev.mobile || data.customerMobileNumber || ''
+                }));
                 setAddresses(data.customerAddress || []);
                 // Auto-select first address if none selected and NOT saving (saving handles its own selection)
                 if (!selectedAddressId && data.customerAddress?.length > 0 && !savingAddress) {
