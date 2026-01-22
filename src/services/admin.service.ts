@@ -4,7 +4,9 @@ import {
     CreateCatalogueRequest, CreateCatalogueResponse,
     CreateProductRequest, CreateProductResponse,
     CreatePricingRequest, CreatePricingResponse,
+    UpdatePricingRequest, UpdatePricingResponse,
     CreateColourRequest, CreateColourResponse,
+    UpdateColourRequest, UpdateColourResponse,
     CreateAddonRequest, CreateAddonResponse,
     UpdateCategoryRequest, UpdateCategoryResponse,
     UpdateCatalogueRequest, UpdateCatalogueResponse
@@ -47,8 +49,29 @@ export const adminService = {
     },
 
     createPricing: async (data: CreatePricingRequest) => {
-        return apiClient<CreatePricingResponse>('/product/pricing/create', {
+        return apiClient<CreatePricingResponse>('/product/size/create', {
             method: 'POST',
+            body: JSON.stringify(data),
+        });
+    },
+
+    updateProductSize: async (data: UpdatePricingRequest) => {
+        return apiClient<UpdatePricingResponse>('/product/size/update', {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    },
+
+    createProductColour: async (data: CreateColourRequest) => {
+        return apiClient<CreateColourResponse>('/product/colour/create', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    },
+
+    updateProductColour: async (data: UpdateColourRequest) => {
+        return apiClient<UpdateColourResponse>('/product/colour/update', {
+            method: 'PUT',
             body: JSON.stringify(data),
         });
     },
@@ -83,6 +106,13 @@ export const adminService = {
     getProductPricing: async (productId: string) => {
         return apiClient<any[]>('/product/pricing/get', {
             params: { productId },
+            next: { revalidate: 300 }
+        });
+    },
+
+    getProductColours: async (productId: string | number) => {
+        return apiClient<any[]>('/product/colour/get', {
+            params: { productId: String(productId) },
             next: { revalidate: 300 }
         });
     },

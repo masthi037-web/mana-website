@@ -64,11 +64,17 @@ export default function AdminInventoryPage() {
     const [price, setPrice] = useState("");
     const [discountedPrice, setDiscountedPrice] = useState("");
     const [qty, setQty] = useState("");
+    const [sizeStatus, setSizeStatus] = useState("ACTIVE");
     const [isMandatory, setIsMandatory] = useState(false);
     const [image, setImage] = useState<string | null>(null);
 
+    // --- COLOUR STATES ---
+    const [colourName, setColourName] = useState("");
+    const [colourImage, setColourImage] = useState<string | null>(null);
+    const [colourStatus, setColourStatus] = useState("ACTIVE");
+
     // --- MANAGE SHEET STATE ---
-    const [manageMode, setManageMode] = useState<'VIEW' | 'ADD_PRICING' | 'ADD_ADDON'>('VIEW');
+    const [manageMode, setManageMode] = useState<'VIEW' | 'ADD_PRICING' | 'ADD_ADDON' | 'ADD_COLOUR'>('VIEW');
     const [expandedPricingId, setExpandedPricingId] = useState<string | null>(null);
     const [editingItem, setEditingItem] = useState<any | null>(null);
 
@@ -128,7 +134,8 @@ export default function AdminInventoryPage() {
                 productImage: p.productImage,
                 description: p.productInfo || "",
                 rating: 0,
-                productOffer: p.productOffer
+                productOffer: p.productOffer,
+                colours: p.productColour || []
             }));
         }
     });
@@ -143,7 +150,9 @@ export default function AdminInventoryPage() {
                 id: String(p.productSizeId),
                 price: p.productPrice,
                 priceAfterDiscount: p.productPriceAfterDiscount,
+                priceAfterDiscount: p.productPriceAfterDiscount,
                 quantity: p.productQuantity,
+                sizeStatus: p.sizeStatus || "ACTIVE",
                 addons: []
             }));
         }
@@ -274,12 +283,24 @@ export default function AdminInventoryPage() {
             } else if (isManageSheetOpen) {
                 // Manage Sheet Flow
                 if (manageMode === 'ADD_PRICING' && selectedProduct) {
-                    return adminService.createPricing({
-                        productId: Number(selectedProduct.id),
-                        productPrice: Number(price),
-                        productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
-                        productQuantity: qty
-                    });
+                    if (editingItem) {
+                        return adminService.updateProductSize({
+                            productSizeId: Number(editingItem.id),
+                            productId: Number(selectedProduct.id),
+                            productPrice: Number(price),
+                            productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
+                            productQuantity: qty,
+                            sizeStatus: sizeStatus
+                        });
+                    } else {
+                        return adminService.createPricing({
+                            productId: Number(selectedProduct.id),
+                            productPrice: Number(price),
+                            productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
+                            productQuantity: qty,
+                            sizeStatus: sizeStatus
+                        });
+                    }
                 } else if (manageMode === 'ADD_ADDON' && expandedPricingId) {
                     return adminService.createAddon({
                         productSizeId: Number(expandedPricingId),
@@ -288,6 +309,23 @@ export default function AdminInventoryPage() {
                         mandatory: isMandatory,
                         active: true
                     });
+                } else if (manageMode === 'ADD_COLOUR' && selectedProduct) {
+                    if (editingItem) {
+                        return adminService.updateProductColour({
+                            productColourId: Number(editingItem.productColourId),
+                            productId: Number(selectedProduct.id),
+                            productPics: colourImage || "",
+                            colourStatus: colourStatus,
+                            colour: colourName
+                        });
+                    } else {
+                        return adminService.createProductColour({
+                            productId: Number(selectedProduct.id),
+                            productPics: colourImage || "",
+                            colourStatus: colourStatus,
+                            colour: colourName
+                        });
+                    }
                 }
             }
         },
@@ -339,8 +377,9 @@ export default function AdminInventoryPage() {
     // --- NAVIGATION HANDLERS ---
     const resetForm = () => {
         setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst(""); setProdOffer("");
-        setProdDeliveryCost("40"); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setIsMandatory(false);
+        setProdDeliveryCost("40"); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setSizeStatus("ACTIVE"); setIsMandatory(false);
         setImage(null);
+        setColourName(""); setColourImage(null); setColourStatus("ACTIVE");
         setEditingItem(null);
     };
 
@@ -622,11 +661,22 @@ export default function AdminInventoryPage() {
                                             <Label className="text-xs">Discounted Price (Auto)</Label>
                                             <Input type="number" value={discountedPrice} onChange={e => setDiscountedPrice(e.target.value)} className="h-8 bg-background border-dashed" placeholder="Auto" />
                                         </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Status</Label>
+                                            <select
+                                                className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={sizeStatus}
+                                                onChange={e => setSizeStatus(e.target.value)}
+                                            >
+                                                <option value="ACTIVE">Active</option>
+                                                <option value="INACTIVE">Inactive</option>
+                                            </select>
+                                        </div>
                                         <div className="flex gap-2 pt-2">
                                             <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="flex-1">
-                                                {createMutation.isPending && <Loader2 className="w-3 h-3 mr-2 animate-spin" />} Save
+                                                {createMutation.isPending && <Loader2 className="w-3 h-3 mr-2 animate-spin" />} {editingItem ? "Update Variant" : "Save Variant"}
                                             </Button>
-                                            <Button size="sm" variant="ghost" onClick={() => setManageMode('VIEW')} className="flex-1">Cancel</Button>
+                                            <Button size="sm" variant="ghost" onClick={() => { setManageMode('VIEW'); resetForm(); }} className="flex-1">Cancel</Button>
                                         </div>
                                     </div>
                                 </div>
@@ -636,29 +686,47 @@ export default function AdminInventoryPage() {
                             <div className="space-y-3">
                                 {pricingOptions.map((p: any) => (
                                     <div key={p.id} className="border rounded-xl p-0 overflow-hidden bg-card shadow-sm transition-all hover:shadow-md">
-                                        <div
-                                            className="p-3 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors"
-                                            onClick={() => setExpandedPricingId(expandedPricingId === p.id ? null : p.id)}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className={`p-2 rounded-full ${expandedPricingId === p.id ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                                                    {expandedPricingId === p.id ? <Layers className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
-                                                </div>
-                                                <div>
-                                                    <div className="font-bold text-sm">{p.quantity}</div>
-                                                    <div className="text-xs text-muted-foreground flex items-center gap-2">
-                                                        {p.priceAfterDiscount && p.priceAfterDiscount < p.price ? (
-                                                            <>
-                                                                <span className="line-through">₹{p.price}</span>
-                                                                <span className="font-bold text-primary">₹{p.priceAfterDiscount}</span>
-                                                            </>
-                                                        ) : (
-                                                            <span>₹{p.price}</span>
-                                                        )}
+                                        <div className="flex items-center">
+                                            <div
+                                                className="flex-1 p-3 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors"
+                                                onClick={() => setExpandedPricingId(expandedPricingId === p.id ? null : p.id)}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2 rounded-full ${expandedPricingId === p.id ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                                        {expandedPricingId === p.id ? <Layers className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-sm">{p.quantity}</div>
+                                                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                                            {p.priceAfterDiscount && p.priceAfterDiscount < p.price ? (
+                                                                <>
+                                                                    <span className="line-through">₹{p.price}</span>
+                                                                    <span className="font-bold text-primary">₹{p.priceAfterDiscount}</span>
+                                                                </>
+                                                            ) : (
+                                                                <span>₹{p.price}</span>
+                                                            )}
+                                                            <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${p.sizeStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                                {p.sizeStatus}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${expandedPricingId === p.id ? 'rotate-90' : ''}`} />
                                             </div>
-                                            <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${expandedPricingId === p.id ? 'rotate-90' : ''}`} />
+                                            <div className="pr-3">
+                                                <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full hover:bg-muted" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingItem(p);
+                                                    setQty(p.quantity);
+                                                    setPrice(String(p.price));
+                                                    setDiscountedPrice(String(p.priceAfterDiscount));
+                                                    setSizeStatus(p.sizeStatus || "ACTIVE");
+                                                    setManageMode('ADD_PRICING');
+                                                }}>
+                                                    <Pencil className="h-3 w-3 text-muted-foreground" />
+                                                </Button>
+                                            </div>
                                         </div>
 
                                         {/* ADDONS SECTION (EXPANDED) */}
@@ -718,6 +786,98 @@ export default function AdminInventoryPage() {
                                     </div>
                                 ))}
                                 {pricingOptions.length === 0 && <div className="text-center py-8 text-muted-foreground text-sm">No pricing variants found. Add one to get started.</div>}
+                            </div>
+                        </div>
+
+                        {/* COLOURS SECTION */}
+                        <div className="space-y-6 mt-8 border-t pt-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-bold flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-primary" /> Product Colours
+                                </h3>
+                                {manageMode !== 'ADD_COLOUR' && (
+                                    <Button size="sm" onClick={() => { setManageMode('ADD_COLOUR'); resetForm(); }} variant="outline" className="h-8 rounded-full">
+                                        <Plus className="w-3 h-3 mr-1" /> Add Colour
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* ADD COLOUR FORM */}
+                            {manageMode === 'ADD_COLOUR' && (
+                                <div className="bg-muted/30 p-4 rounded-xl border border-dashed border-primary/30 animate-in fade-in zoom-in-95 duration-300">
+                                    <h4 className="font-semibold text-sm mb-3 text-primary">New Colour Variant</h4>
+                                    <div className="space-y-3">
+                                        <div className="space-y-2">
+                                            <Label className="text-xs">Colour Name</Label>
+                                            <Input value={colourName} onChange={e => setColourName(e.target.value)} className="h-8 bg-background" placeholder="e.g. Red, Blue, Army Green" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <ImageUpload
+                                                value={colourImage || undefined}
+                                                onChange={setColourImage}
+                                                label="Colour Image"
+                                                companyDomain={domain || ""}
+                                                maxFiles={1}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-xs">Status</Label>
+                                            <select
+                                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={colourStatus}
+                                                onChange={e => setColourStatus(e.target.value)}
+                                            >
+                                                <option value="ACTIVE">Active</option>
+                                                <option value="INACTIVE">Inactive</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex gap-2 pt-2">
+                                            <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="flex-1">
+                                                {createMutation.isPending && <Loader2 className="w-3 h-3 mr-2 animate-spin" />} {editingItem ? "Update Colour" : "Save Colour"}
+                                            </Button>
+                                            <Button size="sm" variant="ghost" onClick={() => { setManageMode('VIEW'); resetForm(); }} className="flex-1">Cancel</Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* COLOUR LIST */}
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {/* @ts-ignore - Dynamic property added in mapping */}
+                                {selectedProduct?.colours && selectedProduct.colours.length > 0 ? (
+                                    /* @ts-ignore */
+                                    selectedProduct.colours.map((c: any) => (
+                                        <div key={c.productColourId} className="border rounded-lg p-2 bg-card relative group overflow-hidden">
+                                            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
+                                                <Button size="icon" variant="secondary" className="h-6 w-6 rounded-full shadow-sm" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingItem(c);
+                                                    setColourName(c.colour);
+                                                    setColourImage(c.productPics);
+                                                    setColourStatus(c.colourStatus);
+                                                    setManageMode('ADD_COLOUR');
+                                                }}>
+                                                    <Pencil className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                            <div className="aspect-square rounded-md bg-muted/50 mb-2 overflow-hidden">
+                                                {c.productPics ? (
+                                                    <img src={c.productPics} alt={c.colour} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
+                                                        <Sparkles className="w-6 h-6" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="font-bold text-sm truncate">{c.colour}</div>
+                                            <div className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded w-fit ${c.colourStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                {c.colourStatus}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    !manageMode && <div className="col-span-full text-center py-6 text-muted-foreground text-sm italic">No colours added yet.</div>
+                                )}
                             </div>
                         </div>
                     </SheetContent>
