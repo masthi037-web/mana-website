@@ -183,6 +183,22 @@ export default function AdminInventoryPage() {
         }
     });
 
+    // 6. Colours (Fetch colours when managing product or selected)
+    const { data: fetchedColours = [], isLoading: coloursLoading } = useQuery({
+        queryKey: ['colours', selectedProduct?.id],
+        enabled: !!selectedProduct?.id && (level === 'PRICING' || isManageSheetOpen), // Fetch when diving into product
+        queryFn: async () => {
+            const res = await adminService.getProductColours(selectedProduct!.id);
+            return res.map((c: any) => ({
+                productColourId: c.productColourId,
+                productId: c.productId,
+                colour: c.colour,
+                productPics: c.productPics,
+                colourStatus: c.colourStatus
+            }));
+        }
+    });
+
     // --- EFFECTS ---
     // Auto-calculate discounted price when Price or Product (Offer) changes
     // Only run if we are in PRICING mode and have a selected product
@@ -360,8 +376,19 @@ export default function AdminInventoryPage() {
             if (level === 'CATALOGUE') queryClient.invalidateQueries({ queryKey: ['catalogues', selectedCategory?.id] });
             if (level === 'PRODUCT') queryClient.invalidateQueries({ queryKey: ['products', selectedCatalogue?.id] });
 
-            // Refresh pricing if managing
-            if (level === 'PRICING' || isManageSheetOpen) queryClient.invalidateQueries({ queryKey: ['pricing', selectedProduct?.id] });
+            // Refresh pricing if managing PRICING or SIZES (not colours)
+            if ((level === 'PRICING' || isManageSheetOpen) && manageMode !== 'ADD_COLOUR') {
+                queryClient.invalidateQueries({ queryKey: ['pricing', selectedProduct?.id] });
+            }
+
+            // Refresh colours if managing COLOURS
+            if (manageMode === 'ADD_COLOUR' && selectedProduct) {
+                queryClient.invalidateQueries({ queryKey: ['colours', selectedProduct.id] });
+                // Also refresh main product list as colours are there too (optional but safe)
+                // queryClient.invalidateQueries({ queryKey: ['products', selectedCatalogue?.id] }); 
+                // User asked to call /product/colour/get, which we do via ['colours'] invalidation.
+                // We should NOT call /product/size/get, which we avoided by the check above.
+            }
 
             // Refresh addons if managing (using expandedPricingId)
             if (expandedPricingId) queryClient.invalidateQueries({ queryKey: ['addons', expandedPricingId] });
@@ -1003,10 +1030,9 @@ export default function AdminInventoryPage() {
 
                             {/* COLOUR LIST */}
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {/* @ts-ignore - Dynamic property added in mapping */}
-                                {selectedProduct?.colours && selectedProduct.colours.length > 0 ? (
-                                    /* @ts-ignore */
-                                    selectedProduct.colours.map((c: any) => (
+                                {/* COLOUR LIST */}
+                                {fetchedColours.length > 0 ? (
+                                    fetchedColours.map((c: any) => (
                                         <div key={c.productColourId} className="border rounded-lg p-2 bg-card relative group overflow-hidden">
                                             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
                                                 <Button size="icon" variant="secondary" className="h-6 w-6 rounded-full shadow-sm" onClick={(e) => {
