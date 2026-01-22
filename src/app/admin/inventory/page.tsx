@@ -68,6 +68,11 @@ export default function AdminInventoryPage() {
     const [isMandatory, setIsMandatory] = useState(false);
     const [image, setImage] = useState<string | null>(null);
 
+    // --- BULK DISCOUNT STATE ---
+    const [bulkDiscounts, setBulkDiscounts] = useState<{ qty: number; discount: number }[]>([]);
+    const [tempBulkQty, setTempBulkQty] = useState("");
+    const [tempBulkDiscount, setTempBulkDiscount] = useState("");
+
     // --- COLOUR STATES ---
     const [colourName, setColourName] = useState("");
     const [colourImage, setColourImage] = useState<string | null>(null);
@@ -258,10 +263,16 @@ export default function AdminInventoryPage() {
                     productInst: prodInst,
                     productPics: "https://cdn.example.com/products/default.jpg",
                     productStatus: "ACTIVE",
+                    // Prices now required
+                    productPrice: Number(price) || 0,
+                    productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : (Number(price) || 0),
                     famous: isFamous,
                     productDeliveryCost: Number(prodDeliveryCost),
                     productImage: image || undefined,
-                    productOffer: prodOffer || undefined
+                    productOffer: prodOffer || undefined,
+                    multipleSetDiscount: bulkDiscounts.length > 0
+                        ? bulkDiscounts.map(bd => `${bd.qty}-${bd.discount}`).join('&&&')
+                        : undefined
                 });
             } else if (level === 'PRICING' && selectedProduct && !isManageSheetOpen) {
                 // Classic Flow
@@ -378,6 +389,7 @@ export default function AdminInventoryPage() {
     const resetForm = () => {
         setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst(""); setProdOffer("");
         setProdDeliveryCost("40"); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setSizeStatus("ACTIVE"); setIsMandatory(false);
+        setBulkDiscounts([]); setTempBulkQty(""); setTempBulkDiscount("");
         setImage(null);
         setColourName(""); setColourImage(null); setColourStatus("ACTIVE");
         setEditingItem(null);
@@ -406,6 +418,38 @@ export default function AdminInventoryPage() {
     const openCreateSheet = () => {
         resetForm();
         setIsSheetOpen(true);
+    };
+
+    // --- UTILS ---
+    const calculateDiscount = (basePrice: number, offerText: string) => {
+        if (!offerText || !basePrice) return basePrice;
+        // Simple regex to find percentage OFF (e.g. "50% OFF", "Save 20%")
+        const match = offerText.match(/(\d+)%/);
+        if (match && match[1]) {
+            const pct = parseInt(match[1]);
+            return Math.round(basePrice * (1 - pct / 100));
+        }
+        return basePrice;
+    };
+
+    // Auto-calculate Discounted Price when Offer or Price changes (for Product Level)
+    useEffect(() => {
+        if (level === 'PRODUCT' && price && prodOffer) {
+            const calculated = calculateDiscount(Number(price), prodOffer);
+            setDiscountedPrice(String(calculated));
+        }
+    }, [price, prodOffer, level]);
+
+    // --- BULK DISCOUNT HANDLERS ---
+    const addBulkDiscount = () => {
+        if (!tempBulkQty || !tempBulkDiscount) return;
+        setBulkDiscounts([...bulkDiscounts, { qty: parseInt(tempBulkQty), discount: parseInt(tempBulkDiscount) }]);
+        setTempBulkQty("");
+        setTempBulkDiscount("");
+    };
+
+    const removeBulkDiscount = (index: number) => {
+        setBulkDiscounts(bulkDiscounts.filter((_, i) => i !== index));
     };
 
     // --- RENDER HELPERS ---
@@ -507,22 +551,12 @@ export default function AdminInventoryPage() {
                             <Checkbox id="famous" checked={isFamous} onCheckedChange={(c) => setIsFamous(!!c)} />
                             <Label htmlFor="famous">Mark as Famous?</Label>
                         </div>
-                    </>
-                )}
-
-                {/* Pricing Fields */}
-                {level === 'PRICING' && (
-                    <>
                         <div className="space-y-2">
-                            <Label>Quantity Label (e.g. 1 Kg)</Label>
-                            <Input placeholder="1 Kg" value={qty} onChange={e => setQty(e.target.value)} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Price</Label>
+                            <Label>Base Price (Starting From)</Label>
                             <Input type="number" placeholder="100" value={price} onChange={e => setPrice(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label>Discounted Price (Calculated)</Label>
+                            <Label>Base Discounted Price</Label>
                             <Input
                                 type="number"
                                 placeholder="80"
@@ -530,32 +564,114 @@ export default function AdminInventoryPage() {
                                 onChange={e => setDiscountedPrice(e.target.value)}
                                 className="bg-muted/30 border-dashed"
                             />
-                            <p className="text-[10px] text-muted-foreground">
-                                Auto-calculated from Product Offer ({selectedProduct?.productOffer || "None"}). You can override this.
-                            </p>
+                        </div>
+
+                        {/* Bulk Discounts Section */}
+                        <div className="space-y-3 pt-2 border-t">
+                            <Label className="text-sm font-semibold">Bulk Discounts (e.g. 3-10% off)</Label>
+                            <div className="flex gap-2 items-end">
+                                <div className="space-y-1 flex-1">
+                                    <Label className="text-xs">Qty (e.g. 3)</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="3"
+                                        value={tempBulkQty}
+                                        onChange={e => setTempBulkQty(e.target.value)}
+                                        className="h-8"
+                                    />
+                                </div>
+                                <div className="space-y-1 flex-1">
+                                    <Label className="text-xs">Discount % (e.g. 10)</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="10"
+                                        value={tempBulkDiscount}
+                                        onChange={e => setTempBulkDiscount(e.target.value)}
+                                        className="h-8"
+                                    />
+                                </div>
+                                <Button size="sm" variant="secondary" onClick={addBulkDiscount} type="button" className="h-8">Add</Button>
+                            </div>
+
+                            {/* List of Discounts */}
+                            {bulkDiscounts.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {bulkDiscounts.map((bd, i) => (
+                                        <div key={i} className="flex items-center gap-2 bg-secondary/50 px-3 py-1 rounded-full text-xs font-medium border">
+                                            <span>Buy {bd.qty} get {bd.discount}% Off</span>
+                                            <button onClick={() => removeBulkDiscount(i)} className="text-muted-foreground hover:text-destructive transition-colors">
+                                                ×
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </>
                 )}
 
+                {/* Pricing Fields */}
+                {
+                    level === 'PRICING' && (
+                        <>
+                            <div className="space-y-2">
+                                <Label>Quantity Label (e.g. 1 Kg)</Label>
+                                <Input placeholder="1 Kg" value={qty} onChange={e => setQty(e.target.value)} />
+                            </div>
+
+                            {selectedProduct && selectedProduct.productPrice > 0 ? (
+                                <div className="p-3 bg-muted rounded-md border border-dashed my-2">
+                                    <p className="text-sm font-medium text-muted-foreground">
+                                        Base Price is set on the Product ({selectedProduct.productPrice}).
+                                        Variant pricing is disabled.
+                                    </p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label>Price</Label>
+                                        <Input type="number" placeholder="100" value={price} onChange={e => setPrice(e.target.value)} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Discounted Price (Calculated)</Label>
+                                        <Input
+                                            type="number"
+                                            placeholder="80"
+                                            value={discountedPrice}
+                                            onChange={e => setDiscountedPrice(e.target.value)}
+                                            className="bg-muted/30 border-dashed"
+                                        />
+                                        <p className="text-[10px] text-muted-foreground">
+                                            Auto-calculated from Product Offer ({selectedProduct?.productOffer || "None"}). You can override this.
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+                        </>
+                    )
+                }
+
                 {/* Addon Fields */}
-                {level === 'ADDON' && (
-                    <>
-                        <div className="space-y-2">
-                            <Label>Price</Label>
-                            <Input type="number" placeholder="10" value={price} onChange={e => setPrice(e.target.value)} />
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="mandatory" checked={isMandatory} onCheckedChange={(c) => setIsMandatory(!!c)} />
-                            <Label htmlFor="mandatory">Is Mandatory?</Label>
-                        </div>
-                    </>
-                )}
+                {
+                    level === 'ADDON' && (
+                        <>
+                            <div className="space-y-2">
+                                <Label>Price</Label>
+                                <Input type="number" placeholder="10" value={price} onChange={e => setPrice(e.target.value)} />
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="mandatory" checked={isMandatory} onCheckedChange={(c) => setIsMandatory(!!c)} />
+                                <Label htmlFor="mandatory">Is Mandatory?</Label>
+                            </div>
+                        </>
+                    )
+                }
 
                 <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !hasChanges()} className="w-full mt-6">
                     {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {editingItem ? "Update" : "Create"} {level === 'PRICING' ? 'Variant' : level.charAt(0) + level.slice(1).toLowerCase()}
                 </Button>
-            </div>
+            </div >
         );
     };
 

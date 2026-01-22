@@ -188,9 +188,9 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
             quickAddButton: "Add Fresh",
             searchPlaceholder: "Search fresh vegetables...",
             startsFrom: "From",
-            heroTitle: "Freshness",
-            heroTitleHighlight: "Redefined",
-            heroDescription: "From the farm directly to your table, experience the true taste of nature.",
+            heroTitle: "Latest Design",
+            heroTitleHighlight: "Best Collection",
+            heroDescription: "Experience the best collection of Menswear and Womenswear.",
         }
     },
     // 2. Midnight Tech (Dark, Cyberpunk)

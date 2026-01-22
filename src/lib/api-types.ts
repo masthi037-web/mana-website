@@ -211,6 +211,8 @@ export interface CreateProductRequest {
     productStatus: string;
     famous: boolean;
     productDeliveryCost: number;
+    productPrice: number;
+    productPriceAfterDiscount: number;
     productImage?: string;
     productOffer?: string;
     multipleSetDiscount?: string;
@@ -222,6 +224,8 @@ export interface CreateProductResponse {
     catalogueId: number;
     productName: string; // ... other fields same as Product
     productStatus: string;
+    productPrice: number;
+    productPriceAfterDiscount: number;
     productImage?: string;
     productOffer?: string;
     multipleSetDiscount?: string;
