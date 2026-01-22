@@ -104,7 +104,7 @@ export const adminService = {
     },
 
     getProductPricing: async (productId: string) => {
-        return apiClient<any[]>('/product/pricing/get', {
+        return apiClient<any[]>('/product/size/get', {
             params: { productId },
             next: { revalidate: 300 }
         });

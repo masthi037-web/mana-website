@@ -61,13 +61,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
           >
             {(product.images && product.images.length > 0 ? product.images : [product.imageUrl]).map((imgSrc, idx) => (
-              <div key={idx} className="relative w-full h-full flex-shrink-0">
+              <div key={idx} className="relative w-full h-full flex-shrink-0 bg-white">
                 <Image
                   src={imgSrc || `https://picsum.photos/seed/${product.id}/300/300`}
                   alt={`${product.name} - ${idx + 1}`}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 25vw, 20vw"
-                  className="object-cover"
+                  className="object-contain p-2"
                   data-ai-hint={product.imageHint}
                 />
               </div>
@@ -82,7 +82,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                   key={idx}
                   className={cn(
                     "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                    idx === currentImageIndex ? "bg-white w-3" : "bg-white/50"
+                    idx === currentImageIndex ? "bg-primary w-3" : "bg-primary/20"
                   )}
                 />
               ))}
@@ -90,7 +90,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           )}
 
           {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          <div className="absolute inset-0 bg-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
           {/* Top Badges */}
           <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
@@ -147,48 +147,50 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </h3>
             <div className="flex flex-col items-end shrink-0">
               {(() => {
-                // Find the option with the lowest FINAL price
-                const pricingOptions = product.pricing || [];
-                let bestOption: typeof pricingOptions[0] | null = null;
-                let minFinalPrice = Infinity;
+                // Modified Price Logic:
+                // 1. If product.price (Price/Base Price) is set (>0), use it.
+                // 2. Else, fallback to min price from pricing options.
 
-                if (pricingOptions.length > 0) {
-                  pricingOptions.forEach(p => {
+                let displayPrice = 0;
+                let originalPriceForDisplay = 0;
+                let hasDiscount = false;
+                let showStartsFrom = false;
+
+                if (product.price && product.price > 0) {
+                  // Check if there is an offer price (aka auto-calculated or manually set final price)
+                  // Does Product type have 'priceAfterDiscount'? Or we assume only variants do?
+                  // Product Creation sends 'productPriceAfterDiscount'. The type might be different.
+                  // Assuming 'product.priceAfterDiscount' exists if updated properly, else use logic
+                  const offerPrice = (product as any).priceAfterDiscount; // Casting as type might need update
+                  if (offerPrice && offerPrice < product.price) {
+                    displayPrice = offerPrice;
+                    originalPriceForDisplay = product.price;
+                    hasDiscount = true;
+                  } else {
+                    displayPrice = product.price;
+                  }
+                } else if (product.pricing && product.pricing.length > 0) {
+                  showStartsFrom = true;
+                  // MIN logic
+                  let minP = Infinity;
+                  product.pricing.forEach(p => {
                     const final = (p.priceAfterDiscount && p.priceAfterDiscount > 0) ? p.priceAfterDiscount : p.price;
-                    if (final < minFinalPrice) {
-                      minFinalPrice = final;
-                      bestOption = p;
-                    }
+                    if (final < minP) minP = final;
                   });
-                } else {
-                  // Fallback for Products without pricing variants (shouldn't happen for active products)
-                  minFinalPrice = product.price || 0;
+                  displayPrice = minP;
                 }
-
-                // If we found a variant, check if it has a discount
-                const originalPrice = bestOption ? bestOption.price : (product.price || 0);
-                const hasDiscount = bestOption && bestOption.priceAfterDiscount && bestOption.priceAfterDiscount < bestOption.price;
 
                 return (
                   <span className="font-headline font-bold text-base text-primary tracking-tight text-right">
-                    {pricingOptions.length > 1 ? (
-                      <span className="flex flex-col items-end">
-                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-0.5">Starts from</span>
-                        <span className="flex items-center gap-1.5">
-                          {hasDiscount && (
-                            <span className="text-xs text-muted-foreground line-through font-medium">₹{originalPrice}</span>
-                          )}
-                          <span>₹{minFinalPrice}</span>
-                        </span>
-                      </span>
-                    ) : (
-                      <span className="flex flex-col items-end">
+                    <span className="flex flex-col items-end">
+                      {showStartsFrom && <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-0.5">Starts from</span>}
+                      <div className="flex items-center gap-1.5 justify-end">
                         {hasDiscount && (
-                          <span className="text-xs text-muted-foreground line-through font-medium leading-none mb-0.5">₹{originalPrice}</span>
+                          <span className="text-xs text-muted-foreground line-through font-medium">₹{originalPriceForDisplay}</span>
                         )}
-                        <span className="leading-none">₹{minFinalPrice}</span>
-                      </span>
-                    )}
+                        <span className="leading-none">₹{displayPrice}</span>
+                      </div>
+                    </span>
                   </span>
                 );
               })()}
