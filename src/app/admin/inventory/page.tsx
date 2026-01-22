@@ -73,6 +73,10 @@ export default function AdminInventoryPage() {
     const [tempBulkQty, setTempBulkQty] = useState("");
     const [tempBulkDiscount, setTempBulkDiscount] = useState("");
 
+    // --- MORE THAN DISCOUNT STATE ---
+    const [moreThanQty, setMoreThanQty] = useState("");
+    const [moreThanDiscount, setMoreThanDiscount] = useState("");
+
     // --- COLOUR STATES ---
     const [colourName, setColourName] = useState("");
     const [colourImage, setColourImage] = useState<string | null>(null);
@@ -272,6 +276,9 @@ export default function AdminInventoryPage() {
                     productOffer: prodOffer || undefined,
                     multipleSetDiscount: bulkDiscounts.length > 0
                         ? bulkDiscounts.map(bd => `${bd.qty}-${bd.discount}`).join('&&&')
+                        : undefined,
+                    multipleDiscountMoreThan: (moreThanQty && moreThanDiscount)
+                        ? `${moreThanQty}-${moreThanDiscount}`
                         : undefined
                 });
             } else if (level === 'PRICING' && selectedProduct && !isManageSheetOpen) {
@@ -390,6 +397,7 @@ export default function AdminInventoryPage() {
         setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst(""); setProdOffer("");
         setProdDeliveryCost("40"); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setSizeStatus("ACTIVE"); setIsMandatory(false);
         setBulkDiscounts([]); setTempBulkQty(""); setTempBulkDiscount("");
+        setMoreThanQty(""); setMoreThanDiscount("");
         setImage(null);
         setColourName(""); setColourImage(null); setColourStatus("ACTIVE");
         setEditingItem(null);
@@ -552,11 +560,11 @@ export default function AdminInventoryPage() {
                             <Label htmlFor="famous">Mark as Famous?</Label>
                         </div>
                         <div className="space-y-2">
-                            <Label>Base Price (Starting From)</Label>
+                            <Label>Price</Label>
                             <Input type="number" placeholder="100" value={price} onChange={e => setPrice(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label>Base Discounted Price</Label>
+                            <Label>Offer Price</Label>
                             <Input
                                 type="number"
                                 placeholder="80"
@@ -606,6 +614,33 @@ export default function AdminInventoryPage() {
                                     ))}
                                 </div>
                             )}
+                        </div>
+
+                        {/* More Than Discount Section */}
+                        <div className="space-y-3 pt-2 border-t">
+                            <Label className="text-sm font-semibold">Bulk Discount (More Than X)</Label>
+                            <div className="flex gap-2 items-end">
+                                <div className="space-y-1 flex-1">
+                                    <Label className="text-xs">More than Qty (e.g. 5)</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="5"
+                                        value={moreThanQty}
+                                        onChange={e => setMoreThanQty(e.target.value)}
+                                        className="h-8"
+                                    />
+                                </div>
+                                <div className="space-y-1 flex-1">
+                                    <Label className="text-xs">Discount % (e.g. 20)</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="20"
+                                        value={moreThanDiscount}
+                                        onChange={e => setMoreThanDiscount(e.target.value)}
+                                        className="h-8"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </>
                 )}
