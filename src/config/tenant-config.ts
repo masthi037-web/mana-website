@@ -86,6 +86,9 @@ export interface TenantConfig {
         quickAddButton?: string;
         searchPlaceholder?: string;
         startsFrom?: string;
+        heroTitle?: string;
+        heroTitleHighlight?: string;
+        heroDescription?: string;
     };
 }
 
@@ -150,12 +153,15 @@ export const DEFAULT_CONFIG: TenantConfig = {
         quickAddButton: "Quick Add",
         searchPlaceholder: "Search products, brands, and more...",
         startsFrom: "Starts from",
+        heroTitle: "Taste of",
+        heroTitleHighlight: "Tradition",
+        heroDescription: "Handcrafted with passion, delivering authentic flavors straight to your doorstep.",
     },
 };
 
 const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     // 1. Organic Greens (Fresh, Friendly)
-    "bavahomefoods": {
+    "skfashions": {
         id: "organic-greens",
         name: "Home Foods",
         theme: {
@@ -182,6 +188,9 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
             quickAddButton: "Add Fresh",
             searchPlaceholder: "Search fresh vegetables...",
             startsFrom: "From",
+            heroTitle: "Freshness",
+            heroTitleHighlight: "Redefined",
+            heroDescription: "From the farm directly to your table, experience the true taste of nature.",
         }
     },
     // 2. Midnight Tech (Dark, Cyberpunk)
@@ -227,7 +236,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
         }
     },
     // 3. Sweet Treats (Pink, Playful)
-    "sweettreats.shop": {
+    "intihomefoods": {
         id: "sweet-treats",
         name: "Sweet Treats",
         theme: {
@@ -260,6 +269,9 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
             quickAddButton: "Grab it!",
             searchPlaceholder: "Find your cravings...",
             startsFrom: "Treats from",
+            heroTitle: "Taste of",
+            heroTitleHighlight: "Tradition",
+            heroDescription: "Handcrafted with passion, delivering authentic flavors straight to your doorstep.",
         }
     },
     // 4. Urban Sneakers (Monochrome, Streetwear)

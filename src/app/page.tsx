@@ -7,6 +7,7 @@ import { ShopNowButton } from '@/components/home/ShopNowButton';
 import { ArrowRight, ChevronRight, ShieldCheck, Star, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { resolveTenantConfig } from '@/config/tenant-config';
 
 export default async function Home() {
   const headersList = await headers();
@@ -17,6 +18,7 @@ export default async function Home() {
 
   // Chained Data Fetching: Company -> Products
   const company = await fetchCompanyDetails(companyDomain);
+  const tenantConfig = resolveTenantConfig(companyDomain);
 
   // Use companyId if available, otherwise empty array (or handle error)
   const categories = company ? await fetchCategories(company.companyId) : [];
@@ -43,11 +45,11 @@ export default async function Home() {
               New Arrivals
             </div>
             <h1 className="text-5xl md:text-7xl font-bold font-headline tracking-tight text-foreground leading-[1.1]">
-              Taste of <br />
-              <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">Tradition</span>
+              {tenantConfig.text.heroTitle} <br />
+              <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">{tenantConfig.text.heroTitleHighlight}</span>
             </h1>
             <p className="text-xl text-muted-foreground md:text-2xl font-light">
-              Handcrafted with passion, delivering authentic flavors straight to your doorstep.
+              {tenantConfig.text.heroDescription}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <ShopNowButton />

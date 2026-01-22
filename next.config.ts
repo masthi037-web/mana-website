@@ -23,6 +23,9 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'static.vecteezy.com' }, // Whitelist Vecteezy
       { protocol: 'https', hostname: 'storage.googleapis.com' }, // Whitelist GCS
       { protocol: 'https', hostname: 'png.pngtree.com' }, // Whitelist PngTree
+      { protocol: 'https', hostname: 'i.pinimg.com' },
+      { protocol: 'https', hostname: 't3.ftcdn.net' },
+      { protocol: 'https', hostname: 't4.ftcdn.net' },
     ],
   },
   serverExternalPackages: [
