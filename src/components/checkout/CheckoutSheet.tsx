@@ -162,7 +162,7 @@ export function CheckoutSheet({ children }: { children: React.ReactNode }) {
             // map cart items to payment initialization items
             const paymentItems = cart.map(item => ({
                 productId: item.productId,
-                pricingId: item.productPricingId ? parseInt(item.productPricingId) : null,
+                pricingId: item.productSizeId ? parseInt(item.productSizeId) : null,
                 productAddonIds: item.selectedAddons ? item.selectedAddons.map(a => a.id).join('&&&') : '',
                 quantity: item.quantity
             }));

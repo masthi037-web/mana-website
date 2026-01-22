@@ -4,6 +4,7 @@ import {
     CreateCatalogueRequest, CreateCatalogueResponse,
     CreateProductRequest, CreateProductResponse,
     CreatePricingRequest, CreatePricingResponse,
+    CreateColourRequest, CreateColourResponse,
     CreateAddonRequest, CreateAddonResponse,
     UpdateCategoryRequest, UpdateCategoryResponse,
     UpdateCatalogueRequest, UpdateCatalogueResponse
@@ -86,9 +87,9 @@ export const adminService = {
         });
     },
 
-    getProductAddons: async (productPricingId: string | number) => {
+    getProductAddons: async (productSizeId: string | number) => {
         return apiClient<any[]>('/product/addon/get', {
-            params: { productPricingId: String(productPricingId) },
+            params: { productSizeId: String(productSizeId) },
             next: { revalidate: 300 }
         });
     },

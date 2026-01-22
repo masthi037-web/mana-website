@@ -140,7 +140,7 @@ export default function AdminInventoryPage() {
         queryFn: async () => {
             const res = await adminService.getProductPricing(selectedProduct!.id);
             return res.map((p: any) => ({
-                id: String(p.productPricingId),
+                id: String(p.productSizeId),
                 price: p.productPrice,
                 priceAfterDiscount: p.productPriceAfterDiscount,
                 quantity: p.productQuantity,
@@ -265,7 +265,7 @@ export default function AdminInventoryPage() {
             } else if (level === 'ADDON' && selectedPricing && !isManageSheetOpen) {
                 // Classic Flow
                 return adminService.createAddon({
-                    productPricingId: Number(selectedPricing.id),
+                    productSizeId: Number(selectedPricing.id),
                     addonName: name,
                     addonPrice: Number(price),
                     mandatory: isMandatory,
@@ -282,7 +282,7 @@ export default function AdminInventoryPage() {
                     });
                 } else if (manageMode === 'ADD_ADDON' && expandedPricingId) {
                     return adminService.createAddon({
-                        productPricingId: Number(expandedPricingId),
+                        productSizeId: Number(expandedPricingId),
                         addonName: name,
                         addonPrice: Number(price),
                         mandatory: isMandatory,

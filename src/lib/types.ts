@@ -18,6 +18,13 @@ export type ProductPriceOption = {
   addons?: ProductAddonOption[];
 };
 
+export type ProductColor = {
+  id: string;
+  name: string;
+  image: string;
+  status: string;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -40,6 +47,9 @@ export type Product = {
   instructions?: string;
   productImage?: string;
   productOffer?: string;
+  multipleSetDiscount?: string;
+  multipleDiscountMoreThan?: string;
+  colors?: ProductColor[];
 };
 
 export type ProductWithImage = Product & {

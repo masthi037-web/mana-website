@@ -182,7 +182,7 @@ const AddToCartContent = ({
     const hasOffer = !isNaN(offerPercentage) && offerPercentage > 0;
     const effectiveBasePrice = hasOffer ? basePrice - (basePrice * offerPercentage / 100) : basePrice;
 
-    addToCart({ ...product, price: effectiveBasePrice }, variantsToAdd, selectedAddonsList);
+    addToCart({ ...product, price: effectiveBasePrice, productSizeId: selectedPricingId }, variantsToAdd, selectedAddonsList);
 
     // Trigger success confetti
     const triggerConfetti = () => {

@@ -14,12 +14,13 @@ export type CartItem = ProductWithImage & {
   selectedVariants: Record<string, string>;
   selectedAddons?: ProductAddonOption[];
   priceAfterDiscount?: number;
+  productSizeId?: string;
 };
 
 interface CartState {
   cart: CartItem[];
   companyDetails: CompanyDetails | null;
-  addToCart: (product: ProductWithImage, selectedVariants: Record<string, string>, selectedAddons?: ProductAddonOption[]) => void;
+  addToCart: (product: ProductWithImage & { productSizeId?: string }, selectedVariants: Record<string, string>, selectedAddons?: ProductAddonOption[]) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   getCartTotal: () => number;
@@ -82,6 +83,7 @@ export const useCart = create<CartState>()(
             imageUrl: product.imageUrl,
             images: product.images,
             description: product.description,
+            productSizeId: product.productSizeId,
             quantity: updatedCart[existingItemIndex].quantity + 1
           };
           newCartItemId = updatedCart[existingItemIndex].cartItemId;

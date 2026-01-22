@@ -1,14 +1,15 @@
 export interface ProductAddon {
     productAddonId: number;
-    productPricingId: number;
+    productSizeId: number;
     addonName: string;
     addonPrice: number;
     mandatory: boolean;
     active: boolean;
 }
 
-export interface ProductPricing {
-    productPricingId: number;
+// Renamed ProductPricing to ProductSize
+export interface ProductSize {
+    productSizeId: number;
     productId: number;
     productPrice: number;
     productPriceAfterDiscount: number;
@@ -38,11 +39,22 @@ export interface Product {
     productDeliveryCost: number;
     createdAt: string;
     updatedAt: string;
-    productPricing: ProductPricing[];
+    productSize: ProductSize[];
     productRatings: ProductRating[];
     famous: boolean;
     productImage?: string;
     productOffer?: string;
+    multipleSetDiscount?: string;
+    multipleDiscountMoreThan?: string;
+    productColour?: ProductColour[];
+}
+
+export interface ProductColour {
+    productColourId: number;
+    productId: number;
+    productPics: string;
+    colourStatus: string;
+    colour: string;
 }
 
 export interface Catalogue {
@@ -200,6 +212,8 @@ export interface CreateProductRequest {
     productDeliveryCost: number;
     productImage?: string;
     productOffer?: string;
+    multipleSetDiscount?: string;
+    multipleDiscountMoreThan?: string;
 }
 
 export interface CreateProductResponse {
@@ -209,6 +223,8 @@ export interface CreateProductResponse {
     productStatus: string;
     productImage?: string;
     productOffer?: string;
+    multipleSetDiscount?: string;
+    multipleDiscountMoreThan?: string;
 }
 
 export interface CreatePricingRequest {
@@ -219,7 +235,7 @@ export interface CreatePricingRequest {
 }
 
 export interface CreatePricingResponse {
-    productPricingId: number;
+    productSizeId: number;
     productId: number;
     productPrice: number;
     productPriceAfterDiscount: number;
@@ -228,7 +244,7 @@ export interface CreatePricingResponse {
 }
 
 export interface CreateAddonRequest {
-    productPricingId: number;
+    productSizeId: number;
     addonName: string;
     addonPrice: number;
     mandatory: boolean;
@@ -237,7 +253,7 @@ export interface CreateAddonRequest {
 
 export interface CreateAddonResponse {
     productAddonId: number;
-    productPricingId: number;
+    productSizeId: number;
     addonName: string;
     addonPrice: number;
     mandatory: boolean;
@@ -351,4 +367,19 @@ export interface PaymentVerificationResponse {
     status: string; // 'success' | 'failed'
     orderId?: string;
     message?: string;
+}
+
+export interface CreateColourRequest {
+    productId: number;
+    productPics: string;
+    colourStatus: string;
+    colour: string;
+}
+
+export interface CreateColourResponse {
+    productColourId: number;
+    productId: number;
+    productPics: string;
+    colourStatus: string;
+    colour: string;
 }

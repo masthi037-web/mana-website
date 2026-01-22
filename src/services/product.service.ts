@@ -67,8 +67,8 @@ function mapApiCatalogueToAppCatalog(apiCat: ApiCatalogue): AppCatalog {
 
 function mapApiProductToAppProduct(apiProd: ApiProduct): AppProduct {
     // Logic to determine price: use the first pricing option or default to 0
-    const firstPricing = apiProd.productPricing && apiProd.productPricing.length > 0
-        ? apiProd.productPricing[0]
+    const firstPricing = apiProd.productSize && apiProd.productSize.length > 0
+        ? apiProd.productSize[0]
         : null;
 
     // Logic to map variants from pricing if available
@@ -93,8 +93,8 @@ function mapApiProductToAppProduct(apiProd: ApiProduct): AppProduct {
     const imageUrl = images[0];
 
     // Map pricing options for UI selection
-    const pricingOptions = apiProd.productPricing?.map(p => ({
-        id: String(p.productPricingId),
+    const pricingOptions = apiProd.productSize?.map(p => ({
+        id: String(p.productSizeId),
         price: p.productPrice,
         quantity: p.productQuantity,
         addons: p.productAddons?.map(a => ({
@@ -126,7 +126,15 @@ function mapApiProductToAppProduct(apiProd: ApiProduct): AppProduct {
         ingredients: apiProd.productIng,
         bestBefore: apiProd.productBestBefore,
         instructions: apiProd.productInst,
-        productOffer: apiProd.productOffer
+        productOffer: apiProd.productOffer,
+        multipleSetDiscount: apiProd.multipleSetDiscount,
+        multipleDiscountMoreThan: apiProd.multipleDiscountMoreThan,
+        colors: apiProd.productColour?.map(c => ({
+            id: String(c.productColourId),
+            name: c.colour,
+            image: c.productPics,
+            status: c.colourStatus
+        }))
     };
 }
 
