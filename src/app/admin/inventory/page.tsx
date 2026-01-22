@@ -218,6 +218,56 @@ export default function AdminInventoryPage() {
     // --- MUTATIONS ---
     const createMutation = useMutation({
         mutationFn: async () => {
+            // Priority: Manage Sheet actions first
+            if (isManageSheetOpen) {
+                // Manage Sheet Flow
+                if (manageMode === 'ADD_PRICING' && selectedProduct) {
+                    if (editingItem) {
+                        return adminService.updateProductSize({
+                            productSizeId: Number(editingItem.id),
+                            productId: Number(selectedProduct.id),
+                            productPrice: Number(price),
+                            productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
+                            productQuantity: qty,
+                            sizeStatus: sizeStatus
+                        });
+                    } else {
+                        return adminService.createPricing({
+                            productId: Number(selectedProduct.id),
+                            productPrice: Number(price),
+                            productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
+                            productQuantity: qty,
+                            sizeStatus: sizeStatus
+                        });
+                    }
+                } else if (manageMode === 'ADD_ADDON' && expandedPricingId) {
+                    return adminService.createAddon({
+                        productSizeId: Number(expandedPricingId),
+                        addonName: name,
+                        addonPrice: Number(price),
+                        mandatory: isMandatory,
+                        active: true
+                    });
+                } else if (manageMode === 'ADD_COLOUR' && selectedProduct) {
+                    if (editingItem) {
+                        return adminService.updateProductColour({
+                            productColourId: Number(editingItem.productColourId),
+                            productId: Number(selectedProduct.id),
+                            productPics: colourImage || "",
+                            colourStatus: colourStatus,
+                            colour: colourName
+                        });
+                    } else {
+                        return adminService.createProductColour({
+                            productId: Number(selectedProduct.id),
+                            productPics: colourImage || "",
+                            colourStatus: colourStatus,
+                            colour: colourName
+                        });
+                    }
+                }
+            }
+
             if (level === 'CATEGORY') {
                 if (editingItem) {
                     return adminService.updateCategory({
@@ -298,53 +348,6 @@ export default function AdminInventoryPage() {
                     mandatory: isMandatory,
                     active: true
                 });
-            } else if (isManageSheetOpen) {
-                // Manage Sheet Flow
-                if (manageMode === 'ADD_PRICING' && selectedProduct) {
-                    if (editingItem) {
-                        return adminService.updateProductSize({
-                            productSizeId: Number(editingItem.id),
-                            productId: Number(selectedProduct.id),
-                            productPrice: Number(price),
-                            productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
-                            productQuantity: qty,
-                            sizeStatus: sizeStatus
-                        });
-                    } else {
-                        return adminService.createPricing({
-                            productId: Number(selectedProduct.id),
-                            productPrice: Number(price),
-                            productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
-                            productQuantity: qty,
-                            sizeStatus: sizeStatus
-                        });
-                    }
-                } else if (manageMode === 'ADD_ADDON' && expandedPricingId) {
-                    return adminService.createAddon({
-                        productSizeId: Number(expandedPricingId),
-                        addonName: name,
-                        addonPrice: Number(price),
-                        mandatory: isMandatory,
-                        active: true
-                    });
-                } else if (manageMode === 'ADD_COLOUR' && selectedProduct) {
-                    if (editingItem) {
-                        return adminService.updateProductColour({
-                            productColourId: Number(editingItem.productColourId),
-                            productId: Number(selectedProduct.id),
-                            productPics: colourImage || "",
-                            colourStatus: colourStatus,
-                            colour: colourName
-                        });
-                    } else {
-                        return adminService.createProductColour({
-                            productId: Number(selectedProduct.id),
-                            productPics: colourImage || "",
-                            colourStatus: colourStatus,
-                            colour: colourName
-                        });
-                    }
-                }
             }
         },
         onSuccess: () => {
