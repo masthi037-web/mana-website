@@ -431,11 +431,17 @@ export default function AdminInventoryPage() {
     // --- UTILS ---
     const calculateDiscount = (basePrice: number, offerText: string) => {
         if (!offerText || !basePrice) return basePrice;
-        // Simple regex to find percentage OFF (e.g. "50% OFF", "Save 20%")
-        const match = offerText.match(/(\d+)%/);
+
+        // Match percentage like "50%", "50 %", or just "50" if it's likely a number
+        // We look for the first number in the string
+        const match = offerText.match(/(\d+)/);
         if (match && match[1]) {
             const pct = parseInt(match[1]);
-            return Math.round(basePrice * (1 - pct / 100));
+            // Safety check: if > 100, might be flat amount? For now assuming % per user intent usually.
+            // But if user enters "5", we treat as 5%.
+            if (pct > 0 && pct <= 100) {
+                return Math.round(basePrice * (1 - pct / 100));
+            }
         }
         return basePrice;
     };
