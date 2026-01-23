@@ -9,7 +9,7 @@ const PLACEHOLDER_BASE = 'https://picsum.photos/seed';
 // ... existing imports
 import { Product } from '@/lib/api-types';
 
-export async function fetchCategories(companyId: string): Promise<AppCategory[]> {
+export async function fetchCategories(companyId: string, deliveryTime?: string): Promise<AppCategory[]> {
     try {
         const data = await apiClient<CompanyInventory>('/company/public/category/catalogue/product/get', {
             params: { companyId },
@@ -17,7 +17,7 @@ export async function fetchCategories(companyId: string): Promise<AppCategory[]>
         });
 
         // The API returns a robust structure, we need to map it to our App's simpler types
-        return mapApiCategoriesToAppCategories(data.categories || []);
+        return mapApiCategoriesToAppCategories(data.categories || [], deliveryTime);
     } catch (error) {
         console.error('Error fetching categories:', error);
         return [];
@@ -47,20 +47,20 @@ export async function fetchProductDetails(productId: string): Promise<AppProduct
 }
 
 
-function mapApiCategoriesToAppCategories(apiCategories: ApiCategory[]): AppCategory[] {
+function mapApiCategoriesToAppCategories(apiCategories: ApiCategory[], deliveryTime?: string): AppCategory[] {
     return apiCategories.map(cat => ({
         id: String(cat.categoryId),
         name: cat.categoryName,
-        catalogs: (cat.catalogues || []).map(mapApiCatalogueToAppCatalog),
+        catalogs: (cat.catalogues || []).map(c => mapApiCatalogueToAppCatalog(c, deliveryTime)),
         categoryImage: cat.categoryImage
     }));
 }
 
-function mapApiCatalogueToAppCatalog(apiCat: ApiCatalogue): AppCatalog {
+function mapApiCatalogueToAppCatalog(apiCat: ApiCatalogue, deliveryTime?: string): AppCatalog {
     return {
         id: String(apiCat.catalogueId),
         name: apiCat.catalogueName,
-        products: (apiCat.products || []).map(mapApiProductToAppProduct),
+        products: (apiCat.products || []).map(p => mapApiProductToAppProduct(p, deliveryTime)),
         catalogueImage: apiCat.catalogueImage
     };
 }
@@ -109,7 +109,7 @@ function mapApiProductToAppProduct(apiProd: ApiProduct): AppProduct {
         id: String(apiProd.productId),
         name: apiProd.productName,
         description: apiProd.productInfo,
-        price: firstPricing ? firstPricing.productPrice : apiProd.productDeliveryCost,
+        price: (apiProd.productPrice && apiProd.productPrice > 0) ? apiProd.productPrice : (firstPricing ? firstPricing.productPrice : apiProd.productDeliveryCost),
         pricing: pricingOptions,
         imageId: String(apiProd.productId),
         imageUrl: imageUrl,

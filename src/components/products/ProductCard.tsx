@@ -34,16 +34,25 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   }
 
   // Carousel Logic
+  // Combine generic product images and colour variant images
+  const displayImages = [
+    ...(product.images || []),
+    ...(product.colors?.map(c => c.image) || [])
+  ].filter(Boolean);
+
+  // Dedup images if needed (optional, keeping simple for now)
+  const slides = displayImages.length > 0 ? displayImages : [product.imageUrl];
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    if (product.images && product.images.length > 1) {
+    if (slides.length > 1) {
       const interval = setInterval(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % (product.images?.length || 1));
-      }, 1400); // Change slide every 2 seconds
+        setCurrentImageIndex((prev) => (prev + 1) % slides.length);
+      }, 1500); // Change slide every 1.5 seconds
       return () => clearInterval(interval);
     }
-  }, [product.images]);
+  }, [slides.length]);
 
   return (
     <Link href={`/product/${product.id}`} className="group block h-full">
@@ -60,7 +69,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             className="flex h-full transition-transform duration-700 ease-in-out"
             style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
           >
-            {(product.images && product.images.length > 0 ? product.images : [product.imageUrl]).map((imgSrc, idx) => (
+            {slides.map((imgSrc, idx) => (
               <div key={idx} className="relative w-full h-full flex-shrink-0 bg-white">
                 <Image
                   src={imgSrc || `https://picsum.photos/seed/${product.id}/300/300`}
@@ -75,9 +84,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
 
           {/* Dots Indicator (visible if > 1 image) */}
-          {product.images && product.images.length > 1 && (
+          {slides.length > 1 && (
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-              {product.images.map((_, idx) => (
+              {slides.map((_, idx) => (
                 <div
                   key={idx}
                   className={cn(

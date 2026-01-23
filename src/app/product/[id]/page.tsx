@@ -133,7 +133,7 @@ export default function ProductDetailPage() {
           // Optimization: Check if we have products in global store first? 
           // For now, fetch transparently or use cache. 
           // Ideally fetchCategories is cached or we rely on client-side store if hydrated.
-          const fetchedCategories = await fetchCategories(companyDetails.companyId);
+          const fetchedCategories = await fetchCategories(companyDetails.companyId, companyDetails.deliveryBetween);
           const allApiProducts = fetchedCategories.flatMap(c => c.catalogs.flatMap(ca => ca.products));
           const apiProduct = allApiProducts.find(p => String(p.id) === String(id));
 

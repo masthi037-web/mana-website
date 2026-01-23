@@ -21,7 +21,7 @@ export default async function Home() {
   const tenantConfig = resolveTenantConfig(companyDomain);
 
   // Use companyId if available, otherwise empty array (or handle error)
-  const categories = company ? await fetchCategories(company.companyId) : [];
+  const categories = company ? await fetchCategories(company.companyId, company.deliveryBetween) : [];
 
   return (
     <div className="bg-background min-h-screen">
