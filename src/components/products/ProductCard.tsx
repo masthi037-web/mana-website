@@ -235,16 +235,21 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </div>
 
             {(() => {
+              console.log("bulk discount ", product.multipleSetDiscount, product.multipleDiscountMoreThan);
               if (product.multipleSetDiscount && product.multipleDiscountMoreThan) {
-                const thresholds = product.multipleDiscountMoreThan.toString().split('&&&');
-                const discounts = product.multipleSetDiscount.toString().split('&&&');
+                const thresholds = product.multipleDiscountMoreThan.toString().split('&&&').map(s => s.trim());
+                const discounts = product.multipleSetDiscount.toString().split('&&&').map(s => s.trim());
 
-                const offers = thresholds.map((t, i) => ({
-                  threshold: t,
-                  discount: discounts[i]
+                const offers = discounts.map((d, i) => ({
+                  threshold: thresholds[i] || thresholds[thresholds.length - 1],
+                  discount: d
                 }))
                   .filter(o => o.threshold && o.discount)
-                  .sort((a, b) => parseFloat(a.threshold) - parseFloat(b.threshold));
+                  .sort((a, b) => {
+                    const tA = parseFloat(a.threshold) || 0;
+                    const tB = parseFloat(b.threshold) || 0;
+                    return tA - tB;
+                  });
 
                 if (offers.length > 0) {
                   return (
