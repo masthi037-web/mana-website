@@ -156,7 +156,26 @@ export default function ProductDetailPage() {
       let foundProduct: ProductWithImage | undefined;
 
       const globalProducts = useProduct.getState().products;
-      const storeProduct = globalProducts.find(p => String(p.id) === String(id));
+      const selectedProduct = useProduct.getState().selectedProduct;
+
+      let storeProduct: ProductWithImage | undefined;
+
+      // 0. Check for explicitly selected product (from Direct Navigation)
+      if (selectedProduct && String(selectedProduct.id) === String(id)) {
+        // Ensure it's treated as ProductWithImage if needed, or cast/map it
+        // Store might hold generic Product or ProductWithImage.
+        // We'll try to find image hint if missing.
+        const image = PlaceHolderImages.find(img => img.id === selectedProduct.imageId)
+          || PlaceHolderImages.find(img => img.id === 'product-1');
+
+        storeProduct = {
+          ...selectedProduct,
+          imageUrl: selectedProduct.imageUrl || image?.imageUrl || '',
+          imageHint: (selectedProduct as any).imageHint || image?.imageHint || 'product image'
+        };
+      } else {
+        storeProduct = globalProducts.find(p => String(p.id) === String(id)) as ProductWithImage | undefined;
+      }
 
       if (storeProduct) {
         const image = PlaceHolderImages.find(img => img.id === storeProduct.imageId)
@@ -164,8 +183,8 @@ export default function ProductDetailPage() {
 
         foundProduct = {
           ...storeProduct,
-          imageUrl: image?.imageUrl || '',
-          imageHint: image?.imageHint || 'product image',
+          imageUrl: storeProduct.imageUrl || image?.imageUrl || '',
+          imageHint: storeProduct.imageHint || image?.imageHint || 'product image',
         };
       }
 

@@ -12,6 +12,7 @@ import type { ProductWithImage } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { AddToCartSheet } from '../cart/AddToCartSheet';
 import { useTenant } from '@/components/providers/TenantContext';
+import { useProduct } from '@/hooks/use-product';
 
 interface ProductCardProps {
   product: ProductWithImage;
@@ -55,7 +56,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   }, [slides.length]);
 
   return (
-    <Link href={`/product/${product.id}`} className="group block h-full">
+    <Link
+      href={`/product/${product.id}`}
+      className="group block h-full"
+      onClick={() => useProduct.getState().setSelectedProduct(product)}
+    >
       <Card
         className="card-root relative w-full h-full overflow-hidden border-transparent bg-card transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]"
         style={{
