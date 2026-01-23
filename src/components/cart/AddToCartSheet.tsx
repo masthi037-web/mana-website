@@ -69,6 +69,48 @@ const OptionCard = ({
       </div>
     )}
   </div>
+
+);
+
+const ColourCard = ({
+  name,
+  image,
+  isSelected,
+  onClick,
+}: {
+  name: string;
+  image?: string;
+  isSelected: boolean;
+  onClick: () => void;
+}) => (
+  <div
+    onClick={onClick}
+    className={cn(
+      "relative flex flex-col items-center justify-center p-2 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-out h-[88px]",
+      "hover:border-primary/30 hover:bg-secondary/30",
+      isSelected
+        ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
+        : "border-transparent bg-secondary/30 text-muted-foreground"
+    )}
+  >
+    {isSelected && (
+      <div className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm z-10">
+        <Check className="w-2.5 h-2.5" strokeWidth={3} />
+      </div>
+    )}
+    <div className="relative w-10 h-10 mb-1.5 rounded-full overflow-hidden border border-border/50">
+      {image ? (
+        <img src={image} alt={name} className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full bg-secondary flex items-center justify-center text-[10px] font-bold text-muted-foreground/50">
+          {name.charAt(0)}
+        </div>
+      )}
+    </div>
+    <span className={cn("text-xs font-bold tracking-tight line-clamp-1 max-w-full text-center px-1", isSelected ? "text-primary" : "text-foreground")}>
+      {name}
+    </span>
+  </div>
 );
 
 const AddonRow = ({
@@ -142,6 +184,10 @@ const AddToCartContent = ({
 
   const [selectedAddonIds, setSelectedAddonIds] = React.useState<Set<string>>(new Set());
 
+  const [selectedColourId, setSelectedColourId] = React.useState<string>(
+    product.colors && product.colors.length > 0 ? product.colors[0].id : ""
+  );
+
   const selectedPricingOption = product.pricing?.find(p => p.id === selectedPricingId);
   const availableAddons = selectedPricingOption?.addons || [];
 
@@ -182,7 +228,22 @@ const AddToCartContent = ({
     const hasOffer = !isNaN(offerPercentage) && offerPercentage > 0;
     const effectiveBasePrice = hasOffer ? basePrice - (basePrice * offerPercentage / 100) : basePrice;
 
-    addToCart({ ...product, price: effectiveBasePrice, productSizeId: selectedPricingId }, variantsToAdd, selectedAddonsList);
+
+
+    // Resolve selected colour object
+    const selectedColour = product.colors?.find(c => c.id === selectedColourId);
+    const colourToAdd = selectedColour ? {
+      id: selectedColour.id,
+      name: selectedColour.name,
+      image: selectedColour.image || ''
+    } : undefined;
+
+    addToCart(
+      { ...product, price: effectiveBasePrice, productSizeId: selectedPricingId },
+      variantsToAdd,
+      selectedAddonsList,
+      colourToAdd
+    );
 
     // Trigger success confetti
     const triggerConfetti = () => {
@@ -219,7 +280,7 @@ const AddToCartContent = ({
     }, 300);
   };
 
-  const hasVariants = (product.variants && product.variants.length > 0) || (product.pricing && product.pricing.length > 0);
+  const hasVariants = (product.variants && product.variants.length > 0) || (product.pricing && product.pricing.length > 0) || (product.colors && product.colors.length > 0);
 
   // -- Render Content --
 
@@ -250,9 +311,10 @@ const AddToCartContent = ({
           {product.pricing && product.pricing.length > 0 && (
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Select</h3>
+                <h3 className="text-sm font-semibold">Select Size/Quantity</h3>
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Required</span>
               </div>
+
               <div className="grid grid-cols-3 gap-2">
                 {(() => {
                   const prices = product.pricing.map(p => p.price);
@@ -392,7 +454,7 @@ export function AddToCartSheet({ product, children, onAddToCart }: AddToCartShee
   const isMobile = useIsMobile();
   const { addToCart, setCartOpen } = useCart();
   const { toast } = useToast();
-  const hasVariants = (product.variants && product.variants.length > 0) || (product.pricing && product.pricing.length > 0);
+  const hasVariants = (product.variants && product.variants.length > 0) || (product.pricing && product.pricing.length > 0) || (product.colors && product.colors.length > 0);
 
   // Handle back button on mobile
   useSheetBackHandler(open, setOpen);

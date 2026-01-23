@@ -15,12 +15,22 @@ export type CartItem = ProductWithImage & {
   selectedAddons?: ProductAddonOption[];
   priceAfterDiscount?: number;
   productSizeId?: string;
+  selectedColour?: {
+    id: string;
+    name: string;
+    image: string;
+  };
 };
 
 interface CartState {
   cart: CartItem[];
   companyDetails: CompanyDetails | null;
-  addToCart: (product: ProductWithImage & { productSizeId?: string }, selectedVariants: Record<string, string>, selectedAddons?: ProductAddonOption[]) => void;
+  addToCart: (
+    product: ProductWithImage & { productSizeId?: string },
+    selectedVariants: Record<string, string>,
+    selectedAddons?: ProductAddonOption[],
+    selectedColour?: { id: string; name: string; image: string }
+  ) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   getCartTotal: () => number;
@@ -46,7 +56,7 @@ export const useCart = create<CartState>()(
       companyDetails: null,
       timestamp: Date.now(),
       lastAddedItemId: null,
-      addToCart: (product, selectedVariants, selectedAddons = []) => {
+      addToCart: (product, selectedVariants, selectedAddons = [], selectedColour) => {
         const currentCart = get().cart;
 
         // Helper to stringify variants consistently (sorted by keys)
@@ -59,14 +69,17 @@ export const useCart = create<CartState>()(
         const newVariantString = stringifyVariants(selectedVariants);
         // We sort addons by ID to ensure order doesn't matter for comparison
         const newAddonIds = selectedAddons.map(a => a.id).sort().join(',');
+        const newColourId = selectedColour?.id || '';
 
         const existingItemIndex = currentCart.findIndex(item => {
           const itemAddonIds = (item.selectedAddons || []).map(a => a.id).sort().join(',');
           const itemVariantString = stringifyVariants(item.selectedVariants);
+          const itemColourId = item.selectedColour?.id || '';
 
           return item.id === product.id &&
             itemVariantString === newVariantString &&
-            itemAddonIds === newAddonIds;
+            itemAddonIds === newAddonIds &&
+            itemColourId === newColourId;
         });
 
         let updatedCart;
@@ -94,7 +107,8 @@ export const useCart = create<CartState>()(
             cartItemId: newCartItemId,
             quantity: 1,
             selectedVariants,
-            selectedAddons
+            selectedAddons,
+            selectedColour
           }];
         }
 
