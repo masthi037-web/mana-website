@@ -272,37 +272,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               </div>
             </div>
 
-            {(() => {
-              if (product.multipleSetDiscount && product.multipleDiscountMoreThan) {
-                const thresholds = product.multipleDiscountMoreThan.toString().split('&&&').map(s => s.trim());
-                const discounts = product.multipleSetDiscount.toString().split('&&&').map(s => s.trim());
 
-                const offers = discounts.map((d, i) => ({
-                  threshold: thresholds[i] || thresholds[thresholds.length - 1],
-                  discount: d
-                }))
-                  .filter(o => o.threshold && o.discount)
-                  .sort((a, b) => {
-                    const tA = parseFloat(a.threshold) || 0;
-                    const tB = parseFloat(b.threshold) || 0;
-                    return tA - tB;
-                  });
-
-                if (offers.length > 0) {
-                  return (
-                    <div className="flex flex-wrap gap-1 mt-1 justify-end">
-                      {offers.map((offer, idx) => (
-                        <div key={idx} className="flex items-center gap-1 font-medium text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 shadow-sm">
-                          <Tag className="w-2.5 h-2.5" />
-                          <span>Buy {offer.threshold}+ Get {offer.discount}% Off</span>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                }
-              }
-              return null;
-            })()}
           </div>
 
           {/* Mobile Quick Add Button - Content Area */}

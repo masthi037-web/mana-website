@@ -1088,6 +1088,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                     let discountableQty = 0;
                                                                     let bulkDiscountPercent = 0;
                                                                     let isBulkEligible = false;
+                                                                    let activeThreshold = 0;
 
                                                                     if (item.multipleSetDiscount) {
                                                                         const segments = item.multipleSetDiscount.toString().split('&&&');
