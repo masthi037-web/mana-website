@@ -378,7 +378,7 @@ export default function ProductDetailPage() {
         {/* Product Image */}
         <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden bg-secondary/10 border border-border/50 shadow-sm md:aspect-auto md:h-[550px]">
           <Image
-            src={product?.colors?.find(c => c.id === selectedColourId)?.image || product?.imageUrl || ''}
+            src={product?.colors?.find(c => c.id === selectedColourId)?.image || product.productImage || product.imageUrl || ''}
             alt={product.name}
             fill
             className="object-cover hover:scale-105 transition-transform duration-700"
