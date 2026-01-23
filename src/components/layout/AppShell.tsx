@@ -27,7 +27,7 @@ export default async function AppShell({ children, companyDomain }: AppShellProp
         <ThemeProvider config={tenantConfig}>
             {companyDetails && <StoreInitializer companyDetails={companyDetails} />}
             <QueryProvider>
-                <div className="relative flex min-h-[100dvh] w-full flex-col">
+                <div className="relative flex min-h-full w-full flex-col">
                     <Header companyName={companyDetails?.companyName} />
                     <main className="flex-1 pb-24">{children}</main>
                     <Footer companyName={companyDetails?.companyName} socialLinks={companyDetails?.socialMediaLink} />

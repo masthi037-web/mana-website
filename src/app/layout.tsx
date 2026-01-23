@@ -21,13 +21,13 @@ export default async function RootLayout({
   const companyDomain = headersList.get('x-company-domain') || 'babaihomefoods';
 
   return (
-    <html lang="en" className="h-full min-h-[100dvh] scroll-smooth antialiased">
+    <html lang="en" className="h-full scroll-smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body bg-background text-foreground h-full min-h-[100dvh] w-full selection:bg-primary/20">
+      <body className="font-body antialiased h-full bg-background">
         <Suspense fallback={<Loading />}>
           <AppShell companyDomain={companyDomain}>
             {children}

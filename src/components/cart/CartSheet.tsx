@@ -1158,9 +1158,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                                     ₹{totalLineCost.toFixed(0)}
                                                                                 </p>
 
-                                                                                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full flex gap-1 items-center mt-0.5 border border-emerald-100 shadow-sm">
-                                                                                    <Tag className="w-2.5 h-2.5" />
-                                                                                    {discountableQty}/{item.quantity} @ {bulkDiscountPercent}% Off
+                                                                                <span className="text-[10px] font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 px-2 py-0.5 rounded-full flex gap-1.5 items-center mt-1 shadow-sm border border-emerald-500/20">
+                                                                                    <Tag className="w-3 h-3 fill-white/20" />
+                                                                                    Bundle Unlocked: {bulkDiscountPercent}% Off
                                                                                 </span>
                                                                                 {fullPriceQty > 0 && (
                                                                                     <span className="text-[9px] text-muted-foreground mt-0.5">
