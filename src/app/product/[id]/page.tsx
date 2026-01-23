@@ -7,7 +7,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { ProductWithImage, ProductVariant, Category } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Star, Heart, Minus, Plus, ArrowLeft, Loader2, Search } from 'lucide-react';
+import { Star, Heart, Minus, Plus, ArrowLeft, Loader2, Search, Check } from 'lucide-react';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
@@ -48,6 +48,47 @@ const VariantSelector = ({
         </Button>
       ))}
     </div>
+  </div>
+);
+
+const ColourCard = ({
+  name,
+  image,
+  isSelected,
+  onClick,
+}: {
+  name: string;
+  image?: string;
+  isSelected: boolean;
+  onClick: () => void;
+}) => (
+  <div
+    onClick={onClick}
+    className={cn(
+      "relative flex flex-col items-center justify-center p-2 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-out h-[88px]",
+      "hover:border-primary/30 hover:bg-secondary/30",
+      isSelected
+        ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
+        : "border-transparent bg-secondary/30 text-muted-foreground"
+    )}
+  >
+    {isSelected && (
+      <div className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm z-10">
+        <Check className="w-2.5 h-2.5" strokeWidth={3} />
+      </div>
+    )}
+    <div className="relative w-10 h-10 mb-1.5 rounded-full overflow-hidden border border-border/50">
+      {image ? (
+        <img src={image} alt={name} className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full bg-secondary flex items-center justify-center text-[10px] font-bold text-muted-foreground/50">
+          {name.charAt(0)}
+        </div>
+      )}
+    </div>
+    <span className={cn("text-xs font-bold tracking-tight line-clamp-1 max-w-full text-center px-1", isSelected ? "text-primary" : "text-foreground")}>
+      {name}
+    </span>
   </div>
 );
 
@@ -100,6 +141,7 @@ export default function ProductDetailPage() {
 
   const [selectedPricingId, setSelectedPricingId] = useState<string | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [selectedColourId, setSelectedColourId] = useState<string>("");
   // We keep 'selectedVariants' for backward compatibility if backend returns 'variants' array separately,
   // but for pricing options, we primarily use selectedPricingId.
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
@@ -175,6 +217,11 @@ export default function ProductDetailPage() {
         if (foundProduct && foundProduct.pricing && foundProduct.pricing.length > 0) {
           // Default to first option
           setSelectedPricingId(foundProduct.pricing[0].id);
+        }
+
+        // Initialize colour
+        if (foundProduct && foundProduct.colors && foundProduct.colors.length > 0) {
+          setSelectedColourId(foundProduct.colors[0].id);
         }
 
         // Initialize legacy variants
@@ -281,10 +328,19 @@ export default function ProductDetailPage() {
 
     const addonObjects = availableAddons.filter(a => selectedAddons.includes(a.id));
 
+    // Resolve selected colour object
+    const selectedColour = product.colors?.find(c => c.id === selectedColourId);
+    const colourToAdd = selectedColour ? {
+      id: selectedColour.id,
+      name: selectedColour.name,
+      image: selectedColour.image || ''
+    } : undefined;
+
     addToCart(
       { ...product, price: basePrice },
       variantInfo,
-      addonObjects
+      addonObjects,
+      colourToAdd
     );
     setCartOpen(true);
   };
@@ -303,7 +359,7 @@ export default function ProductDetailPage() {
         {/* Product Image */}
         <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden bg-secondary/10 border border-border/50 shadow-sm md:aspect-auto md:h-[550px]">
           <Image
-            src={product.imageUrl}
+            src={product?.colors?.find(c => c.id === selectedColourId)?.image || product?.imageUrl || ''}
             alt={product.name}
             fill
             className="object-cover hover:scale-105 transition-transform duration-700"
@@ -415,6 +471,27 @@ export default function ProductDetailPage() {
                       </button>
                     ));
                   })()}
+                </div>
+              </div>
+            )}
+
+            {/* Colour Selector */}
+            {product.colors && product.colors.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-lg font-bold text-foreground">Select Colour</label>
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider bg-secondary/50 px-2 py-1 rounded">OPTIONAL</span>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {product.colors.map((colour) => (
+                    <ColourCard
+                      key={colour.id}
+                      name={colour.name}
+                      image={colour.image}
+                      isSelected={selectedColourId === colour.id}
+                      onClick={() => setSelectedColourId(colour.id)}
+                    />
+                  ))}
                 </div>
               </div>
             )}
