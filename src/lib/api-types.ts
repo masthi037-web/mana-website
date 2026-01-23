@@ -115,7 +115,6 @@ export interface Category {
     categoryName: string;
     catalogues: Catalogue[];
     companyId: string;
-    categories: Catalogue[];
     categoryImage?: string;
 }
 

@@ -167,6 +167,9 @@ const AddToCartContent = ({
   const { addToCart, setCartOpen } = useCart();
   const { toast } = useToast();
 
+  console.log('AddToCartContent Product:', product);
+  console.log('Colors:', product.colors);
+
   // -- State Logic --
   const [selectedVariants, setSelectedVariants] = React.useState<Record<string, string>>(() => {
     const initialState: Record<string, string> = {};
@@ -364,6 +367,27 @@ const AddToCartContent = ({
                     addon={addon}
                     isSelected={selectedAddonIds.has(addon.id)}
                     onToggle={() => handleAddonToggle(addon.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Colour Selector */}
+          {product.colors && product.colors.length > 0 && (
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Select Colour</h3>
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Optional</span>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {product.colors.map((colour) => (
+                  <ColourCard
+                    key={colour.id}
+                    name={colour.name}
+                    image={colour.image}
+                    isSelected={selectedColourId === colour.id}
+                    onClick={() => setSelectedColourId(colour.id)}
                   />
                 ))}
               </div>
