@@ -242,7 +242,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 const offers = thresholds.map((t, i) => ({
                   threshold: t,
                   discount: discounts[i]
-                })).filter(o => o.threshold && o.discount);
+                }))
+                  .filter(o => o.threshold && o.discount)
+                  .sort((a, b) => parseFloat(a.threshold) - parseFloat(b.threshold));
 
                 if (offers.length > 0) {
                   return (
