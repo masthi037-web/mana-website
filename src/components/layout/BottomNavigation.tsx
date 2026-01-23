@@ -43,7 +43,7 @@ const BottomNavigation = () => {
   }, []);
 
   return (
-    <div className="fixed bottom-0 left-0 z-40 w-full border-t bg-background md:hidden pb-[env(safe-area-inset-bottom)]">
+    <div className="fixed bottom-0 left-0 z-50 w-full border-t bg-background dark:bg-background md:hidden pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
       <nav className="container mx-auto flex h-16 items-center justify-around px-4">
         {navItems.map(({ href, icon: Icon, label }) => {
           if (label === 'Admin' && (!isLoggedIn || !userRole?.includes('OWNER'))) return null;
