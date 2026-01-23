@@ -29,7 +29,7 @@ export function Footer({ companyName = "ManaBuy", socialLinks }: FooterProps) {
     const twitter = getLink('twitter') || getLink('x.com') || '#';
 
     return (
-        <footer className="relative bg-background border-t border-border/40 overflow-hidden pt-24 pb-32 md:pb-12">
+        <footer className="relative bg-background border-t border-border/40 overflow-hidden pt-24 pb-12">
             {/* Decorative Background Elements */}
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[128px] -translate-y-1/2 pointer-events-none" />
             <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-[128px] translate-y-1/2 pointer-events-none" />
