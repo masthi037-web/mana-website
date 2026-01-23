@@ -234,12 +234,33 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               </div>
             </div>
 
-            {product.multipleSetDiscount && product.multipleDiscountMoreThan && (
-              <div className="flex items-center gap-1 font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                <Tag className="w-3 h-3" />
-                <span>Buy {product.multipleDiscountMoreThan}+ get {product.multipleSetDiscount}% Off</span>
-              </div>
-            )}
+            {(() => {
+              if (product.multipleSetDiscount && product.multipleDiscountMoreThan) {
+                const thresholds = product.multipleDiscountMoreThan.toString().split('&&&');
+                const discounts = product.multipleSetDiscount.toString().split('&&&');
+
+                const offers = thresholds.map((t, i) => ({
+                  threshold: t,
+                  discount: discounts[i]
+                })).filter(o => o.threshold && o.discount);
+
+                if (offers.length > 0) {
+                  return (
+                    <div className="flex flex-wrap gap-1.5 mt-2 justify-end">
+                      {offers.map((offer, idx) => (
+                        <div key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary text-primary-foreground shadow-sm shadow-primary/20 border-t border-white/20 transition-all hover:scale-105">
+                          <Tag className="w-3 h-3 fill-current opacity-90" />
+                          <span className="text-[10px] font-bold tracking-wide uppercase">
+                            Buy {offer.threshold} Get {offer.discount}% Off
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+              }
+              return null;
+            })()}
           </div>
 
           {/* Mobile Quick Add Button - Content Area */}
