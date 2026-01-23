@@ -1090,15 +1090,30 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                     let isBulkEligible = false;
 
                                                                     if (item.multipleSetDiscount && item.multipleDiscountMoreThan) {
-                                                                        const threshold = parseFloat(item.multipleDiscountMoreThan);
-                                                                        bulkDiscountPercent = parseFloat(item.multipleSetDiscount);
+                                                                        const thresholdStrs = item.multipleDiscountMoreThan.toString().split('&&&');
+                                                                        const discountStrs = item.multipleSetDiscount.toString().split('&&&');
                                                                         const totalQty = productQuantities[item.id] || 0;
 
-                                                                        if (totalQty >= threshold) {
+                                                                        // Find Best Tier
+                                                                        let bestTier = null;
+                                                                        for (let i = 0; i < thresholdStrs.length; i++) {
+                                                                            const t = parseFloat(thresholdStrs[i]);
+                                                                            const d = parseFloat(discountStrs[i]);
+                                                                            if (!isNaN(t) && !isNaN(d) && totalQty >= t) {
+                                                                                if (!bestTier || t > bestTier.threshold) {
+                                                                                    bestTier = { threshold: t, percent: d };
+                                                                                }
+                                                                            }
+                                                                        }
+
+                                                                        if (bestTier) {
                                                                             isBulkEligible = true;
+                                                                            activeThreshold = bestTier.threshold;
+                                                                            bulkDiscountPercent = bestTier.percent;
+
                                                                             // Calculate global quota for this product
-                                                                            const sets = Math.floor(totalQty / threshold);
-                                                                            const globalQuota = sets * threshold;
+                                                                            const sets = Math.floor(totalQty / activeThreshold);
+                                                                            const globalQuota = sets * activeThreshold;
 
                                                                             // How much of that quota is "allocated" to THIS item?
                                                                             // We need to iterate items of this product in order to claim quota
