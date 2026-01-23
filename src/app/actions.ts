@@ -3,7 +3,7 @@ import { categories } from "@/data/products";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import type { Product, ProductWithImage } from "@/lib/types";
 
-export async function getRecommendationsAction(): Promise<ProductWithImage[]> {
+export async function getRecommendationsAction(deliveryTime?: string): Promise<ProductWithImage[]> {
   try {
     // Fallback: Random Shuffle (No AI Key Required)
     const allProducts: Product[] = categories.flatMap(category =>
@@ -23,6 +23,7 @@ export async function getRecommendationsAction(): Promise<ProductWithImage[]> {
           ...product,
           imageUrl: image?.imageUrl || '',
           imageHint: image?.imageHint || 'product image',
+          deliveryTime: deliveryTime || product.deliveryTime || '30-45 min'
         };
       })
       .filter((p): p is ProductWithImage => !!p);

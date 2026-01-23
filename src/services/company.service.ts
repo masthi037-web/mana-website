@@ -14,6 +14,7 @@ export const fetchCompanyDetails = cache(async (companyDomain: string): Promise<
             return null;
         }
 
+        console.log("Company Delivery Between:", data.deliveryBetween);
         console.log(data.companyCoupon + " coupon");
         return data;
     } catch (error) {
