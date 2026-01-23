@@ -1050,202 +1050,152 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         <>
                             <ScrollArea className="flex-1 px-6">
                                 <ul className="py-6 space-y-6">
-                                    {cart.map((item, index) => {
+                                    {cart.flatMap((item, index) => {
                                         const isNew = lastAddedItemId === item.cartItemId;
-                                        return (
-                                            <li
-                                                key={item.cartItemId}
-                                                className={cn(
-                                                    "group relative flex gap-5 animate-in slide-in-from-bottom-4 fade-in duration-500",
-                                                    isNew && "ring-2 ring-primary/20 rounded-2xl p-2 -m-2 bg-primary/5 shadow-[0_0_30px_rgba(50,200,180,0.15)] transition-all duration-1000"
-                                                )}
-                                                style={{ animationDelay: `${index * 50}ms` }}
-                                            >
-                                                {isNew && (
-                                                    <div className="absolute inset-0 rounded-2xl animate-shimmer-highlight pointer-events-none" />
-                                                )}
 
-                                                {/* Premium Image Card */}
-                                                <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-secondary/30 shadow-sm group-hover:shadow-md transition-all duration-300">
-                                                    <Image
-                                                        src={item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
-                                                        alt={item.name}
-                                                        fill
-                                                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                                        data-ai-hint={item.imageHint}
-                                                    />
-                                                </div>
+                                        // --- Bulk Calculation Logic ---
+                                        let discountableQty = 0;
+                                        let bulkDiscountPercent = 0;
+                                        let isBulkEligible = false;
+                                        let activeThreshold = 0;
+                                        let fullPriceQty = 0;
 
-                                                <div className="flex flex-1 flex-col justify-between min-h-[6rem] py-0.5 z-10">
-                                                    <div className="space-y-2">
-                                                        <div className="flex justify-between items-start gap-3">
-                                                            <Link href={`/product/${item.id}`} className="font-bold text-base leading-snug hover:text-primary transition-colors line-clamp-2">
-                                                                {item.name}
-                                                            </Link>
-                                                            <div className="flex flex-col items-end">
-                                                                {(() => {
-                                                                    // Check Bulk Discount Quota
-                                                                    let discountableQty = 0;
-                                                                    let bulkDiscountPercent = 0;
-                                                                    let isBulkEligible = false;
-                                                                    let activeThreshold = 0;
+                                        if (item.multipleSetDiscount) {
+                                            const segments = item.multipleSetDiscount.toString().split('&&&');
+                                            const ruleKey = item.multipleSetDiscount.trim();
+                                            const totalQty = productQuantities[item.id] || 0;
 
-                                                                    if (item.multipleSetDiscount) {
-                                                                        const segments = item.multipleSetDiscount.toString().split('&&&');
-                                                                        const ruleKey = item.multipleSetDiscount.trim();
-                                                                        const totalQty = productQuantities[item.id] || 0; // Keeping id-based for now? No, must match main logic.
+                                            let bestTier = null;
+                                            for (let i = 0; i < segments.length; i++) {
+                                                const parts = segments[i].split('-');
+                                                if (parts.length === 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1]))) {
+                                                    const t = parseFloat(parts[0]);
+                                                    const d = parseFloat(parts[1]);
+                                                    if (totalQty >= t && (!bestTier || t > bestTier.threshold)) {
+                                                        bestTier = { threshold: t, percent: d };
+                                                    }
+                                                }
+                                            }
 
-                                                                        // Recalculate totalQty based on Rule for consistent display
-                                                                        const totalRuleQty = cart
-                                                                            .filter(i => i.multipleSetDiscount?.trim() === ruleKey)
-                                                                            .reduce((acc, i) => acc + i.quantity, 0);
+                                            if (bestTier) {
+                                                isBulkEligible = true;
+                                                activeThreshold = bestTier.threshold;
+                                                bulkDiscountPercent = bestTier.percent;
+                                                const sets = Math.floor(totalQty / activeThreshold);
+                                                const globalQuota = sets * activeThreshold;
+                                                const previousItemsOfSameProduct = cart.slice(0, index).filter(i => i.id === item.id);
+                                                const consumedQuota = previousItemsOfSameProduct.reduce((acc, i) => acc + i.quantity, 0);
+                                                const remainingQuota = Math.max(0, globalQuota - consumedQuota);
+                                                discountableQty = Math.min(item.quantity, remainingQuota);
+                                                fullPriceQty = item.quantity - discountableQty;
+                                            } else {
+                                                discountableQty = 0;
+                                                fullPriceQty = item.quantity;
+                                            }
+                                        } else {
+                                            fullPriceQty = item.quantity;
+                                        }
 
-                                                                        // Find Best Tier
-                                                                        let bestTier = null;
-                                                                        for (let i = 0; i < segments.length; i++) {
-                                                                            const parts = segments[i].split('-');
-                                                                            if (parts.length === 2) {
-                                                                                const t = parseFloat(parts[0]);
-                                                                                const d = parseFloat(parts[1]);
-                                                                                if (!isNaN(t) && !isNaN(d) && totalQty >= t) {
-                                                                                    if (!bestTier || t > bestTier.threshold) {
-                                                                                        bestTier = { threshold: t, percent: d };
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
+                                        // --- Helper to Render Single Row ---
+                                        const renderRow = (qty: number, isDiscounted: boolean, keySuffix: string) => {
+                                            const basePrice = item.priceAfterDiscount || item.price;
+                                            const addonsCost = item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0;
+                                            const singleItemTotal = basePrice + addonsCost;
+                                            const finalTotal = isDiscounted
+                                                ? (singleItemTotal * qty * (1 - bulkDiscountPercent / 100))
+                                                : (singleItemTotal * qty);
 
+                                            return (
+                                                <li
+                                                    key={`${item.cartItemId}-${keySuffix}`}
+                                                    className={cn(
+                                                        "group relative flex gap-5 animate-in slide-in-from-bottom-4 fade-in duration-500",
+                                                        isNew && "ring-2 ring-primary/20 rounded-2xl p-2 -m-2 bg-primary/5 shadow-[0_0_30px_rgba(50,200,180,0.15)] transition-all duration-1000"
+                                                    )}
+                                                    style={{ animationDelay: `${index * 50}ms` }}
+                                                >
+                                                    {isNew && <div className="absolute inset-0 rounded-2xl animate-shimmer-highlight pointer-events-none" />}
 
-                                                                        if (bestTier) {
-                                                                            isBulkEligible = true;
-                                                                            activeThreshold = bestTier.threshold;
-                                                                            bulkDiscountPercent = bestTier.percent;
-
-                                                                            // Calculate global quota for this product
-                                                                            const sets = Math.floor(totalQty / activeThreshold);
-                                                                            const globalQuota = sets * activeThreshold;
-
-                                                                            // How much of that quota is "allocated" to THIS item?
-                                                                            // We need to iterate items of this product in order to claim quota
-                                                                            // We filter the cart list up to current index to calculate consumed quota.
-                                                                            const previousItemsOfSameProduct = cart.slice(0, index).filter(i => i.id === item.id);
-                                                                            const consumedQuota = previousItemsOfSameProduct.reduce((acc, i) => acc + i.quantity, 0);
-
-                                                                            const remainingQuota = Math.max(0, globalQuota - consumedQuota);
-                                                                            discountableQty = Math.min(item.quantity, remainingQuota);
-                                                                        }
-                                                                    }
-
-                                                                    const basePrice = item.priceAfterDiscount || item.price;
-                                                                    const addonsCost = item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0;
-                                                                    const singleItemTotal = basePrice + addonsCost;
-                                                                    const discountedSingleTotal = singleItemTotal * (1 - bulkDiscountPercent / 100);
-
-                                                                    // Render Logic
-                                                                    if (isBulkEligible && discountableQty > 0) {
-                                                                        const fullPriceQty = item.quantity - discountableQty;
-                                                                        const totalLineCost = (discountableQty * discountedSingleTotal) + (fullPriceQty * singleItemTotal);
-
-                                                                        return (
-                                                                            <div className="flex flex-col items-end">
-                                                                                {/* Original Total (Strikethrough) */}
-                                                                                <span className="text-xs text-muted-foreground line-through">
-                                                                                    ₹{(singleItemTotal * item.quantity).toFixed(0)}
-                                                                                </span>
-
-                                                                                {/* New Effective Total */}
-                                                                                <p className="font-bold text-base text-emerald-600 whitespace-nowrap animate-in zoom-in duration-300">
-                                                                                    ₹{totalLineCost.toFixed(0)}
-                                                                                </p>
-
-                                                                                <span className="text-[10px] font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 px-2 py-0.5 rounded-full flex gap-1.5 items-center mt-1 shadow-sm border border-emerald-500/20">
-                                                                                    <Tag className="w-3 h-3 fill-white/20" />
-                                                                                    Bundle Unlocked: {bulkDiscountPercent}% Off
-                                                                                </span>
-                                                                                {fullPriceQty > 0 && (
-                                                                                    <span className="text-[9px] text-muted-foreground mt-0.5">
-                                                                                        (Bundle limit reached)
-                                                                                    </span>
-                                                                                )}
-                                                                            </div>
-                                                                        );
-                                                                    }
-
-                                                                    // Default / No Discount for this specific line item
-                                                                    if (item.priceAfterDiscount) {
-                                                                        return (
-                                                                            <>
-                                                                                <span className="text-xs text-muted-foreground line-through">
-                                                                                    ₹{((item.price + addonsCost) * item.quantity).toFixed(0)}
-                                                                                </span>
-                                                                                <p className="font-bold text-base text-primary whitespace-nowrap">
-                                                                                    ₹{((item.priceAfterDiscount + addonsCost) * item.quantity).toFixed(0)}
-                                                                                </p>
-                                                                            </>
-                                                                        );
-                                                                    } else {
-                                                                        return (
-                                                                            <p className="font-bold text-base text-primary whitespace-nowrap">
-                                                                                ₹{((item.price + addonsCost) * item.quantity).toFixed(0)}
-                                                                            </p>
-                                                                        );
-                                                                    }
-                                                                })()}
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Variants & Addons Pills */}
-                                                        {(item.selectedVariants || item.selectedAddons) && (
-                                                            <div className="flex flex-wrap gap-1.5">
-                                                                {Object.values(item.selectedVariants || {}).map((value, i) => (
-                                                                    <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary/80 text-foreground/80 border border-transparent">
-                                                                        {value}
-                                                                    </span>
-                                                                ))}
-                                                                {item.selectedAddons?.map((addon) => (
-                                                                    <span key={addon.id} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
-                                                                        + {addon.name}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        )}
+                                                    <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-secondary/30 shadow-sm group-hover:shadow-md transition-all duration-300">
+                                                        <Image
+                                                            src={item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
+                                                            alt={item.name}
+                                                            fill
+                                                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                                        />
                                                     </div>
 
-                                                    <div className="flex items-center justify-between pt-2">
-                                                        {/* Modern Quantity Selector */}
-                                                        <div className="flex items-center gap-1 bg-secondary/40 rounded-full p-1 border border-border/50">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-6 w-6 rounded-full hover:bg-white hover:shadow-sm hover:text-destructive transition-all"
-                                                                onClick={() => updateQuantity(item.cartItemId, Math.max(1, item.quantity - 1))}
-                                                                disabled={item.quantity <= 1}
-                                                            >
-                                                                <Minus className="h-3 w-3" />
-                                                            </Button>
-                                                            <span className="w-8 text-center text-xs font-bold tabular-nums">{item.quantity}</span>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-6 w-6 rounded-full hover:bg-white hover:shadow-sm hover:text-primary transition-all"
-                                                                onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
-                                                            >
-                                                                <Plus className="h-3 w-3" />
-                                                            </Button>
+                                                    <div className="flex flex-1 flex-col justify-between min-h-[6rem] py-0.5 z-10">
+                                                        <div className="space-y-2">
+                                                            <div className="flex justify-between items-start gap-3">
+                                                                <Link href={`/product/${item.id}`} className="font-bold text-base leading-snug hover:text-primary transition-colors line-clamp-2">
+                                                                    {item.name}
+                                                                </Link>
+                                                                <div className="flex flex-col items-end">
+                                                                    {isDiscounted ? (
+                                                                        <>
+                                                                            <span className="text-xs text-muted-foreground line-through">₹{(singleItemTotal * qty).toFixed(0)}</span>
+                                                                            <p className="font-bold text-base text-emerald-600 whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
+                                                                            <span className="text-[10px] font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 px-2 py-0.5 rounded-full flex gap-1.5 items-center mt-1 shadow-sm border border-emerald-500/20">
+                                                                                <Tag className="w-3 h-3 fill-white/20" />
+                                                                                Bundle Unlocked: {bulkDiscountPercent}% Off
+                                                                            </span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <p className="font-bold text-base text-primary whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {(item.selectedVariants || item.selectedAddons) && (
+                                                                <div className="flex flex-wrap gap-1.5">
+                                                                    {Object.values(item.selectedVariants || {}).map((v, i) => (
+                                                                        <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary/80 text-foreground/80">{v}</span>
+                                                                    ))}
+                                                                    {item.selectedAddons?.map((addon) => (
+                                                                        <span key={addon.id} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                                                                            + {addon.name}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
 
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
-                                                            onClick={() => setItemToDelete(item.cartItemId)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        <div className="flex items-center justify-between pt-2">
+                                                            <div className="flex items-center gap-1 bg-secondary/40 rounded-full p-1 border border-border/50">
+                                                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-destructive"
+                                                                    onClick={() => updateQuantity(item.cartItemId, Math.max(0, item.quantity - 1))}
+                                                                    disabled={false}
+                                                                >
+                                                                    <Minus className="h-3 w-3" />
+                                                                </Button>
+                                                                <span className="w-8 text-center text-xs font-bold tabular-nums">{qty}</span>
+                                                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-primary"
+                                                                    onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
+                                                                >
+                                                                    <Plus className="h-3 w-3" />
+                                                                </Button>
+                                                            </div>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded-full" onClick={() => setItemToDelete(item.cartItemId)}>
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </li>
-                                        );
+                                                </li>
+                                            );
+                                        };
+
+                                        // --- Return Logic ---
+                                        if (isBulkEligible && discountableQty > 0 && fullPriceQty > 0) {
+                                            return [
+                                                renderRow(discountableQty, true, 'discounted'),
+                                                renderRow(fullPriceQty, false, 'standard')
+                                            ];
+                                        } else if (isBulkEligible && discountableQty > 0) {
+                                            return [renderRow(discountableQty, true, 'discounted')];
+                                        } else {
+                                            return [renderRow(item.quantity, false, 'standard')];
+                                        }
                                     })}
                                 </ul>
 
