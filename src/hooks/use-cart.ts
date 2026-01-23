@@ -132,9 +132,29 @@ export const useCart = create<CartState>()(
         }));
       },
       getCartTotal: () => {
-        return get().cart.reduce((total, item) => {
+        const cart = get().cart;
+        // 1. Group quantities by productId to check for bulk thresholds
+        const productQuantities: Record<string, number> = {};
+        cart.forEach(item => {
+          productQuantities[item.id] = (productQuantities[item.id] || 0) + item.quantity;
+        });
+
+        return cart.reduce((total, item) => {
           const addonsPrice = (item.selectedAddons || []).reduce((acc, addon) => acc + addon.price, 0);
-          const itemPrice = item.priceAfterDiscount !== undefined ? item.priceAfterDiscount : item.price;
+          let itemPrice = item.priceAfterDiscount !== undefined ? item.priceAfterDiscount : item.price;
+
+          // Check Bulk Discount
+          // Ensure fields exist and valid
+          if (item.multipleSetDiscount && item.multipleDiscountMoreThan) {
+            const threshold = parseFloat(item.multipleDiscountMoreThan);
+            const discountPercent = parseFloat(item.multipleSetDiscount);
+            const totalQty = productQuantities[item.id] || 0;
+
+            if (totalQty >= threshold && !isNaN(threshold) && !isNaN(discountPercent)) {
+              itemPrice = itemPrice - (itemPrice * discountPercent / 100);
+            }
+          }
+
           return total + (itemPrice + addonsPrice) * item.quantity;
         }, 0);
       },

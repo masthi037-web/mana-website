@@ -378,7 +378,16 @@ export default function ProductDetailPage() {
         {/* Product Image */}
         <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden bg-secondary/10 border border-border/50 shadow-sm md:aspect-auto md:h-[550px]">
           <Image
-            src={product?.colors?.find(c => c.id === selectedColourId)?.image || product.productImage || product.imageUrl || ''}
+            src={(() => {
+              // 1. If colours exist, prioritize selected colour image.
+              // We avoid falling back to product.productImage here because it might mismatch the selected variant.
+              if (product.colors && product.colors.length > 0) {
+                const selected = product.colors.find(c => c.id === selectedColourId);
+                return selected?.image || product.imageUrl || '';
+              }
+              // 2. If NO colours, use productImage (new field) or imageUrl (legacy).
+              return product.productImage || product.imageUrl || '';
+            })()}
             alt={product.name}
             fill
             className="object-cover hover:scale-105 transition-transform duration-700"

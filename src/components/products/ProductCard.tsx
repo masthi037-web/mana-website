@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Star, Clock, ShoppingBag, Sparkles } from 'lucide-react';
+import { Heart, Star, Clock, ShoppingBag, Sparkles, Tag } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -234,10 +234,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               </div>
             </div>
 
-            <div className="flex items-center gap-1 font-medium text-primary">
-              <ShoppingBag className="w-3 h-3" />
-              <span>Free Delivery</span>
-            </div>
+            {product.multipleSetDiscount && product.multipleDiscountMoreThan && (
+              <div className="flex items-center gap-1 font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                <Tag className="w-3 h-3" />
+                <span>Buy {product.multipleDiscountMoreThan}+ get {product.multipleSetDiscount}% Off</span>
+              </div>
+            )}
           </div>
 
           {/* Mobile Quick Add Button - Content Area */}

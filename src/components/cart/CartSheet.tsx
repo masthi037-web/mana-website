@@ -73,11 +73,66 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const { text, theme } = useTenant();
     const router = useRouter();
     const [celebrated, setCelebrated] = useState(false);
+    const [bulkCelebrated, setBulkCelebrated] = useState(false);
     const [showFreeDeliveryPopup, setShowFreeDeliveryPopup] = useState(false);
     const [showCouponPopup, setShowCouponPopup] = useState(false);
 
     // Track initial render to prevent confetti on reload
+    // Track initial render to prevent confetti on reload
     const isFirstRender = useRef(true);
+
+    // Calculate Product Quantities for Bulk Discount aggregation
+    const productQuantities: Record<string, number> = {};
+    cart.forEach(item => {
+        productQuantities[item.id] = (productQuantities[item.id] || 0) + item.quantity;
+    });
+
+    const hasBulkDiscount = cart.some(item => {
+        if (item.multipleSetDiscount && item.multipleDiscountMoreThan) {
+            const threshold = parseFloat(item.multipleDiscountMoreThan);
+            const totalQty = productQuantities[item.id] || 0;
+            return totalQty >= threshold;
+        }
+        return false;
+    });
+
+    // Bulk Discount Celebration
+    useEffect(() => {
+        if (!isFirstRender.current && hasBulkDiscount && !bulkCelebrated && isCartOpen) {
+            const end = Date.now() + 1500;
+            const colors = ['#059669', '#34D399', '#A7F3D0']; // Emerald/Green theme
+
+            (function frame() {
+                confetti({
+                    particleCount: 2,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: colors,
+                    zIndex: 9999
+                });
+                confetti({
+                    particleCount: 2,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: colors,
+                    zIndex: 9999
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+            setBulkCelebrated(true);
+            toast({
+                title: "Bulk Discount Unlocked! 🎉",
+                description: "You've saved big with our bulk offers.",
+                className: "bg-emerald-50 border-emerald-200 text-emerald-800"
+            });
+        }
+    }, [hasBulkDiscount, bulkCelebrated, isCartOpen]);
+
 
     // Validation State
     const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -1028,20 +1083,89 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                 {item.name}
                                                             </Link>
                                                             <div className="flex flex-col items-end">
-                                                                {item.priceAfterDiscount ? (
-                                                                    <>
-                                                                        <span className="text-xs text-muted-foreground line-through">
-                                                                            ₹{((item.price + (item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0)) * item.quantity).toFixed(0)}
-                                                                        </span>
-                                                                        <p className="font-bold text-base text-primary whitespace-nowrap">
-                                                                            ₹{((item.priceAfterDiscount + (item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0)) * item.quantity).toFixed(0)}
-                                                                        </p>
-                                                                    </>
-                                                                ) : (
-                                                                    <p className="font-bold text-base text-primary whitespace-nowrap">
-                                                                        ₹{((item.price + (item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0)) * item.quantity).toFixed(0)}
-                                                                    </p>
-                                                                )}
+                                                                {(() => {
+                                                                    // Check Bulk Discount Quota
+                                                                    let discountableQty = 0;
+                                                                    let bulkDiscountPercent = 0;
+                                                                    let isBulkEligible = false;
+
+                                                                    if (item.multipleSetDiscount && item.multipleDiscountMoreThan) {
+                                                                        const threshold = parseFloat(item.multipleDiscountMoreThan);
+                                                                        bulkDiscountPercent = parseFloat(item.multipleSetDiscount);
+                                                                        const totalQty = productQuantities[item.id] || 0;
+
+                                                                        if (totalQty >= threshold) {
+                                                                            isBulkEligible = true;
+                                                                            // Calculate global quota for this product
+                                                                            const sets = Math.floor(totalQty / threshold);
+                                                                            const globalQuota = sets * threshold;
+
+                                                                            // How much of that quota is "allocated" to THIS item?
+                                                                            // We need to iterate items of this product in order to claim quota
+                                                                            // We filter the cart list up to current index to calculate consumed quota.
+                                                                            const previousItemsOfSameProduct = cart.slice(0, index).filter(i => i.id === item.id);
+                                                                            const consumedQuota = previousItemsOfSameProduct.reduce((acc, i) => acc + i.quantity, 0);
+
+                                                                            const remainingQuota = Math.max(0, globalQuota - consumedQuota);
+                                                                            discountableQty = Math.min(item.quantity, remainingQuota);
+                                                                        }
+                                                                    }
+
+                                                                    const basePrice = item.priceAfterDiscount || item.price;
+                                                                    const addonsCost = item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0;
+                                                                    const singleItemTotal = basePrice + addonsCost;
+                                                                    const discountedSingleTotal = singleItemTotal * (1 - bulkDiscountPercent / 100);
+
+                                                                    // Render Logic
+                                                                    if (isBulkEligible && discountableQty > 0) {
+                                                                        const fullPriceQty = item.quantity - discountableQty;
+                                                                        const totalLineCost = (discountableQty * discountedSingleTotal) + (fullPriceQty * singleItemTotal);
+
+                                                                        return (
+                                                                            <div className="flex flex-col items-end">
+                                                                                {/* Original Total (Strikethrough) */}
+                                                                                <span className="text-xs text-muted-foreground line-through">
+                                                                                    ₹{(singleItemTotal * item.quantity).toFixed(0)}
+                                                                                </span>
+
+                                                                                {/* New Effective Total */}
+                                                                                <p className="font-bold text-base text-emerald-600 whitespace-nowrap animate-in zoom-in duration-300">
+                                                                                    ₹{totalLineCost.toFixed(0)}
+                                                                                </p>
+
+                                                                                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full flex gap-1 items-center mt-0.5 border border-emerald-100 shadow-sm">
+                                                                                    <Tag className="w-2.5 h-2.5" />
+                                                                                    {discountableQty}/{item.quantity} @ {bulkDiscountPercent}% Off
+                                                                                </span>
+                                                                                {fullPriceQty > 0 && (
+                                                                                    <span className="text-[9px] text-muted-foreground mt-0.5">
+                                                                                        (Bundle limit reached)
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        );
+                                                                    }
+
+                                                                    // Default / No Discount for this specific line item
+                                                                    if (item.priceAfterDiscount) {
+                                                                        return (
+                                                                            <>
+                                                                                <span className="text-xs text-muted-foreground line-through">
+                                                                                    ₹{((item.price + addonsCost) * item.quantity).toFixed(0)}
+                                                                                </span>
+                                                                                <p className="font-bold text-base text-primary whitespace-nowrap">
+                                                                                    ₹{((item.priceAfterDiscount + addonsCost) * item.quantity).toFixed(0)}
+                                                                                </p>
+                                                                            </>
+                                                                        );
+                                                                    } else {
+                                                                        return (
+                                                                            <p className="font-bold text-base text-primary whitespace-nowrap">
+                                                                                ₹{((item.price + addonsCost) * item.quantity).toFixed(0)}
+                                                                            </p>
+                                                                        );
+                                                                    }
+                                                                })()}
                                                             </div>
                                                         </div>
 
