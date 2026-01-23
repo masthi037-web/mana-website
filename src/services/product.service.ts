@@ -17,7 +17,8 @@ export async function fetchCategories(companyId: string, deliveryTime?: string):
         });
 
         // The API returns a robust structure, we need to map it to our App's simpler types
-        if (deliveryTime) console.log("Mapping categories with deliveryTime:", deliveryTime);
+        console.log("Products :", data.categories.at(0)?.catalogues.at(0)?.products);
+        console.log("All Data :", data);
         return mapApiCategoriesToAppCategories(data.categories || [], deliveryTime);
     } catch (error) {
         console.error('Error fetching categories:', error);
