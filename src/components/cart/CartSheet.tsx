@@ -1089,22 +1089,25 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                     let bulkDiscountPercent = 0;
                                                                     let isBulkEligible = false;
 
-                                                                    if (item.multipleSetDiscount && item.multipleDiscountMoreThan) {
-                                                                        const thresholdStrs = item.multipleDiscountMoreThan.toString().split('&&&');
-                                                                        const discountStrs = item.multipleSetDiscount.toString().split('&&&');
+                                                                    if (item.multipleSetDiscount) {
+                                                                        const segments = item.multipleSetDiscount.toString().split('&&&');
                                                                         const totalQty = productQuantities[item.id] || 0;
 
                                                                         // Find Best Tier
                                                                         let bestTier = null;
-                                                                        for (let i = 0; i < thresholdStrs.length; i++) {
-                                                                            const t = parseFloat(thresholdStrs[i]);
-                                                                            const d = parseFloat(discountStrs[i]);
-                                                                            if (!isNaN(t) && !isNaN(d) && totalQty >= t) {
-                                                                                if (!bestTier || t > bestTier.threshold) {
-                                                                                    bestTier = { threshold: t, percent: d };
+                                                                        for (let i = 0; i < segments.length; i++) {
+                                                                            const parts = segments[i].split('-');
+                                                                            if (parts.length === 2) {
+                                                                                const t = parseFloat(parts[0]);
+                                                                                const d = parseFloat(parts[1]);
+                                                                                if (!isNaN(t) && !isNaN(d) && totalQty >= t) {
+                                                                                    if (!bestTier || t > bestTier.threshold) {
+                                                                                        bestTier = { threshold: t, percent: d };
+                                                                                    }
                                                                                 }
                                                                             }
                                                                         }
+
 
                                                                         if (bestTier) {
                                                                             isBulkEligible = true;

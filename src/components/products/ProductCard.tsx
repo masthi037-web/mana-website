@@ -107,22 +107,60 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <div className="absolute inset-0 bg-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
           {/* Top Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
+          <div className="absolute top-3 left-3 flex flex-col gap-2 z-10 w-[calc(100%-24px)] items-start pointer-events-none">
             {/* Rating Badge */}
             {product.rating > 0 && (
-              <div className="flex items-center gap-1 bg-background/90 backdrop-blur-md px-2 py-1 rounded-full text-[10px] font-bold text-foreground shadow-sm">
+              <div className="flex items-center gap-1 bg-background/90 backdrop-blur-md px-2 py-1 rounded-full text-[10px] font-bold text-foreground shadow-sm pointer-events-auto">
                 <Star className="w-3 h-3 fill-primary text-primary" />
                 <span>{product.rating.toFixed(1)}</span>
               </div>
             )}
 
-            {/* Offer Badge */}
+            {/* Offer Badge (Single) */}
             {product.productOffer && (
-              <div className="flex items-center gap-1 bg-primary/90 backdrop-blur-md px-2 py-1 rounded-full text-[10px] font-bold text-white shadow-sm animate-in fade-in zoom-in duration-300">
+              <div className="flex items-center gap-1 bg-rose-500/90 backdrop-blur-md px-2 py-1 rounded-full text-[10px] font-bold text-white shadow-sm animate-in fade-in zoom-in duration-300 pointer-events-auto">
                 <Sparkles className="w-3 h-3 fill-white text-white" />
-                <span>{product.productOffer}{!isNaN(Number(product.productOffer)) ? '%' : ''}</span>
+                <span>{product.productOffer}{!isNaN(Number(product.productOffer)) ? '%' : ''} Off</span>
               </div>
             )}
+
+            {/* Bulk Discount Badges (New Logic) */}
+            {(() => {
+              if (product.multipleSetDiscount) {
+                // Format: "3-10&&&4-15"
+                // Split by &&& first, then by -
+                const segments = product.multipleSetDiscount.toString().split('&&&').map(s => s.trim());
+
+                const offers = segments.map(seg => {
+                  const parts = seg.split('-');
+                  if (parts.length === 2) {
+                    return {
+                      threshold: parts[0].trim(),
+                      discount: parts[1].trim()
+                    };
+                  }
+                  return null;
+                })
+                  .filter((o): o is { threshold: string, discount: string } => o !== null)
+                  .sort((a, b) => parseFloat(a.threshold) - parseFloat(b.threshold));
+
+                if (offers.length > 0) {
+                  return (
+                    <div className="flex flex-col gap-1.5 items-start mt-0.5 pointer-events-auto">
+                      {offers.map((offer, idx) => (
+                        <div key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary text-primary-foreground shadow-md shadow-primary/20 border-t border-white/20 transition-all hover:scale-105">
+                          <Tag className="w-3 h-3 fill-current opacity-90" />
+                          <span className="text-[10px] font-bold tracking-wide uppercase">
+                            Buy {offer.threshold} Get {offer.discount}% Off
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+              }
+              return null;
+            })()}
           </div>
 
           {/* Wishlist Button */}
@@ -235,7 +273,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </div>
 
             {(() => {
-              console.log("bulk discount ", product.multipleSetDiscount, product.multipleDiscountMoreThan);
               if (product.multipleSetDiscount && product.multipleDiscountMoreThan) {
                 const thresholds = product.multipleDiscountMoreThan.toString().split('&&&').map(s => s.trim());
                 const discounts = product.multipleSetDiscount.toString().split('&&&').map(s => s.trim());
@@ -253,13 +290,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
                 if (offers.length > 0) {
                   return (
-                    <div className="flex flex-wrap gap-1.5 mt-2 justify-end">
+                    <div className="flex flex-wrap gap-1 mt-1 justify-end">
                       {offers.map((offer, idx) => (
-                        <div key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary text-primary-foreground shadow-sm shadow-primary/20 border-t border-white/20 transition-all hover:scale-105">
-                          <Tag className="w-3 h-3 fill-current opacity-90" />
-                          <span className="text-[10px] font-bold tracking-wide uppercase">
-                            Buy {offer.threshold} Get {offer.discount}% Off
-                          </span>
+                        <div key={idx} className="flex items-center gap-1 font-medium text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 shadow-sm">
+                          <Tag className="w-2.5 h-2.5" />
+                          <span>Buy {offer.threshold}+ Get {offer.discount}% Off</span>
                         </div>
                       ))}
                     </div>

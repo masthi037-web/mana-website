@@ -145,13 +145,30 @@ export const useCart = create<CartState>()(
 
           // Check Bulk Discount
           // Ensure fields exist and valid
-          if (item.multipleSetDiscount && item.multipleDiscountMoreThan) {
-            const threshold = parseFloat(item.multipleDiscountMoreThan);
-            const discountPercent = parseFloat(item.multipleSetDiscount);
+          // Check Bulk Discount (New Format: "3-10&&&4-15")
+          if (item.multipleSetDiscount) {
+            const segments = item.multipleSetDiscount.toString().split('&&&');
             const totalQty = productQuantities[item.id] || 0;
 
-            if (totalQty >= threshold && !isNaN(threshold) && !isNaN(discountPercent)) {
-              itemPrice = itemPrice - (itemPrice * discountPercent / 100);
+            let bestDiscount = 0;
+            let bestThreshold = 0;
+
+            segments.forEach(seg => {
+              const parts = seg.split('-');
+              if (parts.length === 2) {
+                const t = parseFloat(parts[0]);
+                const d = parseFloat(parts[1]);
+                if (!isNaN(t) && !isNaN(d) && totalQty >= t) {
+                  if (t > bestThreshold) {
+                    bestThreshold = t;
+                    bestDiscount = d;
+                  }
+                }
+              }
+            });
+
+            if (bestDiscount > 0) {
+              itemPrice = itemPrice - (itemPrice * bestDiscount / 100);
             }
           }
 
