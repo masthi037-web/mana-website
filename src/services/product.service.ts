@@ -66,7 +66,7 @@ function mapApiCatalogueToAppCatalog(apiCat: ApiCatalogue, deliveryTime?: string
     };
 }
 
-function mapApiProductToAppProduct(apiProd: ApiProduct): AppProduct {
+function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): AppProduct {
     // Logic to determine price: use the first pricing option or default to 0
     const firstPricing = apiProd.productSize && apiProd.productSize.length > 0
         ? apiProd.productSize[0]
@@ -118,7 +118,7 @@ function mapApiProductToAppProduct(apiProd: ApiProduct): AppProduct {
         rating: apiProd.productRatings && apiProd.productRatings.length > 0
             ? apiProd.productRatings.reduce((acc, curr) => acc + curr.productRating, 0) / apiProd.productRatings.length
             : 4.5,
-        deliveryTime: '30-45 min',
+        deliveryTime: deliveryTime || '30-45 min',
         deliveryCost: apiProd.productDeliveryCost,
         createdAt: apiProd.createdAt,
         updatedAt: apiProd.updatedAt,
