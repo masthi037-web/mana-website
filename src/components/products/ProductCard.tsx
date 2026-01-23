@@ -213,13 +213,24 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                   // Does Product type have 'priceAfterDiscount'? Or we assume only variants do?
                   // Product Creation sends 'productPriceAfterDiscount'. The type might be different.
                   // Assuming 'product.priceAfterDiscount' exists if updated properly, else use logic
-                  const offerPrice = (product as any).priceAfterDiscount; // Casting as type might need update
-                  if (offerPrice && offerPrice < product.price) {
-                    displayPrice = offerPrice;
+                  const offerPercent = product.productOffer ? parseFloat(product.productOffer.toString()) : 0;
+
+                  if (offerPercent > 0) {
+                    // Calculate discount based on percentage
+                    const discountAmount = (product.price * offerPercent) / 100;
+                    displayPrice = Math.round(product.price - discountAmount);
                     originalPriceForDisplay = product.price;
                     hasDiscount = true;
                   } else {
-                    displayPrice = product.price;
+                    // Fallback to pre-calculated priceAfterDiscount if available
+                    const offerPrice = (product as any).priceAfterDiscount;
+                    if (offerPrice && offerPrice < product.price) {
+                      displayPrice = offerPrice;
+                      originalPriceForDisplay = product.price;
+                      hasDiscount = true;
+                    } else {
+                      displayPrice = product.price;
+                    }
                   }
                 } else if (product.pricing && product.pricing.length > 0) {
                   showStartsFrom = true;

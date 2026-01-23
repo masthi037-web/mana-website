@@ -1092,7 +1092,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                                                                     if (item.multipleSetDiscount) {
                                                                         const segments = item.multipleSetDiscount.toString().split('&&&');
-                                                                        const totalQty = productQuantities[item.id] || 0;
+                                                                        const ruleKey = item.multipleSetDiscount.trim();
+                                                                        const totalQty = productQuantities[item.id] || 0; // Keeping id-based for now? No, must match main logic.
+
+                                                                        // Recalculate totalQty based on Rule for consistent display
+                                                                        const totalRuleQty = cart
+                                                                            .filter(i => i.multipleSetDiscount?.trim() === ruleKey)
+                                                                            .reduce((acc, i) => acc + i.quantity, 0);
 
                                                                         // Find Best Tier
                                                                         let bestTier = null;

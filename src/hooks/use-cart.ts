@@ -134,9 +134,22 @@ export const useCart = create<CartState>()(
       getCartTotal: () => {
         const cart = get().cart;
         // 1. Group quantities by productId to check for bulk thresholds
-        const productQuantities: Record<string, number> = {};
+        // 1. Group quantities by Discount Rule to support Mix & Match
+        // distinct products with the same `multipleSetDiscount` rule will be pooled together.
+        const ruleQuantities: Record<string, number> = {};
+
         cart.forEach(item => {
-          productQuantities[item.id] = (productQuantities[item.id] || 0) + item.quantity;
+          if (item.multipleSetDiscount) {
+            // Use the rule string itself as the key (e.g. "3-10&&&4-15")
+            // normalize it just in case
+            const ruleKey = item.multipleSetDiscount.trim();
+            ruleQuantities[ruleKey] = (ruleQuantities[ruleKey] || 0) + item.quantity;
+          } else {
+            // Fallback for items with no discount (though not used for calc)
+            // We'll just use ID to avoid collision
+            const key = `NO_RULE_${item.id}`;
+            ruleQuantities[key] = (ruleQuantities[key] || 0) + item.quantity;
+          }
         });
 
         return cart.reduce((total, item) => {
@@ -148,7 +161,8 @@ export const useCart = create<CartState>()(
           // Check Bulk Discount (New Format: "3-10&&&4-15")
           if (item.multipleSetDiscount) {
             const segments = item.multipleSetDiscount.toString().split('&&&');
-            const totalQty = productQuantities[item.id] || 0;
+            const ruleKey = item.multipleSetDiscount.trim();
+            const totalQty = ruleQuantities[ruleKey] || 0;
 
             let bestDiscount = 0;
             let bestThreshold = 0;
