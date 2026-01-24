@@ -136,16 +136,25 @@ export default function AdminInventoryPage() {
                 id: String(p.productId),
                 name: p.productName,
                 price: p.productPrice || 0,
-                // We'll need pricing for the drill down, but we fetch it fresh on click essentially or here?
-                // Actually the API returns some, but we decided to fetch fresh pricing on click.
-                // For the list view, we just need basic info.
                 pricing: [],
                 imageId: p.imageId || "",
-                productImage: p.productImage,
+                productImage: p.productImage, // Original field
                 description: p.productInfo || "",
                 rating: 0,
                 productOffer: p.productOffer,
-                colours: p.productColour || []
+                colours: p.productColour || [],
+                // Include fields for Editing
+                productIng: p.productIng,
+                productBestBefore: p.productBestBefore,
+                productInst: p.productInst,
+                productDeliveryCost: p.productDeliveryCost,
+                famous: p.famous,
+                multipleSetDiscount: p.multipleSetDiscount,
+                multipleDiscountMoreThan: p.multipleDiscountMoreThan,
+                productPriceAfterDiscount: p.productPriceAfterDiscount,
+                updatedAt: p.updatedAt,
+                createdAt: p.createdAt,
+                productPics: p.productPics // In case needed
             }));
         }
     });
