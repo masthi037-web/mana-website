@@ -150,52 +150,9 @@ export const useCart = create<CartState>()(
         });
 
         // 2. Iterate and Calculate Total
-        return cart.reduce((total, item) => {
-          const addonsPrice = (item.selectedAddons || []).reduce((acc, addon) => acc + addon.price, 0);
-          let itemPrice = item.priceAfterDiscount !== undefined ? item.priceAfterDiscount : item.price;
-          const productId = item.id.toString();
-          const totalQty = productQuantities[productId] || 0;
+        // Removed old reduce block that was returning early
 
-          let appliedDiscount = 0;
-
-          // --- Logic 1: Greedy Tiers (Product Scoped) ---
-          const ruleKey = productRules[productId];
-          let maxGreedyDiscount = 0;
-          let tierDiscount = 0;
-
-          if (ruleKey) {
-            const segments = ruleKey.split('&&&');
-            const tiers: { threshold: number, percent: number }[] = [];
-            segments.forEach(seg => {
-              const parts = seg.split('-');
-              if (parts.length === 2) {
-                const t = parseFloat(parts[0]);
-                const d = parseFloat(parts[1]);
-                if (!isNaN(t) && !isNaN(d)) {
-                  tiers.push({ threshold: t, percent: d });
-                }
-              }
-            });
-            tiers.sort((a, b) => b.threshold - a.threshold);
-            if (tiers.length > 0) maxGreedyDiscount = tiers[0].percent;
-
-            // Determine exact tier for THIS specific item unit?
-            // `getCartTotal` is a simple reduce. We can't easily simulate the distribution map here without complexity.
-            // However, since we need the EXACT total, we should replicate the distribution logic or approximate?
-            // Wait, `getCartTotal` returns a single number.
-            // Calculating exact greedy distribution inside a reduce loop is hard because it depends on order.
-            // BUT: We can calculate the total Discounted Price for the product *once* and distribute it?
-            // Actually, simpler approach: Calculate the total cost for the ENTIRE product quantity using the distribution,
-            // then essentially `totalCost` is sum of `productCost`.
-            // We can refactor `getCartTotal` to loop by PRODUCT first, then sum up?
-            // OR: We stick to the current structure but use a pre-calculated map like the CartSheet.
-          }
-
-          // Let's use the Pre-Calculated Map approach since we have the full cart.
-          // It's cleaner to do this outside the reduce, but `getCartTotal` structure is inside the store.
-          // Refactoring to a robust Product-Centric calculation:
-          return total;
-        }, 0);
+        // REWRITE: Calculate totals by Product ID first
 
         // REWRITE: Calculate totals by Product ID first
         let grandTotal = 0;
