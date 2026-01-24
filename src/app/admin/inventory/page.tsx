@@ -380,7 +380,7 @@ export default function AdminInventoryPage() {
             // Invalidate relevant queries to refresh list
             if (level === 'CATEGORY') queryClient.invalidateQueries({ queryKey: ['categories'] });
             if (level === 'CATALOGUE') queryClient.invalidateQueries({ queryKey: ['catalogues', selectedCategory?.id] });
-            if (level === 'PRODUCT') queryClient.invalidateQueries({ queryKey: ['products', selectedCatalogue?.id] });
+            if (level === 'PRODUCT' && !isManageSheetOpen) queryClient.invalidateQueries({ queryKey: ['products', selectedCatalogue?.id] });
 
             // Refresh pricing if managing PRICING or SIZES (not colours)
             if ((level === 'PRICING' || isManageSheetOpen) && manageMode !== 'ADD_COLOUR') {
