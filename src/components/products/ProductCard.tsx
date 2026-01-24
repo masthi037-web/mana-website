@@ -55,42 +55,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     }
   }, [slides.length]);
 
-  // Price Logic
-  let displayPrice = 0;
-  let originalPriceForDisplay = 0;
-  let hasDiscount = false;
-  let showStartsFrom = false;
-  let discountPercentage = 0;
 
-  if (product.price && product.price > 0) {
-    const offerPercent = product.productOffer ? parseFloat(product.productOffer.toString().replace(/[^0-9.]/g, '')) : 0;
-
-    if (offerPercent > 0) {
-      const discountAmount = (product.price * offerPercent) / 100;
-      displayPrice = Math.round(product.price - discountAmount);
-      originalPriceForDisplay = product.price;
-      hasDiscount = true;
-      discountPercentage = offerPercent;
-    } else {
-      const offerPrice = (product as any).priceAfterDiscount;
-      if (offerPrice && offerPrice < product.price) {
-        displayPrice = offerPrice;
-        originalPriceForDisplay = product.price;
-        hasDiscount = true;
-        discountPercentage = Math.round(((product.price - offerPrice) / product.price) * 100);
-      } else {
-        displayPrice = product.price;
-      }
-    }
-  } else if (product.pricing && product.pricing.length > 0) {
-    showStartsFrom = true;
-    let minP = Infinity;
-    product.pricing.forEach(p => {
-      const final = (p.priceAfterDiscount && p.priceAfterDiscount > 0) ? p.priceAfterDiscount : p.price;
-      if (final < minP) minP = final;
-    });
-    displayPrice = minP;
-  }
 
   return (
     <Link
@@ -295,11 +260,21 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               </div>
             </div>
 
-            {/* Discount Badge */}
-            {hasDiscount && discountPercentage > 0 && (
-              <div className="flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold text-[10px] animate-pulse">
-                <Tag className="w-3 h-3" />
-                <span>{discountPercentage}% OFF</span>
+            {/* Multiple Set Discount Badges */}
+            {product.multipleSetDiscount && (
+              <div className="flex flex-wrap gap-1 justify-end max-w-[60%]">
+                {product.multipleSetDiscount.toString().split('&&&').map((offer, idx) => {
+                  const [qty, discount] = offer.split('-');
+                  if (!qty || !discount) return null;
+                  return (
+                    <div key={idx} className="flex items-center gap-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-2 py-0.5 rounded-full shadow-sm">
+                      <Tag className="w-2.5 h-2.5 fill-white/20" />
+                      <span className="text-[9px] font-bold uppercase tracking-tight leading-none">
+                        Buy {qty} Get {discount}%
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
