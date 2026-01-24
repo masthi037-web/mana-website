@@ -1281,8 +1281,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                                                 // Only render nudges for the last item occurrence to avoid duplication
                                                 // Check forward: Is there any subsequent item with same ID?
-                                                // Note: index is index in the flatMap loop
-                                                const isLastItemOfProduct = cart.slice(index + 1).findIndex(c => c.id === item.id) === -1;
+                                                // Note: index is index in the flatMap loop (sortedCart)
+                                                // FIX: Use sortedCart to ensure we check the rendered order
+                                                const isLastItemOfProduct = sortedCart.slice(index + 1).findIndex(c => c.id === item.id) === -1;
 
                                                 if (isLastItemOfProduct) {
                                                     const ruleKey = productRules[item.id] || "";
