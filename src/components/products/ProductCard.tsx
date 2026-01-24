@@ -249,12 +249,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <span className="text-[10px] text-muted-foreground font-medium ml-1">({product.rating.toFixed(1)})</span>
           </div>
 
-          <div className="hidden md:block h-[2.5em] overflow-hidden relative">
-            <p className="text-muted-foreground/80 text-[11px] leading-relaxed line-clamp-2 font-medium">
+          <div className="hidden md:block">
+            <p className="text-muted-foreground/80 text-[10px] leading-snug line-clamp-2 font-medium break-words" title={product.description}>
               {product.description}
             </p>
-            {/* Gradient fade at bottom for premium feel if text is long */}
-            <div className="absolute bottom-0 inset-x-0 h-2 bg-gradient-to-t from-card to-transparent pointer-events-none" />
           </div>
 
 
