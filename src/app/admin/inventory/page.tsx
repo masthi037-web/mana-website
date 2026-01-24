@@ -833,14 +833,14 @@ export default function AdminInventoryPage() {
                                         setManageMode('ADD_PRICING');
                                         resetForm();
                                         // Pre-fill if base price exists
-                                        if (selectedProduct && selectedProduct.productPrice > 0) {
-                                            setPrice(String(selectedProduct.productPrice));
+                                        if (selectedProduct && selectedProduct.price > 0) {
+                                            setPrice(String(selectedProduct.price));
                                             // Auto-calc discount if offer exists
                                             if (selectedProduct.productOffer) {
-                                                const calculated = calculateDiscount(selectedProduct.productPrice, selectedProduct.productOffer);
+                                                const calculated = calculateDiscount(selectedProduct.price, selectedProduct.productOffer);
                                                 setDiscountedPrice(String(calculated));
                                             } else {
-                                                setDiscountedPrice(String(selectedProduct.productPrice));
+                                                setDiscountedPrice(String(selectedProduct.price));
                                             }
                                         }
                                     }} variant="outline" className="h-8 rounded-full">
@@ -871,7 +871,7 @@ export default function AdminInventoryPage() {
                                                     onChange={e => setPrice(e.target.value)}
                                                     className="h-8 bg-background"
                                                     placeholder="0"
-                                                    disabled={!!(selectedProduct?.productPrice && selectedProduct.productPrice > 0)}
+                                                    disabled={!!(selectedProduct?.price && selectedProduct.price > 0)}
                                                 />
                                             </div>
                                         </div>
@@ -883,7 +883,7 @@ export default function AdminInventoryPage() {
                                                 onChange={e => setDiscountedPrice(e.target.value)}
                                                 className="h-8 bg-background border-dashed"
                                                 placeholder="Auto"
-                                                disabled={!!(selectedProduct?.productPrice && selectedProduct.productPrice > 0)}
+                                                disabled={!!(selectedProduct?.price && selectedProduct.price > 0)}
                                             />
                                         </div>
                                         <div className="space-y-1">
