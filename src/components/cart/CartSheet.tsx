@@ -1168,16 +1168,24 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             if (potentialUpsell) {
                                                 const needed = potentialUpsell.threshold - totalQty;
                                                 upsellNode = (
-                                                    <div className="mt-3 animate-in slide-in-from-bottom-2 duration-500">
-                                                        <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient-x p-[1px] shadow-lg shadow-indigo-500/10">
-                                                            <div className="bg-white dark:bg-slate-950 rounded-[7px] px-3 py-1.5 flex items-center justify-between">
-                                                                <div className="flex items-center gap-2">
-                                                                    <Sparkles className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
-                                                                    <span className="text-xs font-medium text-foreground">
-                                                                        Add <span className="font-bold text-indigo-600 dark:text-indigo-400">{needed}</span> more for <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">{potentialUpsell.percent}% Off</span>
-                                                                    </span>
-                                                                </div>
-                                                                <ArrowRight className="w-3 h-3 text-muted-foreground/50" />
+                                                    <div className="mt-2 animate-in slide-in-from-bottom-2 duration-500">
+                                                        <div className="group relative flex items-center justify-between gap-3 px-3 py-1.5 rounded-full border border-violet-500/30 bg-violet-50/10 dark:bg-violet-950/20 backdrop-blur-sm hover:bg-violet-50/30 transition-all duration-300 cursor-default">
+
+                                                            {/* Gradient Stroke Effect */}
+                                                            <div className="absolute inset-0 rounded-full border border-violet-500/20 pointer-events-none" />
+
+                                                            <div className="flex items-center gap-2">
+                                                                <Sparkles className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 animate-pulse" />
+                                                                <span className="text-xs font-medium text-foreground/80">
+                                                                    Add <span className="font-bold text-violet-700 dark:text-violet-300">{needed}</span> more
+                                                                </span>
+                                                            </div>
+
+                                                            <div className="flex items-center gap-1.5 pl-3 border-l border-violet-200 dark:border-violet-800/50">
+                                                                <span className="text-xs font-bold text-violet-700 dark:text-violet-300 whitespace-nowrap">
+                                                                    Get {potentialUpsell.percent}% Off
+                                                                </span>
+                                                                <ArrowRight className="w-3 h-3 text-violet-400 group-hover:translate-x-0.5 transition-transform" />
                                                             </div>
                                                         </div>
                                                     </div>
