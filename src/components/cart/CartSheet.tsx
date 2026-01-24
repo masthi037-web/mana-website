@@ -81,17 +81,30 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     // Track initial render to prevent confetti on reload
     const isFirstRender = useRef(true);
 
-    // Calculate Product Quantities for Bulk Discount aggregation
+    // Calculate Product Quantities (ID-based) and Rule Quantities (Mix & Match)
     const productQuantities: Record<string, number> = {};
+    const ruleQuantities: Record<string, number> = {};
+
     cart.forEach(item => {
         productQuantities[item.id] = (productQuantities[item.id] || 0) + item.quantity;
+        if (item.multipleSetDiscount) {
+            const rule = item.multipleSetDiscount.trim();
+            ruleQuantities[rule] = (ruleQuantities[rule] || 0) + item.quantity;
+        }
     });
 
     const hasBulkDiscount = cart.some(item => {
-        if (item.multipleSetDiscount && item.multipleDiscountMoreThan) {
-            const threshold = parseFloat(item.multipleDiscountMoreThan);
-            const totalQty = productQuantities[item.id] || 0;
-            return totalQty >= threshold;
+        if (item.multipleSetDiscount) {
+            const rule = item.multipleSetDiscount.trim();
+            const totalQty = ruleQuantities[rule] || 0;
+            const segments = item.multipleSetDiscount.toString().split('&&&');
+            for (const seg of segments) {
+                const parts = seg.split('-');
+                if (parts.length === 2) {
+                    const t = parseFloat(parts[0]);
+                    if (!isNaN(t) && totalQty >= t) return true;
+                }
+            }
         }
         return false;
     });
@@ -1063,7 +1076,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         if (item.multipleSetDiscount) {
                                             const segments = item.multipleSetDiscount.toString().split('&&&');
                                             const ruleKey = item.multipleSetDiscount.trim();
-                                            const totalQty = productQuantities[item.id] || 0;
+                                            // Mix & Match: Use total quantity for this rule
+                                            const totalQty = ruleQuantities[ruleKey] || 0;
 
                                             let bestTier = null;
                                             for (let i = 0; i < segments.length; i++) {
@@ -1083,8 +1097,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                 bulkDiscountPercent = bestTier.percent;
                                                 const sets = Math.floor(totalQty / activeThreshold);
                                                 const globalQuota = sets * activeThreshold;
-                                                const previousItemsOfSameProduct = cart.slice(0, index).filter(i => i.id === item.id);
-                                                const consumedQuota = previousItemsOfSameProduct.reduce((acc, i) => acc + i.quantity, 0);
+
+                                                // Identify previous consumption relative to this rule
+                                                const previousItemsOfSameRule = cart.slice(0, index).filter(i =>
+                                                    i.multipleSetDiscount && i.multipleSetDiscount.trim() === ruleKey
+                                                );
+                                                const consumedQuota = previousItemsOfSameRule.reduce((acc, i) => acc + i.quantity, 0);
+
                                                 const remainingQuota = Math.max(0, globalQuota - consumedQuota);
                                                 discountableQty = Math.min(item.quantity, remainingQuota);
                                                 fullPriceQty = item.quantity - discountableQty;
