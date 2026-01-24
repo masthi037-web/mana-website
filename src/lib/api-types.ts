@@ -355,18 +355,33 @@ export interface UpdateCustomerRequest {
     customerImage?: string;
 }
 
+// Validaton for checkout
 export interface CheckoutValidationItem {
     productId: number;
-    pricingId: number | null;
+    sizeId: number | null; // Renamed from pricingId to sizeId as per requirement
+    productColourId: number | null;
     productAddonIds: string; // "id1&&&id2"
 }
 
-export interface CheckoutValidationRequest {
-    customerName: string;
-    phoneNumber: string;
-    domainName: string;
-    items: CheckoutValidationItem[];
+export interface CheckoutCheckResponse {
+    multipleSetDiscount: string;
+    multipleDiscountMoreThan: string;
+    productOffer: string;
+    productStatus: string; // Enums.Status
+    productPrice: number;
+    productPriceAfterDiscount: number;
+    colourStatus: string; // Enums.Status
+    colour: string;
+    sizeStatus: string; // Enums.Status
+    productSizePrice: number;
+    productSizePriceAfterDiscount: number;
+    productQuantity: string;
+    sizeQuantity: string;
+    addonAndAddonPrice: string[];
 }
+
+export type CheckoutValidationRequest = CheckoutValidationItem[];
+
 
 // --- Order & Payment Interfaces ---
 

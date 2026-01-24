@@ -56,9 +56,11 @@ import { cn } from '@/lib/utils';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { customerService } from '@/services/customer.service';
 import { orderService } from '@/services/order.service';
-import { CustomerDetails, CustomerAddress, PaymentInitializationRequest } from '@/lib/api-types';
+import { CustomerDetails, CustomerAddress, PaymentInitializationRequest, CheckoutValidationItem, CheckoutValidationRequest } from '@/lib/api-types';
 import { Label } from '@/components/ui/label';
 import { useRazorpay } from '@/hooks/use-razorpay';
+import { fetchCompanyDetails } from '@/services/company.service';
+import { validateCheckout } from '@/services/product.service';
 
 import { useTenant } from '@/components/providers/TenantContext';
 import { useSheetBackHandler } from '@/hooks/use-sheet-back-handler';
@@ -495,8 +497,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             const minOrder = parseFloat(companyDetails?.minimumOrderCost || '0');
             const freeDeliveryThreshold = parseFloat(companyDetails?.freeDeliveryCost || '0');
             const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
-            const shipping = isFreeDelivery ? 0 : (companyDetails?.deliveryBetween ? parseFloat(companyDetails.deliveryBetween) : 40); // Fallback to 40 if not set, or parse from string
-            const discountAmount = 0; // Logic for coupon discount to be added later if needed
+            const shipping = isFreeDelivery ? 0 : (companyDetails?.deliveryBetween ? parseFloat(companyDetails.deliveryBetween) : 40);
+            const discountAmount = 0;
             const totalCost = subtotal + shipping - discountAmount;
 
             // Construct Payload
@@ -710,8 +712,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         console.log("Starting checkout validation process...");
         try {
             // 1. Get Customer Details (Phone, Name)
-            // We need these for the validation payload
-            // Assuming customerService has a method to get cached details or we fetch fresh
             const { customerService } = await import('@/services/customer.service');
             const customerData = await customerService.getCustomerDetails();
 
@@ -720,99 +720,205 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 return;
             }
 
-            // 2. Construct Payload
-            const { validateCheckout } = await import('@/services/product.service');
-            const payload: any = {
-                customerName: customerData.customerName,
-                phoneNumber: customerData.customerMobileNumber,
-                domainName: companyDetails?.companyDomain || window.location.hostname,
-                items: cart.map(item => {
-                    // Logic to find the correct pricing ID based on selected variants (Quantity)
-                    let pricingId: number | null = null;
-                    if (item.pricing && item.pricing.length > 0) {
-                        const quantityVariant = item.selectedVariants['Quantity'];
-                        if (quantityVariant) {
-                            const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
-                            if (matchedPricing) {
-                                pricingId = parseInt(matchedPricing.id);
-                            }
-                        }
-                        // Fallback to first pricing option if no variant match found (e.g. legacy or single option)
-                        if (!pricingId && item.pricing.length > 0) {
-                            pricingId = parseInt(item.pricing[0].id);
-                        }
+            // 2. Validate Company Details (Frontend Validation 1)
+            const freshCompanyDetails = await fetchCompanyDetails(companyDetails!.companyDomain);
+            if (!freshCompanyDetails) {
+                toast({ variant: "destructive", description: "Failed to validate company details. Please try again." });
+                return;
+            }
+
+            // 3. Construct Payload (Deduplicated)
+            const uniqueItemsMap = new Map<string, CheckoutValidationItem>();
+            // Also keep track of keys in order to map response back
+            const orderedKeys: string[] = [];
+
+            cart.forEach(item => {
+                let sizeId: number | null = null;
+                if (item.pricing && item.pricing.length > 0) {
+                    const quantityVariant = item.selectedVariants['Quantity'];
+                    if (quantityVariant) {
+                        const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
+                        if (matchedPricing) sizeId = parseInt(matchedPricing.id);
                     }
+                    if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
+                }
 
-                    return {
+                const productColourId = item.selectedVariants['Colour']
+                    ? item.colors?.find(c => c.name === item.selectedVariants['Colour'])?.id
+                    : null;
+
+                const addonIds = item.selectedAddons && item.selectedAddons.length > 0
+                    ? item.selectedAddons.map(a => a.id).sort().join('&&&')
+                    : "";
+
+                const key = `${item.id}-${sizeId}-${productColourId}-${addonIds}`;
+
+                // Store Key on Item for easy lookup later (optimization)
+                // But we don't want to mutate cart state yet. 
+                // We'll regenerate key during cart iteration.
+
+                if (!uniqueItemsMap.has(key)) {
+                    uniqueItemsMap.set(key, {
                         productId: parseInt(item.id),
-                        pricingId: pricingId,
-                        productAddonIds: item.selectedAddons && item.selectedAddons.length > 0
-                            ? item.selectedAddons.map(a => a.id).join('&&&')
-                            : ""
-                    };
-                })
-            };
+                        sizeId: sizeId,
+                        productColourId: productColourId ? parseInt(productColourId) : null,
+                        productAddonIds: addonIds
+                    });
+                    orderedKeys.push(key);
+                }
+            });
 
-            // 3. Call Validation API
-            const response = await validateCheckout(payload);
+            const validationPayload: CheckoutValidationRequest = orderedKeys.map(key => uniqueItemsMap.get(key)!);
 
-            if (!response || !response.productDetails) {
+            // 4. Call Validation API
+            const response = await validateCheckout(validationPayload);
+
+            if (!response) {
                 toast({ variant: "destructive", description: "Validation failed. Please try again." });
                 return;
             }
 
-            // 4. Compare and Validate
+            // 5. Compare and Validate
             let blockingChanges = false;
             const changes: string[] = [];
-
-            // Create a deep copy to avoid mutating state directly before setState
             const newCart = cart.map(item => ({ ...item, selectedAddons: item.selectedAddons ? [...item.selectedAddons] : [] }));
 
-            response.productDetails.forEach((detail, index) => {
-                const item = newCart[index];
-                if (!item) return;
+            // Map keys to response items for O(1) lookup
+            const responseMap = new Map<string, any>(); // using any for the response item momentarily or strict type
+            // Actually, response array corresponds to orderedKeys array by index
+            response.forEach((resItem, idx) => {
+                responseMap.set(orderedKeys[idx], resItem);
+            });
 
-                // Check Status
+            newCart.forEach(item => {
+                // Re-derive key to map back to response
+                let sizeId: number | null = null;
+                if (item.pricing && item.pricing.length > 0) {
+                    const quantityVariant = item.selectedVariants['Quantity'];
+                    if (quantityVariant) {
+                        const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
+                        if (matchedPricing) sizeId = parseInt(matchedPricing.id);
+                    }
+                    if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
+                }
+
+                const productColourId = item.selectedVariants['Colour']
+                    ? item.colors?.find(c => c.name === item.selectedVariants['Colour'])?.id
+                    : null;
+                const addonIds = item.selectedAddons && item.selectedAddons.length > 0
+                    ? item.selectedAddons.map(a => a.id).sort().join('&&&')
+                    : "";
+                const key = `${item.id}-${sizeId}-${productColourId}-${addonIds}`;
+
+                const detail = responseMap.get(key);
+                if (!detail) return; // Should not happen
+
+                // --- 1. SYNC PRODUCT INFO ---
+                // Always sync these fields to ensure latest discount logic applies
+                if (item.multipleSetDiscount !== detail.multipleSetDiscount) item.multipleSetDiscount = detail.multipleSetDiscount;
+                if (item.multipleDiscountMoreThan !== detail.multipleDiscountMoreThan) item.multipleDiscountMoreThan = detail.multipleDiscountMoreThan;
+                if (item.productOffer !== detail.productOffer) item.productOffer = detail.productOffer;
+
+
+                // --- 2. STATUS CHECKS ---
+                // Product Status
                 if (detail.productStatus !== 'ACTIVE') {
                     blockingChanges = true;
-                    changes.push(`"${item.name}" is currently unavailable/inactive and has been removed.`);
+                    changes.push(`"${item.name}" is currently unavailable (Product Inactive) and has been removed.`);
                     item.cartItemId = 'REMOVE_ME';
                     return;
                 }
 
-                // Calculate Effective Prices
+                // Size Status (if size selected)
+                if (sizeId && detail.sizeStatus && detail.sizeStatus !== 'ACTIVE') {
+                    blockingChanges = true;
+                    changes.push(`"${item.name}" (${item.selectedVariants['Quantity']}) is currently unavailable and has been removed.`);
+                    item.cartItemId = 'REMOVE_ME';
+                    return;
+                }
+
+                // Colour Status (if colour selected)
+                if (productColourId && detail.colourStatus && detail.colourStatus !== 'ACTIVE') {
+                    blockingChanges = true;
+                    changes.push(`"${item.name}" (${item.selectedVariants['Colour']}) is currently unavailable and has been removed.`);
+                    item.cartItemId = 'REMOVE_ME';
+                    return;
+                }
+
+
+                // --- 3. STOCK CHECKS ---
+                // User requirement: Always check sizeQuantity if it's not null, regardless of whether strict sizeId was selected logic (assumes API relates sizeQuantity to the relevant size)
+                let availableStock = parseInt(detail.productQuantity || '0');
+
+                if (detail.sizeQuantity !== null && detail.sizeQuantity !== undefined && detail.sizeQuantity !== "") {
+                    const parsed = parseInt(detail.sizeQuantity);
+                    if (!isNaN(parsed)) {
+                        availableStock = parsed;
+                    }
+                }
+
+                if (item.quantity > availableStock) {
+                    blockingChanges = true;
+                    if (availableStock <= 0) {
+                        changes.push(`"${item.name}" is out of stock and has been removed.`);
+                        item.cartItemId = 'REMOVE_ME';
+                    } else {
+                        changes.push(`"${item.name}" quantity reduced to ${availableStock} (Available Stock: ${availableStock}).`);
+                        item.quantity = availableStock;
+                    }
+                    if (item.cartItemId === 'REMOVE_ME') return;
+                }
+
+
+                // --- 4. PRICE CHECKS ---
+                // Determine Correct Source Price based on Variant Selection
+                const serverPrice = sizeId ? (detail.productSizePrice || 0) : detail.productPrice;
+                const serverPriceDiscount = sizeId ? detail.productSizePriceAfterDiscount : detail.productPriceAfterDiscount;
+
                 const oldEffectivePrice = item.priceAfterDiscount !== undefined ? item.priceAfterDiscount : item.price;
-                const newEffectivePrice = detail.productPriceAfterDiscount !== undefined ? detail.productPriceAfterDiscount : detail.productPrice;
+                const newEffectivePrice = serverPriceDiscount !== undefined
+                    ? (serverPriceDiscount > 0 ? serverPriceDiscount : serverPrice) // Use discount if positive, else base
+                    : serverPrice;
+                // NOTE: API typically sends standard price in 'productPrice'. 
+                // If 'productPriceAfterDiscount' is present/valid, that's the effective price.
 
-                // Update Item Properties (Always sync with server)
-                const priceChanged = detail.productPrice !== item.price;
-                const discountChanged = detail.productPriceAfterDiscount !== item.priceAfterDiscount;
+                // Update Item
+                item.price = serverPrice;
+                item.priceAfterDiscount = (serverPriceDiscount && serverPriceDiscount > 0) ? serverPriceDiscount : undefined;
 
-                item.price = detail.productPrice;
-                item.priceAfterDiscount = detail.productPriceAfterDiscount;
-
-                // Only notify if the amount the user pays has changed
                 if (oldEffectivePrice !== newEffectivePrice) {
                     blockingChanges = true;
                     changes.push(`Price of "${item.name}" updated from ₹${oldEffectivePrice} to ₹${newEffectivePrice}.`);
                 }
 
-                // Check Addon Prices
+
+                // --- 5. ADDON CHECKS ---
                 if (item.selectedAddons && item.selectedAddons.length > 0 && detail.addonAndAddonPrice) {
-                    detail.addonAndAddonPrice.forEach(str => {
-                        const [idStr, priceStr] = str.split(':');
-                        const addonIndex = item.selectedAddons!.findIndex(a => a.id === idStr);
-                        if (addonIndex > -1) {
-                            const newPrice = parseFloat(priceStr);
-                            if (item.selectedAddons![addonIndex].price !== newPrice) {
-                                blockingChanges = true;
-                                changes.push(`Addon price for "${item.name}" updated.`);
-                                item.selectedAddons![addonIndex].price = newPrice;
+                    detail.addonAndAddonPrice.forEach((str: string) => {
+                        const parts = str.split(':');
+                        if (parts.length >= 2) {
+                            const idStr = parts[0];
+                            // Price might be part 1, but what if name contains : ? 
+                            // Legacy/User format implies "id:price" or "name:price"?
+                            // User requirement just said "List<String> addonAndAddonPrice".
+                            // Assuming standard "ID:Price" or we iterate to find match.
+                            // Safest: Check ID match.
+                            const priceStr = parts[parts.length - 1]; // Last part is price
+                            const addonIndex = item.selectedAddons!.findIndex(a => a.id.toString() === idStr);
+
+                            if (addonIndex > -1) {
+                                const newPrice = parseFloat(priceStr);
+                                if (!isNaN(newPrice) && item.selectedAddons![addonIndex].price !== newPrice) {
+                                    blockingChanges = true;
+                                    changes.push(`Addon price for "${item.name}" updated.`);
+                                    item.selectedAddons![addonIndex].price = newPrice;
+                                }
                             }
                         }
                     });
                 }
             });
+
 
             const finalCart = newCart.filter(item => item.cartItemId !== 'REMOVE_ME');
 
@@ -835,6 +941,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             setIsCheckingOut(false);
         }
     };
+
 
     // Free Delivery Celebration
     useEffect(() => {

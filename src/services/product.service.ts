@@ -1,5 +1,5 @@
 import { Category as AppCategory, Catalog as AppCatalog, Product as AppProduct, ProductVariant } from '@/lib/types';
-import { CompanyInventory, Category as ApiCategory, Catalogue as ApiCatalogue, Product as ApiProduct, CheckoutValidationRequest, CheckoutValidationResponse } from '@/lib/api-types';
+import { CompanyInventory, Category as ApiCategory, Catalogue as ApiCatalogue, Product as ApiProduct, CheckoutValidationRequest, CheckoutValidationResponse, CheckoutCheckResponse } from '@/lib/api-types';
 
 import { apiClient } from './api-client';
 
@@ -142,13 +142,13 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
     };
 }
 
-export async function validateCheckout(payload: CheckoutValidationRequest): Promise<CheckoutValidationResponse | null> {
+export async function validateCheckout(payload: CheckoutValidationRequest): Promise<CheckoutCheckResponse[] | null> {
     try {
         console.log('Validating checkout with payload:', JSON.stringify(payload, null, 2));
-        const data = await apiClient<CheckoutValidationResponse>('/product/checkout/check', {
+        const data = await apiClient<CheckoutCheckResponse[]>('/product/checkout/check', {
             method: 'POST',
             body: JSON.stringify(payload),
-            next: { revalidate: 150 } // cache for 2.5 minutes
+            next: { revalidate: 0 } // No cache
         });
         return data;
     } catch (error) {
@@ -156,3 +156,4 @@ export async function validateCheckout(payload: CheckoutValidationRequest): Prom
         return null;
     }
 }
+
