@@ -184,8 +184,11 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                         setCartOpen(true);
                     }, 300);
                 } else {
-                    // Default: Open Address Sidebar if NOT owner
-                    if (!response.role?.includes('OWNER')) {
+                    // Check for OWNER role and redirect
+                    if (response.role?.includes('OWNER')) {
+                        router.push('/admin/inventory');
+                    } else {
+                        // Default: Open Address Sidebar if NOT owner
                         // If CUSTOMER, fetch details to warm cache
                         if (response.role?.includes('CUSTOMER')) {
                             customerService.getCustomerDetails().catch(console.error);
