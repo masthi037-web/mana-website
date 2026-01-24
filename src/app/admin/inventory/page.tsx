@@ -432,27 +432,30 @@ export default function AdminInventoryPage() {
                 safeImage !== (editingItem.catalogueImage || "");
         }
         if (manageMode === 'ADD_PRICING' && editingItem) {
-            // Compare as strings with null safety, or Numbers for prices
-            const currentQty = qty || "";
-            const originalQty = editingItem.quantity || "";
+            // Compare as strings with null safety
+            const currentQty = String(qty || "").trim();
+            const originalQty = String(editingItem.quantity || "").trim();
 
-            const currentSizeQty = sizeQuantity || "";
-            const originalSizeQty = editingItem.sizeQuantity || "";
+            const currentSizeQty = String(sizeQuantity || "").trim();
+            const originalSizeQty = String(editingItem.sizeQuantity || "").trim();
 
-            const currentPrice = Number(price);
-            const originalPrice = Number(editingItem.price);
+            // For prices, use float comparison to handle "500" vs 500 etc.
+            const currentPrice = parseFloat(String(price || "0"));
+            const originalPrice = parseFloat(String(editingItem.price || "0"));
 
-            const currentDiscount = Number(discountedPrice);
-            const originalDiscount = Number(editingItem.priceAfterDiscount);
+            const currentDiscount = parseFloat(String(discountedPrice || "0"));
+            const originalDiscount = parseFloat(String(editingItem.priceAfterDiscount || "0"));
 
-            const currentStatus = sizeStatus || "ACTIVE";
-            const originalStatus = editingItem.sizeStatus || "ACTIVE";
+            const currentStatus = String(sizeStatus || "ACTIVE").trim();
+            const originalStatus = String(editingItem.sizeStatus || "ACTIVE").trim();
 
-            return currentQty !== originalQty ||
-                currentSizeQty !== originalSizeQty ||
-                currentPrice !== originalPrice ||
-                currentDiscount !== originalDiscount ||
-                currentStatus !== originalStatus;
+            if (currentQty !== originalQty) return true;
+            if (currentSizeQty !== originalSizeQty) return true;
+            if (currentPrice !== originalPrice) return true;
+            if (currentDiscount !== originalDiscount) return true;
+            if (currentStatus !== originalStatus) return true;
+
+            return false;
         }
         return true; // Default allow for other levels if any
     };
