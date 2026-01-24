@@ -908,7 +908,11 @@ export default function AdminInventoryPage() {
                 {/* MANAGE PRODUCT SHEET */}
                 <Sheet open={isManageSheetOpen} onOpenChange={(open) => {
                     setIsManageSheetOpen(open);
-                    if (!open) { setManageMode('VIEW'); setExpandedPricingId(null); }
+                    if (!open) {
+                        setManageMode('VIEW');
+                        setExpandedPricingId(null);
+                        resetForm(); // Clear editingItem so items reappear in list
+                    }
                 }}>
                     <SheetContent className="overflow-y-auto sm:max-w-xl w-full">
                         <SheetHeader className="mb-6">
@@ -969,7 +973,7 @@ export default function AdminInventoryPage() {
                             {/* ADD PRICING FORM */}
                             {manageMode === 'ADD_PRICING' && (
                                 <div className="bg-muted/30 p-4 rounded-xl border border-dashed border-primary/30 animate-in fade-in zoom-in-95 duration-300">
-                                    <h4 className="font-semibold text-sm mb-3 text-primary">New Pricing Variant</h4>
+                                    <h4 className="font-semibold text-sm mb-3 text-primary">{editingItem ? "Edit Pricing Variant" : "New Pricing Variant"}</h4>
                                     <div className="space-y-3">
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-1">
