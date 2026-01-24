@@ -64,6 +64,7 @@ export default function AdminInventoryPage() {
     const [price, setPrice] = useState("");
     const [discountedPrice, setDiscountedPrice] = useState("");
     const [qty, setQty] = useState("");
+    const [sizeQuantity, setSizeQuantity] = useState("");
     const [sizeStatus, setSizeStatus] = useState("ACTIVE");
     const [isMandatory, setIsMandatory] = useState(false);
     const [image, setImage] = useState<string | null>(null);
@@ -160,7 +161,8 @@ export default function AdminInventoryPage() {
                 price: p.productPrice,
                 priceAfterDiscount: p.productPriceAfterDiscount,
                 priceAfterDiscount: p.productPriceAfterDiscount,
-                quantity: p.productQuantity,
+                quantity: p.size,
+                sizeQuantity: p.sizeQuantity,
                 sizeStatus: p.sizeStatus || "ACTIVE",
                 addons: []
             }));
@@ -244,7 +246,8 @@ export default function AdminInventoryPage() {
                             productId: Number(selectedProduct.id),
                             productPrice: Number(price),
                             productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
-                            productQuantity: qty,
+                            size: qty,
+                            sizeQuantity: sizeQuantity,
                             sizeStatus: sizeStatus
                         });
                     } else {
@@ -252,7 +255,8 @@ export default function AdminInventoryPage() {
                             productId: Number(selectedProduct.id),
                             productPrice: Number(price),
                             productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
-                            productQuantity: qty,
+                            size: qty,
+                            sizeQuantity: sizeQuantity,
                             sizeStatus: sizeStatus
                         });
                     }
@@ -353,7 +357,9 @@ export default function AdminInventoryPage() {
                     productId: Number(selectedProduct.id),
                     productPrice: Number(price),
                     productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
-                    productQuantity: qty
+                    size: qty,
+                    sizeQuantity: sizeQuantity,
+                    sizeStatus: sizeStatus // Default or from state? Using state.
                 });
             } else if (level === 'ADDON' && selectedPricing && !isManageSheetOpen) {
                 // Classic Flow
@@ -425,7 +431,7 @@ export default function AdminInventoryPage() {
     // --- NAVIGATION HANDLERS ---
     const resetForm = () => {
         setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst(""); setProdOffer("");
-        setProdDeliveryCost("40"); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setSizeStatus("ACTIVE"); setIsMandatory(false);
+        setProdDeliveryCost("40"); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setSizeQuantity(""); setSizeStatus("ACTIVE"); setIsMandatory(false);
         setBulkDiscounts([]); setTempBulkQty(""); setTempBulkDiscount("");
         setMoreThanQty(""); setMoreThanDiscount("");
         setImage(null);
@@ -838,6 +844,10 @@ export default function AdminInventoryPage() {
                                             <div className="space-y-1">
                                                 <Label className="text-xs">Quantity (e.g. 1kg)</Label>
                                                 <Input value={qty} onChange={e => setQty(e.target.value)} className="h-8 bg-background" placeholder="Qty" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-xs">Size Quantity</Label>
+                                                <Input value={sizeQuantity} onChange={e => setSizeQuantity(e.target.value)} className="h-8 bg-background" placeholder="Unit Qty" />
                                             </div>
                                             <div className="space-y-1">
                                                 <Label className="text-xs">Price</Label>

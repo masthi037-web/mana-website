@@ -13,7 +13,8 @@ export interface ProductSize {
     productId: number;
     productPrice: number;
     productPriceAfterDiscount: number;
-    productQuantity: string;
+    size: string;
+    sizeQuantity: string;
     productAddons: ProductAddon[];
     sizeStatus: string;
 }
@@ -235,7 +236,8 @@ export interface CreatePricingRequest {
     productId: number;
     productPrice: number;
     productPriceAfterDiscount: number;
-    productQuantity: string;
+    size: string;
+    sizeQuantity: string;
     sizeStatus: string;
 }
 
@@ -244,7 +246,8 @@ export interface CreatePricingResponse {
     productId: number;
     productPrice: number;
     productPriceAfterDiscount: number;
-    productQuantity: string;
+    size: string;
+    sizeQuantity: string;
     productAddons: ProductAddon[];
     sizeStatus: string;
 }
@@ -254,7 +257,9 @@ export interface UpdatePricingRequest {
     productId: number;
     productPrice: number;
     productPriceAfterDiscount: number;
-    productQuantity: string;
+    size: string;
+    sizeQuantity: string;
+    sizeStatus: string;
 }
 
 export interface UpdatePricingResponse {
@@ -262,7 +267,8 @@ export interface UpdatePricingResponse {
     productId: number;
     productPrice: number;
     productPriceAfterDiscount: number;
-    productQuantity: string;
+    size: string;
+    sizeQuantity: string;
     productAddons: ProductAddon[];
 }
 export interface CreateAddonRequest {

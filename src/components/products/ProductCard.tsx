@@ -149,8 +149,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                       {offers.map((offer, idx) => (
                         <div key={idx} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20 border-t border-white/20 transition-all hover:scale-105 hover:shadow-emerald-500/40">
                           <Tag className="w-3 h-3 fill-white/20 text-white" />
-                          <span className="text-[10px] font-extrabold tracking-wide text-shadow-sm">
-                            Buy {offer.threshold} at ~{offer.discount}% Off
+                          <span className="text-[10px] font-extrabold tracking-wide uppercase text-shadow-sm">
+                            BUY {offer.threshold} GET {offer.discount}% OFF
                           </span>
                         </div>
                       ))}
