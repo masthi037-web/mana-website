@@ -334,29 +334,57 @@ export default function AdminInventoryPage() {
                     });
                 }
             } else if (level === 'PRODUCT' && selectedCatalogue) {
-                return adminService.createProduct({
-                    catalogueId: Number(selectedCatalogue.id),
-                    productName: name,
-                    productInfo: desc,
-                    productIng: prodIng,
-                    productBestBefore: prodBest,
-                    productInst: prodInst,
-                    productPics: "https://cdn.example.com/products/default.jpg",
-                    productStatus: "ACTIVE",
-                    // Prices now required
-                    productPrice: Number(price) || 0,
-                    productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : (Number(price) || 0),
-                    famous: isFamous,
-                    productDeliveryCost: Number(prodDeliveryCost),
-                    productImage: image || undefined,
-                    productOffer: prodOffer || undefined,
-                    multipleSetDiscount: bulkDiscounts.length > 0
-                        ? bulkDiscounts.map(bd => `${bd.qty}-${bd.discount}`).join('&&&')
-                        : undefined,
-                    multipleDiscountMoreThan: (moreThanQty && moreThanDiscount)
-                        ? `${moreThanQty}-${moreThanDiscount}`
-                        : undefined
-                });
+                if (editingItem) {
+                    return adminService.updateProduct({
+                        productId: Number(editingItem.id),
+                        catalogueId: Number(selectedCatalogue.id),
+                        productName: name,
+                        productInfo: desc,
+                        productIng: prodIng,
+                        productBestBefore: prodBest,
+                        productInst: prodInst,
+                        productPics: editingItem.productPics || "https://cdn.example.com/products/default.jpg", // Preserve existing or default
+                        productStatus: editingItem.productStatus || "ACTIVE",
+                        productPrice: Number(price) || 0,
+                        productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : (Number(price) || 0),
+                        productDeliveryCost: Number(prodDeliveryCost),
+                        famous: isFamous,
+                        productImage: image || editingItem.productImage || undefined,
+                        productOffer: prodOffer || undefined,
+                        updatedAt: editingItem.updatedAt,
+                        createdAt: editingItem.createdAt,
+                        multipleSetDiscount: bulkDiscounts.length > 0
+                            ? bulkDiscounts.map(bd => `${bd.qty}-${bd.discount}`).join('&&&')
+                            : undefined,
+                        multipleDiscountMoreThan: (moreThanQty && moreThanDiscount)
+                            ? `${moreThanQty}-${moreThanDiscount}`
+                            : undefined
+                    });
+                } else {
+                    return adminService.createProduct({
+                        catalogueId: Number(selectedCatalogue.id),
+                        productName: name,
+                        productInfo: desc,
+                        productIng: prodIng,
+                        productBestBefore: prodBest,
+                        productInst: prodInst,
+                        productPics: "https://cdn.example.com/products/default.jpg",
+                        productStatus: "ACTIVE",
+                        // Prices now required
+                        productPrice: Number(price) || 0,
+                        productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : (Number(price) || 0),
+                        famous: isFamous,
+                        productDeliveryCost: Number(prodDeliveryCost),
+                        productImage: image || undefined,
+                        productOffer: prodOffer || undefined,
+                        multipleSetDiscount: bulkDiscounts.length > 0
+                            ? bulkDiscounts.map(bd => `${bd.qty}-${bd.discount}`).join('&&&')
+                            : undefined,
+                        multipleDiscountMoreThan: (moreThanQty && moreThanDiscount)
+                            ? `${moreThanQty}-${moreThanDiscount}`
+                            : undefined
+                    });
+                }
             } else if (level === 'PRICING' && selectedProduct && !isManageSheetOpen) {
                 // Classic Flow
                 return adminService.createPricing({
@@ -488,6 +516,54 @@ export default function AdminInventoryPage() {
         setDesc(catlg.description || "");
         setImage(catlg.catalogueImage || ""); // Initialize with empty string if null
         setLevel('CATALOGUE'); // Ensure we are in catalogue mode
+        setIsSheetOpen(true);
+    };
+
+    const handleEditProduct = (prod: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditingItem(prod);
+        // Basic
+        setName(prod.name);
+        setDesc(prod.description || prod.productInfo || "");
+        setImage(prod.productImage || "");
+        setProdIng(prod.ingredients || prod.productIng || "");
+        setProdBest(prod.bestBefore || prod.productBestBefore || "");
+        setProdInst(prod.instructions || prod.productInst || "");
+
+        // Price & Offer
+        setPrice(String(prod.productPrice || prod.price || ""));
+        setDiscountedPrice(String(prod.productPriceAfterDiscount || prod.priceAfterDiscount || ""));
+        setProdOffer(prod.productOffer || "");
+        setProdDeliveryCost(String(prod.productDeliveryCost || prod.deliveryCost || "40"));
+        setIsFamous(!!prod.famous);
+
+        // Bulk Discounts Parsing
+        if (prod.multipleSetDiscount) {
+            try {
+                const parts = prod.multipleSetDiscount.toString().split('&&&');
+                const parsed = parts.map((p: string) => {
+                    const [q, d] = p.split('-');
+                    return { qty: parseInt(q), discount: parseInt(d) };
+                }).filter((x: any) => !isNaN(x.qty) && !isNaN(x.discount));
+                setBulkDiscounts(parsed);
+            } catch (e) { console.error("Error parsing bulk discounts", e); setBulkDiscounts([]); }
+        } else {
+            setBulkDiscounts([]);
+        }
+
+        // More Than Parsing
+        if (prod.multipleDiscountMoreThan) {
+            try {
+                const [q, d] = prod.multipleDiscountMoreThan.toString().split('-');
+                setMoreThanQty(q || "");
+                setMoreThanDiscount(d || "");
+            } catch (e) { setMoreThanQty(""); setMoreThanDiscount(""); }
+        } else {
+            setMoreThanQty("");
+            setMoreThanDiscount("");
+        }
+
+        setLevel('PRODUCT');
         setIsSheetOpen(true);
     };
 
@@ -1198,7 +1274,7 @@ export default function AdminInventoryPage() {
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-base font-bold truncate pr-6">{prod.name}</CardTitle>
                                 <div className="flex items-center gap-2">
-                                    <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => { e.stopPropagation(); toast({ description: "Coming soon" }); }}>
+                                    <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditProduct(prod, e)}>
                                         <Pencil className="h-3 w-3 text-muted-foreground" />
                                     </Button>
                                     <Package className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />

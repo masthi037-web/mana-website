@@ -59,6 +59,28 @@ export interface ProductColour {
     colour: string;
 }
 
+export interface UpdateProductRequest {
+    productId: number;
+    catalogueId: number;
+    productName: string;
+    productImage: string;
+    multipleSetDiscount: string;
+    multipleDiscountMoreThan: string;
+    productPrice: number;
+    productPriceAfterDiscount: number;
+    productOffer: string;
+    productIng: string;
+    productBestBefore: string;
+    productInst: string;
+    productInfo: string;
+    productPics: string;
+    productStatus: string;
+    productDeliveryCost: number;
+    famous: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
 export interface Catalogue {
     categoryId: number;
     catalogueId: number;

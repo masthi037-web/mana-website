@@ -108,61 +108,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-          {/* Top Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-2 z-10 w-[calc(100%-24px)] items-start pointer-events-none">
-            {/* Rating Badge */}
-            {product.rating > 0 && (
-              <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-bold text-foreground shadow-sm pointer-events-auto border border-white/50">
-                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                <span>{product.rating.toFixed(1)}</span>
-              </div>
-            )}
 
-            {/* Offer Badge (Single) */}
-            {product.productOffer && (
-              <div className="flex items-center gap-1.5 bg-gradient-to-r from-rose-500 to-pink-600 px-2.5 py-1 rounded-full text-[10px] font-bold text-white shadow-lg shadow-rose-500/20 border-t border-white/20 animate-in fade-in zoom-in duration-300 pointer-events-auto">
-                <Sparkles className="w-3 h-3 text-white fill-white/20" />
-                <span className="tracking-wide uppercase">{product.productOffer}{!isNaN(Number(product.productOffer)) ? '%' : ''} Off</span>
-              </div>
-            )}
-
-            {/* Bulk Discount Badges (New Logic) */}
-            {(() => {
-              if (product.multipleSetDiscount) {
-                // Format: "3-10&&&4-15"
-                const segments = product.multipleSetDiscount.toString().split('&&&').map(s => s.trim());
-
-                const offers = segments.map(seg => {
-                  const parts = seg.split('-');
-                  if (parts.length === 2) {
-                    return {
-                      threshold: parts[0].trim(),
-                      discount: parts[1].trim()
-                    };
-                  }
-                  return null;
-                })
-                  .filter((o): o is { threshold: string, discount: string } => o !== null)
-                  .sort((a, b) => parseFloat(a.threshold) - parseFloat(b.threshold));
-
-                if (offers.length > 0) {
-                  return (
-                    <div className="flex flex-col gap-1.5 items-start mt-1 pointer-events-auto">
-                      {offers.map((offer, idx) => (
-                        <div key={idx} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20 border-t border-white/20 transition-all hover:scale-105 hover:shadow-emerald-500/40">
-                          <Tag className="w-3 h-3 fill-white/20 text-white" />
-                          <span className="text-[10px] font-extrabold tracking-wide uppercase text-shadow-sm">
-                            BUY {offer.threshold} GET {offer.discount}% OFF
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                }
-              }
-              return null;
-            })()}
-          </div>
 
           {/* Top Right Badges (More Than Discount) */}
           <div className="absolute top-12 right-3 flex flex-col items-end gap-2 z-10 pointer-events-none">
@@ -336,6 +282,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
         </CardContent>
       </Card>
-    </Link>
+    </Link >
   );
 };

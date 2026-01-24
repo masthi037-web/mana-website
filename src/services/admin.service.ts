@@ -9,7 +9,8 @@ import {
     UpdateColourRequest, UpdateColourResponse,
     CreateAddonRequest, CreateAddonResponse,
     UpdateCategoryRequest, UpdateCategoryResponse,
-    UpdateCatalogueRequest, UpdateCatalogueResponse
+    UpdateCatalogueRequest, UpdateCatalogueResponse,
+    UpdateProductRequest
 } from '@/lib/api-types';
 
 export const adminService = {
@@ -44,6 +45,13 @@ export const adminService = {
     createProduct: async (data: CreateProductRequest) => {
         return apiClient<CreateProductResponse>('/product/create', {
             method: 'POST',
+            body: JSON.stringify(data),
+        });
+    },
+
+    updateProduct: async (data: UpdateProductRequest) => {
+        return apiClient<CreateProductResponse>('/product/update', {
+            method: 'PUT',
             body: JSON.stringify(data),
         });
     },
