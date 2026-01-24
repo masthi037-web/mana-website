@@ -208,6 +208,12 @@ export default function AdminInventoryPage() {
             const rawPrice = parseFloat(price);
             if (isNaN(rawPrice)) return;
 
+            if (editingItem && String(price) === String(editingItem.price || "")) {
+                // If editing and price hasn't changed from original, don't auto-recalculate discount.
+                // This respects manual overrides on existing items.
+                return;
+            }
+
             // Extract percentage from offer string like "50% OFF", "50 %", "FLAT 50% OFF"
             // Regex: Look for digits followed optionally by % or space+OFF
             const offer = selectedProduct.productOffer || "";
@@ -228,7 +234,7 @@ export default function AdminInventoryPage() {
         } else if (level === 'PRICING' && !price) {
             setDiscountedPrice("");
         }
-    }, [price, selectedProduct, level]);
+    }, [price, selectedProduct, level, editingItem]);
 
 
 
