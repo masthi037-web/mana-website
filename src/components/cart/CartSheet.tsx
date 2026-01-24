@@ -23,6 +23,7 @@ import {
     Trash2,
     ArrowRight,
     Gift,
+    Sparkles,
     X,
     AlertTriangle,
     RefreshCw,
@@ -1170,361 +1171,361 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             // Convert to array of rows to render - Sorted Descending (Higher discount first)
                                             const distinctDiscounts = Object.keys(groups).map(Number).sort((a, b) => b - a);
 
-const renderedRows = distinctDiscounts.map((discountPercent, groupIdx) => {
-    const qty = groups[discountPercent];
-    const isDiscounted = discountPercent > 0;
+                                            const renderedRows = distinctDiscounts.map((discountPercent, groupIdx) => {
+                                                const qty = groups[discountPercent];
+                                                const isDiscounted = discountPercent > 0;
 
-    const basePrice = item.priceAfterDiscount || item.price;
-    const addonsCost = item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0;
-    const singleItemTotal = basePrice + addonsCost;
-    const finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
+                                                const basePrice = item.priceAfterDiscount || item.price;
+                                                const addonsCost = item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0;
+                                                const singleItemTotal = basePrice + addonsCost;
+                                                const finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
 
-    return (
-        <li
-            key={`${item.cartItemId}-${discountPercent}`}
-            className={cn(
-                "group relative flex gap-5 animate-in slide-in-from-bottom-4 fade-in duration-500",
-                isNew && "ring-2 ring-primary/20 rounded-2xl p-2 -m-2 bg-primary/5 shadow-[0_0_30px_rgba(50,200,180,0.15)] transition-all duration-1000"
-            )}
-            style={{ animationDelay: `${index * 50 + groupIdx * 20}ms` }}
-        >
-            {isNew && <div className="absolute inset-0 rounded-2xl animate-shimmer-highlight pointer-events-none" />}
+                                                return (
+                                                    <li
+                                                        key={`${item.cartItemId}-${discountPercent}`}
+                                                        className={cn(
+                                                            "group relative flex gap-5 animate-in slide-in-from-bottom-4 fade-in duration-500",
+                                                            isNew && "ring-2 ring-primary/20 rounded-2xl p-2 -m-2 bg-primary/5 shadow-[0_0_30px_rgba(50,200,180,0.15)] transition-all duration-1000"
+                                                        )}
+                                                        style={{ animationDelay: `${index * 50 + groupIdx * 20}ms` }}
+                                                    >
+                                                        {isNew && <div className="absolute inset-0 rounded-2xl animate-shimmer-highlight pointer-events-none" />}
 
-            <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-secondary/30 shadow-sm group-hover:shadow-md transition-all duration-300">
-                <Image
-                    src={item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
-                    alt={item.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-            </div>
+                                                        <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-secondary/30 shadow-sm group-hover:shadow-md transition-all duration-300">
+                                                            <Image
+                                                                src={item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
+                                                                alt={item.name}
+                                                                fill
+                                                                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                                            />
+                                                        </div>
 
-            <div className="flex flex-1 flex-col justify-between min-h-[6rem] py-0.5 z-10">
-                <div className="space-y-2">
-                    <div className="flex justify-between items-start gap-3">
-                        <Link href={`/product/${item.id}`} className="font-bold text-base leading-snug hover:text-primary transition-colors line-clamp-2">
-                            {item.name}
-                        </Link>
-                        <div className="flex flex-col items-end">
-                            {isDiscounted ? (
-                                <>
-                                    <span className="text-xs text-muted-foreground line-through">₹{(singleItemTotal * qty).toFixed(0)}</span>
-                                    <p className="font-bold text-base text-emerald-600 whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
-                                    <span className="text-[10px] font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 px-2 py-0.5 rounded-full flex gap-1.5 items-center mt-1 shadow-sm border border-emerald-500/20">
-                                        <Tag className="w-3 h-3 fill-white/20" />
-                                        Bundle Unlocked: {discountPercent}% Off
-                                    </span>
-                                </>
-                            ) : (
-                                <p className="font-bold text-base text-primary whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
-                            )}
-                        </div>
-                    </div>
+                                                        <div className="flex flex-1 flex-col justify-between min-h-[6rem] py-0.5 z-10">
+                                                            <div className="space-y-2">
+                                                                <div className="flex justify-between items-start gap-3">
+                                                                    <Link href={`/product/${item.id}`} className="font-bold text-base leading-snug hover:text-primary transition-colors line-clamp-2">
+                                                                        {item.name}
+                                                                    </Link>
+                                                                    <div className="flex flex-col items-end">
+                                                                        {isDiscounted ? (
+                                                                            <>
+                                                                                <span className="text-xs text-muted-foreground line-through">₹{(singleItemTotal * qty).toFixed(0)}</span>
+                                                                                <p className="font-bold text-base text-emerald-600 whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
+                                                                                <span className="text-[10px] font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 px-2 py-0.5 rounded-full flex gap-1.5 items-center mt-1 shadow-sm border border-emerald-500/20">
+                                                                                    <Tag className="w-3 h-3 fill-white/20" />
+                                                                                    Bundle Unlocked: {discountPercent}% Off
+                                                                                </span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <p className="font-bold text-base text-primary whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
 
-                    {(item.selectedVariants || item.selectedAddons) && (
-                        <div className="flex flex-wrap gap-1.5">
-                            {Object.values(item.selectedVariants || {}).map((v, i) => (
-                                <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary/80 text-foreground/80">{v}</span>
-                            ))}
-                            {item.selectedAddons?.map((addon) => (
-                                <span key={addon.id} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
-                                    + {addon.name}
-                                </span>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                                                                {(item.selectedVariants || item.selectedAddons) && (
+                                                                    <div className="flex flex-wrap gap-1.5">
+                                                                        {Object.values(item.selectedVariants || {}).map((v, i) => (
+                                                                            <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary/80 text-foreground/80">{v}</span>
+                                                                        ))}
+                                                                        {item.selectedAddons?.map((addon) => (
+                                                                            <span key={addon.id} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                                                                                + {addon.name}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
 
-                <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-1 bg-secondary/40 rounded-full p-1 border border-border/50">
-                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-destructive"
-                            onClick={() => updateQuantity(item.cartItemId, Math.max(0, item.quantity - 1))}
-                            disabled={false}
-                        >
-                            <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-8 text-center text-xs font-bold tabular-nums">{qty}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-primary"
-                            onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
-                        >
-                            <Plus className="h-3 w-3" />
-                        </Button>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded-full" onClick={() => {
-                        if (qty < item.quantity) {
-                            updateQuantity(item.cartItemId, Math.max(0, item.quantity - qty));
-                        } else {
-                            setItemToDelete(item.cartItemId);
-                        }
-                    }}>
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
-        </li>
-    );
-});
+                                                            <div className="flex items-center justify-between pt-2">
+                                                                <div className="flex items-center gap-1 bg-secondary/40 rounded-full p-1 border border-border/50">
+                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-destructive"
+                                                                        onClick={() => updateQuantity(item.cartItemId, Math.max(0, item.quantity - 1))}
+                                                                        disabled={false}
+                                                                    >
+                                                                        <Minus className="h-3 w-3" />
+                                                                    </Button>
+                                                                    <span className="w-8 text-center text-xs font-bold tabular-nums">{qty}</span>
+                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-primary"
+                                                                        onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
+                                                                    >
+                                                                        <Plus className="h-3 w-3" />
+                                                                    </Button>
+                                                                </div>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded-full" onClick={() => {
+                                                                    if (qty < item.quantity) {
+                                                                        updateQuantity(item.cartItemId, Math.max(0, item.quantity - qty));
+                                                                    } else {
+                                                                        setItemToDelete(item.cartItemId);
+                                                                    }
+                                                                }}>
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                );
+                                            });
 
-// --- Upsell Nudge Logic ---
-const totalQty = productQuantities[item.id.toString()] || 0;
-const upsellNudges: React.ReactNode[] = [];
+                                            // --- Upsell Nudge Logic ---
+                                            const totalQty = productQuantities[item.id.toString()] || 0;
+                                            const upsellNudges: React.ReactNode[] = [];
 
-// Only render nudges for the last item occurrence to avoid duplication
-// Check forward: Is there any subsequent item with same ID?
-// Note: index is index in the flatMap loop
-const isLastItemOfProduct = cart.slice(index + 1).findIndex(c => c.id === item.id) === -1;
+                                            // Only render nudges for the last item occurrence to avoid duplication
+                                            // Check forward: Is there any subsequent item with same ID?
+                                            // Note: index is index in the flatMap loop
+                                            const isLastItemOfProduct = cart.slice(index + 1).findIndex(c => c.id === item.id) === -1;
 
-if (isLastItemOfProduct) {
-    const ruleKey = productRules[item.id] || "";
-    const allTiers: { threshold: number, percent: number }[] = [];
+                                            if (isLastItemOfProduct) {
+                                                const ruleKey = productRules[item.id] || "";
+                                                const allTiers: { threshold: number, percent: number }[] = [];
 
-    // 1. Parse Set Discounts
-    if (ruleKey) {
-        ruleKey.split('&&&').forEach(seg => {
-            const [t, p] = seg.split('-');
-            if (t && p) allTiers.push({ threshold: parseFloat(t), percent: parseFloat(p) });
-        });
-    }
+                                                // 1. Parse Set Discounts
+                                                if (ruleKey) {
+                                                    ruleKey.split('&&&').forEach(seg => {
+                                                        const [t, p] = seg.split('-');
+                                                        if (t && p) allTiers.push({ threshold: parseFloat(t), percent: parseFloat(p) });
+                                                    });
+                                                }
 
-    // 2. Parse More Than Discount
-    if (item.multipleDiscountMoreThan) {
-        const [t, p] = item.multipleDiscountMoreThan.split('-');
-        if (t && p) {
-            // "More than 6" -> Needs 7.
-            allTiers.push({ threshold: parseFloat(t) + 1, percent: parseFloat(p) });
-        }
-    }
+                                                // 2. Parse More Than Discount
+                                                if (item.multipleDiscountMoreThan) {
+                                                    const [t, p] = item.multipleDiscountMoreThan.split('-');
+                                                    if (t && p) {
+                                                        // "More than 6" -> Needs 7.
+                                                        allTiers.push({ threshold: parseFloat(t) + 1, percent: parseFloat(p) });
+                                                    }
+                                                }
 
-    // 3. Filter for Better Deals
-    const potentialUpsells = allTiers
-        .filter(t => t.threshold > totalQty)
-        .sort((a, b) => a.percent - b.percent);
+                                                // 3. Filter for Better Deals
+                                                const potentialUpsells = allTiers
+                                                    .filter(t => t.threshold > totalQty)
+                                                    .sort((a, b) => a.percent - b.percent);
 
-    if (potentialUpsells.length > 0) {
-        upsellNudges.push(
-            <li key={`nudge-${item.cartItemId}`} className="pt-2 animate-in slide-in-from-left-4 fade-in duration-700 list-none">
-                <div className="flex flex-col gap-2 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30 rounded-xl p-3 border border-indigo-100 dark:border-indigo-500/20 shadow-sm relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-2 opacity-10">
-                        <Sparkles className="w-12 h-12 text-indigo-500" />
-                    </div>
+                                                if (potentialUpsells.length > 0) {
+                                                    upsellNudges.push(
+                                                        <li key={`nudge-${item.cartItemId}`} className="pt-2 animate-in slide-in-from-left-4 fade-in duration-700 list-none">
+                                                            <div className="flex flex-col gap-2 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30 rounded-xl p-3 border border-indigo-100 dark:border-indigo-500/20 shadow-sm relative overflow-hidden">
+                                                                <div className="absolute top-0 right-0 p-2 opacity-10">
+                                                                    <Sparkles className="w-12 h-12 text-indigo-500" />
+                                                                </div>
 
-                    <div className="flex items-center gap-2 mb-1">
-                        <div className="p-1 bg-indigo-100 dark:bg-indigo-500/20 rounded-full">
-                            <Sparkles className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
-                        </div>
-                        <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">
-                            Unlock More Savings
-                        </span>
-                    </div>
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <div className="p-1 bg-indigo-100 dark:bg-indigo-500/20 rounded-full">
+                                                                        <Sparkles className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                                                                    </div>
+                                                                    <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">
+                                                                        Unlock More Savings
+                                                                    </span>
+                                                                </div>
 
-                    <div className="space-y-1.5 z-10">
-                        {potentialUpsells.map((tier, idx) => {
-                            const needed = tier.threshold - totalQty;
-                            return (
-                                <div key={idx} className="flex items-center justify-between text-xs group/offer cursor-default">
-                                    <span className="text-muted-foreground group-hover/offer:text-indigo-600 transition-colors">
-                                        Add <span className="font-bold text-foreground">{needed}</span> more
-                                    </span>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="h-px w-8 bg-indigo-200 dark:bg-indigo-800" />
-                                        <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-white dark:bg-indigo-950/50 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-500/30 shadow-sm">
-                                            Get {tier.percent}% Off
-                                        </span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            </li>
-        );
-    }
-}
+                                                                <div className="space-y-1.5 z-10">
+                                                                    {potentialUpsells.map((tier, idx) => {
+                                                                        const needed = tier.threshold - totalQty;
+                                                                        return (
+                                                                            <div key={idx} className="flex items-center justify-between text-xs group/offer cursor-default">
+                                                                                <span className="text-muted-foreground group-hover/offer:text-indigo-600 transition-colors">
+                                                                                    Add <span className="font-bold text-foreground">{needed}</span> more
+                                                                                </span>
+                                                                                <div className="flex items-center gap-1.5">
+                                                                                    <div className="h-px w-8 bg-indigo-200 dark:bg-indigo-800" />
+                                                                                    <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-white dark:bg-indigo-950/50 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-500/30 shadow-sm">
+                                                                                        Get {tier.percent}% Off
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    );
+                                                }
+                                            }
 
-return [...renderedRows, ...upsellNudges];
+                                            return [...renderedRows, ...upsellNudges];
                                         })
                                     }
                                 </ul >
                                 {/* Summary Content Moved to ScrollArea */}
-                                    <div className="pb-6">
-                                        {/* Smart Reward Progress Bar (Combined) */}
-                                        {(() => {
-                                            const milestones = [];
+                                <div className="pb-6">
+                                    {/* Smart Reward Progress Bar (Combined) */}
+                                    {(() => {
+                                        const milestones = [];
 
-                                            // Add Free Delivery Milestone
-                                            if (freeDeliveryThreshold > 0) {
-                                                milestones.push({
-                                                    type: 'delivery',
-                                                    value: freeDeliveryThreshold,
-                                                    label: 'Free Delivery',
-                                                    icon: Gift
-                                                });
-                                            }
+                                        // Add Free Delivery Milestone
+                                        if (freeDeliveryThreshold > 0) {
+                                            milestones.push({
+                                                type: 'delivery',
+                                                value: freeDeliveryThreshold,
+                                                label: 'Free Delivery',
+                                                icon: Gift
+                                            });
+                                        }
 
-                                            // Add Coupon Milestones
-                                            if (companyDetails?.companyCoupon) {
-                                                companyDetails.companyCoupon.split(',').forEach(c => {
-                                                    const [code, , minStr] = c.split('&&&');
-                                                    const min = parseInt(minStr || '0');
-                                                    if (code && min > 0) {
-                                                        milestones.push({
-                                                            type: 'coupon',
-                                                            value: min,
-                                                            label: `Unlock ${code}`,
-                                                            icon: Tag
-                                                        });
-                                                    }
-                                                });
-                                            }
-
-                                            // Sort by value
-                                            milestones.sort((a, b) => a.value - b.value);
-
-                                            // Find first unreached milestone
-                                            const nextMilestone = milestones.find(m => subtotal < m.value);
-
-                                            // If all unlocked (or no milestones), show generic success or nothing
-                                            if (!nextMilestone) {
-                                                if (milestones.length > 0 && subtotal >= milestones[milestones.length - 1].value) {
-                                                    return (
-                                                        <div className="mb-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-3 rounded-lg border border-emerald-500/20 text-center">
-                                                            <p className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-2">
-                                                                <Gift className="w-3.5 h-3.5 fill-emerald-700" />
-                                                                Awesome! All rewards unlocked on this order.
-                                                            </p>
-                                                        </div>
-                                                    );
+                                        // Add Coupon Milestones
+                                        if (companyDetails?.companyCoupon) {
+                                            companyDetails.companyCoupon.split(',').forEach(c => {
+                                                const [code, , minStr] = c.split('&&&');
+                                                const min = parseInt(minStr || '0');
+                                                if (code && min > 0) {
+                                                    milestones.push({
+                                                        type: 'coupon',
+                                                        value: min,
+                                                        label: `Unlock ${code}`,
+                                                        icon: Tag
+                                                    });
                                                 }
-                                                return null;
-                                            }
+                                            });
+                                        }
 
-                                            const amountNeeded = nextMilestone.value - subtotal;
-                                            const progress = (subtotal / nextMilestone.value) * 100;
+                                        // Sort by value
+                                        milestones.sort((a, b) => a.value - b.value);
 
-                                            return (
-                                                <div className="mb-6 bg-secondary/30 p-3 rounded-xl border border-border/60 shadow-sm relative overflow-hidden group">
-                                                    {/* Background Shimmer */}
-                                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
+                                        // Find first unreached milestone
+                                        const nextMilestone = milestones.find(m => subtotal < m.value);
 
-                                                    <div className="flex justify-between items-center mb-2 relative z-10">
-                                                        <p className="text-xs font-bold text-foreground/80 flex items-center gap-2">
-                                                            <div className="bg-primary/10 p-1 rounded-full text-primary">
-                                                                <nextMilestone.icon className="w-3 h-3" />
-                                                            </div>
-                                                            Add <span className="text-primary text-sm font-extrabold">₹{amountNeeded.toFixed(0)}</span> for <span className="uppercase">{nextMilestone.label}</span>
+                                        // If all unlocked (or no milestones), show generic success or nothing
+                                        if (!nextMilestone) {
+                                            if (milestones.length > 0 && subtotal >= milestones[milestones.length - 1].value) {
+                                                return (
+                                                    <div className="mb-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-3 rounded-lg border border-emerald-500/20 text-center">
+                                                        <p className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-2">
+                                                            <Gift className="w-3.5 h-3.5 fill-emerald-700" />
+                                                            Awesome! All rewards unlocked on this order.
                                                         </p>
-                                                        <span className="text-[10px] font-medium text-muted-foreground">{Math.round(progress)}%</span>
                                                     </div>
+                                                );
+                                            }
+                                            return null;
+                                        }
 
-                                                    <div className="h-1.5 w-full bg-background rounded-full overflow-hidden border border-border/50 relative z-10">
-                                                        <div
-                                                            className={cn(
-                                                                "h-full rounded-full transition-all duration-700 ease-out",
-                                                                nextMilestone.type === 'delivery' ? "bg-emerald-500" : "bg-primary"
-                                                            )}
-                                                            style={{ width: `${Math.min(100, progress)}%` }}
-                                                        />
-                                                    </div>
+                                        const amountNeeded = nextMilestone.value - subtotal;
+                                        const progress = (subtotal / nextMilestone.value) * 100;
+
+                                        return (
+                                            <div className="mb-6 bg-secondary/30 p-3 rounded-xl border border-border/60 shadow-sm relative overflow-hidden group">
+                                                {/* Background Shimmer */}
+                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
+
+                                                <div className="flex justify-between items-center mb-2 relative z-10">
+                                                    <p className="text-xs font-bold text-foreground/80 flex items-center gap-2">
+                                                        <div className="bg-primary/10 p-1 rounded-full text-primary">
+                                                            <nextMilestone.icon className="w-3 h-3" />
+                                                        </div>
+                                                        Add <span className="text-primary text-sm font-extrabold">₹{amountNeeded.toFixed(0)}</span> for <span className="uppercase">{nextMilestone.label}</span>
+                                                    </p>
+                                                    <span className="text-[10px] font-medium text-muted-foreground">{Math.round(progress)}%</span>
                                                 </div>
-                                            );
-                                        })()}
 
-                                        {/* Coupon Section */}
-                                        <div className="mb-6 space-y-3">
-                                            {/* Available Coupons List (Simple Version) */}
-                                            {companyDetails?.companyCoupon && (
-                                                <div className="grid grid-cols-2 gap-2 mt-2">
-                                                    {(() => {
-                                                        const coupons = companyDetails.companyCoupon.split(',').map((cStr, idx) => {
-                                                            const [code, discountStr, minOrderStr] = cStr.split('&&&');
-                                                            const discount = parseFloat(discountStr || '0');
-                                                            const minOrder = parseFloat(minOrderStr || '0');
-                                                            if (!code) return null;
+                                                <div className="h-1.5 w-full bg-background rounded-full overflow-hidden border border-border/50 relative z-10">
+                                                    <div
+                                                        className={cn(
+                                                            "h-full rounded-full transition-all duration-700 ease-out",
+                                                            nextMilestone.type === 'delivery' ? "bg-emerald-500" : "bg-primary"
+                                                        )}
+                                                        style={{ width: `${Math.min(100, progress)}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
 
-                                                            return {
-                                                                code,
-                                                                discount,
-                                                                minOrder,
-                                                                isEligible: subtotal >= minOrder,
-                                                                idx
-                                                            };
-                                                        }).filter((c): c is NonNullable<typeof c> => c !== null);
+                                    {/* Coupon Section */}
+                                    <div className="mb-6 space-y-3">
+                                        {/* Available Coupons List (Simple Version) */}
+                                        {companyDetails?.companyCoupon && (
+                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                {(() => {
+                                                    const coupons = companyDetails.companyCoupon.split(',').map((cStr, idx) => {
+                                                        const [code, discountStr, minOrderStr] = cStr.split('&&&');
+                                                        const discount = parseFloat(discountStr || '0');
+                                                        const minOrder = parseFloat(minOrderStr || '0');
+                                                        if (!code) return null;
 
-                                                        coupons.sort((a, b) => a.discount - b.discount);
-                                                        const selectedCouponData = coupons.find(c => c.code === couponCode);
-                                                        const hasActiveCoupon = !!selectedCouponData;
+                                                        return {
+                                                            code,
+                                                            discount,
+                                                            minOrder,
+                                                            isEligible: subtotal >= minOrder,
+                                                            idx
+                                                        };
+                                                    }).filter((c): c is NonNullable<typeof c> => c !== null);
 
-                                                        return coupons.map((coupon) => {
-                                                            const isBlocked = hasActiveCoupon && coupon.code !== couponCode;
-                                                            const isDisabled = !coupon.isEligible || isBlocked;
+                                                    coupons.sort((a, b) => a.discount - b.discount);
+                                                    const selectedCouponData = coupons.find(c => c.code === couponCode);
+                                                    const hasActiveCoupon = !!selectedCouponData;
 
-                                                            return (
-                                                                <button
-                                                                    key={coupon.idx}
-                                                                    onClick={() => {
-                                                                        if (!isDisabled) {
-                                                                            setCouponCode(coupon.code);
-                                                                        }
-                                                                    }}
-                                                                    disabled={isDisabled}
-                                                                    className={cn(
-                                                                        "group relative flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all duration-300 overflow-hidden",
-                                                                        !isDisabled
-                                                                            ? "bg-white border-primary/30 shadow-sm hover:border-primary hover:shadow-md cursor-pointer"
-                                                                            : "bg-slate-50 border-slate-200 cursor-not-allowed opacity-60"
-                                                                    )}
-                                                                >
-                                                                    {couponCode === coupon.code && coupon.isEligible && (
-                                                                        <div className="absolute inset-0 bg-primary/5 animate-pulse" />
-                                                                    )}
+                                                    return coupons.map((coupon) => {
+                                                        const isBlocked = hasActiveCoupon && coupon.code !== couponCode;
+                                                        const isDisabled = !coupon.isEligible || isBlocked;
 
-                                                                    <div className="flex flex-col">
-                                                                        <span className={cn(
-                                                                            "text-sm font-black tracking-wide font-mono leading-none",
-                                                                            coupon.isEligible ? "text-foreground" : "text-slate-400"
-                                                                        )}>{coupon.code}</span>
-                                                                        <span className="text-[10px] font-medium text-muted-foreground leading-none mt-1">
-                                                                            {coupon.isEligible ? `Get ${coupon.discount}% OFF` : `${coupon.discount}% OFF • Orders above ₹${coupon.minOrder}`}
-                                                                        </span>
+                                                        return (
+                                                            <button
+                                                                key={coupon.idx}
+                                                                onClick={() => {
+                                                                    if (!isDisabled) {
+                                                                        setCouponCode(coupon.code);
+                                                                    }
+                                                                }}
+                                                                disabled={isDisabled}
+                                                                className={cn(
+                                                                    "group relative flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all duration-300 overflow-hidden",
+                                                                    !isDisabled
+                                                                        ? "bg-white border-primary/30 shadow-sm hover:border-primary hover:shadow-md cursor-pointer"
+                                                                        : "bg-slate-50 border-slate-200 cursor-not-allowed opacity-60"
+                                                                )}
+                                                            >
+                                                                {couponCode === coupon.code && coupon.isEligible && (
+                                                                    <div className="absolute inset-0 bg-primary/5 animate-pulse" />
+                                                                )}
+
+                                                                <div className="flex flex-col">
+                                                                    <span className={cn(
+                                                                        "text-sm font-black tracking-wide font-mono leading-none",
+                                                                        coupon.isEligible ? "text-foreground" : "text-slate-400"
+                                                                    )}>{coupon.code}</span>
+                                                                    <span className="text-[10px] font-medium text-muted-foreground leading-none mt-1">
+                                                                        {coupon.isEligible ? `Get ${coupon.discount}% OFF` : `${coupon.discount}% OFF • Orders above ₹${coupon.minOrder}`}
+                                                                    </span>
+                                                                </div>
+
+                                                                {couponCode === coupon.code && coupon.isEligible ? (
+                                                                    <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
+                                                                        <div className="h-1.5 w-1.5 bg-white rounded-full" />
                                                                     </div>
-
-                                                                    {couponCode === coupon.code && coupon.isEligible ? (
-                                                                        <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
-                                                                            <div className="h-1.5 w-1.5 bg-white rounded-full" />
-                                                                        </div>
-                                                                    ) : (
-                                                                        coupon.isEligible && (
-                                                                            <div className="h-4 w-4 rounded-full border border-primary/30 group-hover:border-primary transition-colors" />
-                                                                        )
-                                                                    )}
-                                                                </button>
-                                                            );
-                                                        });
-                                                    })()}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-3 mb-6">
-                                            <div className="flex justify-between text-sm text-muted-foreground">
-                                                <span>Subtotal</span>
-                                                <span>₹{subtotal.toFixed(2)}</span>
+                                                                ) : (
+                                                                    coupon.isEligible && (
+                                                                        <div className="h-4 w-4 rounded-full border border-primary/30 group-hover:border-primary transition-colors" />
+                                                                    )
+                                                                )}
+                                                            </button>
+                                                        );
+                                                    });
+                                                })()}
                                             </div>
-                                            <div className="flex justify-between text-sm text-muted-foreground">
-                                                <span>Shipping</span>
-                                                <span className={cn(isFreeDelivery ? "text-green-600 font-medium" : "")}>
-                                                    {isFreeDelivery ? "FREE" : "Calculated at checkout"}
-                                                </span>
-                                            </div>
-                                            {discountAmount > 0 && (
-                                                <div className="flex justify-between text-sm text-emerald-600 font-medium animate-in slide-in-from-left-2">
-                                                    <span>Coupon ({couponCode})</span>
-                                                    <span>-₹{discountAmount.toFixed(2)}</span>
-                                                </div>
-                                            )}
-                                            <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                                        </div>
+                                        )}
                                     </div>
+
+                                    <div className="space-y-3 mb-6">
+                                        <div className="flex justify-between text-sm text-muted-foreground">
+                                            <span>Subtotal</span>
+                                            <span>₹{subtotal.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm text-muted-foreground">
+                                            <span>Shipping</span>
+                                            <span className={cn(isFreeDelivery ? "text-green-600 font-medium" : "")}>
+                                                {isFreeDelivery ? "FREE" : "Calculated at checkout"}
+                                            </span>
+                                        </div>
+                                        {discountAmount > 0 && (
+                                            <div className="flex justify-between text-sm text-emerald-600 font-medium animate-in slide-in-from-left-2">
+                                                <span>Coupon ({couponCode})</span>
+                                                <span>-₹{discountAmount.toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                                    </div>
+                                </div>
                             </ScrollArea>
 
                             {/* Minimal Footer */}
