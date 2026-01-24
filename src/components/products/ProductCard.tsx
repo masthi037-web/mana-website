@@ -55,6 +55,43 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     }
   }, [slides.length]);
 
+  // Price Logic
+  let displayPrice = 0;
+  let originalPriceForDisplay = 0;
+  let hasDiscount = false;
+  let showStartsFrom = false;
+  let discountPercentage = 0;
+
+  if (product.price && product.price > 0) {
+    const offerPercent = product.productOffer ? parseFloat(product.productOffer.toString().replace(/[^0-9.]/g, '')) : 0;
+
+    if (offerPercent > 0) {
+      const discountAmount = (product.price * offerPercent) / 100;
+      displayPrice = Math.round(product.price - discountAmount);
+      originalPriceForDisplay = product.price;
+      hasDiscount = true;
+      discountPercentage = offerPercent;
+    } else {
+      const offerPrice = (product as any).priceAfterDiscount;
+      if (offerPrice && offerPrice < product.price) {
+        displayPrice = offerPrice;
+        originalPriceForDisplay = product.price;
+        hasDiscount = true;
+        discountPercentage = Math.round(((product.price - offerPrice) / product.price) * 100);
+      } else {
+        displayPrice = product.price;
+      }
+    }
+  } else if (product.pricing && product.pricing.length > 0) {
+    showStartsFrom = true;
+    let minP = Infinity;
+    product.pricing.forEach(p => {
+      const final = (p.priceAfterDiscount && p.priceAfterDiscount > 0) ? p.priceAfterDiscount : p.price;
+      if (final < minP) minP = final;
+    });
+    displayPrice = minP;
+  }
+
   return (
     <Link
       href={`/product/${product.id}`}
@@ -221,65 +258,17 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               {product.name}
             </h3>
             <div className="flex flex-col items-end shrink-0">
-              {(() => {
-                // Modified Price Logic:
-                // 1. If product.price (Price/Base Price) is set (>0), use it.
-                // 2. Else, fallback to min price from pricing options.
-
-                let displayPrice = 0;
-                let originalPriceForDisplay = 0;
-                let hasDiscount = false;
-                let showStartsFrom = false;
-
-                if (product.price && product.price > 0) {
-                  // Check if there is an offer price (aka auto-calculated or manually set final price)
-                  // Does Product type have 'priceAfterDiscount'? Or we assume only variants do?
-                  // Product Creation sends 'productPriceAfterDiscount'. The type might be different.
-                  // Assuming 'product.priceAfterDiscount' exists if updated properly, else use logic
-                  const offerPercent = product.productOffer ? parseFloat(product.productOffer.toString()) : 0;
-
-                  if (offerPercent > 0) {
-                    // Calculate discount based on percentage
-                    const discountAmount = (product.price * offerPercent) / 100;
-                    displayPrice = Math.round(product.price - discountAmount);
-                    originalPriceForDisplay = product.price;
-                    hasDiscount = true;
-                  } else {
-                    // Fallback to pre-calculated priceAfterDiscount if available
-                    const offerPrice = (product as any).priceAfterDiscount;
-                    if (offerPrice && offerPrice < product.price) {
-                      displayPrice = offerPrice;
-                      originalPriceForDisplay = product.price;
-                      hasDiscount = true;
-                    } else {
-                      displayPrice = product.price;
-                    }
-                  }
-                } else if (product.pricing && product.pricing.length > 0) {
-                  showStartsFrom = true;
-                  // MIN logic
-                  let minP = Infinity;
-                  product.pricing.forEach(p => {
-                    const final = (p.priceAfterDiscount && p.priceAfterDiscount > 0) ? p.priceAfterDiscount : p.price;
-                    if (final < minP) minP = final;
-                  });
-                  displayPrice = minP;
-                }
-
-                return (
-                  <span className="font-headline font-bold text-base text-primary tracking-tight text-right">
-                    <span className="flex flex-col items-end">
-                      {showStartsFrom && <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-0.5">Starts from</span>}
-                      <div className="flex items-center gap-1.5 justify-end">
-                        {hasDiscount && (
-                          <span className="text-xs text-muted-foreground line-through font-medium">₹{originalPriceForDisplay}</span>
-                        )}
-                        <span className="leading-none">₹{displayPrice}</span>
-                      </div>
-                    </span>
-                  </span>
-                );
-              })()}
+              <span className="font-headline font-bold text-base text-primary tracking-tight text-right">
+                <span className="flex flex-col items-end">
+                  {showStartsFrom && <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-0.5">Starts from</span>}
+                  <div className="flex items-center gap-1.5 justify-end">
+                    {hasDiscount && (
+                      <span className="text-xs text-muted-foreground line-through font-medium">₹{originalPriceForDisplay}</span>
+                    )}
+                    <span className="leading-none">₹{displayPrice}</span>
+                  </div>
+                </span>
+              </span>
             </div>
           </div>
 
@@ -305,6 +294,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 <span>{product.deliveryTime}</span>
               </div>
             </div>
+
+            {/* Discount Badge */}
+            {hasDiscount && discountPercentage > 0 && (
+              <div className="flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-bold text-[10px] animate-pulse">
+                <Tag className="w-3 h-3" />
+                <span>{discountPercentage}% OFF</span>
+              </div>
+            )}
 
 
           </div>
