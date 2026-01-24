@@ -1104,135 +1104,143 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         <>
                             <ScrollArea className="flex-1 px-6">
                                 <ul className="py-6 space-y-6">
-{
-    cart.flatMap((item, index) => {
-        const isNew = lastAddedItemId === item.cartItemId;
+                                    {
+                                        cart.flatMap((item, index) => {
+                                            const isNew = lastAddedItemId === item.cartItemId;
 
-        // --- Bulk Calculation Logic (Greedy Product-Scoped Distribution) ---
-        let itemDiscounts: number[] = [];
+                                            // --- Bulk Calculation Logic (Greedy Product-Scoped Distribution) ---
+                                            let itemDiscounts: number[] = [];
 
-        if (item.multipleSetDiscount) {
-            // Ensure we pull from productDiscounts using item.id
-            const distribution = productDiscounts[item.id] || [];
+                                            if (item.multipleSetDiscount) {
+                                                // Ensure we pull from productDiscounts using item.id
+                                                const distribution = productDiscounts[item.id] || [];
 
-            // Determine Offset
-            // Crucial: Filter for previous items of the SAME PRODUCT ID only
-            const previousItemsOfSameProduct = cart.slice(0, index).filter(i =>
-                i.id === item.id && i.multipleSetDiscount
-            );
-            const startIndex = previousItemsOfSameProduct.reduce((acc, i) => acc + i.quantity, 0);
+                                                // Determine Offset
+                                                // Crucial: Filter for previous items of the SAME PRODUCT ID only
+                                                const previousItemsOfSameProduct = cart.slice(0, index).filter(i =>
+                                                    i.id === item.id && i.multipleSetDiscount
+                                                );
+                                                const startIndex = previousItemsOfSameProduct.reduce((acc, i) => acc + i.quantity, 0);
 
-            // Get Slice
-            itemDiscounts = distribution.slice(startIndex, startIndex + item.quantity);
+                                                // Get Slice
+                                                itemDiscounts = distribution.slice(startIndex, startIndex + item.quantity);
 
-            // Fill with 0 if undefined (should not happen if calc is correct)
-            while (itemDiscounts.length < item.quantity) {
-                itemDiscounts.push(0);
-            }
-        } else {
-            // No rule = 0% for all
-            itemDiscounts = new Array(item.quantity).fill(0);
-        }
+                                                // Fill with 0 if undefined (should not happen if calc is correct)
+                                                while (itemDiscounts.length < item.quantity) {
+                                                    itemDiscounts.push(0);
+                                                }
+                                            } else {
+                                                // No rule = 0% for all
+                                                itemDiscounts = new Array(item.quantity).fill(0);
+                                            }
 
-        // Group by Discount Percentage
-        const groups: Record<number, number> = {};
-        itemDiscounts.forEach(d => {
-            groups[d] = (groups[d] || 0) + 1;
-        });
+                                            // Group by Discount Percentage
+                                            const groups: Record<number, number> = {};
+                                            itemDiscounts.forEach(d => {
+                                                groups[d] = (groups[d] || 0) + 1;
+                                            });
 
-        // Convert to array of rows to render - Sorted Descending (Higher discount first)
-        const distinctDiscounts = Object.keys(groups).map(Number).sort((a, b) => b - a);
+                                            // Convert to array of rows to render - Sorted Descending (Higher discount first)
+                                            const distinctDiscounts = Object.keys(groups).map(Number).sort((a, b) => b - a);
 
-        return distinctDiscounts.map((discountPercent, groupIdx) => {
-            const qty = groups[discountPercent];
-            const isDiscounted = discountPercent > 0;
+                                            return distinctDiscounts.map((discountPercent, groupIdx) => {
+                                                const qty = groups[discountPercent];
+                                                const isDiscounted = discountPercent > 0;
 
-            const basePrice = item.priceAfterDiscount || item.price;
-            const addonsCost = item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0;
-            const singleItemTotal = basePrice + addonsCost;
-            const finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
+                                                const basePrice = item.priceAfterDiscount || item.price;
+                                                const addonsCost = item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0;
+                                                const singleItemTotal = basePrice + addonsCost;
+                                                const finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
 
-            return (
-                <li
-                    key={`${item.cartItemId}-${discountPercent}`}
-                    className={cn(
-                        "group relative flex gap-5 animate-in slide-in-from-bottom-4 fade-in duration-500",
-                        isNew && "ring-2 ring-primary/20 rounded-2xl p-2 -m-2 bg-primary/5 shadow-[0_0_30px_rgba(50,200,180,0.15)] transition-all duration-1000"
-                    )}
-                    style={{ animationDelay: `${index * 50 + groupIdx * 20}ms` }}
-                >
-                    {isNew && <div className="absolute inset-0 rounded-2xl animate-shimmer-highlight pointer-events-none" />}
+                                                return (
+                                                    <li
+                                                        key={`${item.cartItemId}-${discountPercent}`}
+                                                        className={cn(
+                                                            "group relative flex gap-5 animate-in slide-in-from-bottom-4 fade-in duration-500",
+                                                            isNew && "ring-2 ring-primary/20 rounded-2xl p-2 -m-2 bg-primary/5 shadow-[0_0_30px_rgba(50,200,180,0.15)] transition-all duration-1000"
+                                                        )}
+                                                        style={{ animationDelay: `${index * 50 + groupIdx * 20}ms` }}
+                                                    >
+                                                        {isNew && <div className="absolute inset-0 rounded-2xl animate-shimmer-highlight pointer-events-none" />}
 
-                    <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-secondary/30 shadow-sm group-hover:shadow-md transition-all duration-300">
-                        <Image
-                            src={item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
-                            alt={item.name}
-                            fill
-                            className="object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                    </div>
+                                                        <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-secondary/30 shadow-sm group-hover:shadow-md transition-all duration-300">
+                                                            <Image
+                                                                src={item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
+                                                                alt={item.name}
+                                                                fill
+                                                                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                                            />
+                                                        </div>
 
-                    <div className="flex flex-1 flex-col justify-between min-h-[6rem] py-0.5 z-10">
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-start gap-3">
-                                <Link href={`/product/${item.id}`} className="font-bold text-base leading-snug hover:text-primary transition-colors line-clamp-2">
-                                    {item.name}
-                                </Link>
-                                <div className="flex flex-col items-end">
-                                    {isDiscounted ? (
-                                        <>
-                                            <span className="text-xs text-muted-foreground line-through">₹{(singleItemTotal * qty).toFixed(0)}</span>
-                                            <p className="font-bold text-base text-emerald-600 whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
-                                            <span className="text-[10px] font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 px-2 py-0.5 rounded-full flex gap-1.5 items-center mt-1 shadow-sm border border-emerald-500/20">
-                                                <Tag className="w-3 h-3 fill-white/20" />
-                                                Bundle Unlocked: {discountPercent}% Off
-                                            </span>
-                                        </>
-                                    ) : (
-                                        <p className="font-bold text-base text-primary whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
-                                    )}
-                                </div>
-                            </div>
+                                                        <div className="flex flex-1 flex-col justify-between min-h-[6rem] py-0.5 z-10">
+                                                            <div className="space-y-2">
+                                                                <div className="flex justify-between items-start gap-3">
+                                                                    <Link href={`/product/${item.id}`} className="font-bold text-base leading-snug hover:text-primary transition-colors line-clamp-2">
+                                                                        {item.name}
+                                                                    </Link>
+                                                                    <div className="flex flex-col items-end">
+                                                                        {isDiscounted ? (
+                                                                            <>
+                                                                                <span className="text-xs text-muted-foreground line-through">₹{(singleItemTotal * qty).toFixed(0)}</span>
+                                                                                <p className="font-bold text-base text-emerald-600 whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
+                                                                                <span className="text-[10px] font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 px-2 py-0.5 rounded-full flex gap-1.5 items-center mt-1 shadow-sm border border-emerald-500/20">
+                                                                                    <Tag className="w-3 h-3 fill-white/20" />
+                                                                                    Bundle Unlocked: {discountPercent}% Off
+                                                                                </span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <p className="font-bold text-base text-primary whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
 
-                            {(item.selectedVariants || item.selectedAddons) && (
-                                <div className="flex flex-wrap gap-1.5">
-                                    {Object.values(item.selectedVariants || {}).map((v, i) => (
-                                        <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary/80 text-foreground/80">{v}</span>
-                                    ))}
-                                    {item.selectedAddons?.map((addon) => (
-                                        <span key={addon.id} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
-                                            + {addon.name}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                                                {(item.selectedVariants || item.selectedAddons) && (
+                                                                    <div className="flex flex-wrap gap-1.5">
+                                                                        {Object.values(item.selectedVariants || {}).map((v, i) => (
+                                                                            <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary/80 text-foreground/80">{v}</span>
+                                                                        ))}
+                                                                        {item.selectedAddons?.map((addon) => (
+                                                                            <span key={addon.id} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                                                                                + {addon.name}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
 
-                        <div className="flex items-center justify-between pt-2">
-                            <div className="flex items-center gap-1 bg-secondary/40 rounded-full p-1 border border-border/50">
-                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-destructive"
-                                    onClick={() => updateQuantity(item.cartItemId, Math.max(0, item.quantity - 1))}
-                                    disabled={false}
-                                >
-                                    <Minus className="h-3 w-3" />
-                                </Button>
-                                <span className="w-8 text-center text-xs font-bold tabular-nums">{qty}</span>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-primary"
-                                    onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
-                                >
-                                    <Plus className="h-3 w-3" />
-                                </Button>
-                            </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded-full" onClick={() => setItemToDelete(item.cartItemId)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
-                </li>
-            );
-        });
-    })
-}
+                                                            <div className="flex items-center justify-between pt-2">
+                                                                <div className="flex items-center gap-1 bg-secondary/40 rounded-full p-1 border border-border/50">
+                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-destructive"
+                                                                        onClick={() => updateQuantity(item.cartItemId, Math.max(0, item.quantity - 1))}
+                                                                        disabled={false}
+                                                                    >
+                                                                        <Minus className="h-3 w-3" />
+                                                                    </Button>
+                                                                    <span className="w-8 text-center text-xs font-bold tabular-nums">{qty}</span>
+                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-primary"
+                                                                        onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
+                                                                    >
+                                                                        <Plus className="h-3 w-3" />
+                                                                    </Button>
+                                                                </div>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded-full" onClick={() => {
+                                                                    if (qty < item.quantity) {
+                                                                        // Partial deletion: Just reduce quantity without popup
+                                                                        updateQuantity(item.cartItemId, Math.max(0, item.quantity - qty));
+                                                                    } else {
+                                                                        // Full deletion: Trigger confirmation popup
+                                                                        setItemToDelete(item.cartItemId);
+                                                                    }
+                                                                }}>
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                );
+                                            });
+                                        })
+                                    }
                                 </ul>
 
                                 {/* Summary Content Moved to ScrollArea */}
