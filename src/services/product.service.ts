@@ -97,7 +97,7 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
     // Map pricing options for UI selection
     const pricingOptions = apiProd.productSize?.map(p => ({
         id: String(p.productSizeId),
-        price: p.productPrice,
+        price: p.productSizePrice,
         quantity: p.size,
         sizeQuantity: p.sizeQuantity,
         sizeStatus: p.sizeStatus,
@@ -113,7 +113,7 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
         id: String(apiProd.productId),
         name: apiProd.productName,
         description: apiProd.productInfo,
-        price: (apiProd.productPrice && apiProd.productPrice > 0) ? apiProd.productPrice : (firstPricing ? firstPricing.productPrice : apiProd.productDeliveryCost),
+        price: (apiProd.productPrice && apiProd.productPrice > 0) ? apiProd.productPrice : (firstPricing ? firstPricing.productSizePrice : apiProd.productDeliveryCost),
         pricing: pricingOptions,
         imageId: String(apiProd.productId),
         imageUrl: imageUrl,

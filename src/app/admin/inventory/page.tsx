@@ -158,9 +158,9 @@ export default function AdminInventoryPage() {
             const res = await adminService.getProductPricing(selectedProduct!.id);
             return res.map((p: any) => ({
                 id: String(p.productSizeId),
-                price: p.productPrice,
-                priceAfterDiscount: p.productPriceAfterDiscount,
-                priceAfterDiscount: p.productPriceAfterDiscount,
+                price: p.productSizePrice,
+                priceAfterDiscount: p.productSizePriceAfterDiscount,
+                priceAfterDiscount: p.productSizePriceAfterDiscount,
                 quantity: p.size,
                 sizeQuantity: p.sizeQuantity,
                 sizeStatus: p.sizeStatus || "ACTIVE",
@@ -244,8 +244,8 @@ export default function AdminInventoryPage() {
                         return adminService.updateProductSize({
                             productSizeId: Number(editingItem.id),
                             productId: Number(selectedProduct.id),
-                            productPrice: Number(price),
-                            productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
+                            productSizePrice: Number(price),
+                            productSizePriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
                             size: qty,
                             sizeQuantity: sizeQuantity,
                             sizeStatus: sizeStatus
@@ -253,8 +253,8 @@ export default function AdminInventoryPage() {
                     } else {
                         return adminService.createPricing({
                             productId: Number(selectedProduct.id),
-                            productPrice: Number(price),
-                            productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
+                            productSizePrice: Number(price),
+                            productSizePriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
                             size: qty,
                             sizeQuantity: sizeQuantity,
                             sizeStatus: sizeStatus
@@ -355,8 +355,8 @@ export default function AdminInventoryPage() {
                 // Classic Flow
                 return adminService.createPricing({
                     productId: Number(selectedProduct.id),
-                    productPrice: Number(price),
-                    productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
+                    productSizePrice: Number(price),
+                    productSizePriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
                     size: qty,
                     sizeQuantity: sizeQuantity,
                     sizeStatus: sizeStatus // Default or from state? Using state.
