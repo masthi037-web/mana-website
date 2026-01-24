@@ -160,7 +160,6 @@ export default function AdminInventoryPage() {
                 id: String(p.productSizeId),
                 price: p.productSizePrice,
                 priceAfterDiscount: p.productSizePriceAfterDiscount,
-                priceAfterDiscount: p.productSizePriceAfterDiscount,
                 quantity: p.size,
                 sizeQuantity: p.sizeQuantity,
                 sizeStatus: p.sizeStatus || "ACTIVE",
@@ -424,6 +423,13 @@ export default function AdminInventoryPage() {
             return name !== editingItem.name ||
                 desc !== (editingItem.description || "") ||
                 safeImage !== (editingItem.catalogueImage || "");
+        }
+        if (manageMode === 'ADD_PRICING' && editingItem) {
+            return qty !== editingItem.quantity ||
+                sizeQuantity !== (editingItem.sizeQuantity || "") ||
+                String(price) !== String(editingItem.price) ||
+                String(discountedPrice) !== String(editingItem.priceAfterDiscount) ||
+                sizeStatus !== editingItem.sizeStatus;
         }
         return true; // Default allow for other levels if any
     };
@@ -909,107 +915,113 @@ export default function AdminInventoryPage() {
 
                             {/* PRICING LIST */}
                             <div className="space-y-3">
-                                {pricingOptions.map((p: any) => (
-                                    <div key={p.id} className="border rounded-xl p-0 overflow-hidden bg-card shadow-sm transition-all hover:shadow-md">
-                                        <div className="flex items-center">
-                                            <div
-                                                className="flex-1 p-3 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors"
-                                                onClick={() => setExpandedPricingId(expandedPricingId === p.id ? null : p.id)}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`p-2 rounded-full ${expandedPricingId === p.id ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                                                        {expandedPricingId === p.id ? <Layers className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-bold text-sm">{p.quantity}</div>
-                                                        <div className="text-xs text-muted-foreground flex items-center gap-2">
-                                                            {p.priceAfterDiscount && p.priceAfterDiscount < p.price ? (
-                                                                <>
-                                                                    <span className="line-through">₹{p.price}</span>
-                                                                    <span className="font-bold text-primary">₹{p.priceAfterDiscount}</span>
-                                                                </>
-                                                            ) : (
-                                                                <span>₹{p.price}</span>
-                                                            )}
-                                                            <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${p.sizeStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                                {p.sizeStatus}
-                                                            </span>
+                                {pricingOptions.map((p: any) => {
+                                    // Hide the item if it is currently being edited
+                                    if (editingItem && editingItem.id === p.id) return null;
+
+                                    return (
+                                        <div key={p.id} className="border rounded-xl p-0 overflow-hidden bg-card shadow-sm transition-all hover:shadow-md">
+                                            <div className="flex items-center">
+                                                <div
+                                                    className="flex-1 p-3 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors"
+                                                    onClick={() => setExpandedPricingId(expandedPricingId === p.id ? null : p.id)}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-2 rounded-full ${expandedPricingId === p.id ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                                            {expandedPricingId === p.id ? <Layers className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
                                                         </div>
-                                                    </div>
-                                                </div>
-                                                <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${expandedPricingId === p.id ? 'rotate-90' : ''}`} />
-                                            </div>
-                                            <div className="pr-3">
-                                                <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full hover:bg-muted" onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingItem(p);
-                                                    setQty(p.quantity);
-                                                    setPrice(String(p.price));
-                                                    setDiscountedPrice(String(p.priceAfterDiscount));
-                                                    setSizeStatus(p.sizeStatus || "ACTIVE");
-                                                    setManageMode('ADD_PRICING');
-                                                }}>
-                                                    <Pencil className="h-3 w-3 text-muted-foreground" />
-                                                </Button>
-                                            </div>
-                                        </div>
-
-                                        {/* ADDONS SECTION (EXPANDED) */}
-                                        {expandedPricingId === p.id && (
-                                            <div className="bg-muted/20 border-t p-4 animate-in slide-in-from-top-2 duration-300">
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Addons</h5>
-                                                    {manageMode !== 'ADD_ADDON' && (
-                                                        <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => { setManageMode('ADD_ADDON'); resetForm(); }}>
-                                                            <Plus className="w-4 h-4" />
-                                                        </Button>
-                                                    )}
-                                                </div>
-
-                                                {/* ADD ADDON FORM */}
-                                                {manageMode === 'ADD_ADDON' && (
-                                                    <div className="bg-background p-3 rounded-lg border mb-3 shadow-sm animate-in zoom-in-95">
-                                                        <div className="space-y-3">
-                                                            <div className="space-y-1">
-                                                                <Label className="text-xs">Name</Label>
-                                                                <Input value={name} onChange={e => setName(e.target.value)} className="h-7" placeholder="e.g. Extra Cheese" />
-                                                            </div>
-                                                            <div className="flex gap-3">
-                                                                <div className="space-y-1 flex-1">
-                                                                    <Label className="text-xs">Price</Label>
-                                                                    <Input type="number" value={price} onChange={e => setPrice(e.target.value)} className="h-7" placeholder="10" />
-                                                                </div>
-                                                                <div className="pt-6 flex items-center space-x-2">
-                                                                    <Checkbox id="man" checked={isMandatory} onCheckedChange={(c) => setIsMandatory(!!c)} />
-                                                                    <Label htmlFor="man" className="text-xs">Mandatory</Label>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex gap-2 pt-1">
-                                                                <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="h-7 text-xs w-full">Save Addon</Button>
-                                                                <Button size="sm" variant="ghost" onClick={() => setManageMode('VIEW')} className="h-7 text-xs w-full">Cancel</Button>
+                                                        <div>
+                                                            <div className="font-bold text-sm">{p.quantity}</div>
+                                                            <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                                                {p.priceAfterDiscount && p.priceAfterDiscount < p.price ? (
+                                                                    <>
+                                                                        <span className="line-through">₹{p.price}</span>
+                                                                        <span className="font-bold text-primary">₹{p.priceAfterDiscount}</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span>₹{p.price}</span>
+                                                                )}
+                                                                <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${p.sizeStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                                    {p.sizeStatus}
+                                                                </span>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                )}
+                                                    <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${expandedPricingId === p.id ? 'rotate-90' : ''}`} />
+                                                </div>
+                                                <div className="pr-3">
+                                                    <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full hover:bg-muted" onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingItem(p);
+                                                        setQty(p.quantity);
+                                                        setSizeQuantity(p.sizeQuantity || "");
+                                                        setPrice(String(p.price));
+                                                        setDiscountedPrice(String(p.priceAfterDiscount));
+                                                        setSizeStatus(p.sizeStatus || "ACTIVE");
+                                                        setManageMode('ADD_PRICING');
+                                                    }}>
+                                                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                                                    </Button>
+                                                </div>
+                                            </div>
 
-                                                <div className="space-y-2">
-                                                    {addonsLoading ? <div className="text-xs text-center py-2 text-muted-foreground">Loading addons...</div> :
-                                                        addons.length === 0 ? <div className="text-xs text-center py-2 text-muted-foreground italic">No addons configured.</div> :
-                                                            addons.map((addon: any) => (
-                                                                <div key={addon.id} className="bg-background/80 border rounded p-2 flex justify-between items-center text-sm">
-                                                                    <span>{addon.name}</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        {addon.mandatory && <span className="text-[10px] bg-red-100 text-red-600 px-1 rounded font-bold">REQ</span>}
-                                                                        <span className="font-mono font-bold text-xs text-emerald-600">+₹{addon.price}</span>
+                                            {/* ADDONS SECTION (EXPANDED) */}
+                                            {expandedPricingId === p.id && (
+                                                <div className="bg-muted/20 border-t p-4 animate-in slide-in-from-top-2 duration-300">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Addons</h5>
+                                                        {manageMode !== 'ADD_ADDON' && (
+                                                            <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => { setManageMode('ADD_ADDON'); resetForm(); }}>
+                                                                <Plus className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+
+                                                    {/* ADD ADDON FORM */}
+                                                    {manageMode === 'ADD_ADDON' && (
+                                                        <div className="bg-background p-3 rounded-lg border mb-3 shadow-sm animate-in zoom-in-95">
+                                                            <div className="space-y-3">
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-xs">Name</Label>
+                                                                    <Input value={name} onChange={e => setName(e.target.value)} className="h-7" placeholder="e.g. Extra Cheese" />
+                                                                </div>
+                                                                <div className="flex gap-3">
+                                                                    <div className="space-y-1 flex-1">
+                                                                        <Label className="text-xs">Price</Label>
+                                                                        <Input type="number" value={price} onChange={e => setPrice(e.target.value)} className="h-7" placeholder="10" />
+                                                                    </div>
+                                                                    <div className="pt-6 flex items-center space-x-2">
+                                                                        <Checkbox id="man" checked={isMandatory} onCheckedChange={(c) => setIsMandatory(!!c)} />
+                                                                        <Label htmlFor="man" className="text-xs">Mandatory</Label>
                                                                     </div>
                                                                 </div>
-                                                            ))
-                                                    }
+                                                                <div className="flex gap-2 pt-1">
+                                                                    <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="h-7 text-xs w-full">Save Addon</Button>
+                                                                    <Button size="sm" variant="ghost" onClick={() => setManageMode('VIEW')} className="h-7 text-xs w-full">Cancel</Button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="space-y-2">
+                                                        {addonsLoading ? <div className="text-xs text-center py-2 text-muted-foreground">Loading addons...</div> :
+                                                            addons.length === 0 ? <div className="text-xs text-center py-2 text-muted-foreground italic">No addons configured.</div> :
+                                                                addons.map((addon: any) => (
+                                                                    <div key={addon.id} className="bg-background/80 border rounded p-2 flex justify-between items-center text-sm">
+                                                                        <span>{addon.name}</span>
+                                                                        <div className="flex items-center gap-2">
+                                                                            {addon.mandatory && <span className="text-[10px] bg-red-100 text-red-600 px-1 rounded font-bold">REQ</span>}
+                                                                            <span className="font-mono font-bold text-xs text-emerald-600">+₹{addon.price}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                ))
+                                                        }
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                                            )}
+                                        </div>
+                                    )
+                                })}
                                 {pricingOptions.length === 0 && <div className="text-center py-8 text-muted-foreground text-sm">No pricing variants found. Add one to get started.</div>}
                             </div>
                         </div>
