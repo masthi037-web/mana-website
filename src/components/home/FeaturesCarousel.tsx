@@ -1,17 +1,28 @@
-import { ShieldCheck, Truck, Star } from 'lucide-react';
+import { ShieldCheck, Truck, Star, LucideIcon, Zap, Heart, Award, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CompanyFeature } from '@/lib/api-types';
 
 interface FeatureItem {
     id: number;
     title: string;
     description: string;
-    icon: React.ElementType;
+    icon: LucideIcon;
     color: string;
     bgColor: string;
     iconColor: string;
 }
 
-const features: FeatureItem[] = [
+const iconMap: Record<string, LucideIcon> = {
+    'ShieldCheck': ShieldCheck,
+    'Truck': Truck,
+    'Star': Star,
+    'Zap': Zap,
+    'Heart': Heart,
+    'Award': Award,
+    'Gift': Gift
+};
+
+const defaultFeatures: FeatureItem[] = [
     {
         id: 1,
         title: "100% Authentic",
@@ -41,9 +52,26 @@ const features: FeatureItem[] = [
     }
 ];
 
-export function FeaturesCarousel() {
+interface FeaturesCarouselProps {
+    features?: CompanyFeature[];
+}
+
+export function FeaturesCarousel({ features }: FeaturesCarouselProps) {
+    // Map API features to component format or use default
+    const displayFeatures: FeatureItem[] = features && features.length > 0
+        ? features.map((f, index) => ({
+            id: index,
+            title: f.title,
+            description: f.description,
+            icon: iconMap[f.icon] || Star, // Fallback icon
+            color: f.color || "text-primary",
+            bgColor: f.bgColor || "bg-primary/10",
+            iconColor: f.iconColor || "text-primary"
+        }))
+        : defaultFeatures;
+
     // Duplicate the items to create a seamless loop
-    const carouselItems = [...features, ...features, ...features, ...features];
+    const carouselItems = [...displayFeatures, ...displayFeatures, ...displayFeatures, ...displayFeatures];
 
     return (
         <div className="w-full overflow-hidden bg-background py-8 border-b border-border/40">
@@ -68,3 +96,4 @@ export function FeaturesCarousel() {
         </div>
     );
 }
+

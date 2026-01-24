@@ -282,7 +282,7 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
                 )}
                 <CouponCarousel companyCoupon={companyDetails?.companyCoupon} />
                 <div className="animate-in fade-in slide-in-from-top-4 duration-700">
-                    <FeaturesCarousel />
+                    <FeaturesCarousel features={companyDetails?.features} />
                 </div>
                 <div className="container mx-auto px-4 space-y-24">
 

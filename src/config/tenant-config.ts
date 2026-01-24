@@ -1,4 +1,6 @@
 
+import { CompanyFeature } from '@/lib/api-types';
+
 
 export interface TenantMotion {
     cardHover: string; // e.g., "translateY(-4px) scale(1.01)"
@@ -80,6 +82,7 @@ export interface TenantConfig {
         enableratings: boolean;
         showStockCount: boolean;
     };
+    featuresList?: CompanyFeature[];
     text: {
         checkoutButton: string;
         emptyCartParams: string;
@@ -90,6 +93,7 @@ export interface TenantConfig {
         heroTitleHighlight?: string;
         heroDescription?: string;
     };
+
 }
 
 export const DEFAULT_CONFIG: TenantConfig = {
@@ -162,36 +166,62 @@ export const DEFAULT_CONFIG: TenantConfig = {
 const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     // 1. Organic Greens (Fresh, Friendly)
     "skfashions": {
-        id: "organic-greens",
-        name: "Home Foods",
+        id: "sk-fashions",
+        name: "SK Fashions",
         theme: {
             colors: {
-                primary: "142 76% 36%",
+                primary: "346 84% 61%", // Pinkish Red (Fashionable)
                 primaryForeground: "0 0% 100%",
-                secondary: "142 70% 95%",
-                background: "142 20% 97%",
+                secondary: "340 20% 96%",
+                background: "340 10% 99%",
             },
             radius: "1rem",
-            fontFamily: "var(--font-inter)",
+            fontFamily: "var(--font-outfit)", // Modern fashion font
             productCard: {
                 backgroundColor: "white",
                 radius: "1rem",
-                shadow: "0 4px 6px -1px rgb(22 163 74 / 0.1)",
-                border: "1px solid rgb(22 163 74 / 0.2)",
+                shadow: "0 10px 30px -10px rgb(225 29 72 / 0.15)",
+                border: "1px solid rgb(225 29 72 / 0.1)",
             }
         },
-        brandTone: { mood: "energetic", cornerStyle: "mixed", animationSpeed: "normal" },
+        brandTone: { mood: "premium", cornerStyle: "soft", animationSpeed: "slow" },
         surface: { header: "glass", footer: "branded", productCardStyle: "elevated" },
         text: {
-            checkoutButton: "Order Fresh",
-            emptyCartParams: "Your basket needs some greens!",
-            quickAddButton: "Add Fresh",
-            searchPlaceholder: "Search fresh vegetables...",
-            startsFrom: "From",
-            heroTitle: "Latest Design",
-            heroTitleHighlight: "Best Collection",
-            heroDescription: "Experience the best collection of Menswear and Womenswear.",
-        }
+            checkoutButton: "Place Order",
+            emptyCartParams: "Your wardrobe implies it needs an update!",
+            quickAddButton: "Add to Bag",
+            searchPlaceholder: "Search for latest trends...",
+            startsFrom: "Starts at",
+            heroTitle: "Redefine Your",
+            heroTitleHighlight: "Style",
+            heroDescription: "Explore our exclusive collection of Menswear and Womenswear designed for the modern you.",
+        },
+        featuresList: [
+            {
+                title: "Trendsetting Styles",
+                description: "Curated for the fashion-forward",
+                icon: "Star",
+                color: "text-rose-600",
+                bgColor: "bg-rose-50",
+                iconColor: "text-rose-600"
+            },
+            {
+                title: "Premium Fabric",
+                description: "Quality you can feel",
+                icon: "ShieldCheck",
+                color: "text-indigo-600",
+                bgColor: "bg-indigo-50",
+                iconColor: "text-indigo-600"
+            },
+            {
+                title: "Express Shipping",
+                description: "Get your look in no time",
+                icon: "Truck",
+                color: "text-teal-600",
+                bgColor: "bg-teal-50",
+                iconColor: "text-teal-600"
+            }
+        ]
     },
     // 2. Midnight Tech (Dark, Cyberpunk)
     "midnighttech.store": {
@@ -573,6 +603,7 @@ export function resolveTenantConfig(domain: string): TenantConfig {
             ...DEFAULT_CONFIG.features,
             ...(specificConfig.features || {}),
         },
+        featuresList: specificConfig.featuresList, // Pass through
         text: {
             ...DEFAULT_CONFIG.text,
             ...(specificConfig.text || {}),

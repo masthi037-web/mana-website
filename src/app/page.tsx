@@ -20,6 +20,11 @@ export default async function Home() {
   const company = await fetchCompanyDetails(companyDomain);
   const tenantConfig = resolveTenantConfig(companyDomain);
 
+  // Merge Config Features into Company Details (Frontend Override)
+  if (company && tenantConfig.featuresList) {
+    company.features = tenantConfig.featuresList;
+  }
+
   // Use companyId if available, otherwise empty array (or handle error)
   const categories = company ? await fetchCategories(company.companyId, company.deliveryBetween) : [];
 

@@ -92,6 +92,15 @@ export interface Catalogue {
     catalogueImage?: string;
 }
 
+export interface CompanyFeature {
+    title: string;
+    description: string;
+    icon: string;
+    color?: string;
+    bgColor?: string;
+    iconColor?: string;
+}
+
 export interface CompanyDetails {
     companyId: string;
     companyName: string;
@@ -118,6 +127,7 @@ export interface CompanyDetails {
     averageRating: number;
     totalRating: number;
     noOfRatings: number;
+    features?: CompanyFeature[];
     companyRegisteredAt: string;
     updatedAt: string;
     minimumOrderCost: string;
