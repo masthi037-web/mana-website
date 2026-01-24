@@ -223,17 +223,54 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               {product.name}
             </h3>
             <div className="flex flex-col items-end shrink-0">
-              <span className="font-headline font-bold text-base text-primary tracking-tight text-right">
-                <span className="flex flex-col items-end">
-                  {showStartsFrom && <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-0.5">Starts from</span>}
-                  <div className="flex items-center gap-1.5 justify-end">
-                    {hasDiscount && (
-                      <span className="text-xs text-muted-foreground line-through font-medium">₹{originalPriceForDisplay}</span>
-                    )}
-                    <span className="leading-none">₹{displayPrice}</span>
-                  </div>
-                </span>
-              </span>
+              {(() => {
+                let displayPrice = 0;
+                let originalPriceForDisplay = 0;
+                let hasDiscount = false;
+                let showStartsFrom = false;
+
+                if (product.price && product.price > 0) {
+                  const offerPercent = product.productOffer ? parseFloat(product.productOffer.toString().replace(/[^0-9.]/g, '')) : 0;
+
+                  if (offerPercent > 0) {
+                    const discountAmount = (product.price * offerPercent) / 100;
+                    displayPrice = Math.round(product.price - discountAmount);
+                    originalPriceForDisplay = product.price;
+                    hasDiscount = true;
+                  } else {
+                    const offerPrice = (product as any).priceAfterDiscount;
+                    if (offerPrice && offerPrice < product.price) {
+                      displayPrice = offerPrice;
+                      originalPriceForDisplay = product.price;
+                      hasDiscount = true;
+                    } else {
+                      displayPrice = product.price;
+                    }
+                  }
+                } else if (product.pricing && product.pricing.length > 0) {
+                  showStartsFrom = true;
+                  let minP = Infinity;
+                  product.pricing.forEach(p => {
+                    const final = (p.priceAfterDiscount && p.priceAfterDiscount > 0) ? p.priceAfterDiscount : p.price;
+                    if (final < minP) minP = final;
+                  });
+                  displayPrice = minP;
+                }
+
+                return (
+                  <span className="font-headline font-bold text-base text-primary tracking-tight text-right">
+                    <span className="flex flex-col items-end">
+                      {showStartsFrom && <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider leading-none mb-0.5">Starts from</span>}
+                      <div className="flex items-center gap-1.5 justify-end">
+                        {hasDiscount && (
+                          <span className="text-xs text-muted-foreground line-through font-medium">₹{originalPriceForDisplay}</span>
+                        )}
+                        <span className="leading-none">₹{displayPrice}</span>
+                      </div>
+                    </span>
+                  </span>
+                );
+              })()}
             </div>
           </div>
 
@@ -261,11 +298,19 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </div>
 
             {/* Multiple Set Discount Badges */}
-            {product.multipleSetDiscount && (
+            {/* Multiple Set Discount Badges */}
+            {product.multipleSetDiscount && typeof product.multipleSetDiscount === 'string' && (
               <div className="flex flex-wrap gap-1 justify-end max-w-[60%]">
-                {product.multipleSetDiscount.toString().split('&&&').map((offer, idx) => {
-                  const [qty, discount] = offer.split('-');
+                {product.multipleSetDiscount.split('&&&').map((offer, idx) => {
+                  if (!offer) return null;
+                  const parts = offer.trim().split('-');
+                  if (parts.length !== 2) return null;
+
+                  const qty = parts[0].trim();
+                  const discount = parts[1].trim();
+
                   if (!qty || !discount) return null;
+
                   return (
                     <div key={idx} className="flex items-center gap-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-2 py-0.5 rounded-full shadow-sm">
                       <Tag className="w-2.5 h-2.5 fill-white/20" />
