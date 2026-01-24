@@ -163,6 +163,30 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             })()}
           </div>
 
+          {/* Top Right Badges (More Than Discount) */}
+          <div className="absolute top-12 right-3 flex flex-col items-end gap-2 z-10 pointer-events-none">
+            {(() => {
+              if (product.multipleDiscountMoreThan) {
+                const parts = product.multipleDiscountMoreThan.toString().split('-');
+                if (parts.length === 2) {
+                  const threshold = parts[0].trim();
+                  const discount = parts[1].trim();
+
+                  return (
+                    <div className="pointer-events-auto flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-indigo-500/30 border border-white/10 animate-in slide-in-from-right-4 duration-500">
+                      <Sparkles className="w-3 h-3 text-yellow-300 fill-yellow-300 animate-pulse" />
+                      <div className="flex flex-col leading-none items-start">
+                        <span className="text-[8px] opacity-90 font-medium uppercase tracking-wider">Buy &gt; {threshold}</span>
+                        <span className="text-[10px] font-extrabold">Get {discount}% Off</span>
+                      </div>
+                    </div>
+                  );
+                }
+              }
+              return null;
+            })()}
+          </div>
+
           {/* Wishlist Button */}
           <Button
             variant="ghost"

@@ -100,52 +100,79 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         const totalQty = productQuantities[productId];
         const ruleKey = productRules[productId];
 
-        if (!ruleKey) {
-            // No discount rule for this product
-            productDiscounts[productId] = new Array(totalQty).fill(0);
-            return;
+        // Find a representative item to check for 'More Than' rule
+        const productItem = cart.find(i => i.id.toString() === productId);
+        const moreThanRule = productItem?.multipleDiscountMoreThan;
+
+        // --- Logic 1: Standard Greedy Tiers ---
+        let greedyDistribution: number[] = [];
+        let maxGreedyDiscount = 0;
+
+        if (ruleKey) {
+            const segments = ruleKey.split('&&&');
+            const tiers: { threshold: number, percent: number }[] = [];
+            segments.forEach(seg => {
+                const parts = seg.split('-');
+                if (parts.length === 2) {
+                    const t = parseFloat(parts[0]);
+                    const p = parseFloat(parts[1]);
+                    if (!isNaN(t) && !isNaN(p)) {
+                        tiers.push({ threshold: t, percent: p });
+                    }
+                }
+            });
+
+            // Sort Tiers Descending by Threshold
+            tiers.sort((a, b) => b.threshold - a.threshold);
+            if (tiers.length > 0) maxGreedyDiscount = tiers[0].percent; // Approx max possible
+
+            let remaining = totalQty;
+            while (remaining > 0) {
+                const bestTier = tiers.find(t => t.threshold <= remaining);
+                if (bestTier) {
+                    for (let k = 0; k < bestTier.threshold; k++) {
+                        greedyDistribution.push(bestTier.percent);
+                    }
+                    remaining -= bestTier.threshold;
+                } else {
+                    for (let k = 0; k < remaining; k++) {
+                        greedyDistribution.push(0);
+                    }
+                    remaining = 0;
+                }
+            }
+        } else {
+            greedyDistribution = new Array(totalQty).fill(0);
         }
 
-        const segments = ruleKey.split('&&&');
+        // --- Logic 2: 'More Than' Override ---
+        let finalDistribution = greedyDistribution;
 
-        // Parse Tiers: { threshold: 4, percent: 15 }
-        const tiers: { threshold: number, percent: number }[] = [];
-        segments.forEach(seg => {
-            const parts = seg.split('-');
+        if (moreThanRule) {
+            const parts = moreThanRule.split('-');
             if (parts.length === 2) {
-                const t = parseFloat(parts[0]);
-                const p = parseFloat(parts[1]);
-                if (!isNaN(t) && !isNaN(p)) {
-                    tiers.push({ threshold: t, percent: p });
-                }
-            }
-        });
+                const threshold = parseFloat(parts[0]);
+                const discount = parseFloat(parts[1]);
 
-        // Sort Tiers Descending by Threshold (Greedy Approach)
-        tiers.sort((a, b) => b.threshold - a.threshold);
+                // Condition: Quantity > Threshold AND Discount > Max Tier Discount
+                // Note: User says "more then 6", so strictly `>`
+                if (!isNaN(threshold) && !isNaN(discount) && totalQty > threshold) {
+                    // Check if this override is better than the BEST tiered discount available
+                    // Or simply if it applies. User logic implies it should supersede if better.
+                    // We'll trust the user's intent: "start considering buy 6+ get 20% offer as 20% offer is more then 10, 15"
 
-        const distribution: number[] = [];
-        let remaining = totalQty;
+                    // Locate optimal set discount used in greedy? No, just compare max potential.
+                    // Actually, let's compare against the best single tier used.
 
-        // Apply Tiers Iteratively
-        while (remaining > 0) {
-            const bestTier = tiers.find(t => t.threshold <= remaining);
-            if (bestTier) {
-                // Apply this tier
-                for (let k = 0; k < bestTier.threshold; k++) {
-                    distribution.push(bestTier.percent);
+                    if (discount > maxGreedyDiscount) {
+                        // Apply Flat Discount to ALL items
+                        finalDistribution = new Array(totalQty).fill(discount);
+                    }
                 }
-                remaining -= bestTier.threshold;
-            } else {
-                // No tier fits the remainder
-                for (let k = 0; k < remaining; k++) {
-                    distribution.push(0);
-                }
-                remaining = 0;
             }
         }
 
-        productDiscounts[productId] = distribution;
+        productDiscounts[productId] = finalDistribution;
     });
 
     const hasBulkDiscount = Object.keys(productDiscounts).some(k => productDiscounts[k].some(p => p > 0));
