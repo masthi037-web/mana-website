@@ -829,7 +829,21 @@ export default function AdminInventoryPage() {
                                     <Tag className="w-4 h-4 text-primary" /> Pricing Variants
                                 </h3>
                                 {manageMode !== 'ADD_PRICING' && (
-                                    <Button size="sm" onClick={() => { setManageMode('ADD_PRICING'); resetForm(); }} variant="outline" className="h-8 rounded-full">
+                                    <Button size="sm" onClick={() => {
+                                        setManageMode('ADD_PRICING');
+                                        resetForm();
+                                        // Pre-fill if base price exists
+                                        if (selectedProduct && selectedProduct.productPrice > 0) {
+                                            setPrice(String(selectedProduct.productPrice));
+                                            // Auto-calc discount if offer exists
+                                            if (selectedProduct.productOffer) {
+                                                const calculated = calculateDiscount(selectedProduct.productPrice, selectedProduct.productOffer);
+                                                setDiscountedPrice(String(calculated));
+                                            } else {
+                                                setDiscountedPrice(String(selectedProduct.productPrice));
+                                            }
+                                        }
+                                    }} variant="outline" className="h-8 rounded-full">
                                         <Plus className="w-3 h-3 mr-1" /> Add Variant
                                     </Button>
                                 )}
@@ -851,12 +865,26 @@ export default function AdminInventoryPage() {
                                             </div>
                                             <div className="space-y-1">
                                                 <Label className="text-xs">Price</Label>
-                                                <Input type="number" value={price} onChange={e => setPrice(e.target.value)} className="h-8 bg-background" placeholder="0" />
+                                                <Input
+                                                    type="number"
+                                                    value={price}
+                                                    onChange={e => setPrice(e.target.value)}
+                                                    className="h-8 bg-background"
+                                                    placeholder="0"
+                                                    disabled={!!(selectedProduct?.productPrice && selectedProduct.productPrice > 0)}
+                                                />
                                             </div>
                                         </div>
                                         <div className="space-y-1">
                                             <Label className="text-xs">Discounted Price (Auto)</Label>
-                                            <Input type="number" value={discountedPrice} onChange={e => setDiscountedPrice(e.target.value)} className="h-8 bg-background border-dashed" placeholder="Auto" />
+                                            <Input
+                                                type="number"
+                                                value={discountedPrice}
+                                                onChange={e => setDiscountedPrice(e.target.value)}
+                                                className="h-8 bg-background border-dashed"
+                                                placeholder="Auto"
+                                                disabled={!!(selectedProduct?.productPrice && selectedProduct.productPrice > 0)}
+                                            />
                                         </div>
                                         <div className="space-y-1">
                                             <Label className="text-xs">Status</Label>
