@@ -425,8 +425,8 @@ export default function AdminInventoryPage() {
                 safeImage !== (editingItem.catalogueImage || "");
         }
         if (manageMode === 'ADD_PRICING' && editingItem) {
-            return qty !== editingItem.quantity ||
-                sizeQuantity !== (editingItem.sizeQuantity || "") ||
+            return String(qty) !== String(editingItem.quantity) ||
+                String(sizeQuantity) !== String(editingItem.sizeQuantity || "") ||
                 String(price) !== String(editingItem.price) ||
                 String(discountedPrice) !== String(editingItem.priceAfterDiscount) ||
                 sizeStatus !== editingItem.sizeStatus;
