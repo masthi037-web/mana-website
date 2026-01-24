@@ -1133,217 +1133,230 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             <ScrollArea className="flex-1 px-6">
                                 <ul className="py-6 space-y-6">
                                     {
-                                        cart.flatMap((item, index) => {
-                                            const isNew = lastAddedItemId === item.cartItemId;
+                                        cart
+                                            .slice()
+                                            .sort((a, b) => a.id.localeCompare(b.id))
+                                            .flatMap((item, index, sortedCart) => { // Use sortedCart for context checks
+                                                const isNew = lastAddedItemId === item.cartItemId;
 
-                                            // --- Bulk Calculation Logic (Greedy Product-Scoped Distribution) ---
-                                            let itemDiscounts: number[] = [];
+                                                // Re-derive correct index in sorted context if needed, but 'index' here is loop index
+                                                // The `previousItems` logic relies on `slice(0, index)` which is correct within this loop (sorted array).
 
-                                            if (item.multipleSetDiscount) {
-                                                // Ensure we pull from productDiscounts using item.id
-                                                const distribution = productDiscounts[item.id] || [];
+                                                // Ensure we use the proper cart reference for lookups (like isLastItemOfProduct)
+                                                // We should check `sortedCart` instead of `cart` inside the loop.
 
-                                                // Determine Offset
-                                                // Crucial: Filter for previous items of the SAME PRODUCT ID only
-                                                const previousItemsOfSameProduct = cart.slice(0, index).filter(i =>
-                                                    i.id === item.id && i.multipleSetDiscount
-                                                );
-                                                const startIndex = previousItemsOfSameProduct.reduce((acc, i) => acc + i.quantity, 0);
+                                                // --- Bulk Calculation Logic (Greedy Product-Scoped Distribution) ---
+                                                let itemDiscounts: number[] = [];
 
-                                                // Get Slice
-                                                itemDiscounts = distribution.slice(startIndex, startIndex + item.quantity);
+                                                if (item.multipleSetDiscount) {
+                                                    // Ensure we pull from productDiscounts using item.id
+                                                    const distribution = productDiscounts[item.id] || [];
 
-                                                // Fill with 0 if undefined (should not happen if calc is correct)
-                                                while (itemDiscounts.length < item.quantity) {
-                                                    itemDiscounts.push(0);
-                                                }
-                                            } else {
-                                                // No rule = 0% for all
-                                                itemDiscounts = new Array(item.quantity).fill(0);
-                                            }
+                                                    // Determine Offset
+                                                    // Crucial: Filter for previous items of the SAME PRODUCT ID only
+                                                    const previousItemsOfSameProduct = cart.slice(0, index).filter(i =>
+                                                        i.id === item.id && i.multipleSetDiscount
+                                                    );
+                                                    const startIndex = previousItemsOfSameProduct.reduce((acc, i) => acc + i.quantity, 0);
 
-                                            // Group by Discount Percentage
-                                            const groups: Record<number, number> = {};
-                                            itemDiscounts.forEach(d => {
-                                                groups[d] = (groups[d] || 0) + 1;
-                                            });
+                                                    // Get Slice
+                                                    itemDiscounts = distribution.slice(startIndex, startIndex + item.quantity);
 
-                                            // Convert to array of rows to render - Sorted Descending (Higher discount first)
-                                            const distinctDiscounts = Object.keys(groups).map(Number).sort((a, b) => b - a);
-
-                                            const renderedRows = distinctDiscounts.map((discountPercent, groupIdx) => {
-                                                const qty = groups[discountPercent];
-                                                const isDiscounted = discountPercent > 0;
-
-                                                const basePrice = item.priceAfterDiscount || item.price;
-                                                const addonsCost = item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0;
-                                                const singleItemTotal = basePrice + addonsCost;
-                                                const finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
-
-                                                return (
-                                                    <li
-                                                        key={`${item.cartItemId}-${discountPercent}`}
-                                                        className={cn(
-                                                            "group relative flex gap-5 animate-in slide-in-from-bottom-4 fade-in duration-500",
-                                                            isNew && "ring-2 ring-primary/20 rounded-2xl p-2 -m-2 bg-primary/5 shadow-[0_0_30px_rgba(50,200,180,0.15)] transition-all duration-1000"
-                                                        )}
-                                                        style={{ animationDelay: `${index * 50 + groupIdx * 20}ms` }}
-                                                    >
-                                                        {isNew && <div className="absolute inset-0 rounded-2xl animate-shimmer-highlight pointer-events-none" />}
-
-                                                        <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-secondary/30 shadow-sm group-hover:shadow-md transition-all duration-300">
-                                                            <Image
-                                                                src={item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
-                                                                alt={item.name}
-                                                                fill
-                                                                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                                            />
-                                                        </div>
-
-                                                        <div className="flex flex-1 flex-col justify-between min-h-[6rem] py-0.5 z-10">
-                                                            <div className="space-y-2">
-                                                                <div className="flex justify-between items-start gap-3">
-                                                                    <Link href={`/product/${item.id}`} className="font-bold text-base leading-snug hover:text-primary transition-colors line-clamp-2">
-                                                                        {item.name}
-                                                                    </Link>
-                                                                    <div className="flex flex-col items-end">
-                                                                        {isDiscounted ? (
-                                                                            <>
-                                                                                <span className="text-xs text-muted-foreground line-through">₹{(singleItemTotal * qty).toFixed(0)}</span>
-                                                                                <p className="font-bold text-base text-emerald-600 whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
-                                                                                <span className="text-[10px] font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 px-2 py-0.5 rounded-full flex gap-1.5 items-center mt-1 shadow-sm border border-emerald-500/20">
-                                                                                    <Tag className="w-3 h-3 fill-white/20" />
-                                                                                    Bundle Unlocked: {discountPercent}% Off
-                                                                                </span>
-                                                                            </>
-                                                                        ) : (
-                                                                            <p className="font-bold text-base text-primary whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-
-                                                                {(item.selectedVariants || item.selectedAddons) && (
-                                                                    <div className="flex flex-wrap gap-1.5">
-                                                                        {Object.values(item.selectedVariants || {}).map((v, i) => (
-                                                                            <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary/80 text-foreground/80">{v}</span>
-                                                                        ))}
-                                                                        {item.selectedAddons?.map((addon) => (
-                                                                            <span key={addon.id} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
-                                                                                + {addon.name}
-                                                                            </span>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            <div className="flex items-center justify-between pt-2">
-                                                                <div className="flex items-center gap-1 bg-secondary/40 rounded-full p-1 border border-border/50">
-                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-destructive"
-                                                                        onClick={() => updateQuantity(item.cartItemId, Math.max(0, item.quantity - 1))}
-                                                                        disabled={false}
-                                                                    >
-                                                                        <Minus className="h-3 w-3" />
-                                                                    </Button>
-                                                                    <span className="w-8 text-center text-xs font-bold tabular-nums">{qty}</span>
-                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-primary"
-                                                                        onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
-                                                                    >
-                                                                        <Plus className="h-3 w-3" />
-                                                                    </Button>
-                                                                </div>
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded-full" onClick={() => {
-                                                                    if (qty < item.quantity) {
-                                                                        updateQuantity(item.cartItemId, Math.max(0, item.quantity - qty));
-                                                                    } else {
-                                                                        setItemToDelete(item.cartItemId);
-                                                                    }
-                                                                }}>
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                );
-                                            });
-
-                                            // --- Upsell Nudge Logic ---
-                                            const totalQty = productQuantities[item.id.toString()] || 0;
-                                            const upsellNudges: React.ReactNode[] = [];
-
-                                            // Only render nudges for the last item occurrence to avoid duplication
-                                            // Check forward: Is there any subsequent item with same ID?
-                                            // Note: index is index in the flatMap loop
-                                            const isLastItemOfProduct = cart.slice(index + 1).findIndex(c => c.id === item.id) === -1;
-
-                                            if (isLastItemOfProduct) {
-                                                const ruleKey = productRules[item.id] || "";
-                                                const allTiers: { threshold: number, percent: number }[] = [];
-
-                                                // 1. Parse Set Discounts
-                                                if (ruleKey) {
-                                                    ruleKey.split('&&&').forEach(seg => {
-                                                        const [t, p] = seg.split('-');
-                                                        if (t && p) allTiers.push({ threshold: parseFloat(t), percent: parseFloat(p) });
-                                                    });
-                                                }
-
-                                                // 2. Parse More Than Discount
-                                                if (item.multipleDiscountMoreThan) {
-                                                    const [t, p] = item.multipleDiscountMoreThan.split('-');
-                                                    if (t && p) {
-                                                        // "More than 6" -> Needs 7.
-                                                        allTiers.push({ threshold: parseFloat(t) + 1, percent: parseFloat(p) });
+                                                    // Fill with 0 if undefined (should not happen if calc is correct)
+                                                    while (itemDiscounts.length < item.quantity) {
+                                                        itemDiscounts.push(0);
                                                     }
+                                                } else {
+                                                    // No rule = 0% for all
+                                                    itemDiscounts = new Array(item.quantity).fill(0);
                                                 }
 
-                                                // 3. Filter for Better Deals
-                                                const potentialUpsells = allTiers
-                                                    .filter(t => t.threshold > totalQty)
-                                                    .sort((a, b) => a.percent - b.percent);
+                                                // Group by Discount Percentage
+                                                const groups: Record<number, number> = {};
+                                                itemDiscounts.forEach(d => {
+                                                    groups[d] = (groups[d] || 0) + 1;
+                                                });
 
-                                                if (potentialUpsells.length > 0) {
-                                                    upsellNudges.push(
-                                                        <li key={`nudge-${item.cartItemId}`} className="pt-2 animate-in slide-in-from-left-4 fade-in duration-700 list-none">
-                                                            <div className="flex flex-col gap-2 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30 rounded-xl p-3 border border-indigo-100 dark:border-indigo-500/20 shadow-sm relative overflow-hidden">
-                                                                <div className="absolute top-0 right-0 p-2 opacity-10">
-                                                                    <Sparkles className="w-12 h-12 text-indigo-500" />
-                                                                </div>
+                                                // Convert to array of rows to render - Sorted Descending (Higher discount first)
+                                                const distinctDiscounts = Object.keys(groups).map(Number).sort((a, b) => b - a);
 
-                                                                <div className="flex items-center gap-2 mb-1">
-                                                                    <div className="p-1 bg-indigo-100 dark:bg-indigo-500/20 rounded-full">
-                                                                        <Sparkles className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
-                                                                    </div>
-                                                                    <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">
-                                                                        Unlock More Savings
-                                                                    </span>
-                                                                </div>
+                                                const renderedRows = distinctDiscounts.map((discountPercent, groupIdx) => {
+                                                    const qty = groups[discountPercent];
+                                                    const isDiscounted = discountPercent > 0;
 
-                                                                <div className="space-y-1.5 z-10">
-                                                                    {potentialUpsells.map((tier, idx) => {
-                                                                        const needed = tier.threshold - totalQty;
-                                                                        return (
-                                                                            <div key={idx} className="flex items-center justify-between text-xs group/offer cursor-default">
-                                                                                <span className="text-muted-foreground group-hover/offer:text-indigo-600 transition-colors">
-                                                                                    Add <span className="font-bold text-foreground">{needed}</span> more
-                                                                                </span>
-                                                                                <div className="flex items-center gap-1.5">
-                                                                                    <div className="h-px w-8 bg-indigo-200 dark:bg-indigo-800" />
-                                                                                    <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-white dark:bg-indigo-950/50 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-500/30 shadow-sm">
-                                                                                        Get {tier.percent}% Off
+                                                    const basePrice = item.priceAfterDiscount || item.price;
+                                                    const addonsCost = item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0;
+                                                    const singleItemTotal = basePrice + addonsCost;
+                                                    const finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
+
+                                                    return (
+                                                        <li
+                                                            key={`${item.cartItemId}-${discountPercent}`}
+                                                            className={cn(
+                                                                "group relative flex gap-5 animate-in slide-in-from-bottom-4 fade-in duration-500",
+                                                                isNew && "ring-2 ring-primary/20 rounded-2xl p-2 -m-2 bg-primary/5 shadow-[0_0_30px_rgba(50,200,180,0.15)] transition-all duration-1000"
+                                                            )}
+                                                            style={{ animationDelay: `${index * 50 + groupIdx * 20}ms` }}
+                                                        >
+                                                            {isNew && <div className="absolute inset-0 rounded-2xl animate-shimmer-highlight pointer-events-none" />}
+
+                                                            <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-secondary/30 shadow-sm group-hover:shadow-md transition-all duration-300">
+                                                                <Image
+                                                                    src={item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
+                                                                    alt={item.name}
+                                                                    fill
+                                                                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                                                />
+                                                            </div>
+
+                                                            <div className="flex flex-1 flex-col justify-between min-h-[6rem] py-0.5 z-10">
+                                                                <div className="space-y-2">
+                                                                    <div className="flex justify-between items-start gap-3">
+                                                                        <Link href={`/product/${item.id}`} className="font-bold text-base leading-snug hover:text-primary transition-colors line-clamp-2">
+                                                                            {item.name}
+                                                                        </Link>
+                                                                        <div className="flex flex-col items-end">
+                                                                            {isDiscounted ? (
+                                                                                <>
+                                                                                    <span className="text-xs text-muted-foreground line-through">₹{(singleItemTotal * qty).toFixed(0)}</span>
+                                                                                    <p className="font-bold text-base text-emerald-600 whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
+                                                                                    <span className="text-[10px] font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 px-2 py-0.5 rounded-full flex gap-1.5 items-center mt-1 shadow-sm border border-emerald-500/20">
+                                                                                        <Tag className="w-3 h-3 fill-white/20" />
+                                                                                        Bundle Unlocked: {discountPercent}% Off
                                                                                     </span>
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    })}
+                                                                                </>
+                                                                            ) : (
+                                                                                <p className="font-bold text-base text-primary whitespace-nowrap">₹{finalTotal.toFixed(0)}</p>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {(item.selectedVariants || item.selectedAddons) && (
+                                                                        <div className="flex flex-wrap gap-1.5">
+                                                                            {Object.values(item.selectedVariants || {}).map((v, i) => (
+                                                                                <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary/80 text-foreground/80">{v}</span>
+                                                                            ))}
+                                                                            {item.selectedAddons?.map((addon) => (
+                                                                                <span key={addon.id} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                                                                                    + {addon.name}
+                                                                                </span>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="flex items-center justify-between pt-2">
+                                                                    <div className="flex items-center gap-1 bg-secondary/40 rounded-full p-1 border border-border/50">
+                                                                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-destructive"
+                                                                            onClick={() => updateQuantity(item.cartItemId, Math.max(0, item.quantity - 1))}
+                                                                            disabled={false}
+                                                                        >
+                                                                            <Minus className="h-3 w-3" />
+                                                                        </Button>
+                                                                        <span className="w-8 text-center text-xs font-bold tabular-nums">{qty}</span>
+                                                                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white hover:text-primary"
+                                                                            onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
+                                                                        >
+                                                                            <Plus className="h-3 w-3" />
+                                                                        </Button>
+                                                                    </div>
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded-full" onClick={() => {
+                                                                        if (qty < item.quantity) {
+                                                                            updateQuantity(item.cartItemId, Math.max(0, item.quantity - qty));
+                                                                        } else {
+                                                                            setItemToDelete(item.cartItemId);
+                                                                        }
+                                                                    }}>
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </Button>
                                                                 </div>
                                                             </div>
                                                         </li>
                                                     );
-                                                }
-                                            }
+                                                });
 
-                                            return [...renderedRows, ...upsellNudges];
-                                        })
+                                                // --- Upsell Nudge Logic ---
+                                                const totalQty = productQuantities[item.id.toString()] || 0;
+                                                const upsellNudges: React.ReactNode[] = [];
+
+                                                // Only render nudges for the last item occurrence to avoid duplication
+                                                // Check forward: Is there any subsequent item with same ID?
+                                                // Note: index is index in the flatMap loop
+                                                const isLastItemOfProduct = cart.slice(index + 1).findIndex(c => c.id === item.id) === -1;
+
+                                                if (isLastItemOfProduct) {
+                                                    const ruleKey = productRules[item.id] || "";
+                                                    const allTiers: { threshold: number, percent: number }[] = [];
+
+                                                    // 1. Parse Set Discounts
+                                                    if (ruleKey) {
+                                                        ruleKey.split('&&&').forEach(seg => {
+                                                            const [t, p] = seg.split('-');
+                                                            if (t && p) allTiers.push({ threshold: parseFloat(t), percent: parseFloat(p) });
+                                                        });
+                                                    }
+
+                                                    // 2. Parse More Than Discount
+                                                    if (item.multipleDiscountMoreThan) {
+                                                        const [t, p] = item.multipleDiscountMoreThan.split('-');
+                                                        if (t && p) {
+                                                            // "More than 6" -> Needs 7.
+                                                            allTiers.push({ threshold: parseFloat(t) + 1, percent: parseFloat(p) });
+                                                        }
+                                                    }
+
+                                                    // 3. Filter for Better Deals
+                                                    // We want tiers where threshold > totalQty
+                                                    // Sort by Threshold Ascending (Closest goal first)
+                                                    // Take only the FIRST one (User request: "just show next possible discount")
+                                                    const potentialUpsells = allTiers
+                                                        .filter(t => t.threshold > totalQty)
+                                                        .sort((a, b) => a.threshold - b.threshold)
+                                                        .slice(0, 1);
+
+                                                    if (potentialUpsells.length > 0) {
+                                                        upsellNudges.push(
+                                                            <li key={`nudge-${item.cartItemId}`} className="pt-2 animate-in slide-in-from-left-4 fade-in duration-700 list-none">
+                                                                <div className="flex flex-col gap-2 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30 rounded-xl p-3 border border-indigo-100 dark:border-indigo-500/20 shadow-sm relative overflow-hidden">
+                                                                    <div className="absolute top-0 right-0 p-2 opacity-10">
+                                                                        <Sparkles className="w-12 h-12 text-indigo-500" />
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <div className="p-1 bg-indigo-100 dark:bg-indigo-500/20 rounded-full">
+                                                                            <Sparkles className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                                                                        </div>
+                                                                        <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">
+                                                                            Unlock More Savings
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div className="space-y-1.5 z-10">
+                                                                        {potentialUpsells.map((tier, idx) => {
+                                                                            const needed = tier.threshold - totalQty;
+                                                                            return (
+                                                                                <div key={idx} className="flex items-center justify-between text-xs group/offer cursor-default">
+                                                                                    <span className="text-muted-foreground group-hover/offer:text-indigo-600 transition-colors">
+                                                                                        Add <span className="font-bold text-foreground">{needed}</span> more
+                                                                                    </span>
+                                                                                    <div className="flex items-center gap-1.5">
+                                                                                        <div className="h-px w-8 bg-indigo-200 dark:bg-indigo-800" />
+                                                                                        <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-white dark:bg-indigo-950/50 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-500/30 shadow-sm">
+                                                                                            Get {tier.percent}% Off
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+                                                        );
+                                                    }
+                                                }
+
+                                                return [...renderedRows, ...upsellNudges];
+                                            })
                                     }
                                 </ul >
                                 {/* Summary Content Moved to ScrollArea */}
