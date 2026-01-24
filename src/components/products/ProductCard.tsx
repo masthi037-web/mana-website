@@ -16,9 +16,10 @@ import { useProduct } from '@/hooks/use-product';
 
 interface ProductCardProps {
   product: ProductWithImage;
+  hideDescription?: boolean;
 }
 
-export const ProductCard = ({ product }: ProductCardProps) => {
+export const ProductCard = ({ product, hideDescription = false }: ProductCardProps) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { text } = useTenant();
   const isWishlisted = isInWishlist(product.id);
@@ -249,11 +250,15 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <span className="text-[10px] text-muted-foreground font-medium ml-1">({product.rating.toFixed(1)})</span>
           </div>
 
-          <div className="hidden md:block">
-            <p className="text-muted-foreground/80 text-[10px] leading-snug line-clamp-2 font-medium break-words" title={product.description}>
-              {product.description}
-            </p>
-          </div>
+          {!hideDescription && (
+            <div className="hidden md:block">
+              <p className="text-muted-foreground/80 text-[11px] leading-snug line-clamp-2 font-medium break-words" title={product.description}>
+                {product.description}
+              </p>
+            </div>
+          )}
+
+
 
 
           {/* Footer Row */}

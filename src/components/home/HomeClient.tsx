@@ -360,7 +360,7 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
                                             </div>
                                         </div>
 
-                                        <div className="flex overflow-x-auto gap-3 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
+                                        <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
                                             {(() => {
                                                 const imageMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
                                                 const offerProducts = activeCategory ? activeCategory.catalogs.flatMap(c => c.products)
@@ -384,14 +384,15 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
                                                 return offerProducts.map((product, index) => (
                                                     <div
                                                         key={product.id}
-                                                        className="min-w-[160px] md:min-w-[220px] snap-center h-full animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
+                                                        className="min-w-[280px] md:min-w-[320px] snap-center h-full animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
                                                         style={{ animationDelay: `${index * 100}ms` }}
                                                     >
-                                                        <ProductCard product={product} />
+                                                        <ProductCard product={product} hideDescription={true} />
                                                     </div>
                                                 ));
                                             })()}
                                         </div>
+
 
                                     </div>
                                 )}
@@ -412,13 +413,14 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
                                             </div>
                                         </div>
 
-                                        <div className="flex overflow-x-auto gap-3 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
+                                        <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
                                             {newArrivals.map((product) => (
-                                                <div key={product.id} className="min-w-[160px] md:min-w-[220px] snap-center h-full">
-                                                    <ProductCard product={product} />
+                                                <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
+                                                    <ProductCard product={product} hideDescription={true} />
                                                 </div>
                                             ))}
                                         </div>
+
 
                                     </div>
                                 )}
@@ -439,13 +441,14 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
                                             </div>
                                         </div>
 
-                                        <div className="flex overflow-x-auto gap-3 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
+                                        <div className="flex overflow-x-auto gap-4 pb-8 -mx-4 px-4 scroll-smooth no-scrollbar snap-x snap-mandatory">
                                             {famousProducts.map((product) => (
-                                                <div key={product.id} className="min-w-[160px] md:min-w-[220px] snap-center h-full">
-                                                    <ProductCard product={product} />
+                                                <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center h-full">
+                                                    <ProductCard product={product} hideDescription={true} />
                                                 </div>
                                             ))}
                                         </div>
+
 
                                     </div>
                                 )}
