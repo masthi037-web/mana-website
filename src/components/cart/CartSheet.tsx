@@ -1169,24 +1169,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                 const needed = potentialUpsell.threshold - totalQty;
                                                 upsellNode = (
                                                     <div className="mt-2 animate-in slide-in-from-bottom-2 duration-500">
-                                                        <div className="group relative flex items-center justify-between gap-3 px-3 py-1.5 rounded-full border border-violet-500/30 bg-violet-50/10 dark:bg-violet-950/20 backdrop-blur-sm hover:bg-violet-50/30 transition-all duration-300 cursor-default">
-
-                                                            {/* Gradient Stroke Effect */}
-                                                            <div className="absolute inset-0 rounded-full border border-violet-500/20 pointer-events-none" />
-
-                                                            <div className="flex items-center gap-2">
-                                                                <Sparkles className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 animate-pulse" />
-                                                                <span className="text-xs font-medium text-foreground/80">
-                                                                    Add <span className="font-bold text-violet-700 dark:text-violet-300">{needed}</span> more
-                                                                </span>
-                                                            </div>
-
-                                                            <div className="flex items-center gap-1.5 pl-3 border-l border-violet-200 dark:border-violet-800/50">
-                                                                <span className="text-xs font-bold text-violet-700 dark:text-violet-300 whitespace-nowrap">
-                                                                    Get {potentialUpsell.percent}% Off
-                                                                </span>
-                                                                <ArrowRight className="w-3 h-3 text-violet-400 group-hover:translate-x-0.5 transition-transform" />
-                                                            </div>
+                                                        <div className="group flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 cursor-default mx-auto w-fit">
+                                                            <Tag className="w-4 h-4 text-white fill-white/20" />
+                                                            <span className="text-xs font-bold text-white uppercase tracking-wide">
+                                                                Add {needed} more to get {potentialUpsell.percent}% Off
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 );
