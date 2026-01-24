@@ -425,11 +425,27 @@ export default function AdminInventoryPage() {
                 safeImage !== (editingItem.catalogueImage || "");
         }
         if (manageMode === 'ADD_PRICING' && editingItem) {
-            return String(qty) !== String(editingItem.quantity) ||
-                String(sizeQuantity) !== String(editingItem.sizeQuantity || "") ||
-                String(price) !== String(editingItem.price) ||
-                String(discountedPrice) !== String(editingItem.priceAfterDiscount) ||
-                sizeStatus !== editingItem.sizeStatus;
+            // Compare as strings with null safety, or Numbers for prices
+            const currentQty = qty || "";
+            const originalQty = editingItem.quantity || "";
+
+            const currentSizeQty = sizeQuantity || "";
+            const originalSizeQty = editingItem.sizeQuantity || "";
+
+            const currentPrice = Number(price);
+            const originalPrice = Number(editingItem.price);
+
+            const currentDiscount = Number(discountedPrice);
+            const originalDiscount = Number(editingItem.priceAfterDiscount);
+
+            const currentStatus = sizeStatus || "ACTIVE";
+            const originalStatus = editingItem.sizeStatus || "ACTIVE";
+
+            return currentQty !== originalQty ||
+                currentSizeQty !== originalSizeQty ||
+                currentPrice !== originalPrice ||
+                currentDiscount !== originalDiscount ||
+                currentStatus !== originalStatus;
         }
         return true; // Default allow for other levels if any
     };
