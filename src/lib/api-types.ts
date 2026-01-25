@@ -13,7 +13,7 @@ export interface ProductSize {
     productId: number;
     productSizePrice: number;
     productSizePriceAfterDiscount: number;
-    size: string;
+    sizeProduct: string;
     sizeQuantity: string;
     productAddons: ProductAddon[];
     sizeStatus: string;
@@ -39,6 +39,7 @@ export interface Product {
     productPics: string;
     productStatus: string; // 'ACTIVE' | 'INACTIVE' etc.
     productDeliveryCost: number;
+    productQuantity: string;
     createdAt: string;
     updatedAt: string;
     productSize: ProductSize[];
@@ -76,6 +77,7 @@ export interface UpdateProductRequest {
     productPics: string;
     productStatus: string;
     productDeliveryCost: number;
+    productQuantity: string;
     famous: boolean;
     createdAt?: string;
     updatedAt?: string;
@@ -243,6 +245,7 @@ export interface CreateProductRequest {
     productStatus: string;
     famous: boolean;
     productDeliveryCost: number;
+    productQuantity: string;
     productPrice: number;
     productPriceAfterDiscount: number;
     productImage?: string;
@@ -256,6 +259,7 @@ export interface CreateProductResponse {
     catalogueId: number;
     productName: string; // ... other fields same as Product
     productStatus: string;
+    productQuantity: string;
     productPrice: number;
     productPriceAfterDiscount: number;
     productImage?: string;
@@ -268,7 +272,7 @@ export interface CreatePricingRequest {
     productId: number;
     productSizePrice?: number | null;
     productSizePriceAfterDiscount?: number | null;
-    size: string;
+    sizeProduct: string;
     sizeQuantity: string;
     sizeStatus: string;
 }
@@ -278,7 +282,7 @@ export interface CreatePricingResponse {
     productId: number;
     productSizePrice: number;
     productSizePriceAfterDiscount: number;
-    size: string;
+    sizeProduct: string;
     sizeQuantity: string;
     productAddons: ProductAddon[];
     sizeStatus: string;
@@ -289,7 +293,7 @@ export interface UpdatePricingRequest {
     productId: number;
     productSizePrice?: number | null;
     productSizePriceAfterDiscount?: number | null;
-    size: string;
+    sizeProduct: string;
     sizeQuantity: string;
     sizeStatus: string;
 }
@@ -299,7 +303,7 @@ export interface UpdatePricingResponse {
     productId: number;
     productSizePrice: number;
     productSizePriceAfterDiscount: number;
-    size: string;
+    sizeProduct: string;
     sizeQuantity: string;
     productAddons: ProductAddon[];
 }
@@ -375,7 +379,8 @@ export interface CheckoutCheckResponse {
     sizeStatus: string; // Enums.Status
     productSizePrice: number;
     productSizePriceAfterDiscount: number;
-    productQuantity: string;
+    productSize: string;
+    productQuantityAvailable: string;
     sizeQuantity: string;
     addonAndAddonPrice: string[];
     productId: number;

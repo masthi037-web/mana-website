@@ -60,6 +60,7 @@ export default function AdminInventoryPage() {
     const [prodInst, setProdInst] = useState("");
     const [prodOffer, setProdOffer] = useState("");
     const [prodDeliveryCost, setProdDeliveryCost] = useState("40");
+    const [prodQuantity, setProdQuantity] = useState("");
     const [isFamous, setIsFamous] = useState(false);
     const [price, setPrice] = useState("");
     const [discountedPrice, setDiscountedPrice] = useState("");
@@ -154,7 +155,8 @@ export default function AdminInventoryPage() {
                 productPriceAfterDiscount: p.productPriceAfterDiscount,
                 updatedAt: p.updatedAt,
                 createdAt: p.createdAt,
-                productPics: p.productPics // In case needed
+                productPics: p.productPics, // In case needed
+                productQuantity: p.productQuantity
             }));
         }
     });
@@ -169,7 +171,7 @@ export default function AdminInventoryPage() {
                 id: String(p.productSizeId),
                 price: p.productSizePrice,
                 priceAfterDiscount: p.productSizePriceAfterDiscount,
-                quantity: p.size,
+                quantity: p.sizeProduct,
                 sizeQuantity: p.sizeQuantity,
                 sizeStatus: p.sizeStatus || "ACTIVE",
                 addons: []
@@ -269,7 +271,7 @@ export default function AdminInventoryPage() {
                             productSizeId: Number(editingItem.id),
                             productId: Number(selectedProduct.id),
                             ...pricePayload,
-                            size: qty,
+                            sizeProduct: qty,
                             sizeQuantity: sizeQuantity,
                             sizeStatus: sizeStatus
                         });
@@ -277,7 +279,7 @@ export default function AdminInventoryPage() {
                         return adminService.createPricing({
                             productId: Number(selectedProduct.id),
                             ...pricePayload,
-                            size: qty,
+                            sizeProduct: qty,
                             sizeQuantity: sizeQuantity,
                             sizeStatus: sizeStatus
                         });
@@ -374,7 +376,8 @@ export default function AdminInventoryPage() {
                             : undefined,
                         multipleDiscountMoreThan: (moreThanQty && moreThanDiscount)
                             ? `${moreThanQty}-${moreThanDiscount}`
-                            : undefined
+                            : undefined,
+                        productQuantity: prodQuantity || "0"
                     });
                 } else {
                     return adminService.createProduct({
@@ -398,7 +401,8 @@ export default function AdminInventoryPage() {
                             : undefined,
                         multipleDiscountMoreThan: (moreThanQty && moreThanDiscount)
                             ? `${moreThanQty}-${moreThanDiscount}`
-                            : undefined
+                            : undefined,
+                        productQuantity: prodQuantity || "0"
                     });
                 }
             } else if (level === 'PRICING' && selectedProduct && !isManageSheetOpen) {
@@ -415,7 +419,7 @@ export default function AdminInventoryPage() {
                 return adminService.createPricing({
                     productId: Number(selectedProduct.id),
                     ...pricePayload,
-                    size: qty,
+                    sizeProduct: qty,
                     sizeQuantity: sizeQuantity,
                     sizeStatus: sizeStatus // Default or from state? Using state.
                 });
@@ -515,7 +519,7 @@ export default function AdminInventoryPage() {
     // --- NAVIGATION HANDLERS ---
     const resetForm = () => {
         setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst(""); setProdOffer("");
-        setProdDeliveryCost("40"); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setSizeQuantity(""); setSizeStatus("ACTIVE"); setIsMandatory(false);
+        setProdDeliveryCost("40"); setProdQuantity(""); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setSizeQuantity(""); setSizeStatus("ACTIVE"); setIsMandatory(false);
         setBulkDiscounts([]); setTempBulkQty(""); setTempBulkDiscount("");
         setMoreThanQty(""); setMoreThanDiscount("");
         setImage(null);
@@ -559,6 +563,7 @@ export default function AdminInventoryPage() {
         setDiscountedPrice(String(prod.productPriceAfterDiscount || prod.priceAfterDiscount || ""));
         setProdOffer(prod.productOffer || "");
         setProdDeliveryCost(String(prod.productDeliveryCost || prod.deliveryCost || "40"));
+        setProdQuantity(String(prod.productQuantity || ""));
         setIsFamous(!!prod.famous);
 
         // Bulk Discounts Parsing
@@ -718,6 +723,10 @@ export default function AdminInventoryPage() {
                             <div className="space-y-2">
                                 <Label>Delivery Cost</Label>
                                 <Input type="number" placeholder="40" value={prodDeliveryCost} onChange={e => setProdDeliveryCost(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Available Quantity</Label>
+                                <Input placeholder="10" value={prodQuantity} onChange={e => setProdQuantity(e.target.value)} />
                             </div>
                         </div>
 

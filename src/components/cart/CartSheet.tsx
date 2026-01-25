@@ -862,7 +862,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 }
 
                 // --- 3. STOCK CHECKS ---
-                let availableStock = parseInt(detail.productQuantity || '0');
+                let availableStock = parseInt(detail.productQuantityAvailable || detail.productSize || '0');
                 if (detail.sizeQuantity !== null && detail.sizeQuantity !== undefined && detail.sizeQuantity !== "") {
                     const parsed = parseInt(detail.sizeQuantity);
                     if (!isNaN(parsed)) availableStock = parsed;
