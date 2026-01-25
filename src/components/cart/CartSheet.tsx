@@ -805,13 +805,23 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     item.cartItemId = 'REMOVE_ME';
                     return;
                 }
-                if (item.multipleSetDiscount !== detail.multipleSetDiscount) {
+
+                const normalizeDiscount = (s: string | null | undefined) => {
+                    if (!s) return "";
+                    return s.split('&&&').sort().join('&&&');
+                };
+
+                const cartSetDiscount = normalizeDiscount(item.multipleSetDiscount);
+                const serverSetDiscount = normalizeDiscount(detail.multipleSetDiscount);
+
+                if (cartSetDiscount !== serverSetDiscount) {
                     item.multipleSetDiscount = detail.multipleSetDiscount;
-                    // Optional: If you want to block on discount change
-                    // blockingChanges = true; 
-                    // changes.push(`Discount rules for "${item.name}" have changed.`);
                 }
-                if (item.multipleDiscountMoreThan !== detail.multipleDiscountMoreThan) {
+
+                const cartMoreThan = (item.multipleDiscountMoreThan || "").trim();
+                const serverMoreThan = (detail.multipleDiscountMoreThan || "").trim();
+
+                if (cartMoreThan !== serverMoreThan) {
                     item.multipleDiscountMoreThan = detail.multipleDiscountMoreThan;
                 }
                 if (item.productOffer !== detail.productOffer) {
