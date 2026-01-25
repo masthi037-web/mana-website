@@ -1,5 +1,6 @@
 "use client";
 
+import imageCompression from 'browser-image-compression';
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,20 +71,32 @@ export function ImageUpload({
         setIsUploading(true);
 
         try {
+            // Compress Image
+            console.log(`Original File Size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+
+            const options = {
+                maxSizeMB: 0.3,
+                maxWidthOrHeight: 1200,
+                useWebWorker: true
+            };
+
+            const compressedFile = await imageCompression(file, options);
+            console.log(`Compressed File Size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+
             // 1. Get Signed URL
             const uniqueFileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
             const { signedUrl, filePath } = await adminService.getSignedUploadUrl(
                 companyDomain,
                 uniqueFileName,
-                file.type
+                compressedFile.type // Use compressed file type
             );
 
             // 2. Upload to GCP
             const response = await fetch(signedUrl, {
                 method: "PUT",
-                body: file,
+                body: compressedFile, // Upload compressed file
                 headers: {
-                    "Content-Type": file.type,
+                    "Content-Type": compressedFile.type,
                 },
                 credentials: 'omit',
                 mode: 'cors',
