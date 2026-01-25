@@ -751,6 +751,7 @@ export default function AdminInventoryPage() {
                                 value={discountedPrice}
                                 onChange={e => setDiscountedPrice(e.target.value)}
                                 className="bg-muted/30 border-dashed"
+                                disabled
                             />
                         </div>
 
