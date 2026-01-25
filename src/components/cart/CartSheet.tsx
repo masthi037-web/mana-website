@@ -739,9 +739,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
                 }
 
-                const productColourId = item.selectedVariants['Colour']
-                    ? item.colors?.find(c => c.name === item.selectedVariants['Colour'])?.id
-                    : null;
+                const productColourId = item.selectedColour?.id || null;
 
                 const addonIds = item.selectedAddons && item.selectedAddons.length > 0
                     ? item.selectedAddons.map(a => a.id).sort().join('&&&')
@@ -804,9 +802,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 }
 
                 // Colour Status
-                if (item.selectedVariants['Colour'] && detail.colourStatus && detail.colourStatus !== 'ACTIVE') {
+                if (item.selectedColour && detail.colourStatus && detail.colourStatus !== 'ACTIVE') {
                     blockingChanges = true;
-                    changes.push(`"${item.name}" (${item.selectedVariants['Colour']}) is currently unavailable and has been removed.`);
+                    changes.push(`"${item.name}" (${item.selectedColour.name}) is currently unavailable and has been removed.`);
                     item.cartItemId = 'REMOVE_ME';
                     return;
                 }
