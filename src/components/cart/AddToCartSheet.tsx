@@ -226,12 +226,28 @@ const AddToCartContent = ({
     }
     const selectedAddonsList = availableAddons.filter(a => selectedAddonIds.has(a.id));
 
-    // Calculate effective price (use explicit priceAfterDiscount if available, else fallback if base price matches)
-    const effectiveBasePrice = selectedPricingOption
-      ? ((selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0)
-        ? selectedPricingOption.priceAfterDiscount
-        : (Number(selectedPricingOption.price) === Number(product.price) && product.priceAfterDiscount ? product.priceAfterDiscount : selectedPricingOption.price))
-      : ((product.priceAfterDiscount && product.priceAfterDiscount > 0) ? product.priceAfterDiscount : product.price);
+    // Calculate effective price: Mirror ProductCard logic (Calc Percentage -> PriceAfterDiscount -> Base)
+    // 1. Resolve base price for this variant
+    const variantPrice = selectedPricingOption ? selectedPricingOption.price : product.price;
+
+    // 2. Resolve discount logic
+    let effectiveBasePrice = variantPrice;
+
+    const offerPercent = product.productOffer ? parseFloat(product.productOffer.toString().replace(/[^0-9.]/g, '')) : 0;
+
+    // Condition A: Percentage Offer exists (and variant price matches base product price)
+    if (offerPercent > 0 && variantPrice === product.price) {
+      const discountAmount = (variantPrice * offerPercent) / 100;
+      effectiveBasePrice = Math.round(variantPrice - discountAmount);
+    }
+    // Condition B: Explicit Variant Discount
+    else if (selectedPricingOption && selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0) {
+      effectiveBasePrice = selectedPricingOption.priceAfterDiscount;
+    }
+    // Condition C: Explicit Product Discount (fallback)
+    else if (variantPrice === product.price && product.priceAfterDiscount && product.priceAfterDiscount > 0) {
+      effectiveBasePrice = product.priceAfterDiscount;
+    }
 
 
 
@@ -328,10 +344,20 @@ const AddToCartContent = ({
                   const allPricesSame = prices.every(p => p === prices[0]);
 
                   return product.pricing.map((option) => {
-                    // Logic: Use variant discount if present. If not, and variant price == product price, use product discount.
-                    const finalOptionPrice = (option.priceAfterDiscount && option.priceAfterDiscount > 0)
-                      ? option.priceAfterDiscount
-                      : (Number(option.price) === Number(product.price) && product.priceAfterDiscount ? product.priceAfterDiscount : option.price);
+                    // Logic: Mirror ProductCard logic for consistent display
+                    let finalOptionPrice = option.price;
+                    const offerPercent = product.productOffer ? parseFloat(product.productOffer.toString().replace(/[^0-9.]/g, '')) : 0;
+
+                    if (offerPercent > 0 && option.price === product.price) {
+                      const discountAmount = (option.price * offerPercent) / 100;
+                      finalOptionPrice = Math.round(option.price - discountAmount);
+                    }
+                    else if (option.priceAfterDiscount && option.priceAfterDiscount > 0) {
+                      finalOptionPrice = option.priceAfterDiscount;
+                    }
+                    else if (option.price === product.price && product.priceAfterDiscount && product.priceAfterDiscount > 0) {
+                      finalOptionPrice = product.priceAfterDiscount;
+                    }
 
                     const hasOffer = finalOptionPrice < option.price;
 
@@ -439,15 +465,27 @@ const AddToCartContent = ({
           <div className="flex flex-col min-w-[30%]">
             <span className="text-[10px] font-medium text-muted-foreground uppercase">Total</span>
             {(() => {
-              const effectiveBase = selectedPricingOption
-                ? ((selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0)
-                  ? selectedPricingOption.priceAfterDiscount
-                  : (Number(selectedPricingOption.price) === Number(product.price) && product.priceAfterDiscount ? product.priceAfterDiscount : selectedPricingOption.price))
-                : ((product.priceAfterDiscount && product.priceAfterDiscount > 0) ? product.priceAfterDiscount : product.price);
+              const variantPrice = selectedPricingOption ? selectedPricingOption.price : product.price;
+              let effectiveBase = variantPrice;
+
+              const offerPercent = product.productOffer ? parseFloat(product.productOffer.toString().replace(/[^0-9.]/g, '')) : 0;
+
+              // Priority 1: Percentage Offer (for base price variants)
+              if (offerPercent > 0 && variantPrice === product.price) {
+                const discountAmount = (variantPrice * offerPercent) / 100;
+                effectiveBase = Math.round(variantPrice - discountAmount);
+              }
+              // Priority 2: Explicit Variant Discount
+              else if (selectedPricingOption && selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0) {
+                effectiveBase = selectedPricingOption.priceAfterDiscount;
+              }
+              // Priority 3: Explicit Product Discount (fallback)
+              else if (variantPrice === product.price && product.priceAfterDiscount && product.priceAfterDiscount > 0) {
+                effectiveBase = product.priceAfterDiscount;
+              }
 
               const finalPrice = effectiveBase + addonsPrice;
               const hasOffer = finalPrice < currentPrice;
-
 
               return (
                 <div className="flex flex-col items-start leading-none">
