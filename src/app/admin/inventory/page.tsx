@@ -601,8 +601,8 @@ export default function AdminInventoryPage() {
 
     // Auto-calculate Discounted Price when Offer or Price changes (for Product Level)
     useEffect(() => {
-        if (level === 'PRODUCT' && price && prodOffer) {
-            const calculated = calculateDiscount(Number(price), prodOffer);
+        if (level === 'PRODUCT' && price) {
+            const calculated = calculateDiscount(Number(price), prodOffer || "");
             setDiscountedPrice(String(calculated));
         }
     }, [price, prodOffer, level]);
