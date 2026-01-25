@@ -794,10 +794,15 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 if (isIdMismatch) {
                     blockingChanges = true;
-                    // Provide helpful debug info or user friendly error
-                    // "Data mismatch" sounds technical but that's what user asked for.
-                    // We'll treat it as a critical sync failure.
                     changes.push(`Critical: Data mismatch for "${item.name}". Please refresh cart.`);
+                    return;
+                }
+
+                if (productColourId && detail.colour && item.selectedColour?.name &&
+                    detail.colour.trim().toLowerCase() !== item.selectedColour.name.trim().toLowerCase()) {
+                    blockingChanges = true;
+                    changes.push(`Colour mismatch for "${item.name}" (Server: ${detail.colour}, Cart: ${item.selectedColour.name}). Removed.`);
+                    item.cartItemId = 'REMOVE_ME';
                     return;
                 }
                 if (item.multipleSetDiscount !== detail.multipleSetDiscount) {
