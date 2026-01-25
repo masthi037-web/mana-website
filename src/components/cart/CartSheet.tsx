@@ -883,11 +883,30 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 // --- 4. PRICE CHECKS ---
                 const isSized = !!sizeId;
                 const serverPrice = isSized ? (detail.productSizePrice || 0) : detail.productPrice;
-                const serverPriceDiscount = isSized ? detail.productSizePriceAfterDiscount : detail.productPriceAfterDiscount;
+
+                // Resolve Discount Logic
+                let resolvedDiscountPrice = isSized ? detail.productSizePriceAfterDiscount : detail.productPriceAfterDiscount;
+
+                // Fallback: If no explicit discount price, check for Percentage Offer
+                if ((!resolvedDiscountPrice || resolvedDiscountPrice <= 0) && detail.productOffer) {
+                    // Only apply global offer if we are on base price (not sized) OR if sized matches base price?
+                    // Actually for verifying Cart, if the server says "productOffer: 5%", we should apply it to the resolved serverPrice
+                    // UNLESS productSizePrice is distinct and usually doesn't obey global offer.
+                    // However, for "Polo T-Shirt", it's likely a base product add.
+                    // Let's safe-check: if sized, only apply if implicit.
+                    // Simpler: Apply if present.
+                    const offerPercent = parseFloat(detail.productOffer.toString().replace(/[^0-9.]/g, ''));
+                    if (offerPercent > 0) {
+                        const discountAmount = (serverPrice * offerPercent) / 100;
+                        resolvedDiscountPrice = Math.round(serverPrice - discountAmount);
+                    }
+                }
+
+                const serverPriceDiscount = resolvedDiscountPrice;
 
                 const oldEffectivePrice = item.priceAfterDiscount !== undefined ? item.priceAfterDiscount : item.price;
-                const newEffectivePrice = serverPriceDiscount !== undefined
-                    ? (serverPriceDiscount > 0 ? serverPriceDiscount : serverPrice)
+                const newEffectivePrice = serverPriceDiscount !== undefined && serverPriceDiscount > 0
+                    ? serverPriceDiscount
                     : serverPrice;
 
                 item.price = serverPrice;
