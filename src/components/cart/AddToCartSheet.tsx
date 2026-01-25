@@ -331,7 +331,7 @@ const AddToCartContent = ({
                     // Logic: Use variant discount if present. If not, and variant price == product price, use product discount.
                     const finalOptionPrice = (option.priceAfterDiscount && option.priceAfterDiscount > 0)
                       ? option.priceAfterDiscount
-                      : (option.price === product.price && product.priceAfterDiscount ? product.priceAfterDiscount : option.price);
+                      : (Number(option.price) === Number(product.price) && product.priceAfterDiscount ? product.priceAfterDiscount : option.price);
 
                     const hasOffer = finalOptionPrice < option.price;
 
