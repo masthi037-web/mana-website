@@ -727,12 +727,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 return;
             }
 
-            // 3. Construct Payload (Deduplicated)
-            const uniqueItemsMap = new Map<string, CheckoutValidationItem>();
-            // Also keep track of keys in order to map response back
-            const orderedKeys: string[] = [];
-
-            cart.forEach(item => {
+            // 3. Construct Payload (Direct Mapping 1-to-1)
+            const validationPayload: CheckoutValidationRequest = cart.map(item => {
                 let sizeId: number | null = null;
                 if (item.pricing && item.pricing.length > 0) {
                     const quantityVariant = item.selectedVariants['Quantity'];
@@ -751,24 +747,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     ? item.selectedAddons.map(a => a.id).sort().join('&&&')
                     : "";
 
-                const key = `${item.id}-${sizeId}-${productColourId}-${addonIds}`;
-
-                // Store Key on Item for easy lookup later (optimization)
-                // But we don't want to mutate cart state yet. 
-                // We'll regenerate key during cart iteration.
-
-                if (!uniqueItemsMap.has(key)) {
-                    uniqueItemsMap.set(key, {
-                        productId: parseInt(item.id),
-                        sizeId: sizeId,
-                        productColourId: productColourId ? parseInt(productColourId) : null,
-                        productAddonIds: addonIds
-                    });
-                    orderedKeys.push(key);
-                }
+                return {
+                    productId: parseInt(item.id),
+                    sizeId: sizeId,
+                    productColourId: productColourId ? parseInt(productColourId) : null,
+                    productAddonIds: addonIds
+                };
             });
-
-            const validationPayload: CheckoutValidationRequest = orderedKeys.map(key => uniqueItemsMap.get(key)!);
 
             // 4. Call Validation API
             const response = await validateCheckout(validationPayload);
@@ -783,15 +768,24 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             const changes: string[] = [];
             const newCart = cart.map(item => ({ ...item, selectedAddons: item.selectedAddons ? [...item.selectedAddons] : [] }));
 
-            // Map keys to response items for O(1) lookup
-            const responseMap = new Map<string, any>(); // using any for the response item momentarily or strict type
-            // Actually, response array corresponds to orderedKeys array by index
-            response.forEach((resItem, idx) => {
-                responseMap.set(orderedKeys[idx], resItem);
-            });
+            newCart.forEach((item, index) => {
+                const detail = response[index];
+                if (!detail) return;
 
-            newCart.forEach(item => {
-                // Re-derive key to map back to response
+                // --- 1. SYNC PRODUCT INFO ---
+                if (item.multipleSetDiscount !== detail.multipleSetDiscount) item.multipleSetDiscount = detail.multipleSetDiscount;
+                if (item.multipleDiscountMoreThan !== detail.multipleDiscountMoreThan) item.multipleDiscountMoreThan = detail.multipleDiscountMoreThan;
+                if (item.productOffer !== detail.productOffer) item.productOffer = detail.productOffer;
+
+                // --- 2. STATUS CHECKS ---
+                if (detail.productStatus !== 'ACTIVE') {
+                    blockingChanges = true;
+                    changes.push(`"${item.name}" is currently unavailable (Product Inactive) and has been removed.`);
+                    item.cartItemId = 'REMOVE_ME';
+                    return;
+                }
+
+                // Re-derive sizeId for logic checks
                 let sizeId: number | null = null;
                 if (item.pricing && item.pricing.length > 0) {
                     const quantityVariant = item.selectedVariants['Quantity'];
@@ -802,34 +796,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
                 }
 
-                const productColourId = item.selectedVariants['Colour']
-                    ? item.colors?.find(c => c.name === item.selectedVariants['Colour'])?.id
-                    : null;
-                const addonIds = item.selectedAddons && item.selectedAddons.length > 0
-                    ? item.selectedAddons.map(a => a.id).sort().join('&&&')
-                    : "";
-                const key = `${item.id}-${sizeId}-${productColourId}-${addonIds}`;
-
-                const detail = responseMap.get(key);
-                if (!detail) return; // Should not happen
-
-                // --- 1. SYNC PRODUCT INFO ---
-                // Always sync these fields to ensure latest discount logic applies
-                if (item.multipleSetDiscount !== detail.multipleSetDiscount) item.multipleSetDiscount = detail.multipleSetDiscount;
-                if (item.multipleDiscountMoreThan !== detail.multipleDiscountMoreThan) item.multipleDiscountMoreThan = detail.multipleDiscountMoreThan;
-                if (item.productOffer !== detail.productOffer) item.productOffer = detail.productOffer;
-
-
-                // --- 2. STATUS CHECKS ---
-                // Product Status
-                if (detail.productStatus !== 'ACTIVE') {
-                    blockingChanges = true;
-                    changes.push(`"${item.name}" is currently unavailable (Product Inactive) and has been removed.`);
-                    item.cartItemId = 'REMOVE_ME';
-                    return;
-                }
-
-                // Size Status (if size selected)
                 if (sizeId && detail.sizeStatus && detail.sizeStatus !== 'ACTIVE') {
                     blockingChanges = true;
                     changes.push(`"${item.name}" (${item.selectedVariants['Quantity']}) is currently unavailable and has been removed.`);
@@ -837,24 +803,19 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     return;
                 }
 
-                // Colour Status (if colour selected)
-                if (productColourId && detail.colourStatus && detail.colourStatus !== 'ACTIVE') {
+                // Colour Status
+                if (item.selectedVariants['Colour'] && detail.colourStatus && detail.colourStatus !== 'ACTIVE') {
                     blockingChanges = true;
                     changes.push(`"${item.name}" (${item.selectedVariants['Colour']}) is currently unavailable and has been removed.`);
                     item.cartItemId = 'REMOVE_ME';
                     return;
                 }
 
-
                 // --- 3. STOCK CHECKS ---
-                // User requirement: Always check sizeQuantity if it's not null, regardless of whether strict sizeId was selected logic (assumes API relates sizeQuantity to the relevant size)
                 let availableStock = parseInt(detail.productQuantity || '0');
-
                 if (detail.sizeQuantity !== null && detail.sizeQuantity !== undefined && detail.sizeQuantity !== "") {
                     const parsed = parseInt(detail.sizeQuantity);
-                    if (!isNaN(parsed)) {
-                        availableStock = parsed;
-                    }
+                    if (!isNaN(parsed)) availableStock = parsed;
                 }
 
                 if (item.quantity > availableStock) {
@@ -869,20 +830,16 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     if (item.cartItemId === 'REMOVE_ME') return;
                 }
 
-
                 // --- 4. PRICE CHECKS ---
-                // Determine Correct Source Price based on Variant Selection
-                const serverPrice = sizeId ? (detail.productSizePrice || 0) : detail.productPrice;
-                const serverPriceDiscount = sizeId ? detail.productSizePriceAfterDiscount : detail.productPriceAfterDiscount;
+                const isSized = !!sizeId;
+                const serverPrice = isSized ? (detail.productSizePrice || 0) : detail.productPrice;
+                const serverPriceDiscount = isSized ? detail.productSizePriceAfterDiscount : detail.productPriceAfterDiscount;
 
                 const oldEffectivePrice = item.priceAfterDiscount !== undefined ? item.priceAfterDiscount : item.price;
                 const newEffectivePrice = serverPriceDiscount !== undefined
-                    ? (serverPriceDiscount > 0 ? serverPriceDiscount : serverPrice) // Use discount if positive, else base
+                    ? (serverPriceDiscount > 0 ? serverPriceDiscount : serverPrice)
                     : serverPrice;
-                // NOTE: API typically sends standard price in 'productPrice'. 
-                // If 'productPriceAfterDiscount' is present/valid, that's the effective price.
 
-                // Update Item
                 item.price = serverPrice;
                 item.priceAfterDiscount = (serverPriceDiscount && serverPriceDiscount > 0) ? serverPriceDiscount : undefined;
 
@@ -891,19 +848,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     changes.push(`Price of "${item.name}" updated from ₹${oldEffectivePrice} to ₹${newEffectivePrice}.`);
                 }
 
-
                 // --- 5. ADDON CHECKS ---
                 if (item.selectedAddons && item.selectedAddons.length > 0 && detail.addonAndAddonPrice) {
                     detail.addonAndAddonPrice.forEach((str: string) => {
                         const parts = str.split(':');
                         if (parts.length >= 2) {
                             const idStr = parts[0];
-                            // Price might be part 1, but what if name contains : ? 
-                            // Legacy/User format implies "id:price" or "name:price"?
-                            // User requirement just said "List<String> addonAndAddonPrice".
-                            // Assuming standard "ID:Price" or we iterate to find match.
-                            // Safest: Check ID match.
-                            const priceStr = parts[parts.length - 1]; // Last part is price
+                            const priceStr = parts[parts.length - 1];
                             const addonIndex = item.selectedAddons!.findIndex(a => a.id.toString() === idStr);
 
                             if (addonIndex > -1) {
@@ -918,8 +869,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     });
                 }
             });
-
-
             const finalCart = newCart.filter(item => item.cartItemId !== 'REMOVE_ME');
 
             // Always update cart to reflect latest server data (silent updates included)
