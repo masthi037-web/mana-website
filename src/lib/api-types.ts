@@ -41,6 +41,8 @@ export interface Product {
     productDeliveryCost: number;
     productQuantity: string;
     createdAt: string;
+    productPrice: number;
+    productPriceAfterDiscount: number;
     updatedAt: string;
     productSize: ProductSize[];
     productRatings: ProductRating[];

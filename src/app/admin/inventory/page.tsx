@@ -171,7 +171,7 @@ export default function AdminInventoryPage() {
                 id: String(p.productSizeId),
                 price: p.productSizePrice,
                 priceAfterDiscount: p.productSizePriceAfterDiscount,
-                quantity: p.sizeProduct,
+                quantity: p.size,
                 sizeQuantity: p.sizeQuantity,
                 sizeStatus: p.sizeStatus || "ACTIVE",
                 addons: []
@@ -271,7 +271,7 @@ export default function AdminInventoryPage() {
                             productSizeId: Number(editingItem.id),
                             productId: Number(selectedProduct.id),
                             ...pricePayload,
-                            sizeProduct: qty,
+                            size: qty,
                             sizeQuantity: sizeQuantity,
                             sizeStatus: sizeStatus
                         });
@@ -279,7 +279,7 @@ export default function AdminInventoryPage() {
                         return adminService.createPricing({
                             productId: Number(selectedProduct.id),
                             ...pricePayload,
-                            sizeProduct: qty,
+                            size: qty,
                             sizeQuantity: sizeQuantity,
                             sizeStatus: sizeStatus
                         });
@@ -416,7 +416,7 @@ export default function AdminInventoryPage() {
                 return adminService.createPricing({
                     productId: Number(selectedProduct.id),
                     ...pricePayload,
-                    sizeProduct: qty,
+                    size: qty,
                     sizeQuantity: sizeQuantity,
                     sizeStatus: sizeStatus // Default or from state? Using state.
                 });

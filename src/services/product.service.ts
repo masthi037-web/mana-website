@@ -98,7 +98,7 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
     const pricingOptions = apiProd.productSize?.map(p => ({
         id: String(p.productSizeId),
         price: p.productSizePrice,
-        quantity: p.sizeProduct,
+        quantity: p.size,
         sizeQuantity: p.sizeQuantity,
         sizeStatus: p.sizeStatus,
         addons: p.productAddons?.map(a => ({
