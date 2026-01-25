@@ -378,9 +378,14 @@ export interface CheckoutCheckResponse {
     productQuantity: string;
     sizeQuantity: string;
     addonAndAddonPrice: string[];
+    productId: number;
+    sizeId: number | null;
+    productColourId: number | null;
 }
 
-export type CheckoutValidationRequest = CheckoutValidationItem[];
+export interface CheckoutValidationRequest {
+    items: CheckoutValidationItem[];
+}
 
 
 // --- Order & Payment Interfaces ---

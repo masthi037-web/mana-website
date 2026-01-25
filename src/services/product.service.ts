@@ -145,12 +145,12 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
 export async function validateCheckout(payload: CheckoutValidationRequest): Promise<CheckoutCheckResponse[] | null> {
     try {
         console.log('Validating checkout with payload:', JSON.stringify(payload, null, 2));
-        const data = await apiClient<CheckoutCheckResponse[]>('/product/checkout/check', {
+        const data = await apiClient<{ productDetails: CheckoutCheckResponse[] }>('/product/checkout/check', {
             method: 'POST',
             body: JSON.stringify(payload),
             next: { revalidate: 0 } // No cache
         });
-        return data;
+        return data.productDetails;
     } catch (error) {
         console.error('Checkout validation failed:', error);
         return null;

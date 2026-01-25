@@ -728,7 +728,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             }
 
             // 3. Construct Payload (Direct Mapping 1-to-1)
-            const validationPayload: CheckoutValidationRequest = cart.map(item => {
+            const validationPayload: CheckoutValidationItem[] = cart.map(item => {
                 let sizeId: number | null = null;
                 if (item.pricing && item.pricing.length > 0) {
                     const quantityVariant = item.selectedVariants['Quantity'];
@@ -754,7 +754,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             });
 
             // 4. Call Validation API
-            const response = await validateCheckout(validationPayload);
+            const response = await validateCheckout({ items: validationPayload });
 
             if (!response) {
                 toast({ variant: "destructive", description: "Validation failed. Please try again." });
@@ -770,20 +770,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 const detail = response[index];
                 if (!detail) return;
 
-                // --- 1. SYNC PRODUCT INFO ---
-                if (item.multipleSetDiscount !== detail.multipleSetDiscount) item.multipleSetDiscount = detail.multipleSetDiscount;
-                if (item.multipleDiscountMoreThan !== detail.multipleDiscountMoreThan) item.multipleDiscountMoreThan = detail.multipleDiscountMoreThan;
-                if (item.productOffer !== detail.productOffer) item.productOffer = detail.productOffer;
-
-                // --- 2. STATUS CHECKS ---
-                if (detail.productStatus !== 'ACTIVE') {
-                    blockingChanges = true;
-                    changes.push(`"${item.name}" is currently unavailable (Product Inactive) and has been removed.`);
-                    item.cartItemId = 'REMOVE_ME';
-                    return;
-                }
-
-                // Re-derive sizeId for logic checks
+                // --- 0. IDENTITY CHECK (Data Mismatch) ---
+                // Re-derive keys to verify response matches request
                 let sizeId: number | null = null;
                 if (item.pricing && item.pricing.length > 0) {
                     const quantityVariant = item.selectedVariants['Quantity'];
@@ -793,6 +781,52 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     }
                     if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
                 }
+                const productColourId = item.selectedColour?.id ? parseInt(item.selectedColour.id) : null;
+
+                // Verify IDs match (Server vs Client)
+                const isIdMismatch = detail.productId !== parseInt(item.id) ||
+                    (detail.sizeId !== undefined && detail.sizeId !== sizeId) ||
+                    (detail.productColourId !== undefined && detail.productColourId !== productColourId);
+
+                // Note: detail.sizeId might be null/undefined if not returned by older servers, 
+                // but user asked us to add it, so valid server should return it.
+                // We strictly check if it IS returned.
+
+                if (isIdMismatch) {
+                    blockingChanges = true;
+                    // Provide helpful debug info or user friendly error
+                    // "Data mismatch" sounds technical but that's what user asked for.
+                    // We'll treat it as a critical sync failure.
+                    changes.push(`Critical: Data mismatch for "${item.name}". Please refresh cart.`);
+                    return;
+                }
+                if (item.multipleSetDiscount !== detail.multipleSetDiscount) {
+                    item.multipleSetDiscount = detail.multipleSetDiscount;
+                    // Optional: If you want to block on discount change
+                    // blockingChanges = true; 
+                    // changes.push(`Discount rules for "${item.name}" have changed.`);
+                }
+                if (item.multipleDiscountMoreThan !== detail.multipleDiscountMoreThan) {
+                    item.multipleDiscountMoreThan = detail.multipleDiscountMoreThan;
+                }
+                if (item.productOffer !== detail.productOffer) {
+                    const oldOffer = item.productOffer;
+                    item.productOffer = detail.productOffer;
+                    if (oldOffer !== detail.productOffer) {
+                        blockingChanges = true;
+                        changes.push(`Offer for "${item.name}" updated: ${detail.productOffer || 'None'}`);
+                    }
+                }
+
+                // --- 2. STATUS CHECKS ---
+                if (detail.productStatus !== 'ACTIVE') {
+                    blockingChanges = true;
+                    changes.push(`"${item.name}" is currently unavailable (Product Inactive) and has been removed.`);
+                    item.cartItemId = 'REMOVE_ME';
+                    return;
+                }
+
+                // (sizeId is already derived above for identity check)
 
                 if (sizeId && detail.sizeStatus && detail.sizeStatus !== 'ACTIVE') {
                     blockingChanges = true;
