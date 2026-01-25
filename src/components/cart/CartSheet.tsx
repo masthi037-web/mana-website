@@ -766,8 +766,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             const changes: string[] = [];
             const newCart = cart.map(item => ({ ...item, selectedAddons: item.selectedAddons ? [...item.selectedAddons] : [] }));
 
+            // Handle wrapped response (server returns { productDetails: [...] }) or direct array
+            const details = Array.isArray(response) ? response : ((response as any).productDetails || []);
+
             newCart.forEach((item, index) => {
-                const detail = response[index];
+                const detail = details[index];
                 if (!detail) return;
 
                 // --- 0. IDENTITY CHECK (Data Mismatch) ---
