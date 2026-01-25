@@ -49,6 +49,7 @@ export type Product = {
   productOffer?: string;
   multipleSetDiscount?: string;
   multipleDiscountMoreThan?: string;
+  productQuantity?: string;
   colors?: ProductColor[];
 };
 

@@ -377,7 +377,7 @@ export default function AdminInventoryPage() {
                         multipleDiscountMoreThan: (moreThanQty && moreThanDiscount)
                             ? `${moreThanQty}-${moreThanDiscount}`
                             : undefined,
-                        productQuantity: prodQuantity || "0"
+                        productQuantity: prodQuantity
                     });
                 } else {
                     return adminService.createProduct({
@@ -399,10 +399,7 @@ export default function AdminInventoryPage() {
                         multipleSetDiscount: bulkDiscounts.length > 0
                             ? bulkDiscounts.map(bd => `${bd.qty}-${bd.discount}`).join('&&&')
                             : undefined,
-                        multipleDiscountMoreThan: (moreThanQty && moreThanDiscount)
-                            ? `${moreThanQty}-${moreThanDiscount}`
-                            : undefined,
-                        productQuantity: prodQuantity || "0"
+                        productQuantity: prodQuantity
                     });
                 }
             } else if (level === 'PRICING' && selectedProduct && !isManageSheetOpen) {
@@ -837,6 +834,16 @@ export default function AdminInventoryPage() {
                                 <Input placeholder="1 Kg" value={qty} onChange={e => setQty(e.target.value)} />
                             </div>
 
+                            <div className="space-y-2">
+                                <Label>Available Quantity for this Variant</Label>
+                                <Input
+                                    placeholder={selectedProduct?.productQuantity ? "Managed by Product" : "Unit Qty"}
+                                    value={sizeQuantity}
+                                    onChange={e => setSizeQuantity(e.target.value)}
+                                    disabled={!!selectedProduct?.productQuantity}
+                                />
+                            </div>
+
                             {selectedProduct && selectedProduct.productPrice > 0 ? (
                                 <div className="p-3 bg-muted rounded-md border border-dashed my-2">
                                     <p className="text-sm font-medium text-muted-foreground">
@@ -1006,7 +1013,13 @@ export default function AdminInventoryPage() {
                                             </div>
                                             <div className="space-y-1">
                                                 <Label className="text-xs">Size Quantity</Label>
-                                                <Input value={sizeQuantity} onChange={e => setSizeQuantity(e.target.value)} className="h-8 bg-background" placeholder="Unit Qty" />
+                                                <Input
+                                                    value={sizeQuantity}
+                                                    onChange={e => setSizeQuantity(e.target.value)}
+                                                    className="h-8 bg-background"
+                                                    placeholder={selectedProduct?.productQuantity ? "Managed by Product" : "Unit Qty"}
+                                                    disabled={!!selectedProduct?.productQuantity}
+                                                />
                                             </div>
                                             <div className="space-y-1">
                                                 <Label className="text-xs">Price</Label>
