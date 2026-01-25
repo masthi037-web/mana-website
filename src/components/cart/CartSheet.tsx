@@ -832,7 +832,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     item.productOffer = detail.productOffer;
                     if (oldOffer !== detail.productOffer) {
                         blockingChanges = true;
-                        changes.push(`Offer for "${item.name}" updated: ${detail.productOffer || 'None'}`);
+                        if (!detail.productOffer) {
+                            changes.push(`Sorry, the offer for "${item.name}" has expired.`);
+                        } else {
+                            changes.push(`Offer for "${item.name}" updated: ${detail.productOffer}`);
+                        }
                     }
                 }
 
