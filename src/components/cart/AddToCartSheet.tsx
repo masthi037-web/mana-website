@@ -230,7 +230,7 @@ const AddToCartContent = ({
     const effectiveBasePrice = selectedPricingOption
       ? ((selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0)
         ? selectedPricingOption.priceAfterDiscount
-        : (selectedPricingOption.price === product.price && product.priceAfterDiscount ? product.priceAfterDiscount : selectedPricingOption.price))
+        : (Number(selectedPricingOption.price) === Number(product.price) && product.priceAfterDiscount ? product.priceAfterDiscount : selectedPricingOption.price))
       : ((product.priceAfterDiscount && product.priceAfterDiscount > 0) ? product.priceAfterDiscount : product.price);
 
 
@@ -442,7 +442,7 @@ const AddToCartContent = ({
               const effectiveBase = selectedPricingOption
                 ? ((selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0)
                   ? selectedPricingOption.priceAfterDiscount
-                  : (selectedPricingOption.price === product.price && product.priceAfterDiscount ? product.priceAfterDiscount : selectedPricingOption.price))
+                  : (Number(selectedPricingOption.price) === Number(product.price) && product.priceAfterDiscount ? product.priceAfterDiscount : selectedPricingOption.price))
                 : ((product.priceAfterDiscount && product.priceAfterDiscount > 0) ? product.priceAfterDiscount : product.price);
 
               const finalPrice = effectiveBase + addonsPrice;
