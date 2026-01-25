@@ -266,8 +266,8 @@ export interface CreateProductResponse {
 
 export interface CreatePricingRequest {
     productId: number;
-    productSizePrice: number;
-    productSizePriceAfterDiscount: number;
+    productSizePrice?: number | null;
+    productSizePriceAfterDiscount?: number | null;
     size: string;
     sizeQuantity: string;
     sizeStatus: string;
@@ -287,8 +287,8 @@ export interface CreatePricingResponse {
 export interface UpdatePricingRequest {
     productSizeId: number;
     productId: number;
-    productSizePrice: number;
-    productSizePriceAfterDiscount: number;
+    productSizePrice?: number | null;
+    productSizePriceAfterDiscount?: number | null;
     size: string;
     sizeQuantity: string;
     sizeStatus: string;

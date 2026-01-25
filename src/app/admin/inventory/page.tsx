@@ -255,12 +255,20 @@ export default function AdminInventoryPage() {
             if (isManageSheetOpen) {
                 // Manage Sheet Flow
                 if (manageMode === 'ADD_PRICING' && selectedProduct) {
+                    const hasBasePrice = !!(selectedProduct.price && selectedProduct.price > 0);
+                    const pricePayload = hasBasePrice ? {
+                        productSizePrice: null,
+                        productSizePriceAfterDiscount: null
+                    } : {
+                        productSizePrice: Number(price),
+                        productSizePriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
+                    };
+
                     if (editingItem) {
                         return adminService.updateProductSize({
                             productSizeId: Number(editingItem.id),
                             productId: Number(selectedProduct.id),
-                            productSizePrice: Number(price),
-                            productSizePriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
+                            ...pricePayload,
                             size: qty,
                             sizeQuantity: sizeQuantity,
                             sizeStatus: sizeStatus
@@ -268,8 +276,7 @@ export default function AdminInventoryPage() {
                     } else {
                         return adminService.createPricing({
                             productId: Number(selectedProduct.id),
-                            productSizePrice: Number(price),
-                            productSizePriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
+                            ...pricePayload,
                             size: qty,
                             sizeQuantity: sizeQuantity,
                             sizeStatus: sizeStatus
@@ -396,10 +403,18 @@ export default function AdminInventoryPage() {
                 }
             } else if (level === 'PRICING' && selectedProduct && !isManageSheetOpen) {
                 // Classic Flow
-                return adminService.createPricing({
-                    productId: Number(selectedProduct.id),
+                const hasBasePrice = !!(selectedProduct.price && selectedProduct.price > 0);
+                const pricePayload = hasBasePrice ? {
+                    productSizePrice: null,
+                    productSizePriceAfterDiscount: null
+                } : {
                     productSizePrice: Number(price),
                     productSizePriceAfterDiscount: discountedPrice ? Number(discountedPrice) : Number(price),
+                };
+
+                return adminService.createPricing({
+                    productId: Number(selectedProduct.id),
+                    ...pricePayload,
                     size: qty,
                     sizeQuantity: sizeQuantity,
                     sizeStatus: sizeStatus // Default or from state? Using state.
