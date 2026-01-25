@@ -226,10 +226,11 @@ const AddToCartContent = ({
     }
     const selectedAddonsList = availableAddons.filter(a => selectedAddonIds.has(a.id));
 
-    // Calculate effective price with offer
-    const offerPercentage = product.productOffer ? parseFloat(product.productOffer) : 0;
-    const hasOffer = !isNaN(offerPercentage) && offerPercentage > 0;
-    const effectiveBasePrice = hasOffer ? basePrice - (basePrice * offerPercentage / 100) : basePrice;
+    // Calculate effective price (use explicit priceAfterDiscount if available)
+    const effectiveBasePrice = selectedPricingOption
+      ? ((selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0) ? selectedPricingOption.priceAfterDiscount : selectedPricingOption.price)
+      : ((product.priceAfterDiscount && product.priceAfterDiscount > 0) ? product.priceAfterDiscount : product.price);
+
 
 
 
@@ -325,9 +326,9 @@ const AddToCartContent = ({
                   const allPricesSame = prices.every(p => p === prices[0]);
 
                   return product.pricing.map((option) => {
-                    const offerPercentage = product.productOffer ? parseFloat(product.productOffer) : 0;
-                    const hasOffer = !isNaN(offerPercentage) && offerPercentage > 0;
-                    const finalOptionPrice = hasOffer ? option.price - (option.price * offerPercentage / 100) : option.price;
+                    const finalOptionPrice = (option.priceAfterDiscount && option.priceAfterDiscount > 0) ? option.priceAfterDiscount : option.price;
+                    const hasOffer = finalOptionPrice < option.price;
+
 
                     return (
                       <OptionCard
@@ -431,9 +432,13 @@ const AddToCartContent = ({
           <div className="flex flex-col min-w-[30%]">
             <span className="text-[10px] font-medium text-muted-foreground uppercase">Total</span>
             {(() => {
-              const offerPercentage = product.productOffer ? parseFloat(product.productOffer) : 0;
-              const hasOffer = !isNaN(offerPercentage) && offerPercentage > 0;
-              const finalPrice = hasOffer ? currentPrice - (currentPrice * offerPercentage / 100) : currentPrice;
+              const effectiveBase = selectedPricingOption
+                ? ((selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0) ? selectedPricingOption.priceAfterDiscount : selectedPricingOption.price)
+                : ((product.priceAfterDiscount && product.priceAfterDiscount > 0) ? product.priceAfterDiscount : product.price);
+
+              const finalPrice = effectiveBase + addonsPrice;
+              const hasOffer = finalPrice < currentPrice;
+
 
               return (
                 <div className="flex flex-col items-start leading-none">
