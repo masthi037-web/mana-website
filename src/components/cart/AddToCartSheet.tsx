@@ -226,9 +226,11 @@ const AddToCartContent = ({
     }
     const selectedAddonsList = availableAddons.filter(a => selectedAddonIds.has(a.id));
 
-    // Calculate effective price (use explicit priceAfterDiscount if available)
+    // Calculate effective price (use explicit priceAfterDiscount if available, else fallback if base price matches)
     const effectiveBasePrice = selectedPricingOption
-      ? ((selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0) ? selectedPricingOption.priceAfterDiscount : selectedPricingOption.price)
+      ? ((selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0)
+        ? selectedPricingOption.priceAfterDiscount
+        : (selectedPricingOption.price === product.price && product.priceAfterDiscount ? product.priceAfterDiscount : selectedPricingOption.price))
       : ((product.priceAfterDiscount && product.priceAfterDiscount > 0) ? product.priceAfterDiscount : product.price);
 
 
@@ -326,8 +328,13 @@ const AddToCartContent = ({
                   const allPricesSame = prices.every(p => p === prices[0]);
 
                   return product.pricing.map((option) => {
-                    const finalOptionPrice = (option.priceAfterDiscount && option.priceAfterDiscount > 0) ? option.priceAfterDiscount : option.price;
+                    // Logic: Use variant discount if present. If not, and variant price == product price, use product discount.
+                    const finalOptionPrice = (option.priceAfterDiscount && option.priceAfterDiscount > 0)
+                      ? option.priceAfterDiscount
+                      : (option.price === product.price && product.priceAfterDiscount ? product.priceAfterDiscount : option.price);
+
                     const hasOffer = finalOptionPrice < option.price;
+
 
 
                     return (
@@ -433,7 +440,9 @@ const AddToCartContent = ({
             <span className="text-[10px] font-medium text-muted-foreground uppercase">Total</span>
             {(() => {
               const effectiveBase = selectedPricingOption
-                ? ((selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0) ? selectedPricingOption.priceAfterDiscount : selectedPricingOption.price)
+                ? ((selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0)
+                  ? selectedPricingOption.priceAfterDiscount
+                  : (selectedPricingOption.price === product.price && product.priceAfterDiscount ? product.priceAfterDiscount : selectedPricingOption.price))
                 : ((product.priceAfterDiscount && product.priceAfterDiscount > 0) ? product.priceAfterDiscount : product.price);
 
               const finalPrice = effectiveBase + addonsPrice;
