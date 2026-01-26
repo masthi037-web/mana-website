@@ -877,7 +877,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 // Determine Variant/Stock Key
                 let sizeId: number | null = null;
                 if (item.pricing && item.pricing.length > 0) {
-                    const quantityVariant = item.selectedVariants['Quantity'];
+                    const quantityVariant = item.selectedVariants?.['Quantity'];
                     if (quantityVariant) {
                         const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
                         if (matchedPricing) sizeId = parseInt(matchedPricing.id);
@@ -943,7 +943,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 // Re-derive keys to verify response matches request
                 let sizeId: number | null = null;
                 if (item.pricing && item.pricing.length > 0) {
-                    const quantityVariant = item.selectedVariants['Quantity'];
+                    const quantityVariant = item.selectedVariants?.['Quantity'];
                     if (quantityVariant) {
                         const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
                         if (matchedPricing) sizeId = parseInt(matchedPricing.id);
@@ -1386,7 +1386,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                             <div className="flex flex-col">
                                                                 <span className="text-sm font-medium">{item.name}</span>
                                                                 <span className="text-xs text-muted-foreground">
-                                                                    {item.selectedVariants['Quantity'] || item.selectedColour?.name || "Standard Identity"}
+                                                                    {item.selectedVariants?.['Quantity'] || item.selectedColour?.name || "Standard Identity"}
                                                                 </span>
                                                             </div>
 
