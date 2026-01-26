@@ -138,7 +138,14 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
             name: c.colour,
             image: c.productPics,
             status: c.colourStatus
-        }))
+        })),
+        reviews: apiProd.productRatings?.map(r => ({
+            id: String(r.productRatingId),
+            author: "Verified User", // API doesn't seem to return name in ProductRating interface, fallback
+            rating: r.productRating,
+            text: r.productReview,
+            date: new Date(r.createdAt).toLocaleDateString()
+        })) || []
     };
 }
 

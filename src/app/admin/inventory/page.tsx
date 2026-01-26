@@ -157,7 +157,8 @@ export default function AdminInventoryPage() {
                 updatedAt: p.updatedAt,
                 createdAt: p.createdAt,
                 productPics: p.productPics, // In case needed
-                productQuantity: p.productQuantity
+                productQuantity: p.productQuantity,
+                productStatus: p.productStatus // Added missing field
             }));
         }
     });
@@ -1043,7 +1044,25 @@ export default function AdminInventoryPage() {
                                                 <Input
                                                     type="number"
                                                     value={price}
-                                                    onChange={e => setPrice(e.target.value)}
+                                                    onChange={e => {
+                                                        const newVal = e.target.value;
+                                                        setPrice(newVal);
+                                                        // Auto-calc if offer exists
+                                                        if (selectedProduct?.productOffer) {
+                                                            const valNum = parseFloat(newVal);
+                                                            if (!isNaN(valNum)) {
+                                                                const offerPercent = parseFloat(selectedProduct.productOffer.replace(/[^0-9.]/g, ''));
+                                                                if (offerPercent > 0) {
+                                                                    const discountAmount = (valNum * offerPercent) / 100;
+                                                                    setDiscountedPrice(String(Math.round(valNum - discountAmount)));
+                                                                }
+                                                            }
+                                                        } else {
+                                                            // If no offer, discounted price usually equals price unless manually set, 
+                                                            // but safe default is to mirror price if it was empty or matching
+                                                            setDiscountedPrice(newVal);
+                                                        }
+                                                    }}
                                                     className="h-8 bg-background"
                                                     placeholder="0"
                                                     disabled={!!(selectedProduct?.price && selectedProduct.price > 0)}

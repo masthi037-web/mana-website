@@ -55,24 +55,28 @@ const ColourCard = ({
   name,
   image,
   isSelected,
+  active = true,
+  statusLabel,
   onClick,
 }: {
   name: string;
   image?: string;
   isSelected: boolean;
+  active?: boolean;
+  statusLabel?: string;
   onClick: () => void;
 }) => (
   <div
-    onClick={onClick}
+    onClick={active ? onClick : undefined}
     className={cn(
-      "relative flex flex-col items-center justify-center p-2 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-out h-[88px]",
-      "hover:border-primary/30 hover:bg-secondary/30",
-      isSelected
+      "relative flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all duration-300 ease-out h-[88px]",
+      active ? "cursor-pointer hover:border-primary/30 hover:bg-secondary/30" : "cursor-not-allowed opacity-50 bg-muted/50 border-input grayscale",
+      isSelected && active
         ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
-        : "border-transparent bg-secondary/30 text-muted-foreground"
+        : !active ? "border-transparent text-muted-foreground/60" : "border-transparent bg-secondary/30 text-muted-foreground"
     )}
   >
-    {isSelected && (
+    {isSelected && active && (
       <div className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm z-10">
         <Check className="w-2.5 h-2.5" strokeWidth={3} />
       </div>
@@ -89,43 +93,23 @@ const ColourCard = ({
     <span className={cn("text-xs font-bold tracking-tight line-clamp-1 max-w-full text-center px-1", isSelected ? "text-primary" : "text-foreground")}>
       {name}
     </span>
+    {!active && (
+      <span className="text-[8px] font-bold text-rose-500 uppercase tracking-wider leading-none mt-0.5">{statusLabel || "N/A"}</span>
+    )}
   </div>
 );
 
-const reviews = [
-  {
-    id: 1,
-    author: 'Priya S.',
-    avatar: 'https://picsum.photos/seed/review1/40/40',
-    rating: 5,
-    date: '2 weeks ago',
-    text: "Absolutely delicious! The perfect blend of spices. Tastes just like homemade. Will definitely be buying again.",
-  },
-  {
-    id: 2,
-    author: 'Raj K.',
-    avatar: 'https://picsum.photos/seed/review2/40/40',
-    rating: 4,
-    date: '1 month ago',
-    text: "Very good quality and taste. The packaging was also excellent. A bit spicier than I expected, but I still enjoyed it.",
-  },
-  {
-    id: 3,
-    author: 'Anjali M.',
-    avatar: 'https://picsum.photos/seed/review3/40/40',
-    rating: 5,
-    date: '3 months ago',
-    text: "I'm obsessed with this! I've tried many brands, but this is by far the best. Highly recommended!",
-  },
-];
-
-const ratingDistribution = [
-  { star: 5, percentage: 80 },
-  { star: 4, percentage: 15 },
-  { star: 3, percentage: 3 },
-  { star: 2, percentage: 1 },
-  { star: 1, percentage: 1 },
-];
+// Reviews are now fetched from product.reviews
+const getReviewStats = (reviews: any[]) => {
+  if (!reviews || reviews.length === 0) return { average: 0, count: 0, distribution: [] };
+  const count = reviews.length;
+  const average = reviews.reduce((acc, r) => acc + r.rating, 0) / count;
+  const distribution = [5, 4, 3, 2, 1].map(star => ({
+    star,
+    percentage: (reviews.filter(r => Math.floor(r.rating) === star).length / count) * 100
+  }));
+  return { average, count, distribution };
+};
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -329,7 +313,35 @@ export default function ProductDetailPage() {
     .filter(a => selectedAddons.includes(a.id))
     .reduce((sum, a) => sum + a.price, 0);
 
-  const finalPrice = basePrice + addonsPrice;
+  // Calculate Price Logic (Mirror ProductCard)
+  // 1. Resolve base price for this variant
+  let effectiveBasePrice = basePrice;
+  let originalPrice = basePrice;
+  let offerPercentage = 0;
+
+  const offerPercent = product.productOffer ? parseFloat(product.productOffer.toString().replace(/[^0-9.]/g, '')) : 0;
+
+  // Condition A: Percentage Offer exists (and variant price matches base product price)
+  if (offerPercent > 0 && basePrice === product.price) {
+    const discountAmount = (basePrice * offerPercent) / 100;
+    effectiveBasePrice = Math.round(basePrice - discountAmount);
+    offerPercentage = offerPercent;
+  }
+  // Condition B: Explicit Variant Discount
+  else if (currentPricingOption && currentPricingOption.priceAfterDiscount && currentPricingOption.priceAfterDiscount > 0) {
+    effectiveBasePrice = currentPricingOption.priceAfterDiscount;
+    originalPrice = currentPricingOption.price;
+    offerPercentage = Math.round(((originalPrice - effectiveBasePrice) / originalPrice) * 100);
+  }
+  // Condition C: Explicit Product Discount (fallback)
+  else if (basePrice === product.price && product.priceAfterDiscount && product.priceAfterDiscount > 0) {
+    effectiveBasePrice = product.priceAfterDiscount;
+    originalPrice = product.price;
+    offerPercentage = Math.round(((originalPrice - effectiveBasePrice) / originalPrice) * 100);
+  }
+
+  const finalPrice = effectiveBasePrice + addonsPrice;
+  const hasDiscount = effectiveBasePrice < originalPrice;
 
   const handleAddToCart = () => {
     // Construct the product to add to cart
@@ -356,7 +368,7 @@ export default function ProductDetailPage() {
     } : undefined;
 
     addToCart(
-      { ...product, price: basePrice },
+      { ...product, price: effectiveBasePrice, productSizeId: selectedPricingId || undefined },
       variantInfo,
       addonObjects,
       colourToAdd
@@ -408,7 +420,19 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="flex items-center gap-2 mt-2">
-              <h2 className="text-3xl font-bold text-foreground">Rs. {finalPrice.toFixed(2)}</h2>
+              <h2 className="text-3xl font-bold text-foreground">
+                Rs. {(finalPrice).toFixed(2)}
+                {hasDiscount && (
+                  <span className="ml-3 text-lg text-muted-foreground line-through decoration-destructive/50 decoration-2">
+                    Rs. {(originalPrice + addonsPrice).toFixed(2)}
+                  </span>
+                )}
+              </h2>
+              {hasDiscount && (
+                <span className="text-xs font-bold text-white bg-emerald-500 px-2 py-1 rounded-full shadow-sm animate-in zoom-in ml-2">
+                  {offerPercentage}% OFF
+                </span>
+              )}
               <div className="flex-1" />
               <Button
                 variant="outline"
@@ -430,7 +454,7 @@ export default function ProductDetailPage() {
                   <Star key={i} className={cn("h-4 w-4", i < Math.floor(product.rating) ? 'fill-primary text-primary' : 'text-muted-foreground/30 fill-muted-foreground/30')} />
                 ))}
               </div>
-              <span className="text-muted-foreground text-sm font-medium ml-1">({reviews.length} reviews)</span>
+              <span className="text-muted-foreground text-sm font-medium ml-1">({product.reviews?.length || 0} reviews)</span>
             </div>
 
             <p className="mt-4 text-muted-foreground leading-relaxed text-base">{product.description}</p>
@@ -511,15 +535,22 @@ export default function ProductDetailPage() {
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider bg-secondary/50 px-2 py-1 rounded">OPTIONAL</span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
-                  {product.colors.map((colour) => (
-                    <ColourCard
-                      key={colour.id}
-                      name={colour.name}
-                      image={colour.image}
-                      isSelected={selectedColourId === colour.id}
-                      onClick={() => setSelectedColourId(colour.id)}
-                    />
-                  ))}
+                  {product.colors.map((colour) => {
+                    const isActive = colour.status !== 'INACTIVE' && colour.status !== 'OUTOFSTOCK';
+                    const statusLabel = colour.status === 'OUTOFSTOCK' ? 'Sold Out' : (colour.status === 'INACTIVE' ? 'Unavailable' : undefined);
+
+                    return (
+                      <ColourCard
+                        key={colour.id}
+                        name={colour.name}
+                        image={colour.image}
+                        isSelected={selectedColourId === colour.id}
+                        active={isActive}
+                        statusLabel={statusLabel}
+                        onClick={() => setSelectedColourId(colour.id)}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -611,17 +642,17 @@ export default function ProductDetailPage() {
                   <Star key={i} className={cn("h-6 w-6", i < Math.floor(product.rating) ? 'fill-primary text-primary' : 'fill-muted-foreground/20 text-muted-foreground/20')} />
                 ))}
               </div>
-              <p className="text-muted-foreground text-sm mt-2">Based on {reviews.length} reviews</p>
+              <p className="text-muted-foreground text-sm mt-2">Based on {product.reviews?.length || 0} reviews</p>
             </div>
           </div>
           {/* ... keeping existing review list simplified for brevity in this replace ... */}
           <div className="md:col-span-3">
             <div className="space-y-6">
-              {reviews.map((review) => (
+              {(product.reviews || []).map((review) => (
                 <div key={review.id} className="flex gap-4 p-4 rounded-2xl bg-secondary/10 border border-border/40">
                   <Avatar className="h-10 w-10 border">
                     <AvatarImage src={review.avatar} alt={review.author} />
-                    <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{review.author ? review.author.charAt(0) : 'U'}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
@@ -637,6 +668,11 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
               ))}
+              {(!product.reviews || product.reviews.length === 0) && (
+                <div className="text-center py-10 text-muted-foreground">
+                  <p>No reviews yet. Be the first to review!</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

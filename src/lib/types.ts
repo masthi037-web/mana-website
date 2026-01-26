@@ -26,6 +26,15 @@ export type ProductColor = {
   status: string;
 };
 
+export type Review = {
+  id: string;
+  author: string;
+  avatar?: string;
+  rating: number;
+  date: string;
+  text: string;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -53,6 +62,7 @@ export type Product = {
   productQuantity?: string;
   colors?: ProductColor[];
   productStatus?: string;
+  reviews?: Review[];
 };
 
 export type ProductWithImage = Product & {
