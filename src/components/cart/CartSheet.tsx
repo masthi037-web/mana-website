@@ -1351,6 +1351,130 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     </div>
                 )}
 
+                {/* Stock Conflict Resolution Popup */}
+                {showConflictPopup && stockConflicts.length > 0 && (
+                    <div className="absolute inset-0 z-[120] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-background w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 slide-in-from-bottom-5">
+                            <div className="bg-rose-500/10 p-6 flex flex-col items-center text-center border-b border-rose-500/20">
+                                <div className="w-14 h-14 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-3 text-rose-600 dark:text-rose-500 shadow-inner">
+                                    <AlertTriangle className="w-7 h-7" />
+                                </div>
+                                <h3 className="text-xl font-bold text-foreground tracking-tight">Stock Limit Exceeded</h3>
+                                <p className="text-sm text-muted-foreground mt-2 px-4 leading-relaxed">
+                                    You have requested more items than are currently available. Please adjust quantities below.
+                                </p>
+                            </div>
+
+                            <ScrollArea className="max-h-[60vh]">
+                                <div className="p-6 space-y-8">
+                                    {stockConflicts.map((conflict, idx) => {
+                                        const totalSelected = conflict.items.reduce((sum, i) => sum + i.quantity, 0);
+                                        const isOverLimit = totalSelected > conflict.availableStock;
+
+                                        return (
+                                            <div key={idx} className="space-y-4">
+                                                <div className="flex items-center justify-between border-b pb-2">
+                                                    <h4 className="font-bold text-base">{conflict.productName}</h4>
+                                                    <Badge variant={isOverLimit ? "destructive" : "secondary"} className="text-xs">
+                                                        Limit: {conflict.availableStock}
+                                                    </Badge>
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    {conflict.items.map((item) => (
+                                                        <div key={item.cartItemId} className="flex items-center justify-between bg-secondary/30 p-3 rounded-xl">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-medium">{item.name}</span>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {item.selectedVariants['Quantity'] || item.selectedColour?.name || "Standard Identity"}
+                                                                </span>
+                                                            </div>
+
+                                                            <div className="flex items-center gap-3 bg-background rounded-lg p-1 border shadow-sm">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-7 w-7 rounded-md"
+                                                                    onClick={() => {
+                                                                        const updatedItems = [...conflict.items];
+                                                                        const target = updatedItems.find(i => i.cartItemId === item.cartItemId);
+                                                                        if (target && target.quantity > 0) target.quantity--;
+
+                                                                        const newConflicts = [...stockConflicts];
+                                                                        newConflicts[idx].items = updatedItems;
+                                                                        setStockConflicts(newConflicts);
+                                                                    }}
+                                                                >
+                                                                    <Minus className="w-3 h-3" />
+                                                                </Button>
+                                                                <span className={`text-sm font-bold w-4 text-center ${item.quantity === 0 ? 'text-muted-foreground' : 'text-foreground'}`}>
+                                                                    {item.quantity}
+                                                                </span>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-7 w-7 rounded-md"
+                                                                    onClick={() => {
+                                                                        const updatedItems = [...conflict.items];
+                                                                        const target = updatedItems.find(i => i.cartItemId === item.cartItemId);
+                                                                        if (target) target.quantity++;
+
+                                                                        const newConflicts = [...stockConflicts];
+                                                                        newConflicts[idx].items = updatedItems;
+                                                                        setStockConflicts(newConflicts);
+                                                                    }}
+                                                                >
+                                                                    <Plus className="w-3 h-3" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <div className="flex justify-between items-center text-sm font-medium pt-2">
+                                                    <span className="text-muted-foreground">Total Selected:</span>
+                                                    <span className={isOverLimit ? "text-rose-500 font-bold" : "text-emerald-500 font-bold"}>
+                                                        {totalSelected} / {conflict.availableStock}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </ScrollArea>
+
+                            <div className="p-6 pt-0 bg-background/50 backdrop-blur-sm">
+                                <Button
+                                    className="w-full h-11 rounded-xl font-bold shadow-lg"
+                                    disabled={stockConflicts.some(c => c.items.reduce((s, i) => s + i.quantity, 0) > c.availableStock)}
+                                    onClick={() => {
+                                        // Apply Resolved Changes to Main Cart
+                                        const resolvedMap = new Map<string, number>();
+                                        stockConflicts.forEach(c => {
+                                            c.items.forEach(i => resolvedMap.set(i.cartItemId, i.quantity));
+                                        });
+
+                                        const updatedCart = cart.map(item => {
+                                            if (resolvedMap.has(item.cartItemId)) {
+                                                const newQty = resolvedMap.get(item.cartItemId)!;
+                                                return { ...item, quantity: newQty };
+                                            }
+                                            return item;
+                                        }).filter(i => i.quantity > 0);
+
+                                        useCart.setState({ cart: updatedCart });
+                                        setStockConflicts([]);
+                                        setShowConflictPopup(false);
+                                        // Ideally, trigger checkout again or let user review
+                                    }}
+                                >
+                                    Update Cart & Continue
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Validation Popup */}
                 {showValidationPopup && (
                     <div className="absolute inset-0 z-[110] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
