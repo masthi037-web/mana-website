@@ -1054,6 +1054,7 @@ export default function AdminInventoryPage() {
                                             >
                                                 <option value="ACTIVE">Active</option>
                                                 <option value="INACTIVE">Inactive</option>
+                                                <option value="OUTOFSTOCK">Out of Stock</option>
                                             </select>
                                         </div>
                                         <div className="flex gap-2 pt-2">
@@ -1219,6 +1220,7 @@ export default function AdminInventoryPage() {
                                             >
                                                 <option value="ACTIVE">Active</option>
                                                 <option value="INACTIVE">Inactive</option>
+                                                <option value="OUTOFSTOCK">Out of Stock</option>
                                             </select>
                                         </div>
                                         <div className="flex gap-2 pt-2">
