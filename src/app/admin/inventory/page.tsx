@@ -370,7 +370,7 @@ export default function AdminInventoryPage() {
                         productDeliveryCost: Number(prodDeliveryCost),
                         famous: isFamous,
                         productImage: image || editingItem.productImage || undefined,
-                        productOffer: prodOffer || undefined,
+                        productOffer: prodOffer || "0",
                         updatedAt: editingItem.updatedAt,
                         createdAt: editingItem.createdAt,
                         multipleSetDiscount: bulkDiscounts.length > 0

@@ -142,9 +142,9 @@ export function Footer({ companyName = "ManaBuy", socialLinks }: FooterProps) {
                     {/* Standard Copyright & Contact */}
                     <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12 opacity-80">
                         <p>© {new Date().getFullYear()} Mana Buy. All rights reserved.</p>
-                        <a href="mailto:masthanmasthi037@gmail.com" className="hover:text-foreground transition-colors flex items-center gap-2">
+                        <a href="mailto:manabuy630@gmail.com" className="hover:text-foreground transition-colors flex items-center gap-2">
                             <Mail className="h-4 w-4" />
-                            masthanmasthi037@gmail.com
+                            manabuy630@gmail.com
                         </a>
                     </div>
                 </div>
