@@ -769,6 +769,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             // Handle wrapped response (server returns { productDetails: [...] }) or direct array
             const details = Array.isArray(response) ? response : ((response as any).productDetails || []);
 
+            // Track used stock across iterations to handle duplicate product entries sharing the same stock
+            const stockUsageMap = new Map<string, number>();
+
             newCart.forEach((item, index) => {
                 const detail = details[index];
                 if (!detail) return;
@@ -791,24 +794,45 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     (detail.sizeId !== undefined && detail.sizeId !== sizeId) ||
                     (detail.productColourId !== undefined && detail.productColourId !== productColourId);
 
-                // Note: detail.sizeId might be null/undefined if not returned by older servers, 
+                // Note: detail.sizeId might be null/undefined if not returned by older servers,
                 // but user asked us to add it, so valid server should return it.
                 // We strictly check if it IS returned.
 
                 if (isIdMismatch) {
                     blockingChanges = true;
                     changes.push(`Critical: Data mismatch for "${item.name}". Please refresh cart.`);
-                    return;
+                    return; // Abort further checks for this item
                 }
 
-                if (productColourId && detail.colour && item.selectedColour?.name &&
-                    detail.colour.trim().toLowerCase() !== item.selectedColour.name.trim().toLowerCase()) {
-                    blockingChanges = true;
-                    changes.push(`Colour mismatch for "${item.name}" (Server: ${detail.colour}, Cart: ${item.selectedColour.name}). Removed.`);
-                    item.cartItemId = 'REMOVE_ME';
-                    return;
+                // Check Colour Name Mismatch (if applicable)
+                if (detail.colour && item.selectedColour?.name) {
+                    const serverColor = detail.colour.trim().toLowerCase();
+                    const cartColor = item.selectedColour.name.trim().toLowerCase();
+                    if (serverColor !== cartColor) {
+                        blockingChanges = true;
+                        changes.push(`Colour mismatch for "${item.name}" (Server: ${detail.colour}, Cart: ${item.selectedColour.name}). Removed.`);
+                        item.cartItemId = 'REMOVE_ME';
+                        return;
+                    }
                 }
 
+                // Check Size Name Mismatch (if applicable)
+                // item.selectedVariants['Quantity'] holds the size name usually
+                if (detail.productSize && item.selectedVariants && item.selectedVariants['Quantity']) {
+                    const serverSize = detail.productSize.trim().toLowerCase();
+                    const cartSize = item.selectedVariants['Quantity'].trim().toLowerCase();
+                    if (serverSize !== cartSize && serverSize !== "" && cartSize !== "") {
+                        // Note: Sometimes server might return internal ID or different format, strict check might be risky if backend is inconsistent.
+                        // But user requested "check multipleSetDiscount... productSize".
+                        // Assuming strict equality is desired for data integrity.
+                        blockingChanges = true;
+                        changes.push(`Size label mismatch for "${item.name}" (Server: ${detail.productSize}, Cart: ${item.selectedVariants['Quantity']}). Removed.`);
+                        item.cartItemId = 'REMOVE_ME';
+                        return;
+                    }
+                }
+
+                // --- 1. DISCOUNT MISMATCHES ---
                 const normalizeDiscount = (s: string | null | undefined) => {
                     if (!s) return "";
                     return s.split('&&&').sort().join('&&&');
@@ -817,16 +841,68 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 const cartSetDiscount = normalizeDiscount(item.multipleSetDiscount);
                 const serverSetDiscount = normalizeDiscount(detail.multipleSetDiscount);
 
+                // Helper: Check if current total quantity qualifies for any part of a rule
+                const isUsingRule = (rule: string, qty: number) => {
+                    if (!rule || qty <= 0) return false;
+                    const segments = rule.split('&&&');
+                    for (const seg of segments) {
+                        const [thresholdStr] = seg.split('-');
+                        const threshold = parseFloat(thresholdStr);
+                        // If threshold is valid and we have enough qty (inclusive or exclusive depending on logic, usually inclusive like "Buy 3")
+                        if (!isNaN(threshold) && qty >= threshold) {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+
+                const totalQty = productQuantities[item.id] || item.quantity;
+
                 if (cartSetDiscount !== serverSetDiscount) {
+                    const wasUsing = isUsingRule(item.multipleSetDiscount, totalQty);
+                    const willUse = isUsingRule(detail.multipleSetDiscount, totalQty);
+
+                    // Only blocking notify if we were using it OR will start using it (if price changes drastically?)
+                    // User request: "notify when changes only if cart is using that bulk discount"
+                    // Strictly: If I WAS using it.
+                    if (wasUsing) {
+                        blockingChanges = true;
+                        if (!serverSetDiscount) {
+                            changes.push(`Bulk discount rule for "${item.name}" has been removed.`);
+                        } else {
+                            changes.push(`Bulk discount rule for "${item.name}" has been updated.`);
+                        }
+                    }
                     item.multipleSetDiscount = detail.multipleSetDiscount;
                 }
 
                 const cartMoreThan = (item.multipleDiscountMoreThan || "").trim();
                 const serverMoreThan = (detail.multipleDiscountMoreThan || "").trim();
 
+                // Helper for MoreThan (Format: "Qty-Percent" e.g. "6-20") => "More than 6" usually means > 6
+                const isUsingMoreThan = (rule: string, qty: number) => {
+                    if (!rule || qty <= 0) return false;
+                    const [thresholdStr] = rule.split('-');
+                    const threshold = parseFloat(thresholdStr);
+                    // "More Than" usually implies strict greater than, but let's match common logic (often inclusive in casual terms, but user code said >)
+                    return !isNaN(threshold) && qty > threshold;
+                };
+
                 if (cartMoreThan !== serverMoreThan) {
+                    const wasUsing = isUsingMoreThan(item.multipleDiscountMoreThan, totalQty);
+
+                    if (wasUsing) {
+                        blockingChanges = true;
+                        if (!serverMoreThan) {
+                            changes.push(`Special bulk offer for "${item.name}" has been removed.`);
+                        } else {
+                            changes.push(`Special bulk offer for "${item.name}" has been updated.`);
+                        }
+                    }
                     item.multipleDiscountMoreThan = detail.multipleDiscountMoreThan;
                 }
+
+                // --- 2. OFFER CHECK ---
                 if (item.productOffer !== detail.productOffer) {
                     const oldOffer = item.productOffer;
                     item.productOffer = detail.productOffer;
@@ -840,7 +916,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     }
                 }
 
-                // --- 2. STATUS CHECKS ---
+                // --- 3. STATUS CHECKS ---
+                // Product Status
                 if (detail.productStatus !== 'ACTIVE') {
                     blockingChanges = true;
                     changes.push(`"${item.name}" is currently unavailable (Product Inactive) and has been removed.`);
@@ -848,8 +925,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     return;
                 }
 
-                // (sizeId is already derived above for identity check)
-
+                // Size Status (if applicable)
                 if (sizeId && detail.sizeStatus && detail.sizeStatus !== 'ACTIVE') {
                     blockingChanges = true;
                     changes.push(`"${item.name}" (${item.selectedVariants['Quantity']}) is currently unavailable and has been removed.`);
@@ -857,7 +933,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     return;
                 }
 
-                // Colour Status
+                // Colour Status (if applicable)
                 if (item.selectedColour && detail.colourStatus && detail.colourStatus !== 'ACTIVE') {
                     blockingChanges = true;
                     changes.push(`"${item.name}" (${item.selectedColour.name}) is currently unavailable and has been removed.`);
@@ -865,81 +941,124 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     return;
                 }
 
-                // --- 3. STOCK CHECKS ---
-                let availableStock = parseInt(detail.productQuantityAvailable || detail.productSize || '0');
-                if (detail.sizeQuantity !== null && detail.sizeQuantity !== undefined && detail.sizeQuantity !== "") {
-                    const parsed = parseInt(detail.sizeQuantity);
-                    if (!isNaN(parsed)) availableStock = parsed;
+                // --- 4. STOCK CHECKS ---
+                let availableStock = 0;
+                let stockKey = "";
+
+                if (sizeId) {
+                    // Sized Item: Stock depends on specific Variant
+                    availableStock = parseInt(detail.sizeQuantity || '0');
+                    stockKey = `${detail.productId}-size-${sizeId}`;
+                } else {
+                    // Non-Sized Item: Stock depends on Master Product
+                    availableStock = parseInt(detail.productQuantityAvailable || '0');
+                    stockKey = `${detail.productId}-master`;
                 }
 
-                if (item.quantity > availableStock) {
+                if (isNaN(availableStock)) availableStock = 0;
+
+                // SHARED STOCK TRACKING
+                // 1. How much of this specific stock pool has already been used by previous items in this loop?
+                const alreadyConsumed = stockUsageMap.get(stockKey) || 0;
+
+                // 2. How much is left for *this* item?
+                const remainingStockForThisItem = availableStock - alreadyConsumed;
+
+                if (item.quantity > remainingStockForThisItem) {
                     blockingChanges = true;
-                    if (availableStock <= 0) {
+                    if (remainingStockForThisItem <= 0) {
+                        // No stock left at all for this item (consumed by previous items or just OOS)
                         changes.push(`"${item.name}" is out of stock and has been removed.`);
                         item.cartItemId = 'REMOVE_ME';
+                        // Do not increase consumed count if we remove it
                     } else {
-                        changes.push(`"${item.name}" quantity reduced to ${availableStock} (Available Stock: ${availableStock}).`);
-                        item.quantity = availableStock;
+                        // Partial stock fits
+                        changes.push(`"${item.name}" quantity reduced to ${remainingStockForThisItem} (Available Stock: ${availableStock}).`);
+                        item.quantity = remainingStockForThisItem;
+                        // Mark these as consumed
+                        stockUsageMap.set(stockKey, alreadyConsumed + item.quantity);
                     }
-                    if (item.cartItemId === 'REMOVE_ME') return;
+                } else {
+                    // Fits perfectly, mark as consumed
+                    stockUsageMap.set(stockKey, alreadyConsumed + item.quantity);
                 }
 
-                // --- 4. PRICE CHECKS ---
+                if (item.cartItemId === 'REMOVE_ME') return;
+
+                // --- 5. PRICE CHECKS ---
                 const isSized = !!sizeId;
                 const serverPrice = isSized ? (detail.productSizePrice || 0) : detail.productPrice;
 
-                // Resolve Discount Logic
+                // Resolve Discount Price
                 let resolvedDiscountPrice = isSized ? detail.productSizePriceAfterDiscount : detail.productPriceAfterDiscount;
 
                 // Fallback: If no explicit discount price, check for Percentage Offer
                 if ((!resolvedDiscountPrice || resolvedDiscountPrice <= 0) && detail.productOffer) {
-                    // Only apply global offer if we are on base price (not sized) OR if sized matches base price?
-                    // Actually for verifying Cart, if the server says "productOffer: 5%", we should apply it to the resolved serverPrice
-                    // UNLESS productSizePrice is distinct and usually doesn't obey global offer.
-                    // However, for "Polo T-Shirt", it's likely a base product add.
-                    // Let's safe-check: if sized, only apply if implicit.
-                    // Simpler: Apply if present.
-                    const offerPercent = parseFloat(detail.productOffer.toString().replace(/[^0-9.]/g, ''));
-                    if (offerPercent > 0) {
-                        const discountAmount = (serverPrice * offerPercent) / 100;
-                        resolvedDiscountPrice = Math.round(serverPrice - discountAmount);
+                    const match = detail.productOffer.match(/(\d+)\s*%?|(\d+)\s*OFF/i);
+                    if (match) {
+                        const percent = parseFloat(match[1] || match[2]);
+                        if (!isNaN(percent)) {
+                            const discountVal = (serverPrice * percent) / 100;
+                            resolvedDiscountPrice = Math.round(serverPrice - discountVal);
+                        }
                     }
                 }
 
-                const serverPriceDiscount = resolvedDiscountPrice;
-
-                const oldEffectivePrice = item.priceAfterDiscount !== undefined ? item.priceAfterDiscount : item.price;
-                const newEffectivePrice = serverPriceDiscount !== undefined && serverPriceDiscount > 0
-                    ? serverPriceDiscount
-                    : serverPrice;
-
-                item.price = serverPrice;
-                item.priceAfterDiscount = (serverPriceDiscount && serverPriceDiscount > 0) ? serverPriceDiscount : undefined;
-
-                if (oldEffectivePrice !== newEffectivePrice) {
-                    blockingChanges = true;
-                    changes.push(`Price of "${item.name}" updated from ₹${oldEffectivePrice} to ₹${newEffectivePrice}.`);
+                // If still no valid resolved price, assume it's just the server price
+                if (!resolvedDiscountPrice || resolvedDiscountPrice <= 0) {
+                    resolvedDiscountPrice = serverPrice;
                 }
 
-                // --- 5. ADDON CHECKS ---
-                if (item.selectedAddons && item.selectedAddons.length > 0 && detail.addonAndAddonPrice) {
-                    detail.addonAndAddonPrice.forEach((str: string) => {
-                        const parts = str.split(':');
-                        if (parts.length >= 2) {
-                            const idStr = parts[0];
-                            const priceStr = parts[parts.length - 1];
-                            const addonIndex = item.selectedAddons!.findIndex(a => a.id.toString() === idStr);
+                // Is there a mismatch?
+                if (item.price !== resolvedDiscountPrice) {
+                    blockingChanges = true;
+                    changes.push(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedDiscountPrice}.`);
+                    item.price = resolvedDiscountPrice;
+                }
 
-                            if (addonIndex > -1) {
-                                const newPrice = parseFloat(priceStr);
-                                if (!isNaN(newPrice) && item.selectedAddons![addonIndex].price !== newPrice) {
-                                    blockingChanges = true;
-                                    changes.push(`Addon price for "${item.name}" updated.`);
-                                    item.selectedAddons![addonIndex].price = newPrice;
-                                }
+                // --- 6. ADDON CHECKS ---
+                if (item.selectedAddons && item.selectedAddons.length > 0) {
+                    // Parse server addons: ["id:price", "1:20"]
+                    const serverAddonsMap = new Map<string, number>();
+                    if (detail.addonAndAddonPrice && Array.isArray(detail.addonAndAddonPrice)) {
+                        detail.addonAndAddonPrice.forEach(str => {
+                            const parts = str.split(':');
+                            if (parts.length >= 2) {
+                                const idStr = parts[0];
+                                const priceStr = parts[parts.length - 1]; // Handle cases where ID might have :
+                                serverAddonsMap.set(idStr.toString(), parseFloat(priceStr));
                             }
+                        });
+                    }
+
+                    // Iterate cart addons
+                    const validAddons: typeof item.selectedAddons = [];
+                    let addonPriceChanged = false;
+
+                    item.selectedAddons.forEach(addon => {
+                        const serverPrice = serverAddonsMap.get(addon.id.toString());
+                        if (serverPrice !== undefined) {
+                            // Addon exists, check price
+                            if (serverPrice !== addon.price) {
+                                addonPriceChanged = true;
+                                addon.price = serverPrice; // Update price in place
+                            }
+                            validAddons.push(addon);
+                        } else {
+                            // Addon no longer exists on server (removed)
+                            blockingChanges = true;
+                            changes.push(`Addon "${addon.name}" for "${item.name}" is no longer available and has been removed.`);
                         }
                     });
+
+                    if (validAddons.length !== item.selectedAddons.length) {
+                        item.selectedAddons = validAddons;
+                    }
+
+                    if (addonPriceChanged) {
+                        blockingChanges = true;
+                        changes.push(`Addon prices for "${item.name}" have been updated.`);
+                    }
                 }
             });
             const finalCart = newCart.filter(item => item.cartItemId !== 'REMOVE_ME');
