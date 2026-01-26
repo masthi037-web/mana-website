@@ -98,7 +98,7 @@ export default function AdminInventoryPage() {
         enabled: !!companyId,
         queryFn: async () => {
             const res = await adminService.getAllCategories(companyId);
-            return res.map((c: any) => ({
+            return (Array.isArray(res) ? res : []).map((c: any) => ({
                 id: String(c.categoryId),
                 name: c.categoryName,
                 description: c.categoryDescription,
@@ -116,7 +116,7 @@ export default function AdminInventoryPage() {
         enabled: !!selectedCategory?.id,
         queryFn: async () => {
             const res = await adminService.getCataloguesByCategory(selectedCategory!.id);
-            return res.map((c: any) => ({
+            return (Array.isArray(res) ? res : []).map((c: any) => ({
                 id: String(c.catalogueId),
                 name: c.catalogueName,
                 description: c.catalogueDescription,
@@ -134,7 +134,7 @@ export default function AdminInventoryPage() {
         enabled: !!selectedCatalogue?.id,
         queryFn: async () => {
             const res = await adminService.getProductsByCatalogue(selectedCatalogue!.id);
-            return res.map((p: any) => ({
+            return (Array.isArray(res) ? res : []).map((p: any) => ({
                 id: String(p.productId),
                 name: p.productName,
                 price: p.productPrice || 0,
@@ -169,7 +169,7 @@ export default function AdminInventoryPage() {
         enabled: !!selectedProduct?.id,
         queryFn: async () => {
             const res = await adminService.getProductPricing(selectedProduct!.id);
-            return res.map((p: any) => ({
+            return (Array.isArray(res) ? res : []).map((p: any) => ({
                 id: String(p.productSizeId),
                 price: p.productSizePrice,
                 priceAfterDiscount: p.productSizePriceAfterDiscount,
@@ -188,7 +188,7 @@ export default function AdminInventoryPage() {
         enabled: !!expandedPricingId,
         queryFn: async () => {
             const apiAddons = await adminService.getProductAddons(expandedPricingId!);
-            return apiAddons.map((a: any) => ({
+            return (Array.isArray(apiAddons) ? apiAddons : []).map((a: any) => ({
                 id: String(a.productAddonId),
                 name: a.addonName,
                 price: a.addonPrice,
@@ -203,7 +203,7 @@ export default function AdminInventoryPage() {
         enabled: !!selectedProduct?.id && (level === 'PRICING' || isManageSheetOpen), // Fetch when diving into product
         queryFn: async () => {
             const res = await adminService.getProductColours(selectedProduct!.id);
-            return res.map((c: any) => ({
+            return (Array.isArray(res) ? res : []).map((c: any) => ({
                 productColourId: c.productColourId,
                 productId: c.productId,
                 colour: c.colour,
