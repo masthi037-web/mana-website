@@ -229,6 +229,17 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const [validationErrors, setValidationErrors] = useState<ValidationMessage[]>([]);
     const [showValidationPopup, setShowValidationPopup] = useState(false);
 
+    // Stock Conflict State
+    interface StockConflict {
+        stockKey: string;
+        productName: string;
+        availableStock: number;
+        items: CartItem[]; // Items involved in this conflict
+        totalRequested: number;
+    }
+    const [stockConflicts, setStockConflicts] = useState<StockConflict[]>([]);
+    const [showConflictPopup, setShowConflictPopup] = useState(false);
+
 
     // ... (inside handleCheckout) ...
 
@@ -855,6 +866,72 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             // Handle wrapped response (server returns { productDetails: [...] }) or direct array
             const details = Array.isArray(response) ? response : ((response as any).productDetails || []);
 
+            // --- PHASE 0: CONFLICT DETECTION (Shared Stock) ---
+            const stockGroups = new Map<string, CartItem[]>();
+            const stockLimits = new Map<string, { limit: number, name: string }>();
+
+            newCart.forEach((item, index) => {
+                const detail = details[index];
+                if (!detail) return;
+
+                // Determine Variant/Stock Key
+                let sizeId: number | null = null;
+                if (item.pricing && item.pricing.length > 0) {
+                    const quantityVariant = item.selectedVariants['Quantity'];
+                    if (quantityVariant) {
+                        const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
+                        if (matchedPricing) sizeId = parseInt(matchedPricing.id);
+                    }
+                    if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
+                }
+
+                let availableStock = 0;
+                let stockKey = "";
+                if (sizeId) {
+                    availableStock = parseInt(detail.sizeQuantity || '0');
+                    stockKey = `${detail.productId}-size-${sizeId}`;
+                } else {
+                    availableStock = parseInt(detail.productQuantityAvailable || '0');
+                    stockKey = `${detail.productId}-master`;
+                }
+                if (isNaN(availableStock)) availableStock = 0;
+
+                stockLimits.set(stockKey, { limit: availableStock, name: item.name });
+
+                const group = stockGroups.get(stockKey) || [];
+                group.push(item);
+                stockGroups.set(stockKey, group);
+            });
+
+            const currentConflicts: StockConflict[] = [];
+            stockGroups.forEach((items, key) => {
+                const limitInfo = stockLimits.get(key);
+                if (!limitInfo) return;
+                const totalRequested = items.reduce((sum, it) => sum + it.quantity, 0);
+
+                // If total demand exceeds limit, this is a conflict the user must resolve manually
+                if (totalRequested > limitInfo.limit) {
+                    blockingChanges = true;
+                    // Create deep copies of items so user can edit them in popup without mutating main cart yet
+                    const itemCopies = items.map(i => ({ ...i }));
+                    currentConflicts.push({
+                        stockKey: key,
+                        productName: limitInfo.name,
+                        availableStock: limitInfo.limit,
+                        items: itemCopies,
+                        totalRequested: totalRequested
+                    });
+                }
+            });
+
+            if (currentConflicts.length > 0) {
+                setStockConflicts(currentConflicts);
+                setShowConflictPopup(true);
+                setIsCheckingOut(false);
+                return; // HALT VALIDATION. User must resolve conflicts first.
+            }
+
+            // --- PHASE 1: STANDARD VALIDATION (If no conflicts) ---
             // Track used stock across iterations to handle duplicate product entries sharing the same stock
             const stockUsageMap = new Map<string, number>();
 
