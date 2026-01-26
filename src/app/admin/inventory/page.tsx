@@ -627,12 +627,15 @@ export default function AdminInventoryPage() {
     };
 
     // Auto-calculate Discounted Price when Offer or Price changes (for Product Level)
+    // Auto-calculate Discounted Price when Offer or Price changes (for Product Level)
     useEffect(() => {
-        if (level === 'PRODUCT' && price) {
+        // Only run for Product level editing, NOT when adding variants (which shares 'price' state)
+        // If we are adding pricing variants, valid manageMode is 'ADD_PRICING'
+        if (level === 'PRODUCT' && price && manageMode !== 'ADD_PRICING') {
             const calculated = calculateDiscount(Number(price), prodOffer || "");
             setDiscountedPrice(String(calculated));
         }
-    }, [price, prodOffer, level]);
+    }, [price, prodOffer, level, manageMode]);
 
     // --- BULK DISCOUNT HANDLERS ---
     const addBulkDiscount = () => {
@@ -1059,16 +1062,8 @@ export default function AdminInventoryPage() {
                                                         // Prioritize active edited offer if available
                                                         const currentOffer = (typeof prodOffer === 'string' && prodOffer.trim().length > 0) ? prodOffer : "";
                                                         const dbOffer = selectedProduct?.productOffer || "";
+                                                        // For variants, we trust the offer we found (active or db)
                                                         const offerToUse = currentOffer || dbOffer;
-
-                                                        // Debug logging for troubleshooting
-                                                        console.log("Variant Price Logic:", {
-                                                            newVal,
-                                                            prodOffer,
-                                                            dbOffer,
-                                                            offerToUse,
-                                                            calc: calculateDiscount(parseFloat(newVal), offerToUse)
-                                                        });
 
                                                         if (offerToUse) {
                                                             const valNum = parseFloat(newVal);
