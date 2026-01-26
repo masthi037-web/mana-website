@@ -58,11 +58,21 @@ export const ProductCard = ({ product, hideDescription = false }: ProductCardPro
 
 
 
+  const isInactive = product.productStatus === 'INACTIVE';
+  const isOutOfStock = product.productStatus === 'OUTOFSTOCK';
+  const isDisabled = isInactive || isOutOfStock;
+
   return (
     <Link
-      href={`/product/${product.id}`}
-      className="group block h-full"
-      onClick={() => useProduct.getState().setSelectedProduct(product)}
+      href={isDisabled ? '#' : `/product/${product.id}`}
+      className={cn("group block h-full", isDisabled && "cursor-not-allowed opacity-80")}
+      onClick={(e) => {
+        if (isDisabled) {
+          e.preventDefault();
+          return;
+        }
+        useProduct.getState().setSelectedProduct(product);
+      }}
     >
       <Card
         className="card-root relative w-full h-full overflow-hidden border-transparent bg-card transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]"
@@ -84,12 +94,24 @@ export const ProductCard = ({ product, hideDescription = false }: ProductCardPro
                   alt={`${product.name} - ${idx + 1}`}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 25vw, 20vw"
-                  className="object-contain p-2"
+                  className={cn("object-contain p-2", isDisabled && "grayscale opacity-50")}
                   data-ai-hint={product.imageHint}
                 />
               </div>
             ))}
           </div>
+
+          {/* Status Overlay */}
+          {isDisabled && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
+              <div className={cn(
+                "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg transform -rotate-12",
+                isOutOfStock ? "bg-rose-500 text-white" : "bg-gray-500 text-white"
+              )}>
+                {isOutOfStock ? "Sold Out" : "Unavailable"}
+              </div>
+            </div>
+          )}
 
           {/* Dots Indicator (visible if > 1 image) */}
           {slides.length > 1 && (
@@ -169,16 +191,18 @@ export const ProductCard = ({ product, hideDescription = false }: ProductCardPro
             />
           </Button>
 
-          {/* Quick Add Overlay - Desktop Only */}
-          <div className="absolute inset-x-0 bottom-0 p-3 transition-transform duration-500 ease-out z-20 translate-y-full group-hover:translate-y-0 hidden md:block">
-            <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-              <AddToCartSheet product={product}>
-                <Button className="w-full rounded-full shadow-lg shadow-primary/25 font-semibold h-10 text-sm transition-all hover:shadow-primary/40">
-                  {text.quickAddButton || "Quick Add"}
-                </Button>
-              </AddToCartSheet>
+          {/* Quick Add Overlay - Desktop Only - Hide if Disabled */}
+          {!isDisabled && (
+            <div className="absolute inset-x-0 bottom-0 p-3 transition-transform duration-500 ease-out z-20 translate-y-full group-hover:translate-y-0 hidden md:block">
+              <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                <AddToCartSheet product={product}>
+                  <Button className="w-full rounded-full shadow-lg shadow-primary/25 font-semibold h-10 text-sm transition-all hover:shadow-primary/40">
+                    {text.quickAddButton || "Quick Add"}
+                  </Button>
+                </AddToCartSheet>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Content - Compact Spacing */}
@@ -299,14 +323,16 @@ export const ProductCard = ({ product, hideDescription = false }: ProductCardPro
 
           </div>
 
-          {/* Mobile Quick Add Button - Content Area */}
-          <div className="mt-1 block md:hidden" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-            <AddToCartSheet product={product}>
-              <Button className="w-full rounded-full shadow-lg shadow-primary/25 font-semibold h-9 text-sm transition-all hover:shadow-primary/40">
-                {text.quickAddButton || "Quick Add"}
-              </Button>
-            </AddToCartSheet>
-          </div>
+          {/* Mobile Quick Add Button - Content Area - Hide if Disabled */}
+          {!isDisabled && (
+            <div className="mt-1 block md:hidden" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+              <AddToCartSheet product={product}>
+                <Button className="w-full rounded-full shadow-lg shadow-primary/25 font-semibold h-9 text-sm transition-all hover:shadow-primary/40">
+                  {text.quickAddButton || "Quick Add"}
+                </Button>
+              </AddToCartSheet>
+            </div>
+          )}
         </CardContent>
       </Card>
     </Link >

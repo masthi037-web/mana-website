@@ -38,21 +38,25 @@ const OptionCard = ({
   label,
   subLabel,
   isSelected,
+  active,
+  statusLabel,
   onClick,
 }: {
   label: string;
   subLabel?: React.ReactNode;
   isSelected: boolean;
+  active: boolean;
+  statusLabel?: string;
   onClick: () => void;
 }) => (
   <div
-    onClick={onClick}
+    onClick={active ? onClick : undefined}
     className={cn(
-      "relative flex flex-col items-center justify-center py-2.5 px-3 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-out",
-      "hover:border-primary/30 hover:bg-secondary/30",
-      isSelected
+      "relative flex flex-col items-center justify-center py-2.5 px-3 rounded-xl border-2 transition-all duration-300 ease-out",
+      active ? "cursor-pointer hover:border-primary/30 hover:bg-secondary/30" : "cursor-not-allowed opacity-50 bg-muted/50 border-input",
+      isSelected && active
         ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
-        : "border-transparent bg-secondary/30 text-muted-foreground"
+        : !active ? "border-transparent text-muted-foreground/60" : "border-transparent bg-secondary/30 text-muted-foreground"
     )}
   >
     {isSelected && (
@@ -68,6 +72,11 @@ const OptionCard = ({
         {subLabel}
       </div>
     )}
+    {!active && statusLabel && (
+      <div className="absolute inset-x-0 bottom-0.5 text-center">
+        <span className="text-[9px] font-bold text-rose-500 uppercase tracking-wider">{statusLabel}</span>
+      </div>
+    )}
   </div>
 
 );
@@ -76,21 +85,25 @@ const ColourCard = ({
   name,
   image,
   isSelected,
+  active,
+  statusLabel,
   onClick,
 }: {
   name: string;
   image?: string;
   isSelected: boolean;
+  active: boolean;
+  statusLabel?: string;
   onClick: () => void;
 }) => (
   <div
-    onClick={onClick}
+    onClick={active ? onClick : undefined}
     className={cn(
-      "relative flex flex-col items-center justify-center p-2 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-out h-[88px]",
-      "hover:border-primary/30 hover:bg-secondary/30",
-      isSelected
+      "relative flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all duration-300 ease-out h-[88px]",
+      active ? "cursor-pointer hover:border-primary/30 hover:bg-secondary/30" : "cursor-not-allowed opacity-50 bg-muted/50 border-input grayscale",
+      isSelected && active
         ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
-        : "border-transparent bg-secondary/30 text-muted-foreground"
+        : !active ? "border-transparent text-muted-foreground/60" : "border-transparent bg-secondary/30 text-muted-foreground"
     )}
   >
     {isSelected && (
@@ -110,6 +123,9 @@ const ColourCard = ({
     <span className={cn("text-xs font-bold tracking-tight line-clamp-1 max-w-full text-center px-1", isSelected ? "text-primary" : "text-foreground")}>
       {name}
     </span>
+    {!active && (
+      <span className="text-[8px] font-bold text-rose-500 uppercase tracking-wider leading-none mt-0.5">{statusLabel || "N/A"}</span>
+    )}
   </div>
 );
 
@@ -363,12 +379,17 @@ const AddToCartContent = ({
 
 
 
+                    const isActive = option.sizeStatus !== 'INACTIVE' && option.sizeStatus !== 'OUTOFSTOCK';
+                    const statusLabel = option.sizeStatus === 'OUTOFSTOCK' ? 'Sold Out' : (option.sizeStatus === 'INACTIVE' ? 'Unavailable' : undefined);
+
                     return (
                       <OptionCard
                         key={option.id}
                         label={option.quantity}
+                        active={isActive}
+                        statusLabel={statusLabel}
                         subLabel={
-                          !allPricesSame ? (
+                          !allPricesSame && isActive ? (
                             <div className="flex flex-col items-center leading-none">
                               {hasOffer && (
                                 <span className="text-[9px] line-through opacity-70 mb-0.5">₹{option.price}</span>
@@ -415,15 +436,23 @@ const AddToCartContent = ({
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Optional</span>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                {product.colors.map((colour) => (
-                  <ColourCard
-                    key={colour.id}
-                    name={colour.name}
-                    image={colour.image}
-                    isSelected={selectedColourId === colour.id}
-                    onClick={() => setSelectedColourId(colour.id)}
-                  />
-                ))}
+                {product.colors.map((colour) => {
+                  const isActive = colour.status !== 'INACTIVE' && colour.status !== 'OUTOFSTOCK'; // Assuming mapped status, check api types
+                  // fallback if api types differ: ProductColour in types.ts has status: string.
+                  const statusLabel = colour.status === 'OUTOFSTOCK' ? 'Sold Out' : (colour.status === 'INACTIVE' ? 'Unavailable' : undefined);
+
+                  return (
+                    <ColourCard
+                      key={colour.id}
+                      name={colour.name}
+                      image={colour.image}
+                      active={isActive}
+                      statusLabel={statusLabel}
+                      isSelected={selectedColourId === colour.id}
+                      onClick={() => setSelectedColourId(colour.id)}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}

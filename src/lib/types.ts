@@ -16,6 +16,7 @@ export type ProductPriceOption = {
   priceAfterDiscount?: number;
   quantity: string;
   addons?: ProductAddonOption[];
+  sizeStatus?: string;
 };
 
 export type ProductColor = {
@@ -51,6 +52,7 @@ export type Product = {
   multipleDiscountMoreThan?: string;
   productQuantity?: string;
   colors?: ProductColor[];
+  productStatus?: string;
 };
 
 export type ProductWithImage = Product & {

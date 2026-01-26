@@ -1786,8 +1786,15 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                                 src={item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
                                                                                 alt={item.name}
                                                                                 fill
-                                                                                className="object-cover"
+                                                                                className={cn("object-cover", (item.productStatus === 'INACTIVE' || item.productStatus === 'OUTOFSTOCK') && "grayscale opacity-60")}
                                                                             />
+                                                                            {(item.productStatus === 'INACTIVE' || item.productStatus === 'OUTOFSTOCK') && (
+                                                                                <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
+                                                                                    <span className="text-[10px] font-bold text-white bg-rose-500/90 px-1.5 py-0.5 rounded-full shadow-sm">
+                                                                                        {item.productStatus === 'OUTOFSTOCK' ? 'SOLD OUT' : 'UNAVAILABLE'}
+                                                                                    </span>
+                                                                                </div>
+                                                                            )}
                                                                         </div>
 
                                                                         <div className="flex flex-1 flex-col justify-between py-0.5">
