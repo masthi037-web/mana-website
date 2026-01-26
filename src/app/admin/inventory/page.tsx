@@ -1390,12 +1390,18 @@ export default function AdminInventoryPage() {
                                         )}
                                     </div>
                                     <div className="mt-2 flex items-center gap-2">
-                                        {prod.productOffer && (
-                                            <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                <Sparkles className="w-3 h-3" />
-                                                {prod.productOffer}
-                                            </span>
-                                        )}
+                                        {(() => {
+                                            if (!prod.productOffer) return null;
+                                            const offerVal = parseFloat(prod.productOffer.toString().replace(/[^0-9.]/g, ''));
+                                            if (isNaN(offerVal) || offerVal <= 0) return null;
+
+                                            return (
+                                                <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                    <Sparkles className="w-3 h-3" />
+                                                    {prod.productOffer}
+                                                </span>
+                                            );
+                                        })()}
                                     </div>
                                 </CardContent>
                             </Card>

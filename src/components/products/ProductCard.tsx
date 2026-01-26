@@ -142,12 +142,18 @@ export const ProductCard = ({ product, hideDescription = false }: ProductCardPro
             )}
 
             {/* Offer Badge (Single) */}
-            {product.productOffer && (
-              <div className="flex items-center gap-1.5 bg-gradient-to-r from-rose-500 to-pink-600 px-2.5 py-1 rounded-full text-[10px] font-bold text-white shadow-lg shadow-rose-500/20 border-t border-white/20 animate-in fade-in zoom-in duration-300 pointer-events-auto">
-                <Sparkles className="w-3 h-3 text-white fill-white/20" />
-                <span className="tracking-wide uppercase">{product.productOffer}{!isNaN(Number(product.productOffer)) ? '%' : ''} Off</span>
-              </div>
-            )}
+            {(() => {
+              if (!product.productOffer) return null;
+              const offerVal = parseFloat(product.productOffer.toString().replace(/[^0-9.]/g, ''));
+              if (isNaN(offerVal) || offerVal <= 0) return null;
+
+              return (
+                <div className="flex items-center gap-1.5 bg-gradient-to-r from-rose-500 to-pink-600 px-2.5 py-1 rounded-full text-[10px] font-bold text-white shadow-lg shadow-rose-500/20 border-t border-white/20 animate-in fade-in zoom-in duration-300 pointer-events-auto">
+                  <Sparkles className="w-3 h-3 text-white fill-white/20" />
+                  <span className="tracking-wide uppercase">{product.productOffer}{!isNaN(Number(product.productOffer)) ? '%' : ''} Off</span>
+                </div>
+              );
+            })()}
           </div>
 
 
