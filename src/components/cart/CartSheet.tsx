@@ -1049,19 +1049,23 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 if (cartSetDiscount !== serverSetDiscount) {
                     const activeRuleDesc = getActiveRuleDescription(item.multipleSetDiscount, totalQty);
+                    const newActiveRuleDesc = getActiveRuleDescription(detail.multipleSetDiscount, totalQty);
 
                     // Only blocking notify if we were using it OR will start using it (if price changes drastically?)
                     // User request: "notify when changes only if cart is using that bulk discount"
                     // Strictly: If I WAS using it.
                     if (activeRuleDesc) { // implied wasUsing because returns non-null
-                        blockingChanges = true;
-                        if (!serverSetDiscount) {
-                            pushChange(`Selected discount (${activeRuleDesc}) is removed.`, item.cartItemId);
+                        // If the benefit is IDENTICAL, do not show error
+                        if (activeRuleDesc === newActiveRuleDesc) {
+                            // Do nothing, just update the string silently
                         } else {
-                            // It changed. Maybe check if we qualify for NEW rule?
-                            // User requirement: "Selected discount in this place show what exactly selected"
-                            // "Selected discount (Buy 3 Get 10% Off) is removed."
-                            pushChange(`Selected discount (${activeRuleDesc}) is removed.`, item.cartItemId);
+                            blockingChanges = true;
+                            if (!serverSetDiscount || !newActiveRuleDesc) {
+                                pushChange(`Selected discount (${activeRuleDesc}) is removed.`, item.cartItemId);
+                            } else {
+                                // It changed to something else
+                                pushChange(`Selected discount (${activeRuleDesc}) is removed.`, item.cartItemId);
+                            }
                         }
                     }
                     item.multipleSetDiscount = detail.multipleSetDiscount;
