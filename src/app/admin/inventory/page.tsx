@@ -397,7 +397,7 @@ export default function AdminInventoryPage() {
                         famous: isFamous,
                         productDeliveryCost: Number(prodDeliveryCost),
                         productImage: image || undefined,
-                        productOffer: prodOffer || undefined,
+                        productOffer: prodOffer || "0",
                         multipleSetDiscount: bulkDiscounts.length > 0
                             ? bulkDiscounts.map(bd => `${bd.qty}-${bd.discount}`).join('&&&')
                             : undefined,

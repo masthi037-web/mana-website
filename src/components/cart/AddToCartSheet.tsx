@@ -64,17 +64,16 @@ const OptionCard = ({
         <Check className="w-2.5 h-2.5" strokeWidth={3} />
       </div>
     )}
-    <span className={cn("text-sm font-bold tracking-tight", isSelected ? "text-primary" : "text-foreground")}>
+    <span className={cn(
+      "text-sm font-bold tracking-tight",
+      isSelected ? "text-primary" : "text-foreground",
+      !active && "line-through decoration-destructive/50 decoration-2"
+    )}>
       {label}
     </span>
     {subLabel && (
-      <div className={cn("mt-0.5", isSelected ? "text-primary/80" : "text-muted-foreground")}>
+      <div className={cn("mt-0.5", isSelected ? "text-primary/80" : "text-muted-foreground", !active && "opacity-50")}>
         {subLabel}
-      </div>
-    )}
-    {!active && statusLabel && (
-      <div className="absolute inset-x-0 bottom-0.5 text-center">
-        <span className="text-[9px] font-bold text-rose-500 uppercase tracking-wider">{statusLabel}</span>
       </div>
     )}
   </div>
@@ -120,12 +119,13 @@ const ColourCard = ({
         </div>
       )}
     </div>
-    <span className={cn("text-xs font-bold tracking-tight line-clamp-1 max-w-full text-center px-1", isSelected ? "text-primary" : "text-foreground")}>
+    <span className={cn(
+      "text-xs font-bold tracking-tight line-clamp-1 max-w-full text-center px-1",
+      isSelected ? "text-primary" : "text-foreground",
+      !active && "line-through decoration-destructive/50 decoration-2"
+    )}>
       {name}
     </span>
-    {!active && (
-      <span className="text-[8px] font-bold text-rose-500 uppercase tracking-wider leading-none mt-0.5">{statusLabel || "N/A"}</span>
-    )}
   </div>
 );
 
