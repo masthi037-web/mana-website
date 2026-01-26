@@ -606,14 +606,12 @@ export default function AdminInventoryPage() {
     const calculateDiscount = (basePrice: number, offerText: string) => {
         if (!offerText || !basePrice) return basePrice;
 
-        // Match percentage like "50%", "50 %", or just "50" if it's likely a number
-        // We look for the first number in the string
-        const match = offerText.match(/(\d+)/);
+        // Improved match for integers and decimals (e.g. "5", "5.5", "10.5%")
+        // Looks for numbers at the start or preceded by space/non-digit
+        const match = offerText.match(/(\d+(\.\d+)?)/);
         if (match && match[1]) {
-            const pct = parseInt(match[1]);
-            // Safety check: if > 100, might be flat amount? For now assuming % per user intent usually.
-            // But if user enters "5", we treat as 5%.
-            if (pct > 0 && pct <= 100) {
+            const pct = parseFloat(match[1]);
+            if (!isNaN(pct) && pct > 0 && pct <= 100) {
                 return Math.round(basePrice * (1 - pct / 100));
             }
         }
@@ -1026,11 +1024,11 @@ export default function AdminInventoryPage() {
                                     <div className="space-y-3">
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-1">
-                                                <Label className="text-xs">Quantity (e.g. 1kg)</Label>
+                                                <Label className="text-xs">Size </Label>
                                                 <Input value={qty} onChange={e => setQty(e.target.value)} className="h-8 bg-background" placeholder="Qty" />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-xs">Size Quantity</Label>
+                                                <Label className="text-xs">Quantity</Label>
                                                 <Input
                                                     value={sizeQuantity}
                                                     onChange={e => setSizeQuantity(e.target.value)}
@@ -1048,18 +1046,14 @@ export default function AdminInventoryPage() {
                                                         const newVal = e.target.value;
                                                         setPrice(newVal);
                                                         // Auto-calc if offer exists
+                                                        // Use centralized function to ensure consistency
                                                         if (selectedProduct?.productOffer) {
                                                             const valNum = parseFloat(newVal);
                                                             if (!isNaN(valNum)) {
-                                                                const offerPercent = parseFloat(selectedProduct.productOffer.replace(/[^0-9.]/g, ''));
-                                                                if (offerPercent > 0) {
-                                                                    const discountAmount = (valNum * offerPercent) / 100;
-                                                                    setDiscountedPrice(String(Math.round(valNum - discountAmount)));
-                                                                }
+                                                                const calculated = calculateDiscount(valNum, selectedProduct.productOffer);
+                                                                setDiscountedPrice(String(calculated));
                                                             }
                                                         } else {
-                                                            // If no offer, discounted price usually equals price unless manually set, 
-                                                            // but safe default is to mirror price if it was empty or matching
                                                             setDiscountedPrice(newVal);
                                                         }
                                                     }}
@@ -1077,7 +1071,7 @@ export default function AdminInventoryPage() {
                                                 onChange={e => setDiscountedPrice(e.target.value)}
                                                 className="h-8 bg-background border-dashed"
                                                 placeholder="Auto"
-                                                disabled={!!(selectedProduct?.price && selectedProduct.price > 0)}
+                                                disabled={true}
                                             />
                                         </div>
                                         <div className="space-y-1">
