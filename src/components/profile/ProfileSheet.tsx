@@ -257,30 +257,30 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await authService.logout();
-            // toast({ title: "Logged Out", description: "See you soon!" }); // REMOVED
-        } catch (error) {
-            console.error("Logout failed:", error);
-        } finally {
-            // Check if OWNER before clearing state
-            const wasOwner = userRole?.includes('OWNER');
+    const handleLogout = () => {
+        // Optimistic Logout: Clear state immediately without waiting for server
+        const wasOwner = userRole?.includes('OWNER');
 
-            setIsLoggedIn(false);
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('userRole');
-            window.dispatchEvent(new Event('auth-change'));
-            setUserRole(null);
-            setView('login-phone');
-            setPhoneNumber('');
-            setOtp('');
-            setFeedback({ type: 'success', message: "Successfully logged out" });
+        // 1. Trigger background server logout (Fire & Forget)
+        authService.logout().catch(err => console.error("Background logout info:", err));
 
-            // Redirect to home if owner
-            if (wasOwner) {
-                router.push('/');
-            }
+        // 2. Immediate UI/State Cleanup
+        setIsLoggedIn(false);
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userRole');
+
+        // Dispatch event for other components to react
+        window.dispatchEvent(new Event('auth-change'));
+
+        setUserRole(null);
+        setView('login-phone');
+        setPhoneNumber('');
+        setOtp('');
+        setFeedback({ type: 'success', message: "Successfully logged out" });
+
+        // 3. Immediate Redirect if Owner
+        if (wasOwner) {
+            router.push('/');
         }
     };
 
