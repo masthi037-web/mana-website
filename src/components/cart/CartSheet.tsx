@@ -1035,7 +1035,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (!serverSetDiscount) {
                             pushChange(`Bulk discount rule for "${item.name}" has been removed.`, item.cartItemId);
                         } else {
-                            pushChange(`Bulk discount rule for "${item.name}" has been updated.`, item.cartItemId);
+                            pushChange(`Selected discount is removed.`, item.cartItemId);
                         }
                     }
                     item.multipleSetDiscount = detail.multipleSetDiscount;
