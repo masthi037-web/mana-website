@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
@@ -6,6 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import {
     Sheet,
     SheetContent,
@@ -50,7 +52,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useCart } from '@/hooks/use-cart';
+import { useCart, CartItem } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
@@ -607,14 +609,16 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     // Logic to find the correct pricing ID based on selected variants (Quantity)
                     let pricingId: number | null = null;
                     if (item.pricing && item.pricing.length > 0) {
-                        const quantityVariant = item.selectedVariants['Quantity'];
+                        // Try to match pricing ID from selected quantity variant
+                        const quantityVariant = item.selectedVariants?.['Quantity'];
                         if (quantityVariant) {
                             const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
                             if (matchedPricing) {
                                 pricingId = parseInt(matchedPricing.id);
                             }
                         }
-                        if (!pricingId && item.pricing.length > 0) {
+                        // Fallback to first pricing if no match or no variant
+                        if (!pricingId) {
                             pricingId = parseInt(item.pricing[0].id);
                         }
                     }
@@ -823,17 +827,15 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
                 }
 
-                const productColourId = item.selectedColour?.id || null;
-
-                const addonIds = item.selectedAddons && item.selectedAddons.length > 0
-                    ? item.selectedAddons.map(a => a.id).sort().join('&&&')
-                    : "";
+                const productColourId = item.selectedColour?.id;
 
                 return {
                     productId: parseInt(item.id),
                     sizeId: sizeId,
                     productColourId: productColourId ? parseInt(productColourId) : null,
-                    productAddonIds: addonIds
+                    multipleSetDiscount: item.multipleSetDiscount,
+                    multipleDiscountMoreThan: item.multipleDiscountMoreThan,
+                    productOffer: item.productOffer
                 };
             });
 
