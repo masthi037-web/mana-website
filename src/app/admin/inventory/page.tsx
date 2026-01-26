@@ -61,6 +61,7 @@ export default function AdminInventoryPage() {
     const [prodOffer, setProdOffer] = useState("");
     const [prodDeliveryCost, setProdDeliveryCost] = useState("40");
     const [prodQuantity, setProdQuantity] = useState("");
+    const [prodStatus, setProdStatus] = useState("ACTIVE");
     const [isFamous, setIsFamous] = useState(false);
     const [price, setPrice] = useState("");
     const [discountedPrice, setDiscountedPrice] = useState("");
@@ -362,7 +363,7 @@ export default function AdminInventoryPage() {
                         productBestBefore: prodBest,
                         productInst: prodInst,
                         productPics: editingItem.productPics || "https://cdn.example.com/products/default.jpg", // Preserve existing or default
-                        productStatus: editingItem.productStatus || "ACTIVE",
+                        productStatus: prodStatus,
                         productPrice: Number(price) || 0,
                         productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : (Number(price) || 0),
                         productDeliveryCost: Number(prodDeliveryCost),
@@ -388,7 +389,7 @@ export default function AdminInventoryPage() {
                         productBestBefore: prodBest,
                         productInst: prodInst,
                         productPics: "https://cdn.example.com/products/default.jpg",
-                        productStatus: "ACTIVE",
+                        productStatus: prodStatus,
                         // Prices now required
                         productPrice: Number(price) || 0,
                         productPriceAfterDiscount: discountedPrice ? Number(discountedPrice) : (Number(price) || 0),
@@ -517,6 +518,7 @@ export default function AdminInventoryPage() {
     const resetForm = () => {
         setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst(""); setProdOffer("");
         setProdDeliveryCost("40"); setProdQuantity(""); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setSizeQuantity(""); setSizeStatus("ACTIVE"); setIsMandatory(false);
+        setProdStatus("ACTIVE");
         setBulkDiscounts([]); setTempBulkQty(""); setTempBulkDiscount("");
         setMoreThanQty(""); setMoreThanDiscount("");
         setImage(null);
@@ -554,6 +556,7 @@ export default function AdminInventoryPage() {
         setProdIng(prod.ingredients || prod.productIng || "");
         setProdBest(prod.bestBefore || prod.productBestBefore || "");
         setProdInst(prod.instructions || prod.productInst || "");
+        setProdStatus(prod.productStatus || "ACTIVE");
 
         // Price & Offer
         setPrice(String(prod.productPrice || prod.price || ""));
@@ -725,6 +728,19 @@ export default function AdminInventoryPage() {
                                 <Label>Available Quantity</Label>
                                 <Input placeholder="10" value={prodQuantity} onChange={e => setProdQuantity(e.target.value)} />
                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Status</Label>
+                            <select
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                value={prodStatus}
+                                onChange={e => setProdStatus(e.target.value)}
+                            >
+                                <option value="ACTIVE">Active</option>
+                                <option value="INACTIVE">Inactive</option>
+                                <option value="OUTOFSTOCK">Out of Stock</option>
+                            </select>
                         </div>
 
                         <div className="space-y-2">
