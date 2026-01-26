@@ -835,7 +835,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     productColourId: productColourId ? parseInt(productColourId) : null,
                     multipleSetDiscount: item.multipleSetDiscount,
                     multipleDiscountMoreThan: item.multipleDiscountMoreThan,
-                    productOffer: item.productOffer
+                    productOffer: item.productOffer,
+                    productAddonIds: item.selectedAddons ? item.selectedAddons.map(a => a.id).join(',') : ""
                 };
             });
 
