@@ -1024,18 +1024,44 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 const totalQty = productQuantities[item.id] || item.quantity;
 
+                // Helper: Get description of the BEST rule currently active
+                const getActiveRuleDescription = (rule: string, qty: number) => {
+                    if (!rule || qty <= 0) return null;
+                    const segments = rule.split('&&&');
+                    let bestParams: { t: number, p: number } | null = null;
+
+                    for (const seg of segments) {
+                        const [thresholdStr, percentStr] = seg.split('-');
+                        const threshold = parseFloat(thresholdStr);
+                        const percent = parseFloat(percentStr);
+                        if (!isNaN(threshold) && !isNaN(percent) && qty >= threshold) {
+                            // We assume the one with HIGHEST threshold is the "active" one (or most relevant)
+                            if (!bestParams || threshold > bestParams.t) {
+                                bestParams = { t: threshold, p: percent };
+                            }
+                        }
+                    }
+                    if (bestParams) {
+                        return `Buy ${bestParams.t} Get ${bestParams.p}% Off`;
+                    }
+                    return null;
+                };
+
                 if (cartSetDiscount !== serverSetDiscount) {
-                    const wasUsing = isUsingRule(item.multipleSetDiscount, totalQty);
+                    const activeRuleDesc = getActiveRuleDescription(item.multipleSetDiscount, totalQty);
 
                     // Only blocking notify if we were using it OR will start using it (if price changes drastically?)
                     // User request: "notify when changes only if cart is using that bulk discount"
                     // Strictly: If I WAS using it.
-                    if (wasUsing) {
+                    if (activeRuleDesc) { // implied wasUsing because returns non-null
                         blockingChanges = true;
                         if (!serverSetDiscount) {
-                            pushChange(`Bulk discount rule for "${item.name}" has been removed.`, item.cartItemId);
+                            pushChange(`Selected discount (${activeRuleDesc}) is removed.`, item.cartItemId);
                         } else {
-                            pushChange(`Selected discount is removed.`, item.cartItemId);
+                            // It changed. Maybe check if we qualify for NEW rule?
+                            // User requirement: "Selected discount in this place show what exactly selected"
+                            // "Selected discount (Buy 3 Get 10% Off) is removed."
+                            pushChange(`Selected discount (${activeRuleDesc}) is removed.`, item.cartItemId);
                         }
                     }
                     item.multipleSetDiscount = detail.multipleSetDiscount;
@@ -1495,29 +1521,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     {validationErrors.map((err, i) => (
                                         <li key={i} className="text-sm border-l-2 border-amber-500 pl-3 py-1 text-muted-foreground flex items-start justify-between gap-2 bg-amber-50/50 dark:bg-amber-950/10 rounded-r-md">
                                             <span className="leading-snug">{err.message}</span>
-                                            {err.cartItemId && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 -mt-0.5 shrink-0"
-                                                    onClick={() => {
-                                                        if (err.cartItemId) {
-                                                            removeFromCart(err.cartItemId);
-                                                            // Remove this error from the list
-                                                            const newErrors = validationErrors.filter((_, idx) => idx !== i);
-                                                            setValidationErrors(newErrors);
 
-                                                            // If no errors left, close popup
-                                                            if (newErrors.length === 0) {
-                                                                setShowValidationPopup(false);
-                                                            }
-                                                        }
-                                                    }}
-                                                    title="Remove item from cart"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </Button>
-                                            )}
                                         </li>
                                     ))}
                                 </ul>
