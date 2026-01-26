@@ -97,20 +97,44 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         }
     });
 
-    // Pre-calculate Discount Distribution Map for each Product (Scoped by Product ID)
-    // Key: Product ID -> Value: Array of percentages for each unit [15, 15, 15, 15, 0]
-    const productDiscounts: Record<string, number[]> = {};
+    // Pre-calculate Discount Distribution Map for each item UNIT
+    // Key: CartItemId -> Value: Array of percentages for each unit in that item [15, 0]
+    // We map by CartItemId to handle multiple variants of same product correctly
+    const itemDiscountMap: Record<string, number[]> = {};
 
     Object.keys(productQuantities).forEach(productId => {
         const totalQty = productQuantities[productId];
         const ruleKey = productRules[productId];
+        const productItemForRule = cart.find(i => i.id.toString() === productId);
+        const moreThanRule = productItemForRule?.multipleDiscountMoreThan;
 
-        // Find a representative item to check for 'More Than' rule
-        const productItem = cart.find(i => i.id.toString() === productId);
-        const moreThanRule = productItem?.multipleDiscountMoreThan;
+        // 1. Gather all individual units for this product across all cart items
+        // We need to know which unit belongs to which cartItem to map it back later
+        interface Unit {
+            price: number;
+            cartItemId: string;
+            indexInItem: number; // 0 for 1st unit of this item, 1 for 2nd...
+        }
+        let allUnits: Unit[] = [];
 
-        // --- Logic 1: Standard Greedy Tiers ---
-        let greedyDistribution: number[] = [];
+        cart.filter(i => i.id.toString() === productId).forEach(item => {
+            for (let k = 0; k < item.quantity; k++) {
+                allUnits.push({
+                    price: item.price,
+                    cartItemId: item.cartItemId,
+                    indexInItem: k
+                });
+            }
+        });
+
+        // 2. Sort Units by Price DESCENDING (User Request: Apply offer to max price items)
+        allUnits.sort((a, b) => b.price - a.price);
+
+        // 3. Calculate Discount Tiers based on TOTAL quantity
+        let discountsToApply: number[] = [];
+
+        // Logic A: Tiers
+        let greedyDiscounts: number[] = [];
         let maxGreedyDiscount = 0;
 
         if (ruleKey) {
@@ -126,59 +150,94 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     }
                 }
             });
-
-            // Sort Tiers Descending by Threshold
             tiers.sort((a, b) => b.threshold - a.threshold);
-            if (tiers.length > 0) maxGreedyDiscount = tiers[0].percent; // Approx max possible
+            if (tiers.length > 0) maxGreedyDiscount = tiers[0].percent;
 
             let remaining = totalQty;
             while (remaining > 0) {
                 const bestTier = tiers.find(t => t.threshold <= remaining);
                 if (bestTier) {
                     for (let k = 0; k < bestTier.threshold; k++) {
-                        greedyDistribution.push(bestTier.percent);
+                        greedyDiscounts.push(bestTier.percent);
                     }
                     remaining -= bestTier.threshold;
                 } else {
                     for (let k = 0; k < remaining; k++) {
-                        greedyDistribution.push(0);
+                        greedyDiscounts.push(0);
                     }
                     remaining = 0;
                 }
             }
         } else {
-            greedyDistribution = new Array(totalQty).fill(0);
+            greedyDiscounts = new Array(totalQty).fill(0);
         }
 
-        // --- Logic 2: 'More Than' Override ---
-        let finalDistribution = greedyDistribution;
-
+        // Logic B: More Than Override
+        discountsToApply = greedyDiscounts;
         if (moreThanRule) {
             const parts = moreThanRule.split('-');
             if (parts.length === 2) {
                 const threshold = parseFloat(parts[0]);
                 const discount = parseFloat(parts[1]);
-
-                // Condition: Quantity > Threshold AND Discount > Max Tier Discount
-                // Note: User says "more then 6", so strictly `>`
                 if (!isNaN(threshold) && !isNaN(discount) && totalQty > threshold) {
-                    // Check if this override is better than the BEST tiered discount available
-                    // Or simply if it applies. User logic implies it should supersede if better.
-                    // We'll trust the user's intent: "start considering buy 6+ get 20% offer as 20% offer is more then 10, 15"
-
-                    // Locate optimal set discount used in greedy? No, just compare max potential.
-                    // Actually, let's compare against the best single tier used.
-
                     if (discount > maxGreedyDiscount) {
-                        // Apply Flat Discount to ALL items
-                        finalDistribution = new Array(totalQty).fill(discount);
+                        discountsToApply = new Array(totalQty).fill(discount);
                     }
                 }
             }
         }
 
-        productDiscounts[productId] = finalDistribution;
+        // 4. Assign calculated discounts to sorted units
+        // Since both arrays are length = totalQty, index matching works
+        allUnits.forEach((unit, idx) => {
+            const discountPercent = discountsToApply[idx] || 0;
+
+            if (!itemDiscountMap[unit.cartItemId]) {
+                itemDiscountMap[unit.cartItemId] = [];
+            }
+            // We can't just push because loop order might differ from original item indexing if we mixed items
+            // But we stored cartItemId. We need to store it in a way that we can retrieve it by index.
+            // Actually, itemDiscountMap needs to be sorted by indexInItem ultimately? 
+            // array[unit.indexInItem] = discount
+
+            // Initialize if needed (though we might not know total size here efficiently without pre-alloc)
+            // safer to push to a temp object keyed by "cartItemId-index"
+        });
+
+        // Re-map cleanly
+        const tempMap: Record<string, number[]> = {};
+        allUnits.forEach((unit, idx) => {
+            const discountPercent = discountsToApply[idx];
+            if (!tempMap[unit.cartItemId]) tempMap[unit.cartItemId] = [];
+            // We need to place it at the correct index for that item
+            tempMap[unit.cartItemId][unit.indexInItem] = discountPercent;
+        });
+
+        // Merge to main map
+        Object.keys(tempMap).forEach(k => {
+            itemDiscountMap[k] = tempMap[k];
+        });
     });
+
+    const productDiscounts = itemDiscountMap; // Alias for compatibility with existing render logic if it uses ID? 
+    // Wait, existing render logic uses productDiscounts[productId]. 
+    // We need to change the render logic to use item.cartItemId specific discounts.
+    // OR we change the render logic below. Let's look at how it consumes it.
+
+    // It seems previous code was: productDiscounts: Record<string, number[]> keyed by PRODUCT ID.
+    // It assumed distribution was uniform or order didn't matter per item.
+    // NOW it matters per Item.
+    // I will need to update the Consumer logic too.
+
+    // Let's keep productDiscounts as is BUT... wait, the logic below (lines 183+) iterates cart items.
+    // If I change the key to cartItemId, I need to update the consumption.
+    // Let's check lines 868+ (in render).
+    // It likely does: const discounts = productDiscounts[item.id]; 
+    // If I have 2 different items (variants) of same product, they share the pool.
+    // Previous logic: productDiscounts[item.id] returned an array of length TotalQty.
+    // The render loop likely sliced this array based on index?
+    // Let's check the render logic. I'll read the file around line 900-1100 to be safe.
+
 
     const hasBulkDiscount = Object.keys(productDiscounts).some(k => productDiscounts[k].some(p => p > 0));
 
@@ -1770,16 +1829,21 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                     <div className="space-y-4">
                                                         {groupItems.map((item, itemIndex) => {
                                                             const isNew = lastAddedItemId === item.cartItemId;
-
                                                             // Calculate Rendered Discount for this specific line item
-                                                            // We must replicate the greedy distribution logic to show accurate split:
-                                                            // Re-running localized greedy calc:
-                                                            const distribution = productDiscounts[item.id] || [];
+                                                            // We now use the pre-calculated itemDiscountMap which honors price sorting
+                                                            const distribution = productDiscounts[item.cartItemId] || [];
 
-                                                            // Find local offset among same-product items in the cart (using groupItems order)
-                                                            const prevInGroup = groupItems.slice(0, itemIndex).reduce((acc, i) => acc + i.quantity, 0);
-                                                            let itemDiscounts = distribution.slice(prevInGroup, prevInGroup + item.quantity);
-                                                            while (itemDiscounts.length < item.quantity) itemDiscounts.push(0);
+                                                            // The distribution array corresponds 1:1 to the units in this specific cart item
+                                                            // So we don't need to slice based on group offset anymore, because the map is keyed by cartItemId.
+                                                            let itemDiscounts = distribution; // It should already be length == item.quantity
+
+                                                            // Fallback safety
+                                                            if (!itemDiscounts || itemDiscounts.length !== item.quantity) {
+                                                                // If mismatch (shouldn't happen with correct logic), fill 0 or trim
+                                                                // console.warn("Discount mismatch for item", item.cartItemId);
+                                                                itemDiscounts = itemDiscounts ? itemDiscounts.slice(0, item.quantity) : [];
+                                                                while (itemDiscounts.length < item.quantity) itemDiscounts.push(0);
+                                                            }
 
                                                             // Group by Discount Percentage
                                                             const groups: Record<number, number> = {};
