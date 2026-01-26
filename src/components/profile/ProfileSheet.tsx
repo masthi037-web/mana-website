@@ -392,6 +392,9 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                                                     setTimeout(() => {
                                                         setWishlistOpen(true);
                                                     }, 300);
+                                                } else if (item.label === 'Settings' && isOwner) {
+                                                    setIsOpen(false);
+                                                    router.push('/admin/inventory');
                                                 } else {
                                                     router.push(item.href);
                                                 }
