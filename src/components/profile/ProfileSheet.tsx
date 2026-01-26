@@ -165,7 +165,11 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                 setUserRole(response.role);
             }
 
-            // Delay transition and Redirect to Address flow
+            // Determine redirect priority
+            const isOwner = response.role?.includes('OWNER');
+            const delayTime = isOwner ? 500 : 2000; // Fast track for owners
+
+            // Delay transition and Redirect
             setTimeout(() => {
                 setIsLoggedIn(true);
                 localStorage.setItem('isLoggedIn', 'true');
@@ -185,10 +189,10 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                     }, 300);
                 } else {
                     // Check for OWNER role and redirect
-                    if (response.role?.includes('OWNER')) {
+                    if (isOwner) {
                         router.push('/admin/inventory');
                     } else {
-                        // Default: Open Address Sidebar if NOT owner
+                        // Default: Open Address flow for customers
                         // If CUSTOMER, fetch details to warm cache
                         if (response.role?.includes('CUSTOMER')) {
                             customerService.getCustomerDetails().catch(console.error);
@@ -201,7 +205,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                 }
 
                 // toast({ title: "Welcome back!", description: "Logged in successfully" }); // REMOVED
-            }, 2000);
+            }, delayTime);
 
         } catch (error) {
             toast({ title: "Login Failed", description: "Invalid OTP or error occurred", variant: "destructive", duration: 2000 });
