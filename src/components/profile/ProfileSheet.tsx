@@ -297,6 +297,16 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
             <SheetTrigger asChild>{children}</SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-md flex flex-col h-full">
 
+                {/* ACCESSIBILITY: Dialog requires a Title. Render it globaly. Visually hide if not in profile view or if using custom header. */}
+                <SheetHeader className={cn(
+                    "transition-all duration-200",
+                    !(isLoggedIn && !showSuccess && view === 'profile') ? "sr-only" : "pb-6 border-b"
+                )}>
+                    <SheetTitle>
+                        {view === 'profile' ? 'Profile' : 'Authentication'}
+                    </SheetTitle>
+                </SheetHeader>
+
                 {/* VIEW: SUCCESS ANIMATION */}
                 {showSuccess && (
                     <div className="flex flex-col items-center justify-center h-full animate-in fade-in duration-500">
@@ -315,9 +325,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                 {/* VIEW: LOGGED IN PROFILE */}
                 {isLoggedIn && !showSuccess && view === 'profile' && (
                     <>
-                        <SheetHeader className="pb-6 border-b">
-                            <SheetTitle>Profile</SheetTitle>
-                        </SheetHeader>
+                        {/* Title handled globally above */}
                         <div className="flex-1 overflow-y-auto py-6">
                             <div className="flex items-center gap-4 mb-8 px-1">
                                 <Avatar className="h-16 w-16 border-2 border-teal-100">
