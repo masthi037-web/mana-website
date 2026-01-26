@@ -1057,7 +1057,19 @@ export default function AdminInventoryPage() {
                                                         // Auto-calc if offer exists
                                                         // Use centralized function to ensure consistency
                                                         // Prioritize active edited offer if available
-                                                        const offerToUse = prodOffer || selectedProduct?.productOffer;
+                                                        const currentOffer = (typeof prodOffer === 'string' && prodOffer.trim().length > 0) ? prodOffer : "";
+                                                        const dbOffer = selectedProduct?.productOffer || "";
+                                                        const offerToUse = currentOffer || dbOffer;
+
+                                                        // Debug logging for troubleshooting
+                                                        console.log("Variant Price Logic:", {
+                                                            newVal,
+                                                            prodOffer,
+                                                            dbOffer,
+                                                            offerToUse,
+                                                            calc: calculateDiscount(parseFloat(newVal), offerToUse)
+                                                        });
+
                                                         if (offerToUse) {
                                                             const valNum = parseFloat(newVal);
                                                             if (!isNaN(valNum)) {
