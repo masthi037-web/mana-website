@@ -517,6 +517,7 @@ export default function AdminInventoryPage() {
 
     // --- NAVIGATION HANDLERS ---
     const resetForm = () => {
+        // Full reset for Product
         setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst(""); setProdOffer("");
         setProdDeliveryCost("40"); setProdQuantity(""); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setSizeQuantity(""); setSizeStatus("ACTIVE"); setIsMandatory(false);
         setProdStatus("ACTIVE");
@@ -524,6 +525,13 @@ export default function AdminInventoryPage() {
         setMoreThanQty(""); setMoreThanDiscount("");
         setImage(null);
         setColourName(""); setColourImage(null); setColourStatus("ACTIVE");
+        setEditingItem(null);
+    };
+
+    const resetVariantFieldsOnly = () => {
+        // Reset only variant fields, keep product context active
+        setPrice(""); setDiscountedPrice("");
+        setQty(""); setSizeQuantity(""); setSizeStatus("ACTIVE");
         setEditingItem(null);
     };
 
@@ -999,13 +1007,14 @@ export default function AdminInventoryPage() {
                                 {manageMode !== 'ADD_PRICING' && (
                                     <Button size="sm" onClick={() => {
                                         setManageMode('ADD_PRICING');
-                                        resetForm();
+                                        resetVariantFieldsOnly();
                                         // Pre-fill if base price exists
                                         if (selectedProduct && selectedProduct.price > 0) {
                                             setPrice(String(selectedProduct.price));
-                                            // Auto-calc discount if offer exists
-                                            if (selectedProduct.productOffer) {
-                                                const calculated = calculateDiscount(selectedProduct.price, selectedProduct.productOffer);
+                                            // Auto-calc discount if offer exists (Prioritize active edited offer)
+                                            const offerToUse = prodOffer || selectedProduct?.productOffer;
+                                            if (offerToUse) {
+                                                const calculated = calculateDiscount(selectedProduct.price, offerToUse);
                                                 setDiscountedPrice(String(calculated));
                                             } else {
                                                 setDiscountedPrice(String(selectedProduct.price));
@@ -1047,10 +1056,12 @@ export default function AdminInventoryPage() {
                                                         setPrice(newVal);
                                                         // Auto-calc if offer exists
                                                         // Use centralized function to ensure consistency
-                                                        if (selectedProduct?.productOffer) {
+                                                        // Prioritize active edited offer if available
+                                                        const offerToUse = prodOffer || selectedProduct?.productOffer;
+                                                        if (offerToUse) {
                                                             const valNum = parseFloat(newVal);
                                                             if (!isNaN(valNum)) {
-                                                                const calculated = calculateDiscount(valNum, selectedProduct.productOffer);
+                                                                const calculated = calculateDiscount(valNum, offerToUse);
                                                                 setDiscountedPrice(String(calculated));
                                                             }
                                                         } else {
@@ -1308,123 +1319,125 @@ export default function AdminInventoryPage() {
 
             {isLoading && <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}
 
-            {!isLoading && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {
+                !isLoading && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-                    {/* LEVEL 0: CATEGORIES */}
-                    {level === 'CATEGORY' && categories.map((cat: any) => (
-                        <Card key={cat.id}
-                            className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md group"
-                            onClick={() => { setSelectedCategory(cat); setLevel('CATALOGUE'); }}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-base font-bold">{cat.name}</CardTitle>
-                                <div className="flex items-center gap-2">
-                                    <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditCategory(cat, e)}>
-                                        <Pencil className="h-3 w-3 text-muted-foreground" />
-                                    </Button>
-                                    <Folder className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                                </div>
-                            </CardHeader>
-                        </Card>
-                    ))}
-
-                    {/* LEVEL 1: CATALOGUES */}
-                    {level === 'CATALOGUE' && catalogues.map((catlg: any) => (
-                        <Card key={catlg.id}
-                            className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md group"
-                            onClick={() => { setSelectedCatalogue(catlg); setLevel('PRODUCT'); }}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-base font-bold">{catlg.name}</CardTitle>
-                                <div className="flex items-center gap-2">
-                                    <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditCatalogue(catlg, e)}>
-                                        <Pencil className="h-3 w-3 text-muted-foreground" />
-                                    </Button>
-                                    <Layers className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-xs text-muted-foreground truncate">{catlg.products?.map((p: any) => p.name).join(', ')}</p>
-                            </CardContent>
-                        </Card>
-                    ))}
-
-                    {/* LEVEL 2: PRODUCTS */}
-                    {level === 'PRODUCT' && products.map((prod: any) => (
-                        <Card key={prod.id}
-                            className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md group relative overflow-hidden"
-                            onClick={() => { setSelectedProduct(prod); setIsManageSheetOpen(true); }}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-base font-bold truncate pr-6">{prod.name}</CardTitle>
-                                <div className="flex items-center gap-2">
-                                    <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditProduct(prod, e)}>
-                                        <Pencil className="h-3 w-3 text-muted-foreground" />
-                                    </Button>
-                                    <Package className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="absolute top-0 right-0 p-2 flex flex-col gap-1 items-end">
-                                    {prod.famous && (
-                                        <div className="bg-yellow-100 text-yellow-700 p-1 rounded-full shadow-sm">
-                                            <Star className="w-3 h-3 fill-yellow-700" />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="mt-2 flex items-center gap-2">
-                                    {prod.productOffer && (
-                                        <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                            <Sparkles className="w-3 h-3" />
-                                            {prod.productOffer}
-                                        </span>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-
-                    {/* LEVEL 3: PRICING */}
-                    {level === 'PRICING' && pricingOptions.map((p: any) => (
-                        <Card key={p.id}
-                            className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md group"
-                            onClick={() => { setSelectedPricing(p); setLevel('ADDON'); }}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-base font-bold">{p.quantity}</CardTitle>
-                                <Tag className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="mb-2">
-                                    {p.priceAfterDiscount && p.priceAfterDiscount < p.price ? (
-                                        <div className="flex flex-col">
-                                            <span className="text-2xl font-bold text-primary">₹{p.priceAfterDiscount}</span>
-                                            <span className="text-sm text-muted-foreground line-through decoration-destructive/50">₹{p.price}</span>
-                                        </div>
-                                    ) : (
-                                        <div className="text-2xl font-bold text-primary">₹{p.price}</div>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-
-                    {/* LEVEL 4: ADDONS */}
-                    {level === 'ADDON' && selectedPricing && (
-                        addons.map((addon: any) => (
-                            <Card key={addon.id} className="hover:border-border transition-all">
+                        {/* LEVEL 0: CATEGORIES */}
+                        {level === 'CATEGORY' && categories.map((cat: any) => (
+                            <Card key={cat.id}
+                                className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md group"
+                                onClick={() => { setSelectedCategory(cat); setLevel('CATALOGUE'); }}>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-base font-bold">{addon.name}</CardTitle>
-                                    {addon.mandatory && <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded font-bold">MANDATORY</span>}
+                                    <CardTitle className="text-base font-bold">{cat.name}</CardTitle>
+                                    <div className="flex items-center gap-2">
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditCategory(cat, e)}>
+                                            <Pencil className="h-3 w-3 text-muted-foreground" />
+                                        </Button>
+                                        <Folder className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    </div>
+                                </CardHeader>
+                            </Card>
+                        ))}
+
+                        {/* LEVEL 1: CATALOGUES */}
+                        {level === 'CATALOGUE' && catalogues.map((catlg: any) => (
+                            <Card key={catlg.id}
+                                className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md group"
+                                onClick={() => { setSelectedCatalogue(catlg); setLevel('PRODUCT'); }}>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-base font-bold">{catlg.name}</CardTitle>
+                                    <div className="flex items-center gap-2">
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditCatalogue(catlg, e)}>
+                                            <Pencil className="h-3 w-3 text-muted-foreground" />
+                                        </Button>
+                                        <Layers className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-lg font-bold text-emerald-600">+₹{addon.price}</div>
+                                    <p className="text-xs text-muted-foreground truncate">{catlg.products?.map((p: any) => p.name).join(', ')}</p>
                                 </CardContent>
                             </Card>
-                        ))
-                    )}
+                        ))}
 
-                    {/* Empty States */}
-                    {level === 'CATEGORY' && categories.length === 0 && <div className="col-span-3 text-center py-10 text-muted-foreground">No Categories found. Create one to get started.</div>}
-                </div>
-            )}
-        </div>
+                        {/* LEVEL 2: PRODUCTS */}
+                        {level === 'PRODUCT' && products.map((prod: any) => (
+                            <Card key={prod.id}
+                                className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md group relative overflow-hidden"
+                                onClick={() => { setSelectedProduct(prod); setIsManageSheetOpen(true); }}>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-base font-bold truncate pr-6">{prod.name}</CardTitle>
+                                    <div className="flex items-center gap-2">
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditProduct(prod, e)}>
+                                            <Pencil className="h-3 w-3 text-muted-foreground" />
+                                        </Button>
+                                        <Package className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="absolute top-0 right-0 p-2 flex flex-col gap-1 items-end">
+                                        {prod.famous && (
+                                            <div className="bg-yellow-100 text-yellow-700 p-1 rounded-full shadow-sm">
+                                                <Star className="w-3 h-3 fill-yellow-700" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-2">
+                                        {prod.productOffer && (
+                                            <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                <Sparkles className="w-3 h-3" />
+                                                {prod.productOffer}
+                                            </span>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+
+                        {/* LEVEL 3: PRICING */}
+                        {level === 'PRICING' && pricingOptions.map((p: any) => (
+                            <Card key={p.id}
+                                className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md group"
+                                onClick={() => { setSelectedPricing(p); setLevel('ADDON'); }}>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-base font-bold">{p.quantity}</CardTitle>
+                                    <Tag className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="mb-2">
+                                        {p.priceAfterDiscount && p.priceAfterDiscount < p.price ? (
+                                            <div className="flex flex-col">
+                                                <span className="text-2xl font-bold text-primary">₹{p.priceAfterDiscount}</span>
+                                                <span className="text-sm text-muted-foreground line-through decoration-destructive/50">₹{p.price}</span>
+                                            </div>
+                                        ) : (
+                                            <div className="text-2xl font-bold text-primary">₹{p.price}</div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+
+                        {/* LEVEL 4: ADDONS */}
+                        {level === 'ADDON' && selectedPricing && (
+                            addons.map((addon: any) => (
+                                <Card key={addon.id} className="hover:border-border transition-all">
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-base font-bold">{addon.name}</CardTitle>
+                                        {addon.mandatory && <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded font-bold">MANDATORY</span>}
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-lg font-bold text-emerald-600">+₹{addon.price}</div>
+                                    </CardContent>
+                                </Card>
+                            ))
+                        )}
+
+                        {/* Empty States */}
+                        {level === 'CATEGORY' && categories.length === 0 && <div className="col-span-3 text-center py-10 text-muted-foreground">No Categories found. Create one to get started.</div>}
+                    </div>
+                )
+            }
+        </div >
     );
 }
