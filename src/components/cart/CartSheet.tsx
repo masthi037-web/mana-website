@@ -1388,15 +1388,32 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 {showConflictPopup && stockConflicts.length > 0 && (
                     <div className="absolute inset-0 z-[120] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
                         <div className="bg-background w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 slide-in-from-bottom-5">
-                            <div className="bg-rose-500/10 p-6 flex flex-col items-center text-center border-b border-rose-500/20">
-                                <div className="w-14 h-14 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-3 text-rose-600 dark:text-rose-500 shadow-inner">
-                                    <AlertTriangle className="w-7 h-7" />
-                                </div>
-                                <h3 className="text-xl font-bold text-foreground tracking-tight">Stock Limit Exceeded</h3>
-                                <p className="text-sm text-muted-foreground mt-2 px-4 leading-relaxed">
-                                    You have requested more items than are currently available. Please adjust quantities below.
-                                </p>
-                            </div>
+                            {(() => {
+                                const hasUnresolved = stockConflicts.some(c => c.items.reduce((s, i) => s + i.quantity, 0) > c.availableStock);
+                                return (
+                                    <div className={cn(
+                                        "p-6 flex flex-col items-center text-center border-b transition-colors duration-300",
+                                        hasUnresolved ? "bg-rose-500/10 border-rose-500/20" : "bg-emerald-500/10 border-emerald-500/20"
+                                    )}>
+                                        <div className={cn(
+                                            "w-14 h-14 rounded-full flex items-center justify-center mb-3 shadow-inner transition-colors duration-300",
+                                            hasUnresolved
+                                                ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-500"
+                                                : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-500"
+                                        )}>
+                                            {hasUnresolved ? <AlertTriangle className="w-7 h-7" /> : <Check className="w-7 h-7" />}
+                                        </div>
+                                        <h3 className="text-xl font-bold text-foreground tracking-tight transition-all">
+                                            {hasUnresolved ? "Stock Limit Exceeded" : "Issues Resolved"}
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground mt-2 px-4 leading-relaxed transition-all">
+                                            {hasUnresolved
+                                                ? "You have requested more items than are currently available. Please adjust quantities below."
+                                                : "All quantity issues have been resolved. You can now update your cart."}
+                                        </p>
+                                    </div>
+                                );
+                            })()}
 
                             <ScrollArea className="max-h-[60vh]">
                                 <div className="p-6 space-y-8">
