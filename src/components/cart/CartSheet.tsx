@@ -220,8 +220,81 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
     // Validation State
     const [isCheckingOut, setIsCheckingOut] = useState(false);
-    const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+    interface ValidationMessage {
+        message: string;
+        cartItemId?: string;
+    }
+
+    const [validationErrors, setValidationErrors] = useState<ValidationMessage[]>([]);
     const [showValidationPopup, setShowValidationPopup] = useState(false);
+
+
+    // ... (inside handleCheckout) ...
+
+    // 5. Compare and Validate
+    let blockingChanges = false;
+    const changes: ValidationMessage[] = [];
+    const uniqueMessages = new Set<string>();
+
+    const pushChange = (msg: string, cartItemId?: string) => {
+        if (!uniqueMessages.has(msg)) {
+            uniqueMessages.add(msg);
+            changes.push({ message: msg, cartItemId });
+        }
+    };
+
+    // ... (throughout validation logic, pass item.cartItemId where appropriate) ...
+
+    // ... (UI Render for Validation Popup) ...
+
+    {/* Validation Popup */ }
+    {
+        showValidationPopup && (
+            <div className="absolute inset-0 z-[110] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="bg-background w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 slide-in-from-bottom-5">
+                    <div className="bg-amber-500/10 p-6 flex flex-col items-center text-center border-b border-amber-500/20">
+                        <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-3 text-amber-600 dark:text-amber-500">
+                            <AlertTriangle className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-lg font-bold text-foreground">Cart Updated</h3>
+                        <p className="text-sm text-muted-foreground mt-1">Some items have changed since you added them.</p>
+                    </div>
+
+                    <div className="p-6 space-y-4">
+                        <ul className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
+                            {validationErrors.map((err, i) => (
+                                <li key={i} className="text-sm border-l-2 border-amber-500 pl-3 py-1 text-muted-foreground flex items-start justify-between gap-2 bg-amber-50/50 dark:bg-amber-950/10 rounded-r-md">
+                                    <span>{err.message}</span>
+                                    {err.cartItemId && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 -mt-0.5 shrink-0"
+                                            onClick={() => {
+                                                removeFromCart(err.cartItemId!);
+                                                setValidationErrors(prev => prev.filter((_, idx) => idx !== i));
+                                                // If no errors left, close popup (optional, or keep open to review others)
+                                                if (validationErrors.length <= 1) setShowValidationPopup(false);
+                                            }}
+                                            title="Remove item from cart"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+
+                        <Button className="w-full" onClick={() => setShowValidationPopup(false)}>
+                            <RefreshCw className="mr-2 w-4 h-4" />
+                            Review & Continue
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
     const [couponCode, setCouponCode] = useState('');
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
@@ -763,7 +836,20 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
             // 5. Compare and Validate
             let blockingChanges = false;
-            const changes: string[] = [];
+            interface ValidationMessage {
+                message: string;
+                cartItemId?: string;
+            }
+            const changes: ValidationMessage[] = [];
+            const uniqueMessages = new Set<string>();
+
+            const pushChange = (msg: string, cartItemId?: string) => {
+                if (!uniqueMessages.has(msg)) {
+                    uniqueMessages.add(msg);
+                    changes.push({ message: msg, cartItemId });
+                }
+            };
+
             const newCart = cart.map(item => ({ ...item, selectedAddons: item.selectedAddons ? [...item.selectedAddons] : [] }));
 
             // Handle wrapped response (server returns { productDetails: [...] }) or direct array
@@ -800,7 +886,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 if (isIdMismatch) {
                     blockingChanges = true;
-                    changes.push(`Critical: Data mismatch for "${item.name}". Please refresh cart.`);
+                    pushChange(`Critical: Data mismatch for "${item.name}". Please refresh cart.`);
                     return; // Abort further checks for this item
                 }
 
@@ -810,7 +896,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     const cartColor = item.selectedColour.name.trim().toLowerCase();
                     if (serverColor !== cartColor) {
                         blockingChanges = true;
-                        changes.push(`Colour mismatch for "${item.name}" (Server: ${detail.colour}, Cart: ${item.selectedColour.name}). Removed.`);
+                        pushChange(`Colour mismatch for "${item.name}" (Server: ${detail.colour}, Cart: ${item.selectedColour.name}). Removed.`);
                         item.cartItemId = 'REMOVE_ME';
                         return;
                     }
@@ -826,7 +912,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         // But user requested "check multipleSetDiscount... productSize".
                         // Assuming strict equality is desired for data integrity.
                         blockingChanges = true;
-                        changes.push(`Size label mismatch for "${item.name}" (Server: ${detail.productSize}, Cart: ${item.selectedVariants['Quantity']}). Removed.`);
+                        pushChange(`Size label mismatch for "${item.name}" (Server: ${detail.productSize}, Cart: ${item.selectedVariants['Quantity']}). Removed.`);
                         item.cartItemId = 'REMOVE_ME';
                         return;
                     }
@@ -860,7 +946,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 if (cartSetDiscount !== serverSetDiscount) {
                     const wasUsing = isUsingRule(item.multipleSetDiscount, totalQty);
-                    const willUse = isUsingRule(detail.multipleSetDiscount, totalQty);
 
                     // Only blocking notify if we were using it OR will start using it (if price changes drastically?)
                     // User request: "notify when changes only if cart is using that bulk discount"
@@ -868,9 +953,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     if (wasUsing) {
                         blockingChanges = true;
                         if (!serverSetDiscount) {
-                            changes.push(`Bulk discount rule for "${item.name}" has been removed.`);
+                            pushChange(`Bulk discount rule for "${item.name}" has been removed.`, item.cartItemId);
                         } else {
-                            changes.push(`Bulk discount rule for "${item.name}" has been updated.`);
+                            pushChange(`Bulk discount rule for "${item.name}" has been updated.`, item.cartItemId);
                         }
                     }
                     item.multipleSetDiscount = detail.multipleSetDiscount;
@@ -894,9 +979,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     if (wasUsing) {
                         blockingChanges = true;
                         if (!serverMoreThan) {
-                            changes.push(`Special bulk offer for "${item.name}" has been removed.`);
+                            pushChange(`Special bulk offer for "${item.name}" has been removed.`, item.cartItemId);
                         } else {
-                            changes.push(`Special bulk offer for "${item.name}" has been updated.`);
+                            pushChange(`Special bulk offer for "${item.name}" has been updated.`, item.cartItemId);
                         }
                     }
                     item.multipleDiscountMoreThan = detail.multipleDiscountMoreThan;
@@ -909,9 +994,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     if (oldOffer !== detail.productOffer) {
                         blockingChanges = true;
                         if (!detail.productOffer) {
-                            changes.push(`Sorry, the offer for "${item.name}" has expired.`);
+                            pushChange(`Sorry, the offer for "${item.name}" has expired.`, item.cartItemId);
                         } else {
-                            changes.push(`Offer for "${item.name}" updated: ${detail.productOffer}`);
+                            pushChange(`Offer for "${item.name}" updated: ${detail.productOffer}`, item.cartItemId);
                         }
                     }
                 }
@@ -920,7 +1005,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 // Product Status
                 if (detail.productStatus !== 'ACTIVE') {
                     blockingChanges = true;
-                    changes.push(`"${item.name}" is currently unavailable (Product Inactive) and has been removed.`);
+                    pushChange(`"${item.name}" is currently unavailable (Product Inactive) and has been removed.`);
                     item.cartItemId = 'REMOVE_ME';
                     return;
                 }
@@ -928,7 +1013,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 // Size Status (if applicable)
                 if (sizeId && detail.sizeStatus && detail.sizeStatus !== 'ACTIVE') {
                     blockingChanges = true;
-                    changes.push(`"${item.name}" (${item.selectedVariants['Quantity']}) is currently unavailable and has been removed.`);
+                    pushChange(`"${item.name}" (${item.selectedVariants['Quantity']}) is currently unavailable and has been removed.`);
                     item.cartItemId = 'REMOVE_ME';
                     return;
                 }
@@ -936,7 +1021,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 // Colour Status (if applicable)
                 if (item.selectedColour && detail.colourStatus && detail.colourStatus !== 'ACTIVE') {
                     blockingChanges = true;
-                    changes.push(`"${item.name}" (${item.selectedColour.name}) is currently unavailable and has been removed.`);
+                    pushChange(`"${item.name}" (${item.selectedColour.name}) is currently unavailable and has been removed.`);
                     item.cartItemId = 'REMOVE_ME';
                     return;
                 }
@@ -968,12 +1053,12 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     blockingChanges = true;
                     if (remainingStockForThisItem <= 0) {
                         // No stock left at all for this item (consumed by previous items or just OOS)
-                        changes.push(`"${item.name}" is out of stock and has been removed.`);
+                        pushChange(`"${item.name}" is out of stock and has been removed.`);
                         item.cartItemId = 'REMOVE_ME';
                         // Do not increase consumed count if we remove it
                     } else {
-                        // Partial stock fits
-                        changes.push(`"${item.name}" quantity reduced to ${remainingStockForThisItem} (Available Stock: ${availableStock}).`);
+                        // Partial stock fits -> Actionable! (Can remove if user wants)
+                        pushChange(`"${item.name}" quantity updated. Available Quantity: ${remainingStockForThisItem}.`, item.cartItemId);
                         item.quantity = remainingStockForThisItem;
                         // Mark these as consumed
                         stockUsageMap.set(stockKey, alreadyConsumed + item.quantity);
@@ -1012,7 +1097,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 // Is there a mismatch?
                 if (item.price !== resolvedDiscountPrice) {
                     blockingChanges = true;
-                    changes.push(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedDiscountPrice}.`);
+                    pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedDiscountPrice}.`, item.cartItemId);
                     item.price = resolvedDiscountPrice;
                 }
 
@@ -1047,7 +1132,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         } else {
                             // Addon no longer exists on server (removed)
                             blockingChanges = true;
-                            changes.push(`Addon "${addon.name}" for "${item.name}" is no longer available and has been removed.`);
+                            pushChange(`Addon "${addon.name}" for "${item.name}" is no longer available and has been removed.`, item.cartItemId);
                         }
                     });
 
@@ -1057,7 +1142,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                     if (addonPriceChanged) {
                         blockingChanges = true;
-                        changes.push(`Addon prices for "${item.name}" have been updated.`);
+                        pushChange(`Addon prices for "${item.name}" have been updated.`, item.cartItemId);
                     }
                 }
             });
@@ -1202,10 +1287,33 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             </div>
 
                             <div className="p-6 space-y-4">
-                                <ul className="space-y-2 max-h-[150px] overflow-y-auto pr-2">
+                                <ul className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
                                     {validationErrors.map((err, i) => (
-                                        <li key={i} className="text-sm border-l-2 border-amber-500 pl-3 py-0.5 text-muted-foreground">
-                                            {err}
+                                        <li key={i} className="text-sm border-l-2 border-amber-500 pl-3 py-1 text-muted-foreground flex items-start justify-between gap-2 bg-amber-50/50 dark:bg-amber-950/10 rounded-r-md">
+                                            <span className="leading-snug">{err.message}</span>
+                                            {err.cartItemId && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 -mt-0.5 shrink-0"
+                                                    onClick={() => {
+                                                        if (err.cartItemId) {
+                                                            removeFromCart(err.cartItemId);
+                                                            // Remove this error from the list
+                                                            const newErrors = validationErrors.filter((_, idx) => idx !== i);
+                                                            setValidationErrors(newErrors);
+
+                                                            // If no errors left, close popup
+                                                            if (newErrors.length === 0) {
+                                                                setShowValidationPopup(false);
+                                                            }
+                                                        }
+                                                    }}
+                                                    title="Remove item from cart"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </Button>
+                                            )}
                                         </li>
                                     ))}
                                 </ul>
