@@ -140,6 +140,8 @@ export interface CompanyDetails {
     about: string;
     razorpayKeyId: string;
     razorpayKeySecret: string;
+    razorpay?: boolean;
+    upiQrCode?: string;
 }
 
 export interface CompanyInventory {

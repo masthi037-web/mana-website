@@ -66,6 +66,7 @@ import { validateCheckout } from '@/services/product.service';
 
 import { useTenant } from '@/components/providers/TenantContext';
 import { useSheetBackHandler } from '@/hooks/use-sheet-back-handler';
+import { ImageUpload } from '@/components/common/ImageUpload';
 
 export function CartSheet({ children }: { children: React.ReactNode }) {
     const { cart, updateQuantity, removeFromCart, getCartTotal, getCartItemsCount, isCartOpen, setCartOpen, companyDetails, lastAddedItemId, clearCart } = useCart();
@@ -381,6 +382,31 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const [isInitializingPayment, setIsInitializingPayment] = useState(false);
     const [savingAddress, setSavingAddress] = useState(false); // Moved from line 214
 
+    // Manual Payment State
+    const [manualProof, setManualProof] = useState<string | null>(null);
+    const [timeLeft, setTimeLeft] = useState(240); // 4 minutes in seconds
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        // Check for strict false to enable manual mode (assuming true/undefined is default Razorpay)
+        // Or if user wants strict toggle.
+        // User request: "make razorpay to boolean... if yes show screen [Razorpay], if no show scanner".
+        // boolean: true = Razorpay, false = Scanner.
+        if (view === 'payment' && companyDetails?.razorpay === false && timeLeft > 0) {
+            timer = setInterval(() => {
+                setTimeLeft((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [view, companyDetails?.razorpay, timeLeft]);
+
+
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    };
+
     // Address Form State
     const [newAddress, setNewAddress] = useState<Partial<CustomerAddress>>({
         addressName: 'Home',
@@ -594,6 +620,88 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             toast({ variant: "destructive", description: "Failed to save address." });
         } finally {
             setSavingAddress(false);
+        }
+    };
+
+    const handleManualPayment = async () => {
+        if (!selectedAddressId || !customer) {
+            toast({ variant: "destructive", description: "Please select an address first." });
+            return;
+        }
+
+        setIsInitializingPayment(true);
+        try {
+            const subtotal = getCartTotal();
+            const minOrder = parseFloat(companyDetails?.minimumOrderCost || '0');
+            const freeDeliveryThreshold = parseFloat(companyDetails?.freeDeliveryCost || '0');
+            const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
+            const shipping = isFreeDelivery ? 0 : (companyDetails?.deliveryBetween ? parseFloat(companyDetails.deliveryBetween) : 40);
+            const discountAmount = 0;
+            const totalCost = subtotal + shipping - discountAmount;
+
+            const selectedAddress = addresses.find(a => a.customerAddressId === selectedAddressId);
+            if (!selectedAddress) throw new Error("Address not found");
+
+            const payload: PaymentInitializationRequest = {
+                customerName: contactInfo.name,
+                customerPhoneNumber: contactInfo.mobile,
+                customerEmailId: contactInfo.email,
+                domainName: companyDetails?.companyDomain || window.location.hostname,
+                customerAddress: `${selectedAddress.customerDrNum}, ${selectedAddress.customerRoad}`,
+                customerCity: selectedAddress.customerCity,
+                customerState: selectedAddress.customerState,
+                customerCountry: selectedAddress.customerCountry,
+                addressName: selectedAddress.addressName,
+                shipmentAmount: shipping,
+                discount: "PERCENTAGE",
+                discountName: "MANUAL",
+                discountAmount: 0,
+                totalCost: totalCost,
+                paymentMethod: "UPI_MANUAL",
+                customerNote: manualProof ? `Payment Proof: ${manualProof}` : "Manual Payment",
+                items: cart.map(item => {
+                    let pricingId: number | null = null;
+                    if (item.pricing && item.pricing.length > 0) {
+                        const quantityVariant = item.selectedVariants?.['Quantity'];
+                        if (quantityVariant) {
+                            const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
+                            if (matchedPricing) pricingId = parseInt(matchedPricing.id);
+                        }
+                        if (!pricingId) pricingId = parseInt(item.pricing[0].id);
+                    }
+                    return {
+                        productId: parseInt(item.id),
+                        pricingId: pricingId,
+                        productAddonIds: item.selectedAddons && item.selectedAddons.length > 0
+                            ? item.selectedAddons.map(a => a.id).join('&&&')
+                            : "",
+                        quantity: item.quantity
+                    };
+                })
+            };
+
+            await orderService.initializePayment(payload, '', '');
+
+            setCelebrated(true);
+            toast({
+                title: "Order Placed Successfully! 🎉",
+                description: "Your order has been placed. We will verify your payment shortly.",
+                className: "bg-green-50 border-green-200 text-green-800",
+                duration: 5000
+            });
+
+            clearCart();
+            setCartOpen(false);
+            setView('cart');
+            setContactInfo({ name: '', email: '', mobile: '' });
+            setSelectedAddressId(null);
+            setManualProof(null);
+
+        } catch (error) {
+            console.error(error);
+            toast({ variant: "destructive", title: "Error", description: "Failed to place order." });
+        } finally {
+            setIsInitializingPayment(false);
         }
     };
 
@@ -2601,67 +2709,123 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         <div className="space-y-4">
                                             <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Payment Method</h3>
 
-                                            {/* Online Payment Option */}
-                                            <div
-                                                onClick={() => setSelectedPaymentMethod('ONLINE')}
-                                                className={cn(
-                                                    "relative overflow-hidden cursor-pointer p-5 rounded-3xl border-2 transition-all duration-300",
-                                                    selectedPaymentMethod === 'ONLINE'
-                                                        ? "bg-primary/5 border-primary shadow-lg shadow-primary/10"
-                                                        : "bg-background border-border hover:border-primary/30"
-                                                )}
-                                            >
-                                                <div className="flex items-start gap-4 z-10 relative">
-                                                    <div className={cn(
-                                                        "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors",
-                                                        selectedPaymentMethod === 'ONLINE' ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-                                                    )}>
-                                                        <CreditCard className="w-6 h-6" />
+                                            {companyDetails?.razorpay === false ? (
+                                                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl border border-indigo-100 space-y-6">
+                                                    <div className="text-center space-y-2">
+                                                        <h4 className="text-xl font-bold text-indigo-900">Scan & Pay</h4>
+                                                        <p className="text-sm text-indigo-600/80">Complete your payment within the time limit.</p>
                                                     </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center justify-between mb-1">
-                                                            <span className={cn(
-                                                                "font-bold text-lg",
-                                                                selectedPaymentMethod === 'ONLINE' ? "text-primary" : "text-foreground"
-                                                            )}>
-                                                                Online Payment
-                                                            </span>
-                                                            {selectedPaymentMethod === 'ONLINE' && (
-                                                                <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                                    <Check className="w-3 h-3" /> SELECTED
-                                                                </span>
-                                                            )}
+
+                                                    {/* Timer */}
+                                                    <div className="flex justify-center">
+                                                        <div className={cn(
+                                                            "text-3xl font-black font-mono tracking-widest px-6 py-3 rounded-2xl border-2 transition-colors duration-500",
+                                                            timeLeft < 60 ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-white text-indigo-600 border-indigo-100"
+                                                        )}>
+                                                            {formatTime(timeLeft)}
                                                         </div>
-                                                        <p className="text-sm text-muted-foreground leading-relaxed">
-                                                            Securely pay via UPI, Credit/Debit Cards, or Netbanking.
-                                                        </p>
-                                                        <div className="mt-3 flex items-center gap-2">
-                                                            <span className="text-[10px] font-bold bg-secondary px-2 py-1 rounded-md text-muted-foreground">Powered by Razorpay</span>
-                                                            <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-md">100% Secure</span>
-                                                        </div>
+                                                    </div>
+
+                                                    {/* QR Code */}
+                                                    <div className="relative w-48 h-48 mx-auto bg-white p-3 rounded-2xl shadow-sm border border-indigo-100">
+                                                        {companyDetails.upiQrCode ? (
+                                                            <div className="relative w-full h-full">
+                                                                <img
+                                                                    src={companyDetails.upiQrCode}
+                                                                    alt="Payment QR"
+                                                                    className="w-full h-full object-contain rounded-xl"
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center bg-indigo-50/50 rounded-xl border-2 border-dashed border-indigo-200">
+                                                                <p className="text-xs text-indigo-400 font-medium">No QR Code</p>
+                                                            </div>
+                                                        )}
+                                                        {/* Scan Corner Markers */}
+                                                        <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-indigo-500 rounded-tl-xl -mt-1 -ml-1" />
+                                                        <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-indigo-500 rounded-tr-xl -mt-1 -mr-1" />
+                                                        <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-indigo-500 rounded-bl-xl -mb-1 -ml-1" />
+                                                        <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-indigo-500 rounded-br-xl -mb-1 -mr-1" />
+                                                    </div>
+
+                                                    {/* Proof Upload (Optional) */}
+                                                    <div className="bg-white p-4 rounded-2xl border border-indigo-100/50 shadow-sm">
+                                                        <ImageUpload
+                                                            value={manualProof || ''}
+                                                            onChange={(url) => setManualProof(url)}
+                                                            companyDomain={companyDetails.companyDomain}
+                                                            label="Upload Payment Screenshot (Optional)"
+                                                            maxFiles={1}
+                                                        />
                                                     </div>
                                                 </div>
-                                                {/* Background Glow */}
-                                                {selectedPaymentMethod === 'ONLINE' && (
-                                                    <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
-                                                )}
-                                            </div>
+                                            ) : (
+                                                <div
+                                                    onClick={() => setSelectedPaymentMethod('ONLINE')}
+                                                    className={cn(
+                                                        "relative overflow-hidden cursor-pointer p-5 rounded-3xl border-2 transition-all duration-300",
+                                                        selectedPaymentMethod === 'ONLINE'
+                                                            ? "bg-primary/5 border-primary shadow-lg shadow-primary/10"
+                                                            : "bg-background border-border hover:border-primary/30"
+                                                    )}
+                                                >
+                                                    <div className="flex items-start gap-4 z-10 relative">
+                                                        <div className={cn(
+                                                            "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors",
+                                                            selectedPaymentMethod === 'ONLINE' ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                                                        )}>
+                                                            <CreditCard className="w-6 h-6" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <span className={cn(
+                                                                    "font-bold text-lg",
+                                                                    selectedPaymentMethod === 'ONLINE' ? "text-primary" : "text-foreground"
+                                                                )}>
+                                                                    Online Payment
+                                                                </span>
+                                                                {selectedPaymentMethod === 'ONLINE' && (
+                                                                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                                        <Check className="w-3 h-3" /> SELECTED
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                                                Securely pay via UPI, Credit/Debit Cards, or Netbanking.
+                                                            </p>
+                                                            <div className="mt-3 flex items-center gap-2">
+                                                                <span className="text-[10px] font-bold bg-secondary px-2 py-1 rounded-md text-muted-foreground">Powered by Razorpay</span>
+                                                                <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-md">100% Secure</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {/* Background Glow */}
+                                                    {selectedPaymentMethod === 'ONLINE' && (
+                                                        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
+
                                     </div>
                                 )}
                             </div>
                         </ScrollArea>
 
-                        {/* Footer for Address View (Select Address) REMOVED - Moved inside scroll area with validation */}
 
                         {/* Footer for Payment View */}
                         {view === 'payment' && (
                             <div className="p-6 bg-background pt-4 border-t border-border/50 backdrop-blur-md">
                                 <Button
                                     size="lg"
-                                    className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                                    onClick={handlePaymentInitialize}
-                                    disabled={isInitializingPayment}
+                                    className={cn(
+                                        "w-full h-14 rounded-2xl text-lg font-bold shadow-xl transition-all",
+                                        companyDetails?.razorpay === false
+                                            ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200"
+                                            : "bg-primary hover:bg-primary/90 shadow-primary/30"
+                                    )}
+                                    onClick={companyDetails?.razorpay === false ? handleManualPayment : handlePaymentInitialize}
+                                    disabled={isInitializingPayment || (companyDetails?.razorpay === false && timeLeft === 0)}
                                 >
                                     {isInitializingPayment ? (
                                         <>
