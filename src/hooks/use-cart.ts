@@ -4,7 +4,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-import type { ProductWithImage, ProductAddonOption } from '@/lib/types';
+import type { ProductWithImage, ProductSizeColourOption } from '@/lib/types';
 
 import { CompanyDetails } from '@/lib/api-types';
 
@@ -12,7 +12,7 @@ export type CartItem = ProductWithImage & {
   cartItemId: string;
   quantity: number;
   selectedVariants: Record<string, string>;
-  selectedAddons?: ProductAddonOption[];
+  selectedSizeColours?: ProductSizeColourOption[];
   priceAfterDiscount?: number;
   productSizeId?: string;
   selectedColour?: {
@@ -28,7 +28,7 @@ interface CartState {
   addToCart: (
     product: ProductWithImage & { productSizeId?: string },
     selectedVariants: Record<string, string>,
-    selectedAddons?: ProductAddonOption[],
+    selectedSizeColours?: ProductSizeColourOption[],
     selectedColour?: { id: string; name: string; image: string }
   ) => void;
   removeFromCart: (cartItemId: string) => void;
@@ -56,7 +56,7 @@ export const useCart = create<CartState>()(
       companyDetails: null,
       timestamp: Date.now(),
       lastAddedItemId: null,
-      addToCart: (product, selectedVariants, selectedAddons = [], selectedColour) => {
+      addToCart: (product, selectedVariants, selectedSizeColours = [], selectedColour) => {
         const currentCart = get().cart;
 
         // Helper to stringify variants consistently (sorted by keys)
@@ -67,18 +67,18 @@ export const useCart = create<CartState>()(
           }, {}));
 
         const newVariantString = stringifyVariants(selectedVariants);
-        // We sort addons by ID to ensure order doesn't matter for comparison
-        const newAddonIds = selectedAddons.map(a => a.id).sort().join(',');
+        // We sort by ID to ensure order doesn't matter for comparison
+        const newSizeColourIds = selectedSizeColours.map(a => a.id).sort().join(',');
         const newColourId = selectedColour?.id || '';
 
         const existingItemIndex = currentCart.findIndex(item => {
-          const itemAddonIds = (item.selectedAddons || []).map(a => a.id).sort().join(',');
+          const itemSizeColourIds = (item.selectedSizeColours || []).map(a => a.id).sort().join(',');
           const itemVariantString = stringifyVariants(item.selectedVariants);
           const itemColourId = item.selectedColour?.id || '';
 
           return item.id === product.id &&
             itemVariantString === newVariantString &&
-            itemAddonIds === newAddonIds &&
+            itemSizeColourIds === newSizeColourIds &&
             itemColourId === newColourId;
         });
 
@@ -107,7 +107,7 @@ export const useCart = create<CartState>()(
             cartItemId: newCartItemId,
             quantity: 1,
             selectedVariants,
-            selectedAddons,
+            selectedSizeColours,
             selectedColour
           }];
         }
@@ -221,13 +221,13 @@ export const useCart = create<CartState>()(
           // We must map the distribution to the items in order (to match Cart Sheet visual)
           let distributionIndex = 0;
           productItems.forEach(pItem => {
-            const addonsCost = (pItem.selectedAddons || []).reduce((acc, a) => acc + a.price, 0);
+            const sizeColoursCost = (pItem.selectedSizeColours || []).reduce((acc, a) => acc + a.price, 0);
             const basePrice = pItem.priceAfterDiscount !== undefined ? pItem.priceAfterDiscount : pItem.price; // This might exclude addons? 
             // Note: Discount applies to (Base + Addons) or just Base? 
             // CartSheet says: `const singleItemTotal = basePrice + addonsCost; const finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);`
             // So it applies to the SUM.
 
-            const itemBaseTotal = basePrice + addonsCost;
+            const itemBaseTotal = basePrice + sizeColoursCost;
 
             for (let q = 0; q < pItem.quantity; q++) {
               const discountPercent = distribution[distributionIndex] || 0;

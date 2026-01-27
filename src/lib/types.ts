@@ -3,11 +3,10 @@ export type ProductVariant = {
   options: string[];
 };
 
-export type ProductAddonOption = {
+export type ProductSizeColourOption = {
   id: string;
   name: string;
   price: number;
-  mandatory: boolean;
 };
 
 export type ProductPriceOption = {
@@ -15,7 +14,7 @@ export type ProductPriceOption = {
   price: number;
   priceAfterDiscount?: number;
   quantity: string;
-  addons?: ProductAddonOption[];
+  sizeColours?: ProductSizeColourOption[];
   sizeStatus?: string;
 };
 

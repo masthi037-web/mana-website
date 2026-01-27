@@ -21,7 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { X, Check, Plus, ShoppingBag } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { ProductWithImage, ProductVariant, ProductAddonOption } from "@/lib/types";
+import type { ProductWithImage, ProductVariant, ProductSizeColourOption } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
@@ -129,12 +129,12 @@ const ColourCard = ({
   </div>
 );
 
-const AddonRow = ({
-  addon,
+const SizeColourRow = ({
+  sizeColour,
   isSelected,
   onToggle,
 }: {
-  addon: ProductAddonOption;
+  sizeColour: ProductSizeColourOption;
   isSelected: boolean;
   onToggle: () => void;
 }) => (
@@ -159,13 +159,12 @@ const AddonRow = ({
       </div>
       <div className="flex flex-col">
         <span className={cn("text-sm font-medium leading-none transition-colors", isSelected ? "text-foreground font-semibold" : "text-foreground/80")}>
-          {addon.name}
+          {sizeColour.name}
         </span>
-        {addon.mandatory && <span className="text-[9px] text-destructive uppercase tracking-wider font-bold mt-1.5">Required</span>}
       </div>
     </div>
     <span className={cn("text-xs font-bold transition-colors", isSelected ? "text-primary" : "text-muted-foreground")}>
-      +₹{addon.price}
+      +₹{sizeColour.price}
     </span>
   </div>
 );
@@ -201,36 +200,36 @@ const AddToCartContent = ({
     product.pricing && product.pricing.length > 0 ? product.pricing[0].id : ""
   );
 
-  const [selectedAddonIds, setSelectedAddonIds] = React.useState<Set<string>>(new Set());
+  const [selectedSizeColourIds, setSelectedSizeColourIds] = React.useState<Set<string>>(new Set());
 
   const [selectedColourId, setSelectedColourId] = React.useState<string>(
     product.colors && product.colors.length > 0 ? product.colors[0].id : ""
   );
 
   const selectedPricingOption = product.pricing?.find(p => p.id === selectedPricingId);
-  const availableAddons = selectedPricingOption?.addons || [];
+  const availableSizeColours = selectedPricingOption?.sizeColours || [];
 
   React.useEffect(() => {
-    setSelectedAddonIds(new Set());
+    setSelectedSizeColourIds(new Set());
   }, [selectedPricingId]);
 
   const basePrice = selectedPricingOption ? selectedPricingOption.price : product.price;
-  const addonsPrice = availableAddons
-    .filter(addon => selectedAddonIds.has(addon.id))
-    .reduce((acc, addon) => acc + addon.price, 0);
+  const sizeColoursPrice = availableSizeColours
+    .filter(sc => selectedSizeColourIds.has(sc.id))
+    .reduce((acc, sc) => acc + sc.price, 0);
 
-  const currentPrice = basePrice + addonsPrice;
+  const currentPrice = basePrice + sizeColoursPrice;
 
   // -- Handlers --
   const handleVariantChange = (variantName: string, option: string) => {
     setSelectedVariants((prev) => ({ ...prev, [variantName]: option }));
   };
 
-  const handleAddonToggle = (addonId: string) => {
-    setSelectedAddonIds(prev => {
+  const handleSizeColourToggle = (scId: string) => {
+    setSelectedSizeColourIds(prev => {
       const next = new Set(prev);
-      if (next.has(addonId)) next.delete(addonId);
-      else next.add(addonId);
+      if (next.has(scId)) next.delete(scId);
+      else next.add(scId);
       return next;
     });
   };
@@ -240,7 +239,7 @@ const AddToCartContent = ({
     if (selectedPricingOption) {
       variantsToAdd['Quantity'] = selectedPricingOption.quantity;
     }
-    const selectedAddonsList = availableAddons.filter(a => selectedAddonIds.has(a.id));
+    const selectedSizeColoursList = availableSizeColours.filter(a => selectedSizeColourIds.has(a.id));
 
     // Calculate effective price: Mirror ProductCard logic (Calc Percentage -> PriceAfterDiscount -> Base)
     // 1. Resolve base price for this variant
@@ -279,7 +278,7 @@ const AddToCartContent = ({
     addToCart(
       { ...product, price: effectiveBasePrice, productSizeId: selectedPricingId },
       variantsToAdd,
-      selectedAddonsList,
+      selectedSizeColoursList,
       colourToAdd
     );
 
@@ -408,20 +407,20 @@ const AddToCartContent = ({
             </div>
           )}
 
-          {/* Addons Selector */}
-          {availableAddons.length > 0 && (
+          {/* SizeColours Selector */}
+          {availableSizeColours.length > 0 && (
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">Enhance It</h3>
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Optional</span>
               </div>
               <div className="space-y-2">
-                {availableAddons.map(addon => (
-                  <AddonRow
-                    key={addon.id}
-                    addon={addon}
-                    isSelected={selectedAddonIds.has(addon.id)}
-                    onToggle={() => handleAddonToggle(addon.id)}
+                {availableSizeColours.map(sc => (
+                  <SizeColourRow
+                    key={sc.id}
+                    sizeColour={sc}
+                    isSelected={selectedSizeColourIds.has(sc.id)}
+                    onToggle={() => handleSizeColourToggle(sc.id)}
                   />
                 ))}
               </div>
@@ -513,7 +512,7 @@ const AddToCartContent = ({
                 effectiveBase = product.priceAfterDiscount;
               }
 
-              const finalPrice = effectiveBase + addonsPrice;
+              const finalPrice = effectiveBase + sizeColoursPrice;
               const hasOffer = finalPrice < currentPrice;
 
               return (

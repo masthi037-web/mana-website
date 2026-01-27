@@ -304,14 +304,17 @@ export default function ProductDetailPage() {
   // Effective price: base price (from pricing option) + active addons
   // Note: Addons price usually adds ON TOP of the variant price.
 
-  // Get addons available for current pricing option
-  const availableAddons = currentPricingOption?.addons || [];
+  // Get sizeColours available for current pricing option
+  const availableSizeColours = currentPricingOption?.sizeColours || [];
+
+  // Local state for selected sizeColours
+  const [selectedSizeColourIds, setSelectedSizeColourIds] = useState<string[]>([]);
 
   // Calculate total price
   const basePrice = currentPricingOption ? currentPricingOption.price : product.price;
-  const addonsPrice = availableAddons
-    .filter(a => selectedAddons.includes(a.id))
-    .reduce((sum, a) => sum + a.price, 0);
+  const sizeColoursPrice = availableSizeColours
+    .filter(sc => selectedSizeColourIds.includes(sc.id))
+    .reduce((sum, sc) => sum + sc.price, 0);
 
   // Calculate Price Logic (Mirror ProductCard)
   // 1. Resolve base price for this variant
@@ -340,13 +343,13 @@ export default function ProductDetailPage() {
     offerPercentage = Math.round(((originalPrice - effectiveBasePrice) / originalPrice) * 100);
   }
 
-  const finalPrice = effectiveBasePrice + addonsPrice;
+  const finalPrice = effectiveBasePrice + sizeColoursPrice;
   const hasDiscount = effectiveBasePrice < originalPrice;
 
   const handleAddToCart = () => {
     // Construct the product to add to cart
     // We override the price with the basePrice of the selected variant
-    // Addons are passed separately to be handled by useCart logic (which sums them up for total display)
+    // SizeColours are passed separately to be handled by useCart logic (which sums them up for total display)
 
     // Logic: 
     // 1. `product.price` in cart item should reflect the base variant price.
@@ -357,7 +360,7 @@ export default function ProductDetailPage() {
       variantInfo['Quantity'] = currentPricingOption.quantity;
     }
 
-    const addonObjects = availableAddons.filter(a => selectedAddons.includes(a.id));
+    const sizeColourObjects = availableSizeColours.filter(sc => selectedSizeColourIds.includes(sc.id));
 
     // Resolve selected colour object
     const selectedColour = product.colors?.find(c => c.id === selectedColourId);
@@ -370,7 +373,7 @@ export default function ProductDetailPage() {
     addToCart(
       { ...product, price: effectiveBasePrice, productSizeId: selectedPricingId || undefined },
       variantInfo,
-      addonObjects,
+      sizeColourObjects,
       colourToAdd
     );
     setCartOpen(true);
@@ -424,7 +427,7 @@ export default function ProductDetailPage() {
                 Rs. {(finalPrice).toFixed(2)}
                 {hasDiscount && (
                   <span className="ml-3 text-lg text-muted-foreground line-through decoration-destructive/50 decoration-2">
-                    Rs. {(originalPrice + addonsPrice).toFixed(2)}
+                    Rs. {(originalPrice + sizeColoursPrice).toFixed(2)}
                   </span>
                 )}
               </h2>
@@ -500,7 +503,7 @@ export default function ProductDetailPage() {
                         key={option.id}
                         onClick={() => {
                           setSelectedPricingId(option.id);
-                          setSelectedAddons([]);
+                          setSelectedSizeColourIds([]);
                         }}
                         className={cn(
                           "relative flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 transition-all duration-200 h-24",
@@ -555,25 +558,25 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* Addons (Enhance It) */}
-            {availableAddons.length > 0 && (
+            {/* SizeColours (Enhance It) */}
+            {availableSizeColours.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <label className="text-lg font-bold text-foreground">Enhance It</label>
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider bg-secondary/50 px-2 py-1 rounded">OPTIONAL</span>
                 </div>
                 <div className="space-y-3">
-                  {availableAddons.map(addon => {
-                    const isSelected = selectedAddons.includes(addon.id);
+                  {availableSizeColours.map(sc => {
+                    const isSelected = selectedSizeColourIds.includes(sc.id);
                     return (
                       <button
-                        key={addon.id}
+                        key={sc.id}
                         onClick={() => {
                           // Toggle logic
                           if (isSelected) {
-                            setSelectedAddons(prev => prev.filter(id => id !== addon.id));
+                            setSelectedSizeColourIds(prev => prev.filter(id => id !== sc.id));
                           } else {
-                            setSelectedAddons(prev => [...prev, addon.id]);
+                            setSelectedSizeColourIds(prev => [...prev, sc.id]);
                           }
                         }}
                         className={cn(
@@ -591,9 +594,9 @@ export default function ProductDetailPage() {
                           )}>
                             {isSelected && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>}
                           </div>
-                          <span className="text-base font-semibold text-foreground">{addon.name}</span>
+                          <span className="text-base font-semibold text-foreground">{sc.name}</span>
                         </div>
-                        <span className={cn("text-base font-bold", isSelected ? "text-primary" : "text-primary")}>+₹{addon.price}</span>
+                        <span className={cn("text-base font-bold", isSelected ? "text-primary" : "text-primary")}>+₹{sc.price}</span>
                       </button>
                     );
                   })}

@@ -672,8 +672,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     return {
                         productId: parseInt(item.id),
                         pricingId: pricingId,
-                        productAddonIds: item.selectedAddons && item.selectedAddons.length > 0
-                            ? item.selectedAddons.map(a => a.id).join('&&&')
+                        productSizeColourIds: item.selectedSizeColours && item.selectedSizeColours.length > 0
+                            ? item.selectedSizeColours.map(sc => sc.id).join('&&&')
                             : "",
                         quantity: item.quantity
                     };
@@ -793,8 +793,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     return {
                         productId: parseInt(item.id),
                         pricingId: pricingId,
-                        productAddonIds: item.selectedAddons && item.selectedAddons.length > 0
-                            ? item.selectedAddons.map(a => a.id).join('&&&')
+                        productSizeColourIds: item.selectedSizeColours && item.selectedSizeColours.length > 0
+                            ? item.selectedSizeColours.map(sc => sc.id).join('&&&')
                             : "",
                         quantity: item.quantity
                     };
@@ -1003,7 +1003,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     multipleSetDiscount: item.multipleSetDiscount,
                     multipleDiscountMoreThan: item.multipleDiscountMoreThan,
                     productOffer: item.productOffer,
-                    productAddonIds: item.selectedAddons ? item.selectedAddons.map(a => a.id).join(',') : ""
+                    productSizeColourIds: item.selectedSizeColours ? item.selectedSizeColours.map(sc => sc.id).join('&&&') : ""
                 };
             });
 
@@ -1031,7 +1031,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 }
             };
 
-            const newCart = cart.map(item => ({ ...item, selectedAddons: item.selectedAddons ? [...item.selectedAddons] : [] }));
+            const newCart = cart.map(item => ({ ...item, selectedSizeColours: item.selectedSizeColours ? [...item.selectedSizeColours] : [] }));
 
             // Handle wrapped response (server returns { productDetails: [...] }) or direct array
             const details = Array.isArray(response) ? response : ((response as any).productDetails || []);
@@ -1378,48 +1378,51 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     item.price = resolvedDiscountPrice;
                 }
 
-                // --- 6. ADDON CHECKS ---
-                if (item.selectedAddons && item.selectedAddons.length > 0) {
-                    // Parse server addons: ["id:price", "1:20"]
-                    const serverAddonsMap = new Map<string, number>();
-                    if (detail.addonAndAddonPrice && Array.isArray(detail.addonAndAddonPrice)) {
-                        detail.addonAndAddonPrice.forEach(str => {
+                // --- 6. ADDON CHECKS (Refactored to SizeColours) ---
+                if (item.selectedSizeColours && item.selectedSizeColours.length > 0) {
+                    // Parse server sizeColours: ["id:price", "1:20"]
+                    const serverScMap = new Map<string, number>();
+                    // detail.sizeColourAndPrice replace detail.addonAndAddonPrice 
+                    // Verify if detail.sizeColourAndPrice exists on the type from api-types.
+                    // Assuming api-types.ts updated CheckoutProductDetail to have sizeColourAndPrice.
+                    if (detail.sizeColourAndPrice && Array.isArray(detail.sizeColourAndPrice)) {
+                        detail.sizeColourAndPrice.forEach(str => {
                             const parts = str.split(':');
                             if (parts.length >= 2) {
                                 const idStr = parts[0];
-                                const priceStr = parts[parts.length - 1]; // Handle cases where ID might have :
-                                serverAddonsMap.set(idStr.toString(), parseFloat(priceStr));
+                                const priceStr = parts[parts.length - 1];
+                                serverScMap.set(idStr.toString(), parseFloat(priceStr));
                             }
                         });
                     }
 
-                    // Iterate cart addons
-                    const validAddons: typeof item.selectedAddons = [];
-                    let addonPriceChanged = false;
+                    // Iterate cart sizeColours
+                    const validSizeColours: typeof item.selectedSizeColours = [];
+                    let scPriceChanged = false;
 
-                    item.selectedAddons.forEach(addon => {
-                        const serverPrice = serverAddonsMap.get(addon.id.toString());
+                    item.selectedSizeColours.forEach(sc => {
+                        const serverPrice = serverScMap.get(sc.id.toString());
                         if (serverPrice !== undefined) {
-                            // Addon exists, check price
-                            if (serverPrice !== addon.price) {
-                                addonPriceChanged = true;
-                                addon.price = serverPrice; // Update price in place
+                            // SC exists, check price
+                            if (serverPrice !== sc.price) {
+                                scPriceChanged = true;
+                                sc.price = serverPrice; // Update price in place
                             }
-                            validAddons.push(addon);
+                            validSizeColours.push(sc);
                         } else {
-                            // Addon no longer exists on server (removed)
+                            // SC no longer exists on server (removed)
                             blockingChanges = true;
-                            pushChange(`Addon "${addon.name}" for "${item.name}" is no longer available and has been removed.`, item.cartItemId);
+                            pushChange(`SizeColour option "${sc.name}" for "${item.name}" is no longer available and has been removed.`, item.cartItemId);
                         }
                     });
 
-                    if (validAddons.length !== item.selectedAddons.length) {
-                        item.selectedAddons = validAddons;
+                    if (validSizeColours.length !== item.selectedSizeColours.length) {
+                        item.selectedSizeColours = validSizeColours;
                     }
 
-                    if (addonPriceChanged) {
+                    if (scPriceChanged) {
                         blockingChanges = true;
-                        pushChange(`Addon prices for "${item.name}" have been updated.`, item.cartItemId);
+                        pushChange(`SizeColour prices for "${item.name}" have been updated.`, item.cartItemId);
                     }
                 }
             });
@@ -1964,7 +1967,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                 const basePrice = item.priceAfterDiscount || item.price;
                                                                 // Note: we don't have item-specific addons easily here if splitting variants.
                                                                 // Actually item is the cart item. Addons are on the item.
-                                                                const addonsCost = item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0;
+                                                                const addonsCost = item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0;
                                                                 const singleItemTotal = basePrice + addonsCost;
                                                                 const finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
 
@@ -1992,13 +1995,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                                     <Link href={`/product/${item.id}`} className="font-bold text-sm leading-tight hover:text-primary line-clamp-2">
                                                                                         {item.name}
                                                                                     </Link>
-                                                                                    {(item.selectedVariants || item.selectedAddons) && (
+                                                                                    {(item.selectedVariants || item.selectedSizeColours) && (
                                                                                         <div className="flex flex-wrap gap-1">
                                                                                             {Object.values(item.selectedVariants || {}).map((v, i) => (
                                                                                                 <span key={i} className="text-[10px] uppercase font-medium text-muted-foreground">{v}</span>
                                                                                             ))}
-                                                                                            {item.selectedAddons?.map((addon) => (
-                                                                                                <span key={addon.id} className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1 rounded">+{addon.name}</span>
+                                                                                            {item.selectedSizeColours?.map((sc) => (
+                                                                                                <span key={sc.id} className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1 rounded">+{sc.name}</span>
                                                                                             ))}
                                                                                         </div>
                                                                                     )}
@@ -2600,7 +2603,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                 <div>
                                                                     <div className="flex justify-between items-start gap-2">
                                                                         <h4 className="font-bold text-sm leading-tight text-foreground/90 line-clamp-2">{item.name}</h4>
-                                                                        <span className="font-bold text-sm whitespace-nowrap">₹{((item.price + (item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
+                                                                        <span className="font-bold text-sm whitespace-nowrap">₹{((item.price + (item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
                                                                     </div>
 
                                                                     {/* Variants & Addons Chips */}
@@ -2610,9 +2613,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                                 {v}
                                                                             </span>
                                                                         ))}
-                                                                        {item.selectedAddons?.map((addon) => (
-                                                                            <span key={addon.id} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
-                                                                                <Plus className="w-2 h-2" /> {addon.name}
+                                                                        {item.selectedSizeColours?.map((sc) => (
+                                                                            <span key={sc.id} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
+                                                                                <Plus className="w-2 h-2" /> {sc.name}
                                                                             </span>
                                                                         ))}
                                                                     </div>

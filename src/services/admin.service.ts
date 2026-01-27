@@ -7,7 +7,6 @@ import {
     UpdatePricingRequest, UpdatePricingResponse,
     CreateColourRequest, CreateColourResponse,
     UpdateColourRequest, UpdateColourResponse,
-    CreateAddonRequest, CreateAddonResponse,
     UpdateCategoryRequest, UpdateCategoryResponse,
     UpdateCatalogueRequest, UpdateCatalogueResponse,
     UpdateProductRequest
@@ -84,10 +83,24 @@ export const adminService = {
         });
     },
 
-    createAddon: async (data: CreateAddonRequest) => {
-        return apiClient<CreateAddonResponse>('/product/addon/create', {
+    createSizeColour: async (data: any) => {
+        return apiClient<any>('/product/size-colour/create', {
             method: 'POST',
             body: JSON.stringify(data),
+        });
+    },
+
+    updateSizeColour: async (data: any) => {
+        return apiClient<any>('/product/size-colour/update', {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    },
+
+    deleteSizeColour: async (productSizeColourId: string | number) => {
+        return apiClient<any>('/product/size-colour/delete', {
+            method: 'DELETE',
+            params: { productSizeColourId: String(productSizeColourId) }
         });
     },
 
@@ -125,8 +138,8 @@ export const adminService = {
         });
     },
 
-    getProductAddons: async (productSizeId: string | number) => {
-        return apiClient<any[]>('/product/addon/get', {
+    getProductSizeColours: async (productSizeId: string | number) => {
+        return apiClient<any[]>('/product/size-colour/get', {
             params: { productSizeId: String(productSizeId) },
             next: { revalidate: 300 }
         });

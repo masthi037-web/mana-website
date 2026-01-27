@@ -163,7 +163,7 @@ export function CheckoutSheet({ children }: { children: React.ReactNode }) {
             const paymentItems = cart.map(item => ({
                 productId: item.productId,
                 pricingId: item.productSizeId ? parseInt(item.productSizeId) : null,
-                productAddonIds: item.selectedAddons ? item.selectedAddons.map(a => a.id).join('&&&') : '',
+                productSizeColourIds: item.selectedSizeColours ? item.selectedSizeColours.map(sc => sc.id).join('&&&') : '',
                 quantity: item.quantity
             }));
 

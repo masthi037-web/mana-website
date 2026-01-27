@@ -1,10 +1,10 @@
-export interface ProductAddon {
-    productAddonId: number;
+export interface ProductSizeColour {
+    productSizeColourId: number;
     productSizeId: number;
-    addonName: string;
-    addonPrice: number;
-    mandatory: boolean;
-    active: boolean;
+    colourName: string;
+    colourPrice: number;
+    productSizeColourQuantity: string;
+    sizeColourStatus: string;
 }
 
 // Renamed ProductPricing to ProductSize
@@ -15,7 +15,7 @@ export interface ProductSize {
     productSizePriceAfterDiscount: number;
     size: string;
     sizeQuantity: string;
-    productAddons: ProductAddon[];
+    productSizeColours: ProductSizeColour[];
     sizeStatus: string;
 }
 
@@ -288,7 +288,7 @@ export interface CreatePricingResponse {
     productSizePriceAfterDiscount: number;
     size: string;
     sizeQuantity: string;
-    productAddons: ProductAddon[];
+    productSizeColours: ProductSizeColour[];
     sizeStatus: string;
 }
 
@@ -309,23 +309,23 @@ export interface UpdatePricingResponse {
     productSizePriceAfterDiscount: number;
     size: string;
     sizeQuantity: string;
-    productAddons: ProductAddon[];
+    productSizeColours: ProductSizeColour[];
 }
-export interface CreateAddonRequest {
+export interface CreateSizeColourRequest {
     productSizeId: number;
-    addonName: string;
-    addonPrice: number;
-    mandatory: boolean;
-    active: boolean;
+    colourName: string;
+    colourPrice: number;
+    productSizeColourQuantity: string;
+    sizeColourStatus: string;
 }
 
-export interface CreateAddonResponse {
-    productAddonId: number;
+export interface CreateSizeColourResponse {
+    productSizeColourId: number;
     productSizeId: number;
-    addonName: string;
-    addonPrice: number;
-    mandatory: boolean;
-    active: boolean;
+    colourName: string;
+    colourPrice: number;
+    productSizeColourQuantity: string;
+    sizeColourStatus: string;
 }
 
 export interface CustomerAddress {
@@ -368,7 +368,7 @@ export interface CheckoutValidationItem {
     productId: number;
     sizeId: number | null; // Renamed from pricingId to sizeId as per requirement
     productColourId: number | null;
-    productAddonIds: string; // "id1&&&id2"
+    productSizeColourIds: string; // "id1&&&id2"
 }
 
 export interface CheckoutCheckResponse {
@@ -386,7 +386,7 @@ export interface CheckoutCheckResponse {
     productSize: string;
     productQuantityAvailable: string;
     sizeQuantity: string;
-    addonAndAddonPrice: string[];
+    sizeColourAndPrice: string[];
     productId: number;
     sizeId: number | null;
     productColourId: number | null;
@@ -402,7 +402,7 @@ export interface CheckoutValidationRequest {
 export interface PaymentInitializationItem {
     productId: number;
     pricingId: number | null;
-    productAddonIds: string;
+    productSizeColourIds: string;
     quantity: number;
 }
 
@@ -439,7 +439,7 @@ export interface CheckoutValidationProductDetail {
     productStatus: string; // 'ACTIVE' | 'INACTIVE'
     productPrice: number;
     productPriceAfterDiscount?: number;
-    addonAndAddonPrice: string[]; // ["id:price", "1:20"]
+    sizeColourAndPrice: string[]; // ["id:price", "1:20"]
 }
 
 export interface CheckoutValidationResponse {

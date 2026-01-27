@@ -183,16 +183,18 @@ export default function AdminInventoryPage() {
 
     // 5. Addons (Fetch addons only when activePricingId is set)
     // We use expandedPricingId to control this query
-    const { data: addons = [], isLoading: addonsLoading } = useQuery({
-        queryKey: ['addons', expandedPricingId],
+    // 5. SizeColours (Fetch sizeColours only when activePricingId is set)
+    // We use expandedPricingId to control this query
+    const { data: sizeColours = [], isLoading: sizeColoursLoading } = useQuery({
+        queryKey: ['sizeColours', expandedPricingId],
         enabled: !!expandedPricingId,
         queryFn: async () => {
-            const apiAddons = await adminService.getProductAddons(expandedPricingId!);
-            return (Array.isArray(apiAddons) ? apiAddons : []).map((a: any) => ({
-                id: String(a.productAddonId),
-                name: a.addonName,
-                price: a.addonPrice,
-                mandatory: a.mandatory
+            const apiSizeColours = await adminService.getProductSizeColours(expandedPricingId!);
+            return (Array.isArray(apiSizeColours) ? apiSizeColours : []).map((sc: any) => ({
+                id: String(sc.productSizeColourId), // Validate ID field from API
+                name: sc.colourName, // Validate if it's colourName or something else. api-types said sizeColour
+                price: sc.colourPrice,
+                active: true // Assuming active
             }));
         }
     });
@@ -287,13 +289,24 @@ export default function AdminInventoryPage() {
                         });
                     }
                 } else if (manageMode === 'ADD_ADDON' && expandedPricingId) {
-                    return adminService.createAddon({
-                        productSizeId: Number(expandedPricingId),
-                        addonName: name,
-                        addonPrice: Number(price),
-                        mandatory: isMandatory,
-                        active: true
-                    });
+                    if (editingItem) {
+                        return adminService.updateSizeColour({
+                            productSizeColourId: Number(editingItem.id),
+                            productSizeId: Number(expandedPricingId),
+                            colourName: name,
+                            colourPrice: Number(price),
+                            productSizeColourQuantity: "0",
+                            sizeColourStatus: "ACTIVE"
+                        });
+                    } else {
+                        return adminService.createSizeColour({
+                            productSizeId: Number(expandedPricingId),
+                            colourName: name, // Reusing 'name' state
+                            colourPrice: Number(price), // Reusing 'price' state
+                            productSizeColourQuantity: "0", // Default quantity
+                            sizeColourStatus: "ACTIVE"
+                        });
+                    }
                 } else if (manageMode === 'ADD_COLOUR' && selectedProduct) {
                     if (editingItem) {
                         return adminService.updateProductColour({
@@ -424,12 +437,12 @@ export default function AdminInventoryPage() {
                 });
             } else if (level === 'ADDON' && selectedPricing && !isManageSheetOpen) {
                 // Classic Flow
-                return adminService.createAddon({
+                return adminService.createSizeColour({
                     productSizeId: Number(selectedPricing.id),
-                    addonName: name,
-                    addonPrice: Number(price),
-                    mandatory: isMandatory,
-                    active: true
+                    colourName: name,
+                    colourPrice: Number(price),
+                    productSizeColourQuantity: "0",
+                    sizeColourStatus: "ACTIVE"
                 });
             }
         },

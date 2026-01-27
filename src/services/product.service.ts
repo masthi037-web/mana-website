@@ -101,11 +101,10 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
         quantity: p.size || (p as any).sizeProduct,
         sizeQuantity: p.sizeQuantity,
         sizeStatus: p.sizeStatus,
-        addons: p.productAddons?.map(a => ({
-            id: String(a.productAddonId),
-            name: a.addonName,
-            price: a.addonPrice,
-            mandatory: a.mandatory
+        sizeColours: p.productSizeColours?.map(a => ({
+            id: String(a.productSizeColourId),
+            name: a.colourName,
+            price: a.colourPrice
         }))
     })) || [];
 
