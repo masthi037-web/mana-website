@@ -227,7 +227,7 @@ export default function AdminInventoryPage() {
     // "if one colour quantity is null" -> ANY.
     // Let's strictly check for null/undefined as per request? Or maybe count 0?
     // Let's try:
-    const hasColourWithNoQuantity = fetchedColours.length > 0 && fetchedColours.some((c: any) => c.productColourQuantity === null || c.productColourQuantity === undefined);
+    const hasColourWithNoQuantity = fetchedColours.length > 0 && fetchedColours.some((c: any) => c.productColourQuantity === null || c.productColourQuantity === undefined || c.productColourQuantity === "");
 
     // --- EFFECTS ---
 
