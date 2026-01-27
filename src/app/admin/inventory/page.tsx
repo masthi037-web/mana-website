@@ -10,7 +10,7 @@ import { adminService } from "@/services/admin.service";
 import { Category, Catalog, Product, ProductPriceOption } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-    Loader2, Plus, Folder, Package, Tag, Layers, ChevronRight, Home, Star, Sparkles, Pencil
+    Loader2, Plus, Folder, Package, Tag, Layers, ChevronRight, Home, Star, Sparkles, Pencil, AlertCircle
 } from 'lucide-react';
 import {
     Sheet,
@@ -975,7 +975,7 @@ export default function AdminInventoryPage() {
                                 <Input
                                     placeholder={selectedProduct?.productQuantity ? "Managed by Product" : "Unit Qty"}
                                     value={sizeQuantity}
-                                    onChange={e => setSizeQuantity(e.target.value)}
+                                    onChange={e => setSizeQuantity(e.target.value.replace(/[^0-9]/g, ''))}
                                     disabled={!!selectedProduct?.productQuantity}
                                 />
                             </div>
@@ -991,7 +991,7 @@ export default function AdminInventoryPage() {
                                 <>
                                     <div className="space-y-2">
                                         <Label>Price</Label>
-                                        <Input type="number" placeholder="100" value={price} onChange={e => setPrice(e.target.value)} />
+                                        <Input type="number" placeholder="100" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} />
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Discounted Price (Calculated)</Label>
@@ -999,7 +999,7 @@ export default function AdminInventoryPage() {
                                             type="number"
                                             placeholder="80"
                                             value={discountedPrice}
-                                            onChange={e => setDiscountedPrice(e.target.value)}
+                                            onChange={e => setDiscountedPrice(e.target.value.replace(/[^0-9.]/g, ''))}
                                             className="bg-muted/30 border-dashed"
                                         />
                                         <p className="text-[10px] text-muted-foreground">
@@ -1018,7 +1018,7 @@ export default function AdminInventoryPage() {
                         <>
                             <div className="space-y-2">
                                 <Label>Price</Label>
-                                <Input type="number" placeholder="10" value={price} onChange={e => setPrice(e.target.value)} />
+                                <Input type="number" placeholder="10" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} />
                             </div>
                         </>
                     )
@@ -1113,7 +1113,12 @@ export default function AdminInventoryPage() {
                                     <Sparkles className="w-4 h-4 text-primary" /> Product Colours
                                 </h3>
                                 {manageMode !== 'ADD_COLOUR' && (
-                                    selectedProduct?.productQuantity ? (
+                                    (!selectedProduct?.price || selectedProduct.price <= 0) ? (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 text-xs font-medium animate-in fade-in">
+                                            <AlertCircle className="w-3 h-3" />
+                                            Add Price to enable colours
+                                        </div>
+                                    ) : selectedProduct?.productQuantity ? (
                                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in slide-in-from-right-2">
                                             <span className="relative flex h-2 w-2">
                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -1128,6 +1133,20 @@ export default function AdminInventoryPage() {
                                     )
                                 )}
                             </div>
+
+                            {(!selectedProduct?.price || selectedProduct.price <= 0) && (
+                                <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-white p-2 rounded-full shadow-sm text-red-500 mt-0.5">
+                                        <AlertCircle className="w-4 h-4" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-red-900">Colour Variants Disabled (Price Missing)</h4>
+                                        <p className="text-xs text-red-700/80 leading-relaxed">
+                                            This product has no price set. Please add a base price to the product to enable adding colour variants.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                             {selectedProduct?.productQuantity && (
                                 <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
@@ -1324,7 +1343,7 @@ export default function AdminInventoryPage() {
                                                 <Label className="text-xs">Quantity</Label>
                                                 <Input
                                                     value={sizeQuantity}
-                                                    onChange={e => setSizeQuantity(e.target.value)}
+                                                    onChange={e => setSizeQuantity(e.target.value.replace(/[^0-9]/g, ''))}
                                                     className="h-8 bg-background"
                                                     placeholder={selectedProduct?.productQuantity ? "Managed by Product" : "Unit Qty"}
                                                     disabled={!!selectedProduct?.productQuantity}
@@ -1336,7 +1355,8 @@ export default function AdminInventoryPage() {
                                                     type="number"
                                                     value={price}
                                                     onChange={e => {
-                                                        const newVal = e.target.value;
+                                                        const newVal = e.target.value.replace(/[^0-9.]/g, '');
+                                                        if (newVal.length > 6) return;
                                                         setPrice(newVal);
                                                         // Auto-calc if offer exists
                                                         // Use centralized function to ensure consistency
@@ -1367,7 +1387,7 @@ export default function AdminInventoryPage() {
                                             <Input
                                                 type="number"
                                                 value={discountedPrice}
-                                                onChange={e => setDiscountedPrice(e.target.value)}
+                                                onChange={e => setDiscountedPrice(e.target.value.replace(/[^0-9.]/g, ''))}
                                                 className="h-8 bg-background border-dashed"
                                                 placeholder="Auto"
                                                 disabled={true}
