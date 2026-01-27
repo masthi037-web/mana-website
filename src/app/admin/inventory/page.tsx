@@ -218,7 +218,18 @@ export default function AdminInventoryPage() {
 
 
 
+
     const hasColourWithQuantity = fetchedColours.some((c: any) => Number(c.productColourQuantity) > 0);
+    // User requested: if one colour quantity is null (implies Size variant mode), disable Quantity for new colours
+    const hasColourWithNullQuantity = fetchedColours.length > 0 && fetchedColours.some((c: any) => c.productColourQuantity === null || c.productColourQuantity === undefined || c.productColourQuantity === 0); // Assuming 0 also counts as "no quantity" for this logic? "null" was specific. Let's check falsy.
+    // Actually, user said "null". But usually database might return 0.
+    // Let's stick to: if we have colors, and NONE of them have >0 quantity? Or specifically if ANY has null?
+    // "if one colour quantity is null" -> ANY.
+    // Let's strictly check for null/undefined as per request? Or maybe count 0?
+    // Let's try:
+    const hasColourWithNoQuantity = fetchedColours.length > 0 && fetchedColours.some((c: any) => !c.productColourQuantity || c.productColourQuantity == 0);
+
+    // --- EFFECTS ---
 
     // --- EFFECTS ---
     // Auto-calculate discounted price when Price or Product (Offer) changes
@@ -1143,7 +1154,13 @@ export default function AdminInventoryPage() {
                                         </div>
                                         <div className="space-y-2">
                                             <Label className="text-xs">Quantity</Label>
-                                            <Input value={colourQuantity} onChange={e => setColourQuantity(e.target.value)} className="h-8 bg-background" placeholder="0" />
+                                            <Input
+                                                value={colourQuantity}
+                                                onChange={e => setColourQuantity(e.target.value)}
+                                                className="h-8 bg-background"
+                                                placeholder={hasColourWithNoQuantity ? "Managed by Sizes" : "0"}
+                                                disabled={hasColourWithNoQuantity}
+                                            />
                                         </div>
                                         <div className="space-y-2">
                                             <ImageUpload
