@@ -367,7 +367,7 @@ export default function AdminInventoryPage() {
                             productPics: colourImage || "",
                             colourStatus: colourStatus,
                             colour: colourName,
-                            productColourQuantity: colourQuantity || "0"
+                            productColourQuantity: colourQuantity
                         });
                     } else {
                         return adminService.createProductColour({
@@ -375,7 +375,7 @@ export default function AdminInventoryPage() {
                             productPics: colourImage || "",
                             colourStatus: colourStatus,
                             colour: colourName,
-                            productColourQuantity: colourQuantity || "0"
+                            productColourQuantity: colourQuantity
                         });
                     }
                 }
