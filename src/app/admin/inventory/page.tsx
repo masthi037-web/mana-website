@@ -1348,6 +1348,11 @@ export default function AdminInventoryPage() {
                                                     placeholder={selectedProduct?.productQuantity ? "Managed by Product" : "Unit Qty"}
                                                     disabled={!!selectedProduct?.productQuantity}
                                                 />
+                                                {sizeQuantity && Number(sizeQuantity) > 0 && (
+                                                    <p className="text-[10px] text-amber-600 font-medium leading-tight pt-1">
+                                                        Setting quantity disables adding colours to this size.
+                                                    </p>
+                                                )}
                                             </div>
                                             <div className="space-y-1">
                                                 <Label className="text-xs">Price</Label>
@@ -1473,9 +1478,16 @@ export default function AdminInventoryPage() {
                                                     <div className="flex items-center justify-between mb-4">
                                                         <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Size Colours</h5>
                                                         {manageMode !== 'ADD_SIZE_COLOUR' && (
-                                                            <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => { setManageMode('ADD_SIZE_COLOUR'); resetForm(); }}>
-                                                                <Plus className="w-4 h-4" />
-                                                            </Button>
+                                                            (p.sizeQuantity && Number(p.sizeQuantity) > 0) ? (
+                                                                <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2 py-1 rounded text-[10px] font-medium border border-amber-100">
+                                                                    <AlertCircle className="w-3 h-3" />
+                                                                    <span>Remove Quantity from Variant to add colours</span>
+                                                                </div>
+                                                            ) : (
+                                                                <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => { setManageMode('ADD_SIZE_COLOUR'); resetForm(); }}>
+                                                                    <Plus className="w-4 h-4" />
+                                                                </Button>
+                                                            )
                                                         )}
                                                     </div>
 
