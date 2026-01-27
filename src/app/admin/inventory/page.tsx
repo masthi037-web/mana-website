@@ -740,24 +740,17 @@ export default function AdminInventoryPage() {
 
                 {level === 'PRODUCT' && (
                     <div className="grid grid-cols-2 gap-6 pt-2">
-                        {/* Row 1: Price & Offer Price */}
+                        {/* Row 1: Available Quantity & Price */}
+                        <div className="space-y-2">
+                            <Label>Available Quantity</Label>
+                            <Input placeholder="10" value={prodQuantity} onChange={e => setProdQuantity(e.target.value)} />
+                        </div>
                         <div className="space-y-2">
                             <Label>Price {prodQuantity ? <span className="text-destructive">*</span> : null}</Label>
                             <Input type="number" placeholder="100" value={price} onChange={e => setPrice(e.target.value)} />
                         </div>
-                        <div className="space-y-2">
-                            <Label>Offer Price</Label>
-                            <Input
-                                type="number"
-                                placeholder="80"
-                                value={discountedPrice}
-                                onChange={e => setDiscountedPrice(e.target.value)}
-                                className="bg-muted/30 border-dashed"
-                                disabled
-                            />
-                        </div>
 
-                        {/* Row 2: Product Offer & Available Quantity */}
+                        {/* Row 2: Product Offer & Offer Price */}
                         <div className="space-y-2">
                             <Label>Product Offer</Label>
                             <div className="relative">
@@ -774,8 +767,15 @@ export default function AdminInventoryPage() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label>Available Quantity</Label>
-                            <Input placeholder="10" value={prodQuantity} onChange={e => setProdQuantity(e.target.value)} />
+                            <Label>Offer Price</Label>
+                            <Input
+                                type="number"
+                                placeholder="80"
+                                value={discountedPrice}
+                                onChange={e => setDiscountedPrice(e.target.value)}
+                                className="bg-muted/30 border-dashed"
+                                disabled
+                            />
                         </div>
 
                         {/* Row 3: Status & Famous */}
