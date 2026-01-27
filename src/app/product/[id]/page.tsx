@@ -558,11 +558,11 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* SizeColours (Enhance It) */}
+            {/* SizeColours (Select Colour) */}
             {availableSizeColours.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <label className="text-lg font-bold text-foreground">Enhance It</label>
+                  <label className="text-lg font-bold text-foreground">Select Colour</label>
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider bg-secondary/50 px-2 py-1 rounded">REQUIRED</span>
                 </div>
                 <div className="space-y-3">

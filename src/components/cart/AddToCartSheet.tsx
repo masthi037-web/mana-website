@@ -190,6 +190,7 @@ const AddToCartContent = ({
 
   console.log('AddToCartContent Product:', product);
   console.log('Colors:', product.colors);
+  console.log('Pricing/SizeColours:', product.pricing);
 
   // -- State Logic --
   const [selectedVariants, setSelectedVariants] = React.useState<Record<string, string>>(() => {
@@ -428,7 +429,7 @@ const AddToCartContent = ({
           {availableSizeColours.length > 0 && (
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Enhance It</h3>
+                <h3 className="text-sm font-semibold">Select Colour</h3>
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider bg-secondary/50 px-2 py-1 rounded">Required</span>
               </div>
               <div className="grid grid-cols-4 gap-2">
@@ -436,7 +437,8 @@ const AddToCartContent = ({
                   <ColourCard
                     key={sc.id}
                     name={sc.name}
-                    image={sc.productPics}
+                    // @ts-ignore - Check for multiple possible image fields
+                    image={sc.productPics || sc.image}
                     active={true} // Always active
                     isSelected={selectedSizeColourIds.has(sc.id)}
                     onClick={() => handleSizeColourToggle(sc.id)}
