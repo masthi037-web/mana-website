@@ -286,7 +286,21 @@ export default function AdminInventoryPage() {
                 }
                 return true;
             }
-            // For ADD_PRICING or VIEW in manage sheet, we might skipping main form validation
+            if (manageMode === 'ADD_PRICING') {
+                if (!qty || !sizeQuantity || !price) {
+                    toast({ title: "Validation Error", description: "Size, Quantity, and Price are required", variant: "destructive", duration: 2000 });
+                    return false;
+                }
+                return true;
+            }
+            if (manageMode === 'ADD_SIZE_COLOUR') {
+                if (!name || !sizeQuantity || (!colourImage && !editingItem?.productPics)) {
+                    toast({ title: "Validation Error", description: "Name, Quantity, and Image are required", variant: "destructive", duration: 2000 });
+                    return false;
+                }
+                return true;
+            }
+            // For VIEW in manage sheet, we might skipping main form validation
             return true;
         }
 
@@ -1341,11 +1355,11 @@ export default function AdminInventoryPage() {
                                     <div className="space-y-3">
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-1">
-                                                <Label className="text-xs">Size </Label>
+                                                <Label className="text-xs">Size <span className="text-destructive">*</span></Label>
                                                 <Input value={qty} onChange={e => setQty(e.target.value)} className="h-8 bg-background" placeholder="Qty" />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-xs">Quantity</Label>
+                                                <Label className="text-xs">Quantity <span className="text-destructive">*</span></Label>
                                                 <Input
                                                     value={sizeQuantity}
                                                     onChange={e => setSizeQuantity(e.target.value.replace(/[^0-9]/g, ''))}
@@ -1360,7 +1374,7 @@ export default function AdminInventoryPage() {
                                                 )}
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-xs">Price</Label>
+                                                <Label className="text-xs">Price <span className="text-destructive">*</span></Label>
                                                 <Input
                                                     type="number"
                                                     value={price}
@@ -1428,8 +1442,8 @@ export default function AdminInventoryPage() {
                             {/* PRICING LIST */}
                             <div className="space-y-3">
                                 {pricingOptions.map((p: any) => {
-                                    // Hide the item if it is currently being edited
-                                    if (editingItem && editingItem.id === p.id) return null;
+                                    // Hide the item if it is currently being edited (only if editing a PRICE variant)
+                                    if (manageMode === 'ADD_PRICING' && editingItem && editingItem.id === p.id) return null;
 
                                     return (
                                         <div key={p.id} className="border rounded-xl p-0 overflow-hidden bg-card shadow-sm transition-all hover:shadow-md">
@@ -1501,14 +1515,14 @@ export default function AdminInventoryPage() {
                                                         <div className="bg-background p-3 rounded-lg border mb-3 shadow-sm animate-in zoom-in-95">
                                                             <div className="space-y-3">
                                                                 <div className="space-y-1">
-                                                                    <Label className="text-xs">Name</Label>
+                                                                    <Label className="text-xs">Name <span className="text-destructive">*</span></Label>
                                                                     <Input value={name} onChange={e => setName(e.target.value)} className="h-7" placeholder="e.g. Green" />
                                                                 </div>
                                                                 <div>
                                                                     <ImageUpload
                                                                         value={colourImage || undefined}
                                                                         onChange={setColourImage}
-                                                                        label="Variant Image"
+                                                                        label={<span>Variant Image <span className="text-destructive">*</span></span>}
                                                                         companyDomain={domain || ""}
                                                                         maxFiles={1}
                                                                     />
@@ -1524,7 +1538,7 @@ export default function AdminInventoryPage() {
                                                                 </div>
                                                                 <div className="grid grid-cols-2 gap-3">
                                                                     <div className="space-y-1">
-                                                                        <Label className="text-xs">Quantity</Label>
+                                                                        <Label className="text-xs">Quantity <span className="text-destructive">*</span></Label>
                                                                         <Input value={sizeQuantity} onChange={e => setSizeQuantity(e.target.value)} className="h-7" placeholder="0" />
                                                                     </div>
                                                                     <div className="space-y-1">
