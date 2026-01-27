@@ -8,6 +8,7 @@ import { resolveTenantConfig } from '@/config/tenant-config';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Footer } from '@/components/layout/Footer';
 import { WishlistSheet } from '@/components/wishlist/WishlistSheet';
+import { GlobalScrollHandler } from '@/components/common/GlobalScrollHandler';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -25,6 +26,7 @@ export default async function AppShell({ children, companyDomain }: AppShellProp
 
     return (
         <ThemeProvider config={tenantConfig}>
+            <GlobalScrollHandler />
             {companyDetails && <StoreInitializer companyDetails={companyDetails} />}
             <QueryProvider>
                 <div className="relative flex min-h-full w-full flex-col">

@@ -752,64 +752,69 @@ export default function AdminInventoryPage() {
                 {/* Product Extra Fields */}
                 {level === 'PRODUCT' && (
                     <>
-                        <div className="grid grid-cols-1 gap-4">
+                        <div className="grid grid-cols-2 gap-6">
+                            {/* Row 1: Price & Offer Price */}
+                            <div className="space-y-2">
+                                <Label>Price {prodQuantity ? <span className="text-destructive">*</span> : null}</Label>
+                                <Input type="number" placeholder="100" value={price} onChange={e => setPrice(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Offer Price</Label>
+                                <Input
+                                    type="number"
+                                    placeholder="80"
+                                    value={discountedPrice}
+                                    onChange={e => setDiscountedPrice(e.target.value)}
+                                    className="bg-muted/30 border-dashed"
+                                    disabled
+                                />
+                            </div>
+
+                            {/* Row 2: Product Offer & Available Quantity */}
+                            <div className="space-y-2">
+                                <Label>Product Offer</Label>
+                                <div className="relative">
+                                    <Input
+                                        type="number"
+                                        placeholder="50"
+                                        value={prodOffer}
+                                        onChange={e => setProdOffer(e.target.value)}
+                                        className="pr-16"
+                                    />
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
+                                        % OFF
+                                    </div>
+                                </div>
+                            </div>
                             <div className="space-y-2">
                                 <Label>Available Quantity</Label>
                                 <Input placeholder="10" value={prodQuantity} onChange={e => setProdQuantity(e.target.value)} />
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <Label>Status</Label>
-                            <select
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                value={prodStatus}
-                                onChange={e => setProdStatus(e.target.value)}
-                            >
-                                <option value="ACTIVE">Active</option>
-                                <option value="INACTIVE">Inactive</option>
-                                <option value="OUTOFSTOCK">Out of Stock</option>
-                            </select>
+                            {/* Row 3: Status & Famous */}
+                            <div className="space-y-2">
+                                <Label>Status</Label>
+                                <select
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    value={prodStatus}
+                                    onChange={e => setProdStatus(e.target.value)}
+                                >
+                                    <option value="ACTIVE">Active</option>
+                                    <option value="INACTIVE">Inactive</option>
+                                    <option value="OUTOFSTOCK">Out of Stock</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center space-x-2 h-10 mt-6">
+                                <Checkbox id="famous" checked={isFamous} onCheckedChange={(c) => setIsFamous(!!c)} />
+                                <Label htmlFor="famous" className="cursor-pointer">Mark as Famous?</Label>
+                            </div>
                         </div>
 
                         <div className="space-y-2">
                             <Label>Instructions</Label>
                             <Input placeholder="Usage Instructions" value={prodInst} onChange={e => setProdInst(e.target.value)} />
                         </div>
-                        <div className="space-y-2">
-                            <Label>Product Offer</Label>
-                            <div className="relative">
-                                <Input
-                                    type="number"
-                                    placeholder="50"
-                                    value={prodOffer}
-                                    onChange={e => setProdOffer(e.target.value)}
-                                    className="pr-16"
-                                />
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
-                                    % OFF
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="famous" checked={isFamous} onCheckedChange={(c) => setIsFamous(!!c)} />
-                            <Label htmlFor="famous">Mark as Famous?</Label>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Price {prodQuantity ? <span className="text-destructive">*</span> : null}</Label>
-                            <Input type="number" placeholder="100" value={price} onChange={e => setPrice(e.target.value)} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Offer Price</Label>
-                            <Input
-                                type="number"
-                                placeholder="80"
-                                value={discountedPrice}
-                                onChange={e => setDiscountedPrice(e.target.value)}
-                                className="bg-muted/30 border-dashed"
-                                disabled
-                            />
-                        </div>
+
 
                         {/* Bulk Discounts Section */}
                         <div className="space-y-3 pt-2 border-t">
