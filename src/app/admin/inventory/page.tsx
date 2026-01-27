@@ -782,7 +782,7 @@ export default function AdminInventoryPage() {
                                         Setting a quantity here enables "Single Variant Mode"
                                     </p>
                                     <p className="text-[11px] text-amber-600/90 leading-relaxed">
-                                        To add multiple colour variants (e.g. Red, Blue) with their own quantities, leave this <b>Available Quantity</b> empty or 0.
+                                        To add multiple colour or size variants (e.g. Red, Blue, Small, Large) with their own quantities, leave this <b>Available Quantity</b> empty or 0.
                                     </p>
                                 </div>
                             </div>
@@ -1203,26 +1203,51 @@ export default function AdminInventoryPage() {
                                     <Tag className="w-4 h-4 text-primary" /> Pricing Variants
                                 </h3>
                                 {manageMode !== 'ADD_PRICING' && (
-                                    <Button size="sm" onClick={() => {
-                                        setManageMode('ADD_PRICING');
-                                        resetVariantFieldsOnly();
-                                        // Pre-fill if base price exists
-                                        if (selectedProduct && selectedProduct.price > 0) {
-                                            setPrice(String(selectedProduct.price));
-                                            // Auto-calc discount if offer exists (Prioritize active edited offer)
-                                            const offerToUse = prodOffer || selectedProduct?.productOffer;
-                                            if (offerToUse) {
-                                                const calculated = calculateDiscount(selectedProduct.price, offerToUse);
-                                                setDiscountedPrice(String(calculated));
-                                            } else {
-                                                setDiscountedPrice(String(selectedProduct.price));
+                                    selectedProduct?.productQuantity ? (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in slide-in-from-right-2">
+                                            <span className="relative flex h-2 w-2">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                            </span>
+                                            Single variant mode active
+                                        </div>
+                                    ) : (
+                                        <Button size="sm" onClick={() => {
+                                            setManageMode('ADD_PRICING');
+                                            resetVariantFieldsOnly();
+                                            // Pre-fill if base price exists
+                                            if (selectedProduct && selectedProduct.price > 0) {
+                                                setPrice(String(selectedProduct.price));
+                                                // Auto-calc discount if offer exists (Prioritize active edited offer)
+                                                const offerToUse = prodOffer || selectedProduct?.productOffer;
+                                                if (offerToUse) {
+                                                    const calculated = calculateDiscount(selectedProduct.price, offerToUse);
+                                                    setDiscountedPrice(String(calculated));
+                                                } else {
+                                                    setDiscountedPrice(String(selectedProduct.price));
+                                                }
                                             }
-                                        }
-                                    }} variant="outline" className="h-8 rounded-full">
-                                        <Plus className="w-3 h-3 mr-1" /> Add Variant
-                                    </Button>
+                                        }} variant="outline" className="h-8 rounded-full">
+                                            <Plus className="w-3 h-3 mr-1" /> Add Variant
+                                        </Button>
+                                    )
                                 )}
                             </div>
+
+                            {selectedProduct?.productQuantity && (
+                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 mt-0.5">
+                                        <Tag className="w-4 h-4" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-amber-900">Pricing Variants Disabled</h4>
+                                        <p className="text-xs text-amber-700/80 leading-relaxed">
+                                            This product has a fixed quantity set, which enables simplified inventory tracking.
+                                            To add multiple pricing variants (Sizes), please remove the quantity from the main product settings.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* ADD PRICING FORM */}
                             {manageMode === 'ADD_PRICING' && (
