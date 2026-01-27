@@ -262,6 +262,20 @@ export default function AdminInventoryPage() {
 
     // --- VALIDATION ---
     const validateForm = () => {
+        // 1. Manage Sheet Validations (Prioritize these if active)
+        if (isManageSheetOpen) {
+            if (manageMode === 'ADD_COLOUR') {
+                if (!colourName || (!colourImage && !editingItem?.productPics)) {
+                    toast({ title: "Validation Error", description: "Colour Name and Image are required", variant: "destructive", duration: 2000 });
+                    return false;
+                }
+                return true;
+            }
+            // For ADD_PRICING or VIEW in manage sheet, we might skipping main form validation
+            return true;
+        }
+
+        // 2. Main Form Validations (Category, Catalogue, Product)
         if (level === 'CATEGORY' || level === 'CATALOGUE') {
             if (!name || !desc) {
                 toast({ title: "Validation Error", description: "Name and Description are required", variant: "destructive", duration: 2000 });
@@ -274,14 +288,6 @@ export default function AdminInventoryPage() {
             }
             if (prodQuantity && (!price || (!image && !editingItem?.productImage))) {
                 toast({ title: "Validation Error", description: "Price and Image are required when Quantity is set", variant: "destructive", duration: 2000 });
-                return false;
-            }
-        }
-
-        // Manage Sheet Validations
-        if (manageMode === 'ADD_COLOUR') {
-            if (!colourName || (!colourImage && !editingItem?.productPics)) {
-                toast({ title: "Validation Error", description: "Colour Name and Image are required", variant: "destructive", duration: 2000 });
                 return false;
             }
         }
