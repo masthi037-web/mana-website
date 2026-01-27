@@ -9,7 +9,8 @@ import {
     UpdateColourRequest, UpdateColourResponse,
     UpdateCategoryRequest, UpdateCategoryResponse,
     UpdateCatalogueRequest, UpdateCatalogueResponse,
-    UpdateProductRequest
+    UpdateProductRequest,
+    CreateSizeColourRequest, CreateSizeColourResponse
 } from '@/lib/api-types';
 
 export const adminService = {
@@ -83,8 +84,8 @@ export const adminService = {
         });
     },
 
-    createSizeColour: async (data: any) => {
-        return apiClient<any>('/product/size-colour/create', {
+    createSizeColour: async (data: CreateSizeColourRequest) => {
+        return apiClient<CreateSizeColourResponse>('/product/size-colour/create', {
             method: 'POST',
             body: JSON.stringify(data),
         });

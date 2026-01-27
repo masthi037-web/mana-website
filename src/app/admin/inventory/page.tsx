@@ -294,16 +294,16 @@ export default function AdminInventoryPage() {
                             productSizeId: Number(expandedPricingId),
                             colourName: name,
                             colourPrice: Number(price),
-                            productSizeColourQuantity: "0",
-                            sizeColourStatus: "ACTIVE"
+                            productSizeColourQuantity: sizeQuantity || "0",
+                            sizeColourStatus: sizeStatus || "ACTIVE"
                         });
                     } else {
                         return adminService.createSizeColour({
                             productSizeId: Number(expandedPricingId),
                             colourName: name, // Reusing 'name' state
                             colourPrice: Number(price), // Reusing 'price' state
-                            productSizeColourQuantity: "0", // Default quantity
-                            sizeColourStatus: "ACTIVE"
+                            productSizeColourQuantity: sizeQuantity || "0",
+                            sizeColourStatus: sizeStatus || "ACTIVE"
                         });
                     }
                 } else if (manageMode === 'ADD_COLOUR' && selectedProduct) {
@@ -1293,6 +1293,24 @@ export default function AdminInventoryPage() {
                                                                     </div>
                                                                     <div className="pt-6 flex items-center space-x-2">
                                                                         {/* Mandatory field removed */}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="grid grid-cols-2 gap-3">
+                                                                    <div className="space-y-1">
+                                                                        <Label className="text-xs">Quantity</Label>
+                                                                        <Input value={sizeQuantity} onChange={e => setSizeQuantity(e.target.value)} className="h-7" placeholder="0" />
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <Label className="text-xs">Status</Label>
+                                                                        <select
+                                                                            className="flex h-7 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                                                            value={sizeStatus}
+                                                                            onChange={e => setSizeStatus(e.target.value)}
+                                                                        >
+                                                                            <option value="ACTIVE">Active</option>
+                                                                            <option value="INACTIVE">Inactive</option>
+                                                                            <option value="OUTOFSTOCK">Out of Stock</option>
+                                                                        </select>
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex gap-2 pt-1">
