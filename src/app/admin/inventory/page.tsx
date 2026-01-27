@@ -27,7 +27,7 @@ import { ImageUpload } from "@/components/common/ImageUpload";
 // Remove hardcoded COMPANY_ID
 // const COMPANY_ID = "74f0d689-0ca7-4feb-a123-8e98c151b514";
 
-type ViewLevel = 'CATEGORY' | 'CATALOGUE' | 'PRODUCT' | 'PRICING' | 'ADDON';
+type ViewLevel = 'CATEGORY' | 'CATALOGUE' | 'PRODUCT' | 'PRICING' | 'SIZE_COLOUR';
 
 export default function AdminInventoryPage() {
     const { toast } = useToast();
@@ -86,7 +86,7 @@ export default function AdminInventoryPage() {
     const [colourStatus, setColourStatus] = useState("ACTIVE");
 
     // --- MANAGE SHEET STATE ---
-    const [manageMode, setManageMode] = useState<'VIEW' | 'ADD_PRICING' | 'ADD_ADDON' | 'ADD_COLOUR'>('VIEW');
+    const [manageMode, setManageMode] = useState<'VIEW' | 'ADD_PRICING' | 'ADD_SIZE_COLOUR' | 'ADD_COLOUR'>('VIEW');
     const [expandedPricingId, setExpandedPricingId] = useState<string | null>(null);
     const [editingItem, setEditingItem] = useState<any | null>(null);
 
@@ -175,13 +175,12 @@ export default function AdminInventoryPage() {
                 priceAfterDiscount: p.productSizePriceAfterDiscount,
                 quantity: p.size,
                 sizeQuantity: p.sizeQuantity,
-                sizeStatus: p.sizeStatus || "ACTIVE",
-                addons: []
+                sizeStatus: p.sizeStatus || "ACTIVE"
             }));
         }
     });
 
-    // 5. Addons (Fetch addons only when activePricingId is set)
+    // 5. SizeColours (Fetch sizeColours only when activePricingId is set)
     // We use expandedPricingId to control this query
     // 5. SizeColours (Fetch sizeColours only when activePricingId is set)
     // We use expandedPricingId to control this query
@@ -288,7 +287,7 @@ export default function AdminInventoryPage() {
                             sizeStatus: sizeStatus
                         });
                     }
-                } else if (manageMode === 'ADD_ADDON' && expandedPricingId) {
+                } else if (manageMode === 'ADD_SIZE_COLOUR' && expandedPricingId) {
                     if (editingItem) {
                         return adminService.updateSizeColour({
                             productSizeColourId: Number(editingItem.id),
@@ -435,7 +434,7 @@ export default function AdminInventoryPage() {
                     sizeQuantity: sizeQuantity,
                     sizeStatus: sizeStatus // Default or from state? Using state.
                 });
-            } else if (level === 'ADDON' && selectedPricing && !isManageSheetOpen) {
+            } else if (level === 'SIZE_COLOUR' && selectedPricing && !isManageSheetOpen) {
                 // Classic Flow
                 return adminService.createSizeColour({
                     productSizeId: Number(selectedPricing.id),
@@ -470,8 +469,8 @@ export default function AdminInventoryPage() {
                 // We should NOT call /product/size/get, which we avoided by the check above.
             }
 
-            // Refresh addons if managing (using expandedPricingId)
-            if (expandedPricingId) queryClient.invalidateQueries({ queryKey: ['addons', expandedPricingId] });
+            // Refresh sizeColours if managing (using expandedPricingId)
+            if (expandedPricingId) queryClient.invalidateQueries({ queryKey: ['sizeColours', expandedPricingId] });
 
             // If in Manage Sheet, return to VIEW mode, don't close sheet
             if (isManageSheetOpen) {
@@ -676,7 +675,7 @@ export default function AdminInventoryPage() {
                     </button>
                 </>
             )}
-            {(level === 'PRODUCT' || level === 'PRICING' || level === 'ADDON') && selectedCatalogue && (
+            {(level === 'PRODUCT' || level === 'PRICING' || level === 'SIZE_COLOUR') && selectedCatalogue && (
                 <>
                     <ChevronRight className="w-4 h-4 mx-2" />
                     <button onClick={() => setLevel('PRODUCT')} className="hover:text-primary font-medium text-foreground">
@@ -684,7 +683,7 @@ export default function AdminInventoryPage() {
                     </button>
                 </>
             )}
-            {(level === 'PRICING' || level === 'ADDON') && selectedProduct && (
+            {(level === 'PRICING' || level === 'SIZE_COLOUR') && selectedProduct && (
                 <>
                     <ChevronRight className="w-4 h-4 mx-2" />
                     <button onClick={() => setLevel('PRICING')} className="hover:text-primary font-medium text-foreground">
@@ -692,7 +691,7 @@ export default function AdminInventoryPage() {
                     </button>
                 </>
             )}
-            {level === 'ADDON' && selectedPricing && (
+            {level === 'SIZE_COLOUR' && selectedPricing && (
                 <>
                     <ChevronRight className="w-4 h-4 mx-2" />
                     <span className="font-bold text-primary">
@@ -706,7 +705,7 @@ export default function AdminInventoryPage() {
     const renderSheetForm = () => {
         return (
             <div className="space-y-4 py-4">
-                {(level === 'CATEGORY' || level === 'CATALOGUE' || level === 'PRODUCT' || level === 'ADDON') && (
+                {(level === 'CATEGORY' || level === 'CATALOGUE' || level === 'PRODUCT' || level === 'SIZE_COLOUR') && (
                     <div className="space-y-2">
                         <Label>Name</Label>
                         <Input placeholder="Name" value={name} onChange={e => setName(e.target.value)} />
@@ -916,9 +915,9 @@ export default function AdminInventoryPage() {
                     )
                 }
 
-                {/* Addon Fields */}
+                {/* Size Colour Fields */}
                 {
-                    level === 'ADDON' && (
+                    level === 'SIZE_COLOUR' && (
                         <>
                             <div className="space-y-2">
                                 <Label>Price</Label>
@@ -940,7 +939,7 @@ export default function AdminInventoryPage() {
         );
     };
 
-    const isLoading = catsLoading || catlgsLoading || prodsLoading || pricingLoading || addonsLoading;
+    const isLoading = catsLoading || catlgsLoading || prodsLoading || pricingLoading || sizeColoursLoading;
 
     return (
         <div className="container mx-auto py-8 px-4 max-w-6xl">
@@ -962,14 +961,14 @@ export default function AdminInventoryPage() {
                                 {level === 'CATALOGUE' && (editingItem ? "Edit Catalogue" : `Add Catalogue to ${selectedCategory?.name}`)}
                                 {level === 'PRODUCT' && `Add Product to ${selectedCatalogue?.name}`}
                                 {level === 'PRICING' && `Add Variant to ${selectedProduct?.name}`}
-                                {level === 'ADDON' && `Add Addon to ${selectedPricing?.quantity}`}
+                                {level === 'SIZE_COLOUR' && `Add Size Colour to ${selectedPricing?.quantity}`}
                             </SheetTitle>
                             <SheetDescription>
                                 {level === 'CATEGORY' && (editingItem ? "Update category details." : "Create a new top-level category.")}
                                 {level === 'CATALOGUE' && (editingItem ? "Update catalogue details." : `Creating a new catalogue under ${selectedCategory?.name}.`)}
                                 {level === 'PRODUCT' && `Creating a new product under ${selectedCatalogue?.name}.`}
                                 {level === 'PRICING' && `Adding a pricing variant for ${selectedProduct?.name}.`}
-                                {level === 'ADDON' && `Adding an addon for the ${selectedPricing?.quantity} variant.`}
+                                {level === 'SIZE_COLOUR' && `Adding a size colour for the ${selectedPricing?.quantity} variant.`}
                             </SheetDescription>
                         </SheetHeader>
                         {renderSheetForm()}
@@ -994,7 +993,7 @@ export default function AdminInventoryPage() {
                                 {selectedProduct?.name}
                             </SheetTitle>
                             <SheetDescription>
-                                Manage pricing variants and addons.
+                                Manage pricing variants and size colours.
                             </SheetDescription>
                         </SheetHeader>
 
@@ -1179,20 +1178,20 @@ export default function AdminInventoryPage() {
                                                 </div>
                                             </div>
 
-                                            {/* ADDONS SECTION (EXPANDED) */}
+                                            {/* Size Colour SECTION (EXPANDED) */}
                                             {expandedPricingId === p.id && (
                                                 <div className="bg-muted/20 border-t p-4 animate-in slide-in-from-top-2 duration-300">
                                                     <div className="flex items-center justify-between mb-4">
-                                                        <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Addons</h5>
-                                                        {manageMode !== 'ADD_ADDON' && (
-                                                            <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => { setManageMode('ADD_ADDON'); resetForm(); }}>
+                                                        <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Enhancements / Size Colours</h5>
+                                                        {manageMode !== 'ADD_SIZE_COLOUR' && (
+                                                            <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => { setManageMode('ADD_SIZE_COLOUR'); resetForm(); }}>
                                                                 <Plus className="w-4 h-4" />
                                                             </Button>
                                                         )}
                                                     </div>
 
-                                                    {/* ADD ADDON FORM */}
-                                                    {manageMode === 'ADD_ADDON' && (
+                                                    {/* ADD SIZE COLOUR FORM */}
+                                                    {manageMode === 'ADD_SIZE_COLOUR' && (
                                                         <div className="bg-background p-3 rounded-lg border mb-3 shadow-sm animate-in zoom-in-95">
                                                             <div className="space-y-3">
                                                                 <div className="space-y-1">
@@ -1210,7 +1209,7 @@ export default function AdminInventoryPage() {
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex gap-2 pt-1">
-                                                                    <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="h-7 text-xs w-full">Save Addon</Button>
+                                                                    <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="h-7 text-xs w-full">Save Size Colour</Button>
                                                                     <Button size="sm" variant="ghost" onClick={() => setManageMode('VIEW')} className="h-7 text-xs w-full">Cancel</Button>
                                                                 </div>
                                                             </div>
@@ -1218,14 +1217,14 @@ export default function AdminInventoryPage() {
                                                     )}
 
                                                     <div className="space-y-2">
-                                                        {addonsLoading ? <div className="text-xs text-center py-2 text-muted-foreground">Loading addons...</div> :
-                                                            addons.length === 0 ? <div className="text-xs text-center py-2 text-muted-foreground italic">No addons configured.</div> :
-                                                                addons.map((addon: any) => (
-                                                                    <div key={addon.id} className="bg-background/80 border rounded p-2 flex justify-between items-center text-sm">
-                                                                        <span>{addon.name}</span>
+                                                        {sizeColoursLoading ? <div className="text-xs text-center py-2 text-muted-foreground">Loading options...</div> :
+                                                            sizeColours.length === 0 ? <div className="text-xs text-center py-2 text-muted-foreground italic">No options configured.</div> :
+                                                                sizeColours.map((sc: any) => (
+                                                                    <div key={sc.id} className="bg-background/80 border rounded p-2 flex justify-between items-center text-sm">
+                                                                        <span>{sc.name}</span>
                                                                         <div className="flex items-center gap-2">
-                                                                            {addon.mandatory && <span className="text-[10px] bg-red-100 text-red-600 px-1 rounded font-bold">REQ</span>}
-                                                                            <span className="font-mono font-bold text-xs text-emerald-600">+₹{addon.price}</span>
+                                                                            {/* Mandatory flag removed as it might not be in SC schema anymore or is implicit */}
+                                                                            <span className="font-mono font-bold text-xs text-emerald-600">+₹{sc.price}</span>
                                                                         </div>
                                                                     </div>
                                                                 ))
@@ -1424,7 +1423,7 @@ export default function AdminInventoryPage() {
                         {level === 'PRICING' && pricingOptions.map((p: any) => (
                             <Card key={p.id}
                                 className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md group"
-                                onClick={() => { setSelectedPricing(p); setLevel('ADDON'); }}>
+                                onClick={() => { setSelectedPricing(p); setLevel('SIZE_COLOUR'); }}>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-base font-bold">{p.quantity}</CardTitle>
                                     <Tag className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -1444,16 +1443,16 @@ export default function AdminInventoryPage() {
                             </Card>
                         ))}
 
-                        {/* LEVEL 4: ADDONS */}
-                        {level === 'ADDON' && selectedPricing && (
-                            addons.map((addon: any) => (
-                                <Card key={addon.id} className="hover:border-border transition-all">
+                        {/* LEVEL 4: SIZE COLOURS */}
+                        {level === 'SIZE_COLOUR' && selectedPricing && (
+                            sizeColours.map((sc: any) => (
+                                <Card key={sc.id} className="hover:border-border transition-all">
                                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <CardTitle className="text-base font-bold">{addon.name}</CardTitle>
-                                        {addon.mandatory && <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded font-bold">MANDATORY</span>}
+                                        <CardTitle className="text-base font-bold">{sc.name}</CardTitle>
+                                        {/* {sc.mandatory && <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded font-bold">MANDATORY</span>} */}
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="text-lg font-bold text-emerald-600">+₹{addon.price}</div>
+                                        <div className="text-lg font-bold text-emerald-600">+₹{sc.price}</div>
                                     </CardContent>
                                 </Card>
                             ))

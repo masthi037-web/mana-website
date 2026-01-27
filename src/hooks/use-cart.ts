@@ -163,14 +163,14 @@ export const useCart = create<CartState>()(
           if (processedProductIds.has(productId)) return; // Already processed this product's total logic
           processedProductIds.add(productId);
 
-          // Get all items for this product to handle variants/addons correctly
+          // Get all items for this product to handle variants/colour correctly
           const productItems = cart.filter(i => i.id.toString() === productId);
           const totalQty = productQuantities[productId];
           const ruleKey = productRules[productId];
           const moreThanRule = productMoreThanRules[productId];
 
-          // 1. Calculate Base Total for this Product (including variants/addons)
-          // We need to apply discounts to the BASE PRICE of each specific item (since variants might change price?)
+          // 1. Calculate Base Total for this Product (including variants/sizeColours)
+          // We need to apply discounts to the BASE PRICE of each specific item
           // Actually, `itemPrice` (base) is per item. 
           // We need to distribute the discount schedule [15, 15, 10, 0...] across the items.
 
@@ -222,9 +222,9 @@ export const useCart = create<CartState>()(
           let distributionIndex = 0;
           productItems.forEach(pItem => {
             const sizeColoursCost = (pItem.selectedSizeColours || []).reduce((acc, a) => acc + a.price, 0);
-            const basePrice = pItem.priceAfterDiscount !== undefined ? pItem.priceAfterDiscount : pItem.price; // This might exclude addons? 
-            // Note: Discount applies to (Base + Addons) or just Base? 
-            // CartSheet says: `const singleItemTotal = basePrice + addonsCost; const finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);`
+            const basePrice = pItem.priceAfterDiscount !== undefined ? pItem.priceAfterDiscount : pItem.price;
+            // Note: Discount applies to (Base + SizeColours)
+            // CartSheet logic: singleItemTotal = basePrice + sizeColoursCost; finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
             // So it applies to the SUM.
 
             const itemBaseTotal = basePrice + sizeColoursCost;

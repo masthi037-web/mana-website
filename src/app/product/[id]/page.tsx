@@ -124,7 +124,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
 
   const [selectedPricingId, setSelectedPricingId] = useState<string | null>(null);
-  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [selectedSizeColourIds, setSelectedSizeColourIds] = useState<string[]>([]);
   const [selectedColourId, setSelectedColourId] = useState<string>("");
   // We keep 'selectedVariants' for backward compatibility if backend returns 'variants' array separately,
   // but for pricing options, we primarily use selectedPricingId.
@@ -301,14 +301,14 @@ export default function ProductDetailPage() {
 
   // Derived state for current pricing option
   const currentPricingOption = product.pricing?.find(p => p.id === selectedPricingId) || (product.pricing?.[0]);
-  // Effective price: base price (from pricing option) + active addons
-  // Note: Addons price usually adds ON TOP of the variant price.
+  // Using 'SizeColours' terminology
+  // Note: SizeColours price usually adds ON TOP of the variant price.
 
   // Get sizeColours available for current pricing option
   const availableSizeColours = currentPricingOption?.sizeColours || [];
 
   // Local state for selected sizeColours
-  const [selectedSizeColourIds, setSelectedSizeColourIds] = useState<string[]>([]);
+  // Local state for selected sizeColours (hoisted to top)
 
   // Calculate total price
   const basePrice = currentPricingOption ? currentPricingOption.price : product.price;

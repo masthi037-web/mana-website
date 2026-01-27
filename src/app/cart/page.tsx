@@ -112,17 +112,17 @@ export default function CartPage() {
                                 {value}
                               </span>
                             ))}
-                            {/* Addon Pills (Teal/Green) */}
-                            {item.selectedAddons && item.selectedAddons.map((addon) => (
-                              <span key={addon.id} className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg text-sm font-medium border border-emerald-100">
-                                + {addon.name}
+                            {/* Size Colour Pills (Teal/Green) */}
+                            {item.selectedSizeColours && item.selectedSizeColours.map((sc) => (
+                              <span key={sc.id} className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg text-sm font-medium border border-emerald-100">
+                                + {sc.name}
                               </span>
                             ))}
                           </div>
                         </div>
 
                         <p className="font-extrabold text-xl tabular-nums whitespace-nowrap">
-                          ₹{((item.price + (item.selectedAddons?.reduce((acc, a) => acc + a.price, 0) || 0)) * item.quantity).toFixed(2)}
+                          ₹{((item.price + (item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0)) * item.quantity).toFixed(2)}
                         </p>
                       </div>
 

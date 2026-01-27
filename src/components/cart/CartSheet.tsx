@@ -220,13 +220,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         });
     });
 
-    const productDiscounts = itemDiscountMap; // Alias for compatibility with existing render logic if it uses ID? 
-    // Wait, existing render logic uses productDiscounts[productId]. 
-    // We need to change the render logic to use item.cartItemId specific discounts.
-    // OR we change the render logic below. Let's look at how it consumes it.
-
-    // It seems previous code was: productDiscounts: Record<string, number[]> keyed by PRODUCT ID.
-    // It assumed distribution was uniform or order didn't matter per item.
+    const productDiscounts = itemDiscountMap; // Alias for compatibility with existing render logic
+    // We used to assume distribution was uniform or order didn't matter per item.
     // NOW it matters per Item.
     // I will need to update the Consumer logic too.
 
@@ -1378,11 +1373,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     item.price = resolvedDiscountPrice;
                 }
 
-                // --- 6. ADDON CHECKS (Refactored to SizeColours) ---
+                // --- 6. SIZE COLOUR CHECKS ---
                 if (item.selectedSizeColours && item.selectedSizeColours.length > 0) {
                     // Parse server sizeColours: ["id:price", "1:20"]
                     const serverScMap = new Map<string, number>();
-                    // detail.sizeColourAndPrice replace detail.addonAndAddonPrice 
+                    // detail.sizeColourAndPrice replace detail.sizeColourPrice 
                     // Verify if detail.sizeColourAndPrice exists on the type from api-types.
                     // Assuming api-types.ts updated CheckoutProductDetail to have sizeColourAndPrice.
                     if (detail.sizeColourAndPrice && Array.isArray(detail.sizeColourAndPrice)) {
@@ -1965,10 +1960,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                 const qty = groups[discountPercent];
                                                                 const isDiscounted = discountPercent > 0;
                                                                 const basePrice = item.priceAfterDiscount || item.price;
-                                                                // Note: we don't have item-specific addons easily here if splitting variants.
-                                                                // Actually item is the cart item. Addons are on the item.
-                                                                const addonsCost = item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0;
-                                                                const singleItemTotal = basePrice + addonsCost;
+                                                                // Note: we don't have item-specific sizeColours easily here if splitting variants.
+                                                                // Actually item is the cart item. SizeColours are on the item.
+                                                                const sizeColoursCost = item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0;
+                                                                const singleItemTotal = basePrice + sizeColoursCost;
                                                                 const finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
 
                                                                 return (
@@ -2606,7 +2601,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                         <span className="font-bold text-sm whitespace-nowrap">₹{((item.price + (item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
                                                                     </div>
 
-                                                                    {/* Variants & Addons Chips */}
+                                                                    {/* Variants & SizeColours Chips */}
                                                                     <div className="flex flex-wrap gap-1.5 mt-2">
                                                                         {Object.entries(item.selectedVariants || {}).map(([k, v]) => (
                                                                             <span key={k} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-border/50">

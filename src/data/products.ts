@@ -41,25 +41,25 @@ export const categories: Category[] = [
                 id: '1',
                 price: 300.00,
                 quantity: '250 g',
-                addons: [
-                  { id: '1', name: 'Bottle ', price: 10.00, mandatory: false }
+                sizeColours: [
+                  { id: '1', name: 'Bottle ', price: 10.00 }
                 ]
               },
               {
                 id: '2',
                 price: 550.00,
                 quantity: '500 g',
-                addons: [
-                  { id: '2', name: 'Bottle ', price: 20.00, mandatory: false }
+                sizeColours: [
+                  { id: '2', name: 'Bottle ', price: 20.00 }
                 ]
               },
               {
                 id: '3',
                 price: 800.00,
                 quantity: '1 Kg',
-                addons: [
-                  { id: '4', name: 'Gift packing', price: 50.00, mandatory: false },
-                  { id: '3', name: 'Glass packing', price: 30.00, mandatory: false }
+                sizeColours: [
+                  { id: '4', name: 'Gift packing', price: 50.00 },
+                  { id: '3', name: 'Glass packing', price: 30.00 }
                 ]
               }
             ]
