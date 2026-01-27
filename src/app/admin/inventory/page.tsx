@@ -194,6 +194,9 @@ export default function AdminInventoryPage() {
                 id: String(sc.productSizeColourId), // Validate ID field from API
                 name: sc.colourName, // Validate if it's colourName or something else. api-types said sizeColour
                 price: sc.colourPrice,
+                productPics: sc.productPics,
+                productSizeColourQuantity: sc.productSizeColourQuantity,
+                sizeColourStatus: sc.sizeColourStatus,
                 active: true // Assuming active
             }));
         }
@@ -349,6 +352,7 @@ export default function AdminInventoryPage() {
                             colourName: name,
                             colourPrice: Number(price),
                             productSizeColourQuantity: sizeQuantity || "0",
+                            productPics: colourImage || "",
                             sizeColourStatus: sizeStatus || "ACTIVE"
                         });
                     } else {
@@ -357,6 +361,7 @@ export default function AdminInventoryPage() {
                             colourName: name, // Reusing 'name' state
                             colourPrice: Number(price), // Reusing 'price' state
                             productSizeColourQuantity: sizeQuantity || "0",
+                            productPics: colourImage || "",
                             sizeColourStatus: sizeStatus || "ACTIVE"
                         });
                     }
@@ -1499,6 +1504,15 @@ export default function AdminInventoryPage() {
                                                                     <Label className="text-xs">Name</Label>
                                                                     <Input value={name} onChange={e => setName(e.target.value)} className="h-7" placeholder="e.g. Green" />
                                                                 </div>
+                                                                <div>
+                                                                    <ImageUpload
+                                                                        value={colourImage || undefined}
+                                                                        onChange={setColourImage}
+                                                                        label="Variant Image"
+                                                                        companyDomain={domain || ""}
+                                                                        maxFiles={1}
+                                                                    />
+                                                                </div>
                                                                 <div className="flex gap-3">
                                                                     <div className="space-y-1 flex-1">
                                                                         <Label className="text-xs">Extra Price</Label>
@@ -1543,6 +1557,17 @@ export default function AdminInventoryPage() {
                                                                         <div className="flex items-center gap-2">
                                                                             {/* Mandatory flag removed as it might not be in SC schema anymore or is implicit */}
                                                                             <span className="font-mono font-bold text-xs text-emerald-600">+₹{sc.price}</span>
+                                                                            <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-muted" onClick={() => {
+                                                                                setEditingItem(sc);
+                                                                                setName(sc.name);
+                                                                                setPrice(String(sc.price));
+                                                                                setSizeQuantity(sc.productSizeColourQuantity || "");
+                                                                                setColourImage(sc.productPics || null);
+                                                                                setSizeStatus(sc.sizeColourStatus || "ACTIVE");
+                                                                                setManageMode('ADD_SIZE_COLOUR');
+                                                                            }}>
+                                                                                <Pencil className="h-3 w-3 text-muted-foreground" />
+                                                                            </Button>
                                                                         </div>
                                                                     </div>
                                                                 ))

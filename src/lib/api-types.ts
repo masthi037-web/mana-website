@@ -4,6 +4,7 @@ export interface ProductSizeColour {
     colourName: string;
     colourPrice: number;
     productSizeColourQuantity: string;
+    productPics?: string;
     sizeColourStatus: string;
 }
 
@@ -316,6 +317,7 @@ export interface CreateSizeColourRequest {
     colourName: string;
     colourPrice: number;
     productSizeColourQuantity: string;
+    productPics?: string;
     sizeColourStatus: string;
 }
 
@@ -325,6 +327,7 @@ export interface CreateSizeColourResponse {
     colourName: string;
     colourPrice: number;
     productSizeColourQuantity: string;
+    productPics?: string;
     sizeColourStatus: string;
 }
 
