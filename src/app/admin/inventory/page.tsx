@@ -1567,9 +1567,23 @@ export default function AdminInventoryPage() {
                                                             sizeColours.length === 0 ? <div className="text-xs text-center py-2 text-muted-foreground italic">No options configured.</div> :
                                                                 sizeColours.map((sc: any) => (
                                                                     <div key={sc.id} className="bg-background/80 border rounded p-2 flex justify-between items-center text-sm">
-                                                                        <span>{sc.name}</span>
+                                                                        <div className="flex items-center gap-3">
+                                                                            {sc.productPics && (
+                                                                                <img src={sc.productPics} alt={sc.name} className="w-8 h-8 rounded-md object-cover border" />
+                                                                            )}
+                                                                            <div>
+                                                                                <div className="font-medium flex items-center gap-2">
+                                                                                    {sc.name}
+                                                                                    <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${sc.sizeColourStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                                                        {sc.sizeColourStatus?.charAt(0)}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                                                                    <span>Qty: {sc.productSizeColourQuantity || 0}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
                                                                         <div className="flex items-center gap-2">
-                                                                            {/* Mandatory flag removed as it might not be in SC schema anymore or is implicit */}
                                                                             <span className="font-mono font-bold text-xs text-emerald-600">+₹{sc.price}</span>
                                                                             <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-muted" onClick={() => {
                                                                                 setEditingItem(sc);
