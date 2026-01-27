@@ -1996,7 +1996,18 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                                                 <span key={i} className="text-[10px] uppercase font-medium text-muted-foreground">{v}</span>
                                                                                             ))}
                                                                                             {item.selectedSizeColours?.map((sc) => (
-                                                                                                <span key={sc.id} className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1 rounded">+{sc.name}</span>
+                                                                                                <div key={sc.id} className="flex items-center gap-1.5 pl-1 pr-2 py-0.5 bg-background border border-border/50 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                                                                                                    {sc.productPics ? (
+                                                                                                        <div className="w-4 h-4 rounded-full overflow-hidden border border-border/20 shadow-sm shrink-0">
+                                                                                                            <img src={sc.productPics} alt={sc.name} className="w-full h-full object-cover" />
+                                                                                                        </div>
+                                                                                                    ) : (
+                                                                                                        <div className="w-4 h-4 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-[9px] font-bold text-primary shrink-0">
+                                                                                                            {sc.name.charAt(0)}
+                                                                                                        </div>
+                                                                                                    )}
+                                                                                                    <span className="text-[10px] font-bold text-foreground tracking-tight leading-none">{sc.name}</span>
+                                                                                                </div>
                                                                                             ))}
                                                                                         </div>
                                                                                     )}
