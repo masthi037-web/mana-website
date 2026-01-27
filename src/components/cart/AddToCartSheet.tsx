@@ -216,8 +216,13 @@ const AddToCartContent = ({
   const availableSizeColours = selectedPricingOption?.sizeColours || [];
 
   React.useEffect(() => {
-    setSelectedSizeColourIds(new Set());
-  }, [selectedPricingId]);
+    // Default select the first size colour if available (Mandatory)
+    if (availableSizeColours.length > 0) {
+      setSelectedSizeColourIds(new Set([availableSizeColours[0].id]));
+    } else {
+      setSelectedSizeColourIds(new Set());
+    }
+  }, [selectedPricingId, availableSizeColours.length]); // Dependencies updated
 
   const basePrice = selectedPricingOption ? selectedPricingOption.price : product.price;
   const sizeColoursPrice = availableSizeColours
@@ -233,11 +238,10 @@ const AddToCartContent = ({
 
   const handleSizeColourToggle = (scId: string) => {
     setSelectedSizeColourIds(prev => {
-      const next = new Set<string>();
-      if (!prev.has(scId)) {
-        next.add(scId);
-      }
-      return next;
+      // Single selection, mandatory (cannot deselect the only one, but clicking another switches)
+      // Actually user says "mandatory to click on add to cart", implies we should just switch.
+      // If we click the same one, do nothing or keep it selected.
+      return new Set([scId]);
     });
   };
 
@@ -267,8 +271,15 @@ const AddToCartContent = ({
       effectiveBasePrice = selectedPricingOption.priceAfterDiscount;
     }
     // Condition C: Explicit Product Discount (fallback)
-    else if (variantPrice === product.price && product.priceAfterDiscount && product.priceAfterDiscount > 0) {
-      effectiveBasePrice = product.priceAfterDiscount;
+    // Relaxed check: If no specific variant discount, and product has discount, try to apply it.
+    // We check if variant price is relatively close to product price to avoid applying absolute discount to a much more expensive variant?
+    // User requested "productPriceAfterDiscount ... is shown in card but not considered".
+    // We'll trust that if priceAfterDiscount exists on product, it's intended for the base config (which this likely is).
+    else if (product.priceAfterDiscount && product.priceAfterDiscount > 0) {
+      // Only apply if it makes sense (e.g. less than current variant price)
+      if (product.priceAfterDiscount < variantPrice) {
+        effectiveBasePrice = product.priceAfterDiscount;
+      }
     }
 
 
@@ -414,20 +425,21 @@ const AddToCartContent = ({
             </div>
           )}
 
-          {/* SizeColours Selector */}
           {availableSizeColours.length > 0 && (
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">Enhance It</h3>
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Optional</span>
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider bg-secondary/50 px-2 py-1 rounded">Required</span>
               </div>
-              <div className="space-y-2">
+              <div className="grid grid-cols-4 gap-2">
                 {availableSizeColours.map(sc => (
-                  <SizeColourRow
+                  <ColourCard
                     key={sc.id}
-                    sizeColour={sc}
+                    name={sc.name}
+                    image={sc.productPics}
+                    active={true} // Always active
                     isSelected={selectedSizeColourIds.has(sc.id)}
-                    onToggle={() => handleSizeColourToggle(sc.id)}
+                    onClick={() => handleSizeColourToggle(sc.id)}
                   />
                 ))}
               </div>
@@ -515,8 +527,10 @@ const AddToCartContent = ({
                 effectiveBase = selectedPricingOption.priceAfterDiscount;
               }
               // Priority 3: Explicit Product Discount (fallback)
-              else if (variantPrice === product.price && product.priceAfterDiscount && product.priceAfterDiscount > 0) {
-                effectiveBase = product.priceAfterDiscount;
+              else if (product.priceAfterDiscount && product.priceAfterDiscount > 0) {
+                if (product.priceAfterDiscount < variantPrice) {
+                  effectiveBase = product.priceAfterDiscount;
+                }
               }
 
               const finalPrice = effectiveBase + sizeColoursPrice;
