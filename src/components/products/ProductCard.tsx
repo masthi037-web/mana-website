@@ -39,7 +39,8 @@ export const ProductCard = ({ product, hideDescription = false }: ProductCardPro
   // Combine generic product images and colour variant images
   const displayImages = [
     ...(product.images || []),
-    ...(product.colors?.map(c => c.image) || [])
+    ...(product.colors?.map(c => c.image) || []),
+    ...(product.pricing?.flatMap(p => p.sizeColours?.map(sc => sc.productPics) || []) || [])
   ].filter(Boolean);
 
   // Dedup images if needed (optional, keeping simple for now)

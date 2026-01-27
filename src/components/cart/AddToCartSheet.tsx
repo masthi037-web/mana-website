@@ -157,6 +157,12 @@ const SizeColourRow = ({
       >
         {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />}
       </div>
+
+      {sizeColour.productPics && (
+        <div className="w-8 h-8 rounded-md overflow-hidden border border-border/50 shrink-0">
+          <img src={sizeColour.productPics} alt={sizeColour.name} className="w-full h-full object-cover" />
+        </div>
+      )}
       <div className="flex flex-col">
         <span className={cn("text-sm font-medium leading-none transition-colors", isSelected ? "text-foreground font-semibold" : "text-foreground/80")}>
           {sizeColour.name}
@@ -166,7 +172,7 @@ const SizeColourRow = ({
     <span className={cn("text-xs font-bold transition-colors", isSelected ? "text-primary" : "text-muted-foreground")}>
       +₹{sizeColour.price}
     </span>
-  </div>
+  </div >
 );
 
 
@@ -227,9 +233,10 @@ const AddToCartContent = ({
 
   const handleSizeColourToggle = (scId: string) => {
     setSelectedSizeColourIds(prev => {
-      const next = new Set(prev);
-      if (next.has(scId)) next.delete(scId);
-      else next.add(scId);
+      const next = new Set<string>();
+      if (!prev.has(scId)) {
+        next.add(scId);
+      }
       return next;
     });
   };

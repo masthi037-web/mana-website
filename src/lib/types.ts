@@ -7,6 +7,9 @@ export type ProductSizeColourOption = {
   id: string;
   name: string;
   price: number;
+  productPics?: string;
+  quantity?: string;
+  status?: string;
 };
 
 export type ProductPriceOption = {
