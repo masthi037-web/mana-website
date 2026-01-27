@@ -219,7 +219,8 @@ export default function AdminInventoryPage() {
 
 
 
-    const hasColourWithQuantity = fetchedColours.some((c: any) => Number(c.productColourQuantity) > 0);
+
+    const hasColourWithQuantity = fetchedColours.some((c: any) => c.productColourQuantity !== null && c.productColourQuantity !== undefined && c.productColourQuantity !== "");
     // User requested: if one colour quantity is null (implies Size variant mode), disable Quantity for new colours
     const hasColourWithNullQuantity = fetchedColours.length > 0 && fetchedColours.some((c: any) => c.productColourQuantity === null || c.productColourQuantity === undefined || c.productColourQuantity === 0); // Assuming 0 also counts as "no quantity" for this logic? "null" was specific. Let's check falsy.
     // Actually, user said "null". But usually database might return 0.
@@ -1302,8 +1303,8 @@ export default function AdminInventoryPage() {
                                     <div className="space-y-1">
                                         <h4 className="text-sm font-bold text-amber-900">Pricing Variants Disabled (Colour Quantities Set)</h4>
                                         <p className="text-xs text-amber-700/80 leading-relaxed">
-                                            Quantities are set on Colour variants.
-                                            To add multiple pricing variants (Sizes), please remove quantities from your Colours.
+                                            Quantities are set on Colour variants (including 0/Out of Stock).
+                                            To add multiple pricing variants (Sizes), please remove quantities (make them blank/null) from your Colours.
                                         </p>
                                     </div>
                                 </div>
