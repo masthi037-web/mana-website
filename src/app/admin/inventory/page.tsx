@@ -210,10 +210,15 @@ export default function AdminInventoryPage() {
                 productId: c.productId,
                 colour: c.colour,
                 productPics: c.productPics,
+                productColourQuantity: c.productColourQuantity,
                 colourStatus: c.colourStatus
             }));
         }
     });
+
+
+
+    const hasColourWithQuantity = fetchedColours.some((c: any) => Number(c.productColourQuantity) > 0);
 
     // --- EFFECTS ---
     // Auto-calculate discounted price when Price or Product (Offer) changes
@@ -272,6 +277,15 @@ export default function AdminInventoryPage() {
                 return false;
             }
         }
+
+        // Manage Sheet Validations
+        if (manageMode === 'ADD_COLOUR') {
+            if (!colourName || (!colourImage && !editingItem?.productPics)) {
+                toast({ title: "Validation Error", description: "Colour Name and Image are required", variant: "destructive", duration: 2000 });
+                return false;
+            }
+        }
+
         return true;
     };
 
@@ -1118,7 +1132,7 @@ export default function AdminInventoryPage() {
                                     <h4 className="font-semibold text-sm mb-3 text-primary">New Colour Variant</h4>
                                     <div className="space-y-3">
                                         <div className="space-y-2">
-                                            <Label className="text-xs">Colour Name</Label>
+                                            <Label className="text-xs">Colour Name <span className="text-destructive">*</span></Label>
                                             <Input value={colourName} onChange={e => setColourName(e.target.value)} className="h-8 bg-background" placeholder="e.g. Red, Blue, Army Green" />
                                         </div>
                                         <div className="space-y-2">
@@ -1129,7 +1143,7 @@ export default function AdminInventoryPage() {
                                             <ImageUpload
                                                 value={colourImage || undefined}
                                                 onChange={setColourImage}
-                                                label="Colour Image"
+                                                label={<span>Colour Image <span className="text-destructive">*</span></span>}
                                                 companyDomain={domain || ""}
                                                 maxFiles={1}
                                             />
@@ -1147,7 +1161,7 @@ export default function AdminInventoryPage() {
                                             </select>
                                         </div>
                                         <div className="flex gap-2 pt-2">
-                                            <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="flex-1">
+                                            <Button size="sm" onClick={() => { if (validateForm()) createMutation.mutate(); }} disabled={createMutation.isPending} className="flex-1">
                                                 {createMutation.isPending && <Loader2 className="w-3 h-3 mr-2 animate-spin" />} {editingItem ? "Update Colour" : "Save Colour"}
                                             </Button>
                                             <Button size="sm" variant="ghost" onClick={() => { setManageMode('VIEW'); resetForm(); }} className="flex-1">Cancel</Button>
@@ -1211,6 +1225,14 @@ export default function AdminInventoryPage() {
                                             </span>
                                             Single variant mode active
                                         </div>
+                                    ) : hasColourWithQuantity ? (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in slide-in-from-right-2">
+                                            <span className="relative flex h-2 w-2">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                            </span>
+                                            Colour Quantities Set
+                                        </div>
                                     ) : (
                                         <Button size="sm" onClick={() => {
                                             setManageMode('ADD_PRICING');
@@ -1244,6 +1266,21 @@ export default function AdminInventoryPage() {
                                         <p className="text-xs text-amber-700/80 leading-relaxed">
                                             This product has a fixed quantity set, which enables simplified inventory tracking.
                                             To add multiple pricing variants (Sizes), please remove the quantity from the main product settings.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {hasColourWithQuantity && !selectedProduct?.productQuantity && (
+                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 mt-0.5">
+                                        <Tag className="w-4 h-4" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-amber-900">Pricing Variants Disabled (Colour Quantities Set)</h4>
+                                        <p className="text-xs text-amber-700/80 leading-relaxed">
+                                            Quantities are set on Colour variants.
+                                            To add multiple pricing variants (Sizes), please remove quantities from your Colours.
                                         </p>
                                     </div>
                                 </div>
