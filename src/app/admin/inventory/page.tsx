@@ -84,6 +84,7 @@ export default function AdminInventoryPage() {
     const [colourName, setColourName] = useState("");
     const [colourImage, setColourImage] = useState<string | null>(null);
     const [colourStatus, setColourStatus] = useState("ACTIVE");
+    const [colourQuantity, setColourQuantity] = useState("");
 
     // --- MANAGE SHEET STATE ---
     const [manageMode, setManageMode] = useState<'VIEW' | 'ADD_PRICING' | 'ADD_SIZE_COLOUR' | 'ADD_COLOUR'>('VIEW');
@@ -313,14 +314,16 @@ export default function AdminInventoryPage() {
                             productId: Number(selectedProduct.id),
                             productPics: colourImage || "",
                             colourStatus: colourStatus,
-                            colour: colourName
+                            colour: colourName,
+                            productColourQuantity: colourQuantity || "0"
                         });
                     } else {
                         return adminService.createProductColour({
                             productId: Number(selectedProduct.id),
                             productPics: colourImage || "",
                             colourStatus: colourStatus,
-                            colour: colourName
+                            colour: colourName,
+                            productColourQuantity: colourQuantity || "0"
                         });
                     }
                 }
@@ -536,7 +539,7 @@ export default function AdminInventoryPage() {
         setBulkDiscounts([]); setTempBulkQty(""); setTempBulkDiscount("");
         setMoreThanQty(""); setMoreThanDiscount("");
         setImage(null);
-        setColourName(""); setColourImage(null); setColourStatus("ACTIVE");
+        setColourName(""); setColourImage(null); setColourStatus("ACTIVE"); setColourQuantity("");
         setEditingItem(null);
     };
 
@@ -733,19 +736,7 @@ export default function AdminInventoryPage() {
                 {/* Product Extra Fields */}
                 {level === 'PRODUCT' && (
                     <>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Ingredients</Label>
-                                <Input placeholder="Ingredients" value={prodIng} onChange={e => setProdIng(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Best Before</Label>
-                                <Input placeholder="15 days" value={prodBest} onChange={e => setProdBest(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Delivery Cost</Label>
-                                <Input type="number" placeholder="40" value={prodDeliveryCost} onChange={e => setProdDeliveryCost(e.target.value)} />
-                            </div>
+                        <div className="grid grid-cols-1 gap-4">
                             <div className="space-y-2">
                                 <Label>Available Quantity</Label>
                                 <Input placeholder="10" value={prodQuantity} onChange={e => setProdQuantity(e.target.value)} />
@@ -767,11 +758,22 @@ export default function AdminInventoryPage() {
 
                         <div className="space-y-2">
                             <Label>Instructions</Label>
-                            <Input placeholder="Storage Instructions" value={prodInst} onChange={e => setProdInst(e.target.value)} />
+                            <Input placeholder="Usage Instructions" value={prodInst} onChange={e => setProdInst(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label>Product Offer (e.g. 50% OFF)</Label>
-                            <Input placeholder="Offer text" value={prodOffer} onChange={e => setProdOffer(e.target.value)} />
+                            <Label>Product Offer</Label>
+                            <div className="relative">
+                                <Input
+                                    type="number"
+                                    placeholder="50"
+                                    value={prodOffer}
+                                    onChange={e => setProdOffer(e.target.value)}
+                                    className="pr-16"
+                                />
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
+                                    % OFF
+                                </div>
+                            </div>
                         </div>
                         <div className="flex items-center space-x-2">
                             <Checkbox id="famous" checked={isFamous} onCheckedChange={(c) => setIsFamous(!!c)} />
@@ -1032,6 +1034,10 @@ export default function AdminInventoryPage() {
                                             <Input value={colourName} onChange={e => setColourName(e.target.value)} className="h-8 bg-background" placeholder="e.g. Red, Blue, Army Green" />
                                         </div>
                                         <div className="space-y-2">
+                                            <Label className="text-xs">Quantity</Label>
+                                            <Input value={colourQuantity} onChange={e => setColourQuantity(e.target.value)} className="h-8 bg-background" placeholder="0" />
+                                        </div>
+                                        <div className="space-y-2">
                                             <ImageUpload
                                                 value={colourImage || undefined}
                                                 onChange={setColourImage}
@@ -1075,6 +1081,7 @@ export default function AdminInventoryPage() {
                                                     setColourName(c.colour);
                                                     setColourImage(c.productPics);
                                                     setColourStatus(c.colourStatus);
+                                                    setColourQuantity(c.productColourQuantity || "");
                                                     setManageMode('ADD_COLOUR');
                                                 }}>
                                                     <Pencil className="h-3 w-3" />
@@ -1284,11 +1291,11 @@ export default function AdminInventoryPage() {
                                                             <div className="space-y-3">
                                                                 <div className="space-y-1">
                                                                     <Label className="text-xs">Name</Label>
-                                                                    <Input value={name} onChange={e => setName(e.target.value)} className="h-7" placeholder="e.g. Extra Cheese" />
+                                                                    <Input value={name} onChange={e => setName(e.target.value)} className="h-7" placeholder="e.g. Green" />
                                                                 </div>
                                                                 <div className="flex gap-3">
                                                                     <div className="space-y-1 flex-1">
-                                                                        <Label className="text-xs">Price</Label>
+                                                                        <Label className="text-xs">Extra Price</Label>
                                                                         <Input type="number" value={price} onChange={e => setPrice(e.target.value)} className="h-7" placeholder="10" />
                                                                     </div>
                                                                     <div className="pt-6 flex items-center space-x-2">

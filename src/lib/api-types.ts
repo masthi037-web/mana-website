@@ -463,6 +463,7 @@ export interface CreateColourRequest {
     productPics: string;
     colourStatus: string;
     colour: string;
+    productColourQuantity: string;
 }
 
 export interface CreateColourResponse {
@@ -471,4 +472,23 @@ export interface CreateColourResponse {
     productPics: string;
     colourStatus: string;
     colour: string;
+    productColourQuantity: string;
+}
+
+export interface UpdateColourRequest {
+    productColourId: number;
+    productId: number;
+    productPics: string;
+    colourStatus: string;
+    colour: string;
+    productColourQuantity: string;
+}
+
+export interface UpdateColourResponse {
+    productColourId: number;
+    productId: number;
+    productPics: string;
+    colourStatus: string;
+    colour: string;
+    productColourQuantity: string;
 }
