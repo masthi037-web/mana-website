@@ -97,14 +97,21 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
     // Map pricing options for UI selection
     const pricingOptions = apiProd.productSize?.map(p => ({
         id: String(p.productSizeId),
-        price: p.productSizePrice,
+        price: (p.productSizePrice !== null && p.productSizePrice !== undefined && p.productSizePrice > 0)
+            ? p.productSizePrice
+            : apiProd.productPrice,
+        priceAfterDiscount: (p.productSizePrice !== null && p.productSizePrice !== undefined && p.productSizePrice > 0)
+            ? ((p as any).productSizePriceAfterDiscount) // Assuming this field exists on variant if price exists
+            : ((apiProd as any).productPriceAfterDiscount), // Fallback to parent discount
         quantity: p.size || (p as any).sizeProduct,
         sizeQuantity: p.sizeQuantity,
         sizeStatus: p.sizeStatus,
         sizeColours: p.productSizeColours?.map(a => ({
             id: String(a.productSizeColourId),
             name: a.colourName,
-            price: a.colourPrice
+            price: a.colourPrice,
+            productPics: a.productPics,
+            status: a.sizeColourStatus
         }))
     })) || [];
 
