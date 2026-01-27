@@ -743,11 +743,26 @@ export default function AdminInventoryPage() {
                         {/* Row 1: Available Quantity & Price */}
                         <div className="space-y-2">
                             <Label>Available Quantity</Label>
-                            <Input placeholder="10" value={prodQuantity} onChange={e => setProdQuantity(e.target.value)} />
+                            <Input placeholder="10" value={prodQuantity} onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (val.length <= 5) setProdQuantity(val); }} />
                         </div>
                         <div className="space-y-2">
                             <Label>Price {prodQuantity ? <span className="text-destructive">*</span> : null}</Label>
-                            <Input type="number" placeholder="100" value={price} onChange={e => setPrice(e.target.value)} />
+                            <Input type="number" placeholder="100" value={price} onChange={e => { if (e.target.value.length <= 6) setPrice(e.target.value); }} />
+                        </div>
+
+                        {/* Warning about Single Variant Mode */}
+                        <div className="col-span-2 bg-amber-50/50 border border-amber-100 rounded-lg p-3 flex gap-3 items-start">
+                            <div className="mt-0.5 text-amber-600">
+                                <Sparkles className="w-4 h-4" />
+                            </div>
+                            <div className="space-y-0.5">
+                                <p className="text-xs font-medium text-amber-800">
+                                    Setting a quantity here enables "Single Variant Mode"
+                                </p>
+                                <p className="text-[11px] text-amber-600/90 leading-relaxed">
+                                    To add multiple colour variants (e.g. Red, Blue) with their own quantities, leave this <b>Available Quantity</b> empty or 0.
+                                </p>
+                            </div>
                         </div>
 
                         {/* Row 2: Product Offer & Offer Price */}
@@ -758,7 +773,7 @@ export default function AdminInventoryPage() {
                                     type="number"
                                     placeholder="50"
                                     value={prodOffer}
-                                    onChange={e => setProdOffer(e.target.value)}
+                                    onChange={e => { if (Number(e.target.value) < 99) setProdOffer(e.target.value); }}
                                     className="pr-16"
                                 />
                                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
@@ -822,7 +837,7 @@ export default function AdminInventoryPage() {
 
                         {/* Bulk Discounts Section */}
                         <div className="space-y-3 pt-2 border-t">
-                            <Label className="text-sm font-semibold">Bulk Discounts (e.g. 3-10% off)</Label>
+                            <Label className="text-sm font-semibold">Bulk Discounts (e.g. Buy 3 Get 10% off)</Label>
                             <div className="flex gap-2 items-end">
                                 <div className="space-y-1 flex-1">
                                     <Label className="text-xs">Qty (e.g. 3)</Label>
@@ -830,7 +845,7 @@ export default function AdminInventoryPage() {
                                         type="number"
                                         placeholder="3"
                                         value={tempBulkQty}
-                                        onChange={e => setTempBulkQty(e.target.value)}
+                                        onChange={e => { if (e.target.value.length <= 4) setTempBulkQty(e.target.value); }}
                                         className="h-8"
                                     />
                                 </div>
@@ -840,7 +855,7 @@ export default function AdminInventoryPage() {
                                         type="number"
                                         placeholder="10"
                                         value={tempBulkDiscount}
-                                        onChange={e => setTempBulkDiscount(e.target.value)}
+                                        onChange={e => { if (Number(e.target.value) < 99) setTempBulkDiscount(e.target.value); }}
                                         className="h-8"
                                     />
                                 </div>
@@ -864,8 +879,8 @@ export default function AdminInventoryPage() {
 
                         {/* More Than Discount Section */}
                         <div className="space-y-3 pt-2 border-t">
-                            <Label className="text-sm font-semibold">Bulk Discount (More Than X)</Label>
-                            <div className="flex gap-2 items-end">
+                            <Label className="text-sm font-semibold">Bulk Discount (Buy More than 5 Get 20% Off)</Label>
+                            n                             <div className="flex gap-2 items-end">
                                 <div className="space-y-1 flex-1">
                                     <Label className="text-xs">More than Qty (e.g. 5)</Label>
                                     <Input
