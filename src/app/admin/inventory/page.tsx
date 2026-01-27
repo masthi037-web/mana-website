@@ -1158,8 +1158,8 @@ export default function AdminInventoryPage() {
                                                 value={colourQuantity}
                                                 onChange={e => setColourQuantity(e.target.value)}
                                                 className="h-8 bg-background"
-                                                placeholder={hasColourWithNoQuantity ? "Managed by Sizes" : "0"}
-                                                disabled={hasColourWithNoQuantity}
+                                                placeholder={hasColourWithNoQuantity && !editingItem ? "Managed by Sizes" : "0"}
+                                                disabled={hasColourWithNoQuantity && !editingItem}
                                             />
                                         </div>
                                         <div className="space-y-2">
