@@ -330,6 +330,10 @@ export default function AdminInventoryPage() {
             }
 
             if (level === 'CATEGORY') {
+                if (!name || !desc) {
+                    toast({ title: "Validation Error", description: "Name and Description are required", variant: "destructive", duration: 2000 });
+                    return;
+                }
                 if (editingItem) {
                     return adminService.updateCategory({
                         companyId: companyId,
@@ -350,6 +354,10 @@ export default function AdminInventoryPage() {
                     });
                 }
             } else if (level === 'CATALOGUE' && selectedCategory) {
+                if (!name || !desc) {
+                    toast({ title: "Validation Error", description: "Name and Description are required", variant: "destructive", duration: 2000 });
+                    return;
+                }
                 if (editingItem) {
                     return adminService.updateCatalogue({
                         categoryId: Number(selectedCategory.id),
@@ -369,6 +377,14 @@ export default function AdminInventoryPage() {
                     });
                 }
             } else if (level === 'PRODUCT' && selectedCatalogue) {
+                if (!name || !desc) {
+                    toast({ title: "Validation Error", description: "Name and Description are required", variant: "destructive", duration: 2000 });
+                    return;
+                }
+                if (prodQuantity && (!price || !image && !editingItem?.productImage)) {
+                    toast({ title: "Validation Error", description: "Price and Image are required when Quantity is set", variant: "destructive", duration: 2000 });
+                    return;
+                }
                 if (editingItem) {
                     return adminService.updateProduct({
                         productId: Number(editingItem.id),
@@ -710,7 +726,7 @@ export default function AdminInventoryPage() {
             <div className="space-y-4 py-4">
                 {(level === 'CATEGORY' || level === 'CATALOGUE' || level === 'PRODUCT' || level === 'SIZE_COLOUR') && (
                     <div className="space-y-2">
-                        <Label>Name</Label>
+                        <Label>Name <span className="text-destructive">*</span></Label>
                         <Input placeholder="Name" value={name} onChange={e => setName(e.target.value)} />
                     </div>
                 )}
@@ -718,14 +734,14 @@ export default function AdminInventoryPage() {
                 {(level === 'CATEGORY' || level === 'CATALOGUE' || level === 'PRODUCT') && (
                     <>
                         <div className="space-y-2">
-                            <Label>Description / Info</Label>
+                            <Label>Description / Info <span className="text-destructive">*</span></Label>
                             <Input placeholder="Description" value={desc} onChange={e => setDesc(e.target.value)} />
                         </div>
                         <div className="pt-2">
                             <ImageUpload
                                 value={image || undefined}
                                 onChange={setImage}
-                                label={`${level.charAt(0) + level.slice(1).toLowerCase()} Image`}
+                                label={<span>{level.charAt(0) + level.slice(1).toLowerCase()} Image {level === 'PRODUCT' && prodQuantity ? <span className="text-destructive">*</span> : null}</span>}
                                 companyDomain={domain || ""}
                                 maxFiles={level === 'CATEGORY' || level === 'CATALOGUE' ? 1 : level === 'PRODUCT' ? 4 : 3}
                             />
@@ -780,7 +796,7 @@ export default function AdminInventoryPage() {
                             <Label htmlFor="famous">Mark as Famous?</Label>
                         </div>
                         <div className="space-y-2">
-                            <Label>Price</Label>
+                            <Label>Price {prodQuantity ? <span className="text-destructive">*</span> : null}</Label>
                             <Input type="number" placeholder="100" value={price} onChange={e => setPrice(e.target.value)} />
                         </div>
                         <div className="space-y-2">
@@ -1018,11 +1034,36 @@ export default function AdminInventoryPage() {
                                     <Sparkles className="w-4 h-4 text-primary" /> Product Colours
                                 </h3>
                                 {manageMode !== 'ADD_COLOUR' && (
-                                    <Button size="sm" onClick={() => { setManageMode('ADD_COLOUR'); resetForm(); }} variant="outline" className="h-8 rounded-full">
-                                        <Plus className="w-3 h-3 mr-1" /> Add Colour
-                                    </Button>
+                                    selectedProduct?.productQuantity ? (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in slide-in-from-right-2">
+                                            <span className="relative flex h-2 w-2">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                            </span>
+                                            Single variant mode active
+                                        </div>
+                                    ) : (
+                                        <Button size="sm" onClick={() => { setManageMode('ADD_COLOUR'); resetForm(); }} variant="outline" className="h-8 rounded-full">
+                                            <Plus className="w-3 h-3 mr-1" /> Add Colour
+                                        </Button>
+                                    )
                                 )}
                             </div>
+
+                            {selectedProduct?.productQuantity && (
+                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 mt-0.5">
+                                        <Layers className="w-4 h-4" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-amber-900">Colour Variants Disabled</h4>
+                                        <p className="text-xs text-amber-700/80 leading-relaxed">
+                                            This product has a fixed quantity set, which enables simplified inventory tracking.
+                                            To add multiple colour variants, please remove the quantity from the main product settings.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* ADD COLOUR FORM */}
                             {manageMode === 'ADD_COLOUR' && (

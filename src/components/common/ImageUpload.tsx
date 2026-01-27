@@ -15,7 +15,7 @@ interface ImageUploadProps {
     value?: string;
     onChange: (value: string | null) => void;
     disabled?: boolean;
-    label?: string;
+    label?: string | React.ReactNode;
     className?: string;
     companyDomain: string; // Changed from companyId
     maxFiles?: number;
