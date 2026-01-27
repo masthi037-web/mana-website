@@ -254,6 +254,27 @@ export default function AdminInventoryPage() {
 
 
 
+
+    // --- VALIDATION ---
+    const validateForm = () => {
+        if (level === 'CATEGORY' || level === 'CATALOGUE') {
+            if (!name || !desc) {
+                toast({ title: "Validation Error", description: "Name and Description are required", variant: "destructive", duration: 2000 });
+                return false;
+            }
+        } else if (level === 'PRODUCT') {
+            if (!name || !desc) {
+                toast({ title: "Validation Error", description: "Name and Description are required", variant: "destructive", duration: 2000 });
+                return false;
+            }
+            if (prodQuantity && (!price || (!image && !editingItem?.productImage))) {
+                toast({ title: "Validation Error", description: "Price and Image are required when Quantity is set", variant: "destructive", duration: 2000 });
+                return false;
+            }
+        }
+        return true;
+    };
+
     // --- MUTATIONS ---
     const createMutation = useMutation({
         mutationFn: async () => {
@@ -971,7 +992,7 @@ export default function AdminInventoryPage() {
                     )
                 }
 
-                <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !hasChanges()} className="w-full mt-6">
+                <Button onClick={() => { if (validateForm()) createMutation.mutate(); }} disabled={createMutation.isPending || !hasChanges()} className="w-full mt-6">
                     {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {editingItem ? "Update" : "Create"} {level === 'PRICING' ? 'Variant' : level.charAt(0) + level.slice(1).toLowerCase()}
                 </Button>
