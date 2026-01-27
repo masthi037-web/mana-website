@@ -923,10 +923,6 @@ export default function AdminInventoryPage() {
                                 <Label>Price</Label>
                                 <Input type="number" placeholder="10" value={price} onChange={e => setPrice(e.target.value)} />
                             </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="mandatory" checked={isMandatory} onCheckedChange={(c) => setIsMandatory(!!c)} />
-                                <Label htmlFor="mandatory">Is Mandatory?</Label>
-                            </div>
                         </>
                     )
                 }
@@ -1013,8 +1009,100 @@ export default function AdminInventoryPage() {
                             </div>
                         )}
 
+                        {/* COLOURS SECTION */}
                         <div className="space-y-6">
-                            {/* PRICING SECTION */}
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-bold flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-primary" /> Product Colours
+                                </h3>
+                                {manageMode !== 'ADD_COLOUR' && (
+                                    <Button size="sm" onClick={() => { setManageMode('ADD_COLOUR'); resetForm(); }} variant="outline" className="h-8 rounded-full">
+                                        <Plus className="w-3 h-3 mr-1" /> Add Colour
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* ADD COLOUR FORM */}
+                            {manageMode === 'ADD_COLOUR' && (
+                                <div className="bg-muted/30 p-4 rounded-xl border border-dashed border-primary/30 animate-in fade-in zoom-in-95 duration-300">
+                                    <h4 className="font-semibold text-sm mb-3 text-primary">New Colour Variant</h4>
+                                    <div className="space-y-3">
+                                        <div className="space-y-2">
+                                            <Label className="text-xs">Colour Name</Label>
+                                            <Input value={colourName} onChange={e => setColourName(e.target.value)} className="h-8 bg-background" placeholder="e.g. Red, Blue, Army Green" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <ImageUpload
+                                                value={colourImage || undefined}
+                                                onChange={setColourImage}
+                                                label="Colour Image"
+                                                companyDomain={domain || ""}
+                                                maxFiles={1}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-xs">Status</Label>
+                                            <select
+                                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={colourStatus}
+                                                onChange={e => setColourStatus(e.target.value)}
+                                            >
+                                                <option value="ACTIVE">Active</option>
+                                                <option value="INACTIVE">Inactive</option>
+                                                <option value="OUTOFSTOCK">Out of Stock</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex gap-2 pt-2">
+                                            <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="flex-1">
+                                                {createMutation.isPending && <Loader2 className="w-3 h-3 mr-2 animate-spin" />} {editingItem ? "Update Colour" : "Save Colour"}
+                                            </Button>
+                                            <Button size="sm" variant="ghost" onClick={() => { setManageMode('VIEW'); resetForm(); }} className="flex-1">Cancel</Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* COLOUR LIST */}
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {/* COLOUR LIST */}
+                                {fetchedColours.length > 0 ? (
+                                    fetchedColours.map((c: any) => (
+                                        <div key={c.productColourId} className="border rounded-lg p-2 bg-card relative group overflow-hidden">
+                                            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
+                                                <Button size="icon" variant="secondary" className="h-6 w-6 rounded-full shadow-sm" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingItem(c);
+                                                    setColourName(c.colour);
+                                                    setColourImage(c.productPics);
+                                                    setColourStatus(c.colourStatus);
+                                                    setManageMode('ADD_COLOUR');
+                                                }}>
+                                                    <Pencil className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                            <div className="aspect-square rounded-md bg-muted/50 mb-2 overflow-hidden">
+                                                {c.productPics ? (
+                                                    <img src={c.productPics} alt={c.colour} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
+                                                        <Sparkles className="w-6 h-6" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="font-bold text-sm truncate">{c.colour}</div>
+                                            <div className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded w-fit ${c.colourStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                {c.colourStatus}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    !manageMode && <div className="col-span-full text-center py-6 text-muted-foreground text-sm italic">No colours added yet.</div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* PRICING SECTION */}
+                        <div className="space-y-6 mt-8 border-t pt-6">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-bold flex items-center gap-2">
                                     <Tag className="w-4 h-4 text-primary" /> Pricing Variants
@@ -1182,7 +1270,7 @@ export default function AdminInventoryPage() {
                                             {expandedPricingId === p.id && (
                                                 <div className="bg-muted/20 border-t p-4 animate-in slide-in-from-top-2 duration-300">
                                                     <div className="flex items-center justify-between mb-4">
-                                                        <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Enhancements / Size Colours</h5>
+                                                        <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Size Colours</h5>
                                                         {manageMode !== 'ADD_SIZE_COLOUR' && (
                                                             <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => { setManageMode('ADD_SIZE_COLOUR'); resetForm(); }}>
                                                                 <Plus className="w-4 h-4" />
@@ -1204,8 +1292,7 @@ export default function AdminInventoryPage() {
                                                                         <Input type="number" value={price} onChange={e => setPrice(e.target.value)} className="h-7" placeholder="10" />
                                                                     </div>
                                                                     <div className="pt-6 flex items-center space-x-2">
-                                                                        <Checkbox id="man" checked={isMandatory} onCheckedChange={(c) => setIsMandatory(!!c)} />
-                                                                        <Label htmlFor="man" className="text-xs">Mandatory</Label>
+                                                                        {/* Mandatory field removed */}
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex gap-2 pt-1">
@@ -1236,98 +1323,6 @@ export default function AdminInventoryPage() {
                                     )
                                 })}
                                 {pricingOptions.length === 0 && <div className="text-center py-8 text-muted-foreground text-sm">No pricing variants found. Add one to get started.</div>}
-                            </div>
-                        </div>
-
-                        {/* COLOURS SECTION */}
-                        <div className="space-y-6 mt-8 border-t pt-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-bold flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-primary" /> Product Colours
-                                </h3>
-                                {manageMode !== 'ADD_COLOUR' && (
-                                    <Button size="sm" onClick={() => { setManageMode('ADD_COLOUR'); resetForm(); }} variant="outline" className="h-8 rounded-full">
-                                        <Plus className="w-3 h-3 mr-1" /> Add Colour
-                                    </Button>
-                                )}
-                            </div>
-
-                            {/* ADD COLOUR FORM */}
-                            {manageMode === 'ADD_COLOUR' && (
-                                <div className="bg-muted/30 p-4 rounded-xl border border-dashed border-primary/30 animate-in fade-in zoom-in-95 duration-300">
-                                    <h4 className="font-semibold text-sm mb-3 text-primary">New Colour Variant</h4>
-                                    <div className="space-y-3">
-                                        <div className="space-y-2">
-                                            <Label className="text-xs">Colour Name</Label>
-                                            <Input value={colourName} onChange={e => setColourName(e.target.value)} className="h-8 bg-background" placeholder="e.g. Red, Blue, Army Green" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <ImageUpload
-                                                value={colourImage || undefined}
-                                                onChange={setColourImage}
-                                                label="Colour Image"
-                                                companyDomain={domain || ""}
-                                                maxFiles={1}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label className="text-xs">Status</Label>
-                                            <select
-                                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                                value={colourStatus}
-                                                onChange={e => setColourStatus(e.target.value)}
-                                            >
-                                                <option value="ACTIVE">Active</option>
-                                                <option value="INACTIVE">Inactive</option>
-                                                <option value="OUTOFSTOCK">Out of Stock</option>
-                                            </select>
-                                        </div>
-                                        <div className="flex gap-2 pt-2">
-                                            <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="flex-1">
-                                                {createMutation.isPending && <Loader2 className="w-3 h-3 mr-2 animate-spin" />} {editingItem ? "Update Colour" : "Save Colour"}
-                                            </Button>
-                                            <Button size="sm" variant="ghost" onClick={() => { setManageMode('VIEW'); resetForm(); }} className="flex-1">Cancel</Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* COLOUR LIST */}
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {/* COLOUR LIST */}
-                                {fetchedColours.length > 0 ? (
-                                    fetchedColours.map((c: any) => (
-                                        <div key={c.productColourId} className="border rounded-lg p-2 bg-card relative group overflow-hidden">
-                                            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
-                                                <Button size="icon" variant="secondary" className="h-6 w-6 rounded-full shadow-sm" onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingItem(c);
-                                                    setColourName(c.colour);
-                                                    setColourImage(c.productPics);
-                                                    setColourStatus(c.colourStatus);
-                                                    setManageMode('ADD_COLOUR');
-                                                }}>
-                                                    <Pencil className="h-3 w-3" />
-                                                </Button>
-                                            </div>
-                                            <div className="aspect-square rounded-md bg-muted/50 mb-2 overflow-hidden">
-                                                {c.productPics ? (
-                                                    <img src={c.productPics} alt={c.colour} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
-                                                        <Sparkles className="w-6 h-6" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="font-bold text-sm truncate">{c.colour}</div>
-                                            <div className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded w-fit ${c.colourStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                {c.colourStatus}
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    !manageMode && <div className="col-span-full text-center py-6 text-muted-foreground text-sm italic">No colours added yet.</div>
-                                )}
                             </div>
                         </div>
                     </SheetContent>
