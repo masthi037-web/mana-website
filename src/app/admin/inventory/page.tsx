@@ -543,10 +543,10 @@ export default function AdminInventoryPage() {
                         createdAt: editingItem.createdAt,
                         multipleSetDiscount: bulkDiscounts.length > 0
                             ? bulkDiscounts.map(bd => `${bd.qty}-${bd.discount}`).join('&&&')
-                            : undefined,
+                            : "",
                         multipleDiscountMoreThan: (moreThanQty && moreThanDiscount)
                             ? `${moreThanQty}-${moreThanDiscount}`
-                            : undefined,
+                            : "",
                         productQuantity: prodQuantity,
                         productType: prodType
                     });
@@ -986,7 +986,7 @@ export default function AdminInventoryPage() {
                         )}
                         <div className="space-y-2">
                             <Label>Price {(prodQuantity || (prodType || editingItem?.productType) === 'SIMPLE' || (prodType || editingItem?.productType) === 'COLOUR') ? <span className="text-destructive">*</span> : null}</Label>
-                            {(prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE' ? (
+                            {(prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE' || (prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE_COLOUR' ? (
                                 <Input value="Managed by Variants" disabled className="bg-muted" />
                             ) : (
                                 <Input type="number" placeholder="100" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} min={0} />
@@ -1312,6 +1312,15 @@ export default function AdminInventoryPage() {
                                         );
                                     }
 
+                                    if (currentType === 'SIZE_COLOUR') {
+                                        return (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 text-purple-600 border border-purple-200 text-xs font-medium animate-in fade-in">
+                                                <Layers className="w-3 h-3" />
+                                                Managed in Size Variant
+                                            </div>
+                                        );
+                                    }
+
                                     if ((!selectedProduct?.price || selectedProduct.price <= 0)) {
                                         return (
                                             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 text-xs font-medium animate-in fade-in">
@@ -1370,7 +1379,22 @@ export default function AdminInventoryPage() {
                                 </div>
                             )}
 
-                            {(!selectedProduct?.price || selectedProduct.price <= 0) && (prodType || selectedProduct?.productType || editingItem?.productType) !== 'SIZE' && (prodType || selectedProduct?.productType || editingItem?.productType) !== 'SIMPLE' && (
+                            {/* Complex Product Warning */}
+                            {((prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE_COLOUR') && (
+                                <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-white p-2 rounded-full shadow-sm text-purple-500 mt-0.5">
+                                        <Layers className="w-4 h-4" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-purple-900">Complex Variant (Sizes & Colours)</h4>
+                                        <p className="text-xs text-purple-700/80 leading-relaxed">
+                                            This is a <b>Complex Variant</b>. Colours are managed within specific sizes in the "Product Pricing / Sizes" section.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {(!selectedProduct?.price || selectedProduct.price <= 0) && (prodType || selectedProduct?.productType || editingItem?.productType) !== 'SIZE' && (prodType || selectedProduct?.productType || editingItem?.productType) !== 'SIZE_COLOUR' && (prodType || selectedProduct?.productType || editingItem?.productType) !== 'SIMPLE' && (
                                 <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
                                     <div className="bg-white p-2 rounded-full shadow-sm text-red-500 mt-0.5">
                                         <AlertCircle className="w-4 h-4" />
@@ -1598,10 +1622,10 @@ export default function AdminInventoryPage() {
                                                 <Label className="text-xs">Quantity <span className="text-destructive">*</span></Label>
                                                 <Input
                                                     value={sizeQuantity}
-                                                    onChange={e => setSizeQuantity(e.target.value.replace(/[^0-9]/g, ''))}
+                                                    onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (val.length <= 5) setSizeQuantity(val); }}
                                                     className="h-8 bg-background"
-                                                    placeholder={selectedProduct?.productQuantity ? "Managed by Product" : "Unit Qty"}
-                                                    disabled={!!selectedProduct?.productQuantity}
+                                                    placeholder={(selectedProduct?.productQuantity || (selectedProduct?.productType || prodType) === 'SIZE_COLOUR') ? "Managed by Product/Colours" : "Unit Qty"}
+                                                    disabled={!!selectedProduct?.productQuantity || (selectedProduct?.productType || prodType || editingItem?.productType) === 'SIZE_COLOUR'}
                                                 />
 
                                             </div>
