@@ -278,26 +278,26 @@ export default function AdminInventoryPage() {
 
 
     // --- VALIDATION ---
-    const validateForm = () => {
+    const validateForm = (silent = false) => {
         // 1. Manage Sheet Validations (Prioritize these if active)
         if (isManageSheetOpen) {
             if (manageMode === 'ADD_COLOUR') {
                 if (!colourName || (!colourImage && !editingItem?.productPics)) {
-                    toast({ title: "Validation Error", description: "Colour Name and Image are required", variant: "destructive", duration: 2000 });
+                    if (!silent) toast({ title: "Validation Error", description: "Colour Name and Image are required", variant: "destructive", duration: 2000 });
                     return false;
                 }
                 return true;
             }
             if (manageMode === 'ADD_PRICING') {
                 if (!qty || !sizeQuantity || !price) {
-                    toast({ title: "Validation Error", description: "Size, Quantity, and Price are required", variant: "destructive", duration: 2000 });
+                    if (!silent) toast({ title: "Validation Error", description: "Size, Quantity, and Price are required", variant: "destructive", duration: 2000 });
                     return false;
                 }
                 return true;
             }
             if (manageMode === 'ADD_SIZE_COLOUR') {
                 if (!name || !sizeQuantity || (!colourImage && !editingItem?.productPics)) {
-                    toast({ title: "Validation Error", description: "Name, Quantity, and Image are required", variant: "destructive", duration: 2000 });
+                    if (!silent) toast({ title: "Validation Error", description: "Name, Quantity, and Image are required", variant: "destructive", duration: 2000 });
                     return false;
                 }
                 return true;
@@ -309,16 +309,39 @@ export default function AdminInventoryPage() {
         // 2. Main Form Validations (Category, Catalogue, Product)
         if (level === 'CATEGORY' || level === 'CATALOGUE') {
             if (!name || !desc) {
-                toast({ title: "Validation Error", description: "Name and Description are required", variant: "destructive", duration: 2000 });
+                if (!silent) toast({ title: "Validation Error", description: "Name and Description are required", variant: "destructive", duration: 2000 });
                 return false;
             }
         } else if (level === 'PRODUCT') {
             if (!name || !desc) {
-                toast({ title: "Validation Error", description: "Name and Description are required", variant: "destructive", duration: 2000 });
+                if (!silent) toast({ title: "Validation Error", description: "Name and Description are required", variant: "destructive", duration: 2000 });
                 return false;
             }
+
+            if (!editingItem && !prodType) {
+                if (!silent) toast({ title: "Validation Error", description: "Please select a Product Type", variant: "destructive", duration: 2000 });
+                return false;
+            }
+
+            // Standard Product Validation (Strict)
+            const currentType = prodType || editingItem?.productType;
+            if (currentType === 'SIMPLE') {
+                if (!prodQuantity) {
+                    if (!silent) toast({ title: "Validation Error", description: "Available Quantity is required for Standard Product", variant: "destructive", duration: 2000 });
+                    return false;
+                }
+                if (!price) {
+                    if (!silent) toast({ title: "Validation Error", description: "Price is required for Standard Product", variant: "destructive", duration: 2000 });
+                    return false;
+                }
+                if (!image && !editingItem?.productImage) {
+                    if (!silent) toast({ title: "Validation Error", description: "Product Image is required for Standard Product", variant: "destructive", duration: 2000 });
+                    return false;
+                }
+            }
+
             if (prodQuantity && (!price || (!image && !editingItem?.productImage))) {
-                toast({ title: "Validation Error", description: "Price and Image are required when Quantity is set", variant: "destructive", duration: 2000 });
+                if (!silent) toast({ title: "Validation Error", description: "Price and Image are required when Quantity is set", variant: "destructive", duration: 2000 });
                 return false;
             }
         }
@@ -1170,7 +1193,7 @@ export default function AdminInventoryPage() {
                     )
                 }
 
-                <Button onClick={() => { if (validateForm()) createMutation.mutate(); }} disabled={createMutation.isPending || !hasChanges()} className="w-full mt-6">
+                <Button onClick={() => { if (validateForm()) createMutation.mutate(); }} disabled={createMutation.isPending || !hasChanges() || !validateForm(true)} className="w-full mt-6">
                     {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {editingItem ? "Update" : "Create"} {level === 'PRICING' ? 'Variant' : level.charAt(0) + level.slice(1).toLowerCase()}
                 </Button>
