@@ -1605,11 +1605,7 @@ export default function AdminInventoryPage() {
                                                     placeholder={selectedProduct?.productQuantity ? "Managed by Product" : "Unit Qty"}
                                                     disabled={!!selectedProduct?.productQuantity}
                                                 />
-                                                {sizeQuantity && Number(sizeQuantity) > 0 && (
-                                                    <p className="text-[10px] text-amber-600 font-medium leading-tight pt-1">
-                                                        Setting quantity disables adding colours to this size.
-                                                    </p>
-                                                )}
+
                                             </div>
                                             <div className="space-y-1">
                                                 <Label className="text-xs">Price <span className="text-destructive">*</span></Label>
@@ -1733,7 +1729,7 @@ export default function AdminInventoryPage() {
                                             </div>
 
                                             {/* Size Colour SECTION (EXPANDED) */}
-                                            {expandedPricingId === p.id && (
+                                            {expandedPricingId === p.id && (!(((prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE' || (p.sizeQuantity && Number(p.sizeQuantity) > 0)) && !sizeColoursLoading && sizeColours.length === 0)) && (
                                                 <div className="bg-muted/20 border-t p-4 animate-in slide-in-from-top-2 duration-300">
                                                     <div className="flex items-center justify-between mb-4">
                                                         <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Size Colours</h5>
@@ -1810,41 +1806,41 @@ export default function AdminInventoryPage() {
 
                                                     <div className="space-y-2">
                                                         {sizeColoursLoading ? <div className="text-xs text-center py-2 text-muted-foreground">Loading options...</div> :
-                                                            sizeColours.length === 0 ? <div className="text-xs text-center py-2 text-muted-foreground italic">No options configured.</div> :
-                                                                sizeColours.map((sc: any) => (
-                                                                    <div key={sc.id} className="bg-background/80 border rounded p-2 flex justify-between items-center text-sm">
-                                                                        <div className="flex items-center gap-3">
-                                                                            {sc.productPics && (
-                                                                                <img src={sc.productPics} alt={sc.name} className="w-8 h-8 rounded-md object-cover border" />
-                                                                            )}
-                                                                            <div>
-                                                                                <div className="font-medium flex items-center gap-2">
-                                                                                    {sc.name}
-                                                                                    <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${sc.sizeColourStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                                                        {sc.sizeColourStatus?.charAt(0)}
-                                                                                    </span>
-                                                                                </div>
-                                                                                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                                                                    <span>Qty: {sc.productSizeColourQuantity || 0}</span>
-                                                                                </div>
+                                                            // sizeColours.length === 0 ? <div className="text-xs text-center py-2 text-muted-foreground italic">No options configured.</div> :
+                                                            sizeColours.map((sc: any) => (
+                                                                <div key={sc.id} className="bg-background/80 border rounded p-2 flex justify-between items-center text-sm">
+                                                                    <div className="flex items-center gap-3">
+                                                                        {sc.productPics && (
+                                                                            <img src={sc.productPics} alt={sc.name} className="w-8 h-8 rounded-md object-cover border" />
+                                                                        )}
+                                                                        <div>
+                                                                            <div className="font-medium flex items-center gap-2">
+                                                                                {sc.name}
+                                                                                <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${sc.sizeColourStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                                                    {sc.sizeColourStatus?.charAt(0)}
+                                                                                </span>
+                                                                            </div>
+                                                                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                                                                <span>Qty: {sc.productSizeColourQuantity || 0}</span>
                                                                             </div>
                                                                         </div>
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className="font-mono font-bold text-xs text-emerald-600">+₹{sc.price}</span>
-                                                                            <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-muted" onClick={() => {
-                                                                                setEditingItem(sc);
-                                                                                setName(sc.name);
-                                                                                setPrice(String(sc.price));
-                                                                                setSizeQuantity(sc.productSizeColourQuantity || "");
-                                                                                setColourImage(sc.productPics || null);
-                                                                                setSizeStatus(sc.sizeColourStatus || "ACTIVE");
-                                                                                setManageMode('ADD_SIZE_COLOUR');
-                                                                            }}>
-                                                                                <Pencil className="h-3 w-3 text-muted-foreground" />
-                                                                            </Button>
-                                                                        </div>
                                                                     </div>
-                                                                ))
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-mono font-bold text-xs text-emerald-600">+₹{sc.price}</span>
+                                                                        <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-muted" onClick={() => {
+                                                                            setEditingItem(sc);
+                                                                            setName(sc.name);
+                                                                            setPrice(String(sc.price));
+                                                                            setSizeQuantity(sc.productSizeColourQuantity || "");
+                                                                            setColourImage(sc.productPics || null);
+                                                                            setSizeStatus(sc.sizeColourStatus || "ACTIVE");
+                                                                            setManageMode('ADD_SIZE_COLOUR');
+                                                                        }}>
+                                                                            <Pencil className="h-3 w-3 text-muted-foreground" />
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
+                                                            ))
                                                         }
                                                     </div>
                                                 </div>
