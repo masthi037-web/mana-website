@@ -1125,134 +1125,284 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     return; // Abort further checks for this item
                 }
 
-                // Check Colour Name Mismatch (if applicable)
-                if (detail.colour && item.selectedColour?.name) {
-                    const serverColor = detail.colour.trim().toLowerCase();
-                    const cartColor = item.selectedColour.name.trim().toLowerCase();
-                    if (serverColor !== cartColor) {
-                        blockingChanges = true;
-                        pushChange(`Colour mismatch for "${item.name}" (Server: ${detail.colour}, Cart: ${item.selectedColour.name}). Removed.`);
-                        item.cartItemId = 'REMOVE_ME';
-                        return;
-                    }
-                }
 
-                // Check Size Name Mismatch (if applicable)
-                // item.selectedVariants['Quantity'] holds the size name usually
-                if (detail.productSize && item.selectedVariants && item.selectedVariants['Quantity']) {
-                    const serverSize = detail.productSize.trim().toLowerCase();
-                    const cartSize = item.selectedVariants['Quantity'].trim().toLowerCase();
-                    if (serverSize !== cartSize && serverSize !== "" && cartSize !== "") {
-                        // Note: Sometimes server might return internal ID or different format, strict check might be risky if backend is inconsistent.
-                        // But user requested "check multipleSetDiscount... productSize".
-                        // Assuming strict equality is desired for data integrity.
-                        blockingChanges = true;
-                        pushChange(`Size label mismatch for "${item.name}" (Server: ${detail.productSize}, Cart: ${item.selectedVariants['Quantity']}). Removed.`);
-                        item.cartItemId = 'REMOVE_ME';
-                        return;
-                    }
-                }
+                // --- REFACTORED STRICT VALIDATION LOGIC ---
 
-                // --- 1. DISCOUNT MISMATCHES ---
-                const normalizeDiscount = (s: string | null | undefined) => {
-                    if (!s) return "";
-                    return s.split('&&&').sort().join('&&&');
-                };
+                // CASE 1: Size Colour Variant
+                if (detail.productSizeColourId !== null && detail.productSizeColourId !== undefined) {
+                    console.log(`Validating Case 1: Size Colour for "${item.name}"`);
 
-                const cartSetDiscount = normalizeDiscount(item.multipleSetDiscount);
-                const serverSetDiscount = normalizeDiscount(detail.multipleSetDiscount);
-
-                // Helper: Check if current total quantity qualifies for any part of a rule
-                const isUsingRule = (rule: string, qty: number) => {
-                    if (!rule || qty <= 0) return false;
-                    const segments = rule.split('&&&');
-                    for (const seg of segments) {
-                        const [thresholdStr] = seg.split('-');
-                        const threshold = parseFloat(thresholdStr);
-                        // If threshold is valid and we have enough qty (inclusive or exclusive depending on logic, usually inclusive like "Buy 3")
-                        if (!isNaN(threshold) && qty >= threshold) {
-                            return true;
-                        }
-                    }
-                    return false;
-                };
-
-                const totalQty = productQuantities[item.id] || item.quantity;
-
-                // Helper: Get description of the BEST rule currently active
-                const getActiveRuleDescription = (rule: string, qty: number) => {
-                    if (!rule || qty <= 0) return null;
-                    const segments = rule.split('&&&');
-                    let bestParams: { t: number, p: number } | null = null;
-
-                    for (const seg of segments) {
-                        const [thresholdStr, percentStr] = seg.split('-');
-                        const threshold = parseFloat(thresholdStr);
-                        const percent = parseFloat(percentStr);
-                        if (!isNaN(threshold) && !isNaN(percent) && qty >= threshold) {
-                            // We assume the one with HIGHEST threshold is the "active" one (or most relevant)
-                            if (!bestParams || threshold > bestParams.t) {
-                                bestParams = { t: threshold, p: percent };
-                            }
-                        }
-                    }
-                    if (bestParams) {
-                        return `Buy ${bestParams.t} Get ${bestParams.p}% Off`;
-                    }
-                    return null;
-                };
-
-                if (cartSetDiscount !== serverSetDiscount) {
-                    const activeRuleDesc = getActiveRuleDescription(item.multipleSetDiscount, totalQty);
-                    const newActiveRuleDesc = getActiveRuleDescription(detail.multipleSetDiscount, totalQty);
-
-                    // Only blocking notify if we were using it OR will start using it (if price changes drastically?)
-                    // User request: "notify when changes only if cart is using that bulk discount"
-                    // Strictly: If I WAS using it.
-                    if (activeRuleDesc) { // implied wasUsing because returns non-null
-                        // If the benefit is IDENTICAL, do not show error
-                        if (activeRuleDesc === newActiveRuleDesc) {
-                            // Do nothing, just update the string silently
-                        } else {
+                    // 1. Validate sizeColourName
+                    if (detail.sizeColourName && item.selectedSizeColours && item.selectedSizeColours.length > 0) {
+                        const matchingSc = item.selectedSizeColours.find(sc => sc.id === (detail.productSizeColourId?.toString() || item.productSizeColourId));
+                        if (matchingSc && matchingSc.name !== detail.sizeColourName) {
                             blockingChanges = true;
-                            if (!serverSetDiscount || !newActiveRuleDesc) {
-                                pushChange(`Selected discount (${activeRuleDesc}) is removed.`, item.cartItemId);
+                            pushChange(`Variant name for "${item.name}" changed (Server: ${detail.sizeColourName}, Cart: ${matchingSc.name}).`);
+                        }
+                    }
+
+                    // 2. Validate colourExtraPrice
+                    if (detail.colourExtraPrice !== undefined && detail.colourExtraPrice !== null) {
+                        if (item.selectedSizeColours) {
+                            item.selectedSizeColours.forEach(sc => {
+                                if (sc.id === (detail.productSizeColourId?.toString() || item.productSizeColourId)) {
+                                    if (sc.price !== detail.colourExtraPrice) {
+                                        blockingChanges = true;
+                                        pushChange(`Extra price for "${sc.name}" updated from ₹${sc.price} to ₹${detail.colourExtraPrice}.`, item.cartItemId);
+                                        sc.price = detail.colourExtraPrice;
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    // 3. Validate productSizeColourQuantity (Stock)
+                    if (detail.productSizeColourQuantity) {
+                        const scLimit = parseInt(detail.productSizeColourQuantity);
+                        const scKey = `${detail.productId}-sc-${detail.productSizeColourId}`;
+                        const scConsumed = stockUsageMap.get(scKey) || 0;
+                        const remainingSc = scLimit - scConsumed;
+
+                        if (!isNaN(scLimit)) {
+                            if (item.quantity > remainingSc) {
+                                blockingChanges = true;
+                                if (remainingSc <= 0) {
+                                    pushChange(`"${item.name}" (Size Variant) is out of stock and has been removed.`);
+                                    item.cartItemId = 'REMOVE_ME';
+                                } else {
+                                    pushChange(`"${item.name}" (Size Variant) quantity updated to available stock: ${remainingSc}.`, item.cartItemId);
+                                    item.quantity = remainingSc;
+                                    stockUsageMap.set(scKey, scConsumed + item.quantity);
+                                }
                             } else {
-                                // It changed to something else
-                                pushChange(`Selected discount (${activeRuleDesc}) is removed.`, item.cartItemId);
+                                stockUsageMap.set(scKey, scConsumed + item.quantity);
                             }
                         }
                     }
-                    item.multipleSetDiscount = detail.multipleSetDiscount;
-                }
 
-                const cartMoreThan = (item.multipleDiscountMoreThan || "").trim();
-                const serverMoreThan = (detail.multipleDiscountMoreThan || "").trim();
-
-                // Helper for MoreThan (Format: "Qty-Percent" e.g. "6-20") => "More than 6" usually means > 6
-                const isUsingMoreThan = (rule: string, qty: number) => {
-                    if (!rule || qty <= 0) return false;
-                    const [thresholdStr] = rule.split('-');
-                    const threshold = parseFloat(thresholdStr);
-                    // "More Than" usually implies strict greater than, but let's match common logic (often inclusive in casual terms, but user code said >)
-                    return !isNaN(threshold) && qty > threshold;
-                };
-
-                if (cartMoreThan !== serverMoreThan) {
-                    const wasUsing = isUsingMoreThan(item.multipleDiscountMoreThan, totalQty);
-
-                    if (wasUsing) {
+                    // 4. Validate sizeColourStatus
+                    if (detail.sizeColourStatus && detail.sizeColourStatus !== 'ACTIVE') {
                         blockingChanges = true;
-                        if (!serverMoreThan) {
-                            pushChange(`Special bulk offer for "${item.name}" has been removed.`, item.cartItemId);
-                        } else {
-                            pushChange(`Special bulk offer for "${item.name}" has been updated.`, item.cartItemId);
+                        pushChange(`"${item.name}" (Size Variant) is currently unavailable and has been removed.`);
+                        item.cartItemId = 'REMOVE_ME';
+                        return;
+                    }
+
+                }
+                // CASE 2: Size Variant (but NO Size Colour)
+                else if (detail.sizeId !== null && detail.sizeId !== undefined && (detail.productSizeColourId === null || detail.productSizeColourId === undefined)) {
+                    console.log(`Validating Case 2: Size for "${item.name}"`);
+
+                    // 1. Validate sizeStatus
+                    if (detail.sizeStatus && detail.sizeStatus !== 'ACTIVE') {
+                        blockingChanges = true;
+                        pushChange(`"${item.name}" (${detail.productSize}) is currently unavailable and has been removed.`);
+                        item.cartItemId = 'REMOVE_ME';
+                        return;
+                    }
+
+                    // 2. Validate productSize (Name)
+                    if (detail.productSize && item.selectedVariants && item.selectedVariants['Quantity']) {
+                        const serverSize = detail.productSize.trim().toLowerCase();
+                        const cartSize = item.selectedVariants['Quantity'].trim().toLowerCase();
+                        if (serverSize !== cartSize && serverSize !== "" && cartSize !== "") {
+                            blockingChanges = true;
+                            pushChange(`Size label mismatch for "${item.name}" (Server: ${detail.productSize}, Cart: ${item.selectedVariants['Quantity']}). Removed.`);
+                            item.cartItemId = 'REMOVE_ME';
+                            return;
                         }
                     }
-                    item.multipleDiscountMoreThan = detail.multipleDiscountMoreThan;
+
+                    // 3. Validate Prices (productSizePrice, productSizePriceAfterDiscount)
+                    const serverSizePrice = detail.productSizePrice || 0;
+                    let resolvedPrice = detail.productSizePriceAfterDiscount;
+
+                    // Fallback logic for discount
+                    if ((!resolvedPrice || resolvedPrice <= 0) && detail.productOffer) {
+                        const match = detail.productOffer.match(/(\d+)\s*%?|(\d+)\s*OFF/i);
+                        if (match) {
+                            const percent = parseFloat(match[1] || match[2]);
+                            if (!isNaN(percent)) {
+                                const discountVal = (serverSizePrice * percent) / 100;
+                                resolvedPrice = Math.round(serverSizePrice - discountVal);
+                            }
+                        }
+                    }
+                    if (!resolvedPrice || resolvedPrice <= 0) resolvedPrice = serverSizePrice;
+
+                    if (item.price !== resolvedPrice) {
+                        blockingChanges = true;
+                        pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedPrice}.`, item.cartItemId);
+                        item.price = resolvedPrice;
+                    }
+
+
+                    // 4. Validate sizeQuantity (Stock)
+                    if (detail.sizeQuantity) {
+                        const szLimit = parseInt(detail.sizeQuantity);
+                        const szKey = `${detail.productId}-sz-${detail.sizeId}`;
+                        const szConsumed = stockUsageMap.get(szKey) || 0;
+                        const remainingSz = szLimit - szConsumed;
+
+                        if (!isNaN(szLimit)) {
+                            if (item.quantity > remainingSz) {
+                                blockingChanges = true;
+                                if (remainingSz <= 0) {
+                                    pushChange(`"${item.name}" (${detail.productSize}) is out of stock and has been removed.`);
+                                    item.cartItemId = 'REMOVE_ME';
+                                } else {
+                                    pushChange(`"${item.name}" (${detail.productSize}) quantity updated to available stock: ${remainingSz}.`, item.cartItemId);
+                                    item.quantity = remainingSz;
+                                    stockUsageMap.set(szKey, szConsumed + item.quantity);
+                                }
+                            } else {
+                                stockUsageMap.set(szKey, szConsumed + item.quantity);
+                            }
+                        }
+                    }
+                }
+                // CASE 3: Product Colour Variant (NO Size)
+                else if (detail.productColourId !== null && detail.productColourId !== undefined && (detail.sizeId === null || detail.sizeId === undefined)) {
+                    console.log(`Validating Case 3: Product Colour for "${item.name}"`);
+
+                    // 1. Validate colourStatus
+                    if (detail.colourStatus && detail.colourStatus !== 'ACTIVE') {
+                        blockingChanges = true;
+                        pushChange(`"${item.name}" (${detail.colour}) is currently unavailable and has been removed.`);
+                        item.cartItemId = 'REMOVE_ME';
+                        return;
+                    }
+
+                    // 2. Validate colour (Name)
+                    if (detail.colour && item.selectedColour?.name) {
+                        const serverColor = detail.colour.trim().toLowerCase();
+                        const cartColor = item.selectedColour.name.trim().toLowerCase();
+                        if (serverColor !== cartColor) {
+                            blockingChanges = true;
+                            pushChange(`Colour mismatch for "${item.name}" (Server: ${detail.colour}, Cart: ${item.selectedColour.name}). Removed.`);
+                            item.cartItemId = 'REMOVE_ME';
+                            return;
+                        }
+                    }
+
+                    // 3. Validate Prices (productPrice, productPriceAfterDiscount) - Standard items use main product price?
+                    // Usually Colour Variant uses main product price unless specified differently?
+                    // User Request: "validate productPrice: 0.00, productPriceAfterDiscount: 0.00" ???
+                    // Wait, if 0.00, it means use standard? Or it means FREE?
+                    // Usually 0 implies fallback or strictly 0.
+                    // Let's assume standard logic: Check detail.productPrice.
+
+                    const serverProdPrice = detail.productPrice || 0;
+                    let resolvedProdPrice = detail.productPriceAfterDiscount;
+
+                    // Fallback logic for discount
+                    if ((!resolvedProdPrice || resolvedProdPrice <= 0) && detail.productOffer) {
+                        const match = detail.productOffer.match(/(\d+)\s*%?|(\d+)\s*OFF/i);
+                        if (match) {
+                            const percent = parseFloat(match[1] || match[2]);
+                            if (!isNaN(percent)) {
+                                const discountVal = (serverProdPrice * percent) / 100;
+                                resolvedProdPrice = Math.round(serverProdPrice - discountVal);
+                            }
+                        }
+                    }
+                    if (!resolvedProdPrice || resolvedProdPrice <= 0) resolvedProdPrice = serverProdPrice;
+
+                    if (item.price !== resolvedProdPrice) {
+                        blockingChanges = true;
+                        pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedProdPrice}.`, item.cartItemId);
+                        item.price = resolvedProdPrice;
+                    }
+
+                    // 4. Validate colourQuantityAvailable
+                    if (detail.colourQuantityAvailable) {
+                        const colLimit = parseInt(detail.colourQuantityAvailable);
+                        const colKey = `${detail.productId}-col-${detail.productColourId}`;
+                        const colConsumed = stockUsageMap.get(colKey) || 0;
+                        const remainingCol = colLimit - colConsumed;
+
+                        if (!isNaN(colLimit)) {
+                            if (item.quantity > remainingCol) {
+                                blockingChanges = true;
+                                if (remainingCol <= 0) {
+                                    pushChange(`"${item.name}" (${detail.colour}) is out of stock and has been removed.`);
+                                    item.cartItemId = 'REMOVE_ME';
+                                } else {
+                                    pushChange(`"${item.name}" (${detail.colour}) quantity updated to available stock: ${remainingCol}.`, item.cartItemId);
+                                    item.quantity = remainingCol;
+                                    stockUsageMap.set(colKey, colConsumed + item.quantity);
+                                }
+                            } else {
+                                stockUsageMap.set(colKey, colConsumed + item.quantity);
+                            }
+                        }
+                    }
+                }
+                // CASE 4: Product Only (No Size, No Colour)
+                else if (detail.productId !== null && detail.productId !== undefined) {
+                    console.log(`Validating Case 4: Product Only for "${item.name}"`);
+
+                    // 1. Validate Prices
+                    const serverProdPrice = detail.productPrice || 0;
+                    let resolvedProdPrice = detail.productPriceAfterDiscount;
+
+                    if ((!resolvedProdPrice || resolvedProdPrice <= 0) && detail.productOffer) {
+                        const match = detail.productOffer.match(/(\d+)\s*%?|(\d+)\s*OFF/i);
+                        if (match) {
+                            const percent = parseFloat(match[1] || match[2]);
+                            if (!isNaN(percent)) {
+                                const discountVal = (serverProdPrice * percent) / 100;
+                                resolvedProdPrice = Math.round(serverProdPrice - discountVal);
+                            }
+                        }
+                    }
+                    if (!resolvedProdPrice || resolvedProdPrice <= 0) resolvedProdPrice = serverProdPrice;
+
+                    if (item.price !== resolvedProdPrice) {
+                        blockingChanges = true;
+                        pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedProdPrice}.`, item.cartItemId);
+                        item.price = resolvedProdPrice;
+                    }
+
+                    // 2. Validate productQuantityAvailable
+                    if (detail.productQuantityAvailable) {
+                        const prodLimit = parseInt(detail.productQuantityAvailable);
+                        const prodKey = `${detail.productId}-master`; // Shared master stock
+                        const prodConsumed = stockUsageMap.get(prodKey) || 0;
+                        const remainingProd = prodLimit - prodConsumed;
+
+                        if (!isNaN(prodLimit)) {
+                            if (item.quantity > remainingProd) {
+                                blockingChanges = true;
+                                if (remainingProd <= 0) {
+                                    pushChange(`"${item.name}" is out of stock and has been removed.`);
+                                    item.cartItemId = 'REMOVE_ME';
+                                } else {
+                                    pushChange(`"${item.name}" quantity updated to available stock: ${remainingProd}.`, item.cartItemId);
+                                    item.quantity = remainingProd;
+                                    stockUsageMap.set(prodKey, prodConsumed + item.quantity);
+                                }
+                            } else {
+                                stockUsageMap.set(prodKey, prodConsumed + item.quantity);
+                            }
+                        }
+                    }
                 }
 
-                // --- 2. OFFER CHECK ---
+                if (item.cartItemId === 'REMOVE_ME') return;
+
+
+                // --- GLOBAL VALIDATIONS (ALL CASES) ---
+
+                // 1. Validate productStatus
+                if (detail.productStatus !== 'ACTIVE') {
+                    blockingChanges = true;
+                    pushChange(`"${item.name}" is currently unavailable (Product Inactive) and has been removed.`);
+                    item.cartItemId = 'REMOVE_ME';
+                    return;
+                }
+
+                // 2. Validate productOffer
                 if (item.productOffer !== detail.productOffer) {
                     const oldOffer = item.productOffer;
                     item.productOffer = detail.productOffer;
@@ -1266,252 +1416,74 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     }
                 }
 
-                // --- 3. STATUS CHECKS ---
-                // Product Status
-                if (detail.productStatus !== 'ACTIVE') {
-                    blockingChanges = true;
-                    pushChange(`"${item.name}" is currently unavailable (Product Inactive) and has been removed.`);
-                    item.cartItemId = 'REMOVE_ME';
-                    return;
-                }
+                // 3. Validate multipleSetDiscount
+                const normalizeDiscount = (s: string | null | undefined) => {
+                    if (!s) return "";
+                    return s.split('&&&').sort().join('&&&');
+                };
 
-                // Size Status (if applicable)
-                if (sizeId && detail.sizeStatus && detail.sizeStatus !== 'ACTIVE') {
-                    blockingChanges = true;
-                    pushChange(`"${item.name}" (${item.selectedVariants['Quantity']}) is currently unavailable and has been removed.`);
-                    item.cartItemId = 'REMOVE_ME';
-                    return;
-                }
+                const cartSetDiscount = normalizeDiscount(item.multipleSetDiscount);
+                const serverSetDiscount = normalizeDiscount(detail.multipleSetDiscount);
 
-                // Colour Status (if applicable)
-                if (item.selectedColour && detail.colourStatus && detail.colourStatus !== 'ACTIVE') {
-                    blockingChanges = true;
-                    pushChange(`"${item.name}" (${item.selectedColour.name}) is currently unavailable and has been removed.`);
-                    item.cartItemId = 'REMOVE_ME';
-                    return;
-                }
-
-                // --- 4. STOCK CHECKS ---
-                let availableStock = 0;
-                let stockKey = "";
-
-                if (sizeId) {
-                    // Sized Item: Stock depends on specific Variant
-                    availableStock = parseInt(detail.sizeQuantity || '0');
-                    stockKey = `${detail.productId}-size-${sizeId}`;
-                } else {
-                    // Non-Sized Item: Stock depends on Master Product
-                    availableStock = parseInt(detail.productQuantityAvailable || '0');
-                    stockKey = `${detail.productId}-master`;
-                }
-
-                if (isNaN(availableStock)) availableStock = 0;
-
-                // SHARED STOCK TRACKING
-                // 1. How much of this specific stock pool has already been used by previous items in this loop?
-                const alreadyConsumed = stockUsageMap.get(stockKey) || 0;
-
-                // 2. How much is left for *this* item?
-                const remainingStockForThisItem = availableStock - alreadyConsumed;
-
-                if (item.quantity > remainingStockForThisItem) {
-                    blockingChanges = true;
-                    if (remainingStockForThisItem <= 0) {
-                        // No stock left at all for this item (consumed by previous items or just OOS)
-                        pushChange(`"${item.name}" is out of stock and has been removed.`);
-                        item.cartItemId = 'REMOVE_ME';
-                        // Do not increase consumed count if we remove it
-                    } else {
-                        // Partial stock fits -> Actionable! (Can remove if user wants)
-                        pushChange(`"${item.name}" quantity updated. Available Quantity: ${remainingStockForThisItem}.`, item.cartItemId);
-                        item.quantity = remainingStockForThisItem;
-                        // Mark these as consumed
-                        stockUsageMap.set(stockKey, alreadyConsumed + item.quantity);
-                    }
-                } else {
-                    // Fits perfectly, mark as consumed
-                    stockUsageMap.set(stockKey, alreadyConsumed + item.quantity);
-                }
-
-                if (item.cartItemId === 'REMOVE_ME') return;
-
-                // --- 5. PRICE CHECKS ---
-                const isSized = !!sizeId;
-                const serverPrice = isSized ? (detail.productSizePrice || 0) : detail.productPrice;
-
-                // Resolve Discount Price
-                let resolvedDiscountPrice = isSized ? detail.productSizePriceAfterDiscount : detail.productPriceAfterDiscount;
-
-                // Fallback: If no explicit discount price, check for Percentage Offer
-                if ((!resolvedDiscountPrice || resolvedDiscountPrice <= 0) && detail.productOffer) {
-                    const match = detail.productOffer.match(/(\d+)\s*%?|(\d+)\s*OFF/i);
-                    if (match) {
-                        const percent = parseFloat(match[1] || match[2]);
-                        if (!isNaN(percent)) {
-                            const discountVal = (serverPrice * percent) / 100;
-                            resolvedDiscountPrice = Math.round(serverPrice - discountVal);
+                // Helper: Get description of the BEST rule currently active (Copied for scope)
+                const getActiveRuleDescription = (rule: string, qty: number) => {
+                    if (!rule || qty <= 0) return null;
+                    const segments = rule.split('&&&');
+                    let bestParams: { t: number, p: number } | null = null;
+                    for (const seg of segments) {
+                        const [thresholdStr, percentStr] = seg.split('-');
+                        const threshold = parseFloat(thresholdStr);
+                        const percent = parseFloat(percentStr);
+                        if (!isNaN(threshold) && !isNaN(percent) && qty >= threshold) {
+                            if (!bestParams || threshold > bestParams.t) {
+                                bestParams = { t: threshold, p: percent };
+                            }
                         }
                     }
-                }
+                    if (bestParams) return `Buy ${bestParams.t} Get ${bestParams.p}% Off`;
+                    return null;
+                };
 
-                // If still no valid resolved price, assume it's just the server price
-                if (!resolvedDiscountPrice || resolvedDiscountPrice <= 0) {
-                    resolvedDiscountPrice = serverPrice;
-                }
+                if (cartSetDiscount !== serverSetDiscount) {
+                    const totalQty = productQuantities[item.id] || item.quantity;
+                    const activeRuleDesc = getActiveRuleDescription(item.multipleSetDiscount, totalQty);
+                    const newActiveRuleDesc = getActiveRuleDescription(detail.multipleSetDiscount, totalQty);
 
-                // Is there a mismatch?
-                if (item.price !== resolvedDiscountPrice) {
-                    blockingChanges = true;
-                    pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedDiscountPrice}.`, item.cartItemId);
-                    item.price = resolvedDiscountPrice;
-                }
-
-                // --- 5.5 NEW VALIDATIONS ---
-
-                // Validate productSizeColourId
-                if (item.productSizeColourId && detail.productSizeColourId) {
-                    if (parseInt(item.productSizeColourId) !== detail.productSizeColourId) {
-                        blockingChanges = true;
-                        pushChange(`Configuration changed for "${item.name}". Please re-add to cart.`);
-                        item.cartItemId = 'REMOVE_ME';
-                        return;
-                    }
-                }
-
-                // Validate Size Colour Status
-                if (detail.sizeColourStatus && detail.sizeColourStatus !== 'ACTIVE') {
-                    blockingChanges = true;
-                    pushChange(`"${item.name}" (Size Variant) is currently unavailable and has been removed.`);
-                    item.cartItemId = 'REMOVE_ME';
-                    return;
-                }
-
-                // Validate Size Colour Name
-                // Assuming item.selectedSizeColours contains the relevant SizeColour
-                if (detail.sizeColourName && item.selectedSizeColours && item.selectedSizeColours.length > 0) {
-                    // Check if any of the selected size colours match the name, or if the MAIN one matches
-                    // Since we only send one productSizeColourId (presumably), checking the first one or finding by ID is best.
-                    // But we don't strictly link the single ID sent to a specific item in the array here easily without map.
-                    // However, usually if productSizeColourId is set, it corresponds to a specific SizeColour.
-                    // Let's check name against the one matching the ID if possible, or just strict check if single.
-                    const matchingSc = item.selectedSizeColours.find(sc => sc.id === (detail.productSizeColourId?.toString() || item.productSizeColourId));
-                    if (matchingSc && matchingSc.name !== detail.sizeColourName) {
-                        blockingChanges = true;
-                        pushChange(`Variant name changed for "${item.name}" (Server: ${detail.sizeColourName}, Cart: ${matchingSc.name}).`);
-                    }
-                }
-
-                // Validate Colour Extra Price
-                if (detail.colourExtraPrice !== undefined && detail.colourExtraPrice !== null) {
-                    // This implies the specific SizeColour option selected has a price
-                    // We need to apply this price to the relevant SizeColours in the cart
-                    if (item.selectedSizeColours) {
-                        item.selectedSizeColours.forEach(sc => {
-                            if (sc.id === (detail.productSizeColourId?.toString() || item.productSizeColourId)) {
-                                if (sc.price !== detail.colourExtraPrice) {
-                                    blockingChanges = true;
-                                    pushChange(`Extra price for "${sc.name}" updated from ₹${sc.price} to ₹${detail.colourExtraPrice}.`, item.cartItemId);
-                                    sc.price = detail.colourExtraPrice;
-                                }
-                            }
-                        });
-                    }
-                }
-
-                // Validate Size Colour Quantity (Stock)
-                if (detail.productSizeColourQuantity) {
-                    const scLimit = parseInt(detail.productSizeColourQuantity);
-                    const scKey = `${detail.productId}-sc-${detail.productSizeColourId}`;
-                    const scConsumed = stockUsageMap.get(scKey) || 0;
-                    const remainingSc = scLimit - scConsumed;
-
-                    if (!isNaN(scLimit)) {
-                        if (item.quantity > remainingSc) {
-                            blockingChanges = true;
-                            if (remainingSc <= 0) {
-                                pushChange(`"${item.name}" (Size Variant) is out of stock and has been removed.`);
-                                item.cartItemId = 'REMOVE_ME';
-                            } else {
-                                pushChange(`"${item.name}" (Size Variant) quantity updated to available stock: ${remainingSc}.`, item.cartItemId);
-                                item.quantity = remainingSc;
-                                stockUsageMap.set(scKey, scConsumed + item.quantity);
-                            }
+                    if (activeRuleDesc) {
+                        if (activeRuleDesc === newActiveRuleDesc) {
+                            // Do nothing
                         } else {
-                            stockUsageMap.set(scKey, scConsumed + item.quantity);
+                            blockingChanges = true;
+                            pushChange(`Selected discount (${activeRuleDesc}) is removed/updated.`, item.cartItemId);
                         }
                     }
+                    item.multipleSetDiscount = detail.multipleSetDiscount;
                 }
 
-                // Validate Colour Quantity Available (Standard Colour Variant)
-                if (detail.colourQuantityAvailable) {
-                    const colLimit = parseInt(detail.colourQuantityAvailable);
-                    const colKey = `${detail.productId}-col-${detail.productColourId}`;
-                    const colConsumed = stockUsageMap.get(colKey) || 0;
-                    const remainingCol = colLimit - colConsumed;
+                // 4. Validate multipleDiscountMoreThan
+                const cartMoreThan = (item.multipleDiscountMoreThan || "").trim();
+                const serverMoreThan = (detail.multipleDiscountMoreThan || "").trim();
 
-                    if (!isNaN(colLimit)) {
-                        if (item.quantity > remainingCol) {
-                            blockingChanges = true;
-                            if (remainingCol <= 0) {
-                                pushChange(`"${item.name}" (${detail.colour}) is out of stock and has been removed.`);
-                                item.cartItemId = 'REMOVE_ME';
-                            } else {
-                                pushChange(`"${item.name}" (${detail.colour}) quantity updated to available stock: ${remainingCol}.`, item.cartItemId);
-                                item.quantity = remainingCol;
-                                stockUsageMap.set(colKey, colConsumed + item.quantity);
-                            }
-                        } else {
-                            stockUsageMap.set(colKey, colConsumed + item.quantity);
-                        }
-                    }
-                }
+                const isUsingMoreThan = (rule: string, qty: number) => {
+                    if (!rule || qty <= 0) return false;
+                    const [thresholdStr] = rule.split('-');
+                    const threshold = parseFloat(thresholdStr);
+                    return !isNaN(threshold) && qty > threshold;
+                };
 
-                // --- 6. SIZE COLOUR CHECKS ---
-                if (item.selectedSizeColours && item.selectedSizeColours.length > 0) {
-                    // Parse server sizeColours: ["id:price", "1:20"]
-                    const serverScMap = new Map<string, number>();
-                    // detail.sizeColourAndPrice replace detail.sizeColourPrice 
-                    // Verify if detail.sizeColourAndPrice exists on the type from api-types.
-                    // Assuming api-types.ts updated CheckoutProductDetail to have sizeColourAndPrice.
-                    if (detail.sizeColourAndPrice && Array.isArray(detail.sizeColourAndPrice)) {
-                        detail.sizeColourAndPrice.forEach(str => {
-                            const parts = str.split(':');
-                            if (parts.length >= 2) {
-                                const idStr = parts[0];
-                                const priceStr = parts[parts.length - 1];
-                                serverScMap.set(idStr.toString(), parseFloat(priceStr));
-                            }
-                        });
-                    }
+                if (cartMoreThan !== serverMoreThan) {
+                    const totalQty = productQuantities[item.id] || item.quantity;
+                    const wasUsing = isUsingMoreThan(item.multipleDiscountMoreThan, totalQty);
 
-                    // Iterate cart sizeColours
-                    const validSizeColours: typeof item.selectedSizeColours = [];
-                    let scPriceChanged = false;
-
-                    item.selectedSizeColours.forEach(sc => {
-                        const serverPrice = serverScMap.get(sc.id.toString());
-                        if (serverPrice !== undefined) {
-                            // SC exists, check price
-                            if (serverPrice !== sc.price) {
-                                scPriceChanged = true;
-                                sc.price = serverPrice; // Update price in place
-                            }
-                            validSizeColours.push(sc);
-                        } else {
-                            // SC no longer exists on server (removed)
-                            blockingChanges = true;
-                            pushChange(`SizeColour option "${sc.name}" for "${item.name}" is no longer available and has been removed.`, item.cartItemId);
-                        }
-                    });
-
-                    if (validSizeColours.length !== item.selectedSizeColours.length) {
-                        item.selectedSizeColours = validSizeColours;
-                    }
-
-                    if (scPriceChanged) {
+                    if (wasUsing) {
                         blockingChanges = true;
-                        pushChange(`SizeColour prices for "${item.name}" have been updated.`, item.cartItemId);
+                        if (!serverMoreThan) {
+                            pushChange(`Special bulk offer for "${item.name}" has been removed.`, item.cartItemId);
+                        } else {
+                            pushChange(`Special bulk offer for "${item.name}" has been updated.`, item.cartItemId);
+                        }
                     }
+                    item.multipleDiscountMoreThan = detail.multipleDiscountMoreThan;
                 }
             });
             const finalCart = newCart.filter(item => item.cartItemId !== 'REMOVE_ME');
