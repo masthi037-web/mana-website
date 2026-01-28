@@ -1690,7 +1690,7 @@ export default function AdminInventoryPage() {
                                             </select>
                                         </div>
                                         <div className="flex gap-2 pt-2">
-                                            <Button size="sm" onClick={() => { if (qty && sizeQuantity && price) createMutation.mutate(); }} disabled={createMutation.isPending || !qty || !sizeQuantity || !price} className="flex-1">
+                                            <Button size="sm" onClick={() => { if (validateForm()) createMutation.mutate(); }} disabled={createMutation.isPending} className="flex-1">
                                                 {createMutation.isPending && <Loader2 className="w-3 h-3 mr-2 animate-spin" />} {editingItem ? "Update Variant" : "Save Variant"}
                                             </Button>
                                             <Button size="sm" variant="ghost" onClick={() => { setManageMode('VIEW'); resetForm(); }} className="flex-1">Cancel</Button>
