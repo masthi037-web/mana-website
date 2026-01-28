@@ -1274,31 +1274,45 @@ export default function AdminInventoryPage() {
                                 <h3 className="text-lg font-bold flex items-center gap-2">
                                     <Sparkles className="w-4 h-4 text-primary" /> Product Colours
                                 </h3>
-                                {manageMode !== 'ADD_COLOUR' && (
-                                    (prodType || editingItem?.productType) === 'SIMPLE' ? (
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-medium animate-in fade-in">
-                                            <Tag className="w-3 h-3" />
-                                            Disabled for Standard Product
-                                        </div>
-                                    ) : (!selectedProduct?.price || selectedProduct.price <= 0) ? (
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 text-xs font-medium animate-in fade-in">
-                                            <AlertCircle className="w-3 h-3" />
-                                            Add Price to enable colours
-                                        </div>
-                                    ) : selectedProduct?.productQuantity ? (
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in slide-in-from-right-2">
-                                            <span className="relative flex h-2 w-2">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                                            </span>
-                                            Single variant mode active
-                                        </div>
-                                    ) : (
+                                {manageMode !== 'ADD_COLOUR' && (() => {
+                                    const currentType = prodType || selectedProduct?.productType || editingItem?.productType;
+
+                                    if (currentType === 'SIMPLE') {
+                                        return (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-medium animate-in fade-in">
+                                                <Tag className="w-3 h-3" />
+                                                Disabled for Standard Product
+                                            </div>
+                                        );
+                                    }
+
+                                    if ((!selectedProduct?.price || selectedProduct.price <= 0)) {
+                                        return (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 text-xs font-medium animate-in fade-in">
+                                                <AlertCircle className="w-3 h-3" />
+                                                Add Price to enable colours
+                                            </div>
+                                        );
+                                    }
+
+                                    if (selectedProduct?.productQuantity) {
+                                        return (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in slide-in-from-right-2">
+                                                <span className="relative flex h-2 w-2">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                                </span>
+                                                Single variant mode active
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
                                         <Button size="sm" onClick={() => { setManageMode('ADD_COLOUR'); resetForm(); }} variant="outline" className="h-8 rounded-full">
                                             <Plus className="w-3 h-3 mr-1" /> Add Colour
                                         </Button>
-                                    )
-                                )}
+                                    );
+                                })()}
                             </div>
 
                             {/* Standard Product Warning */}
