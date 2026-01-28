@@ -265,20 +265,16 @@ const AddToCartContent = ({
 
     const offerPercent = product.productOffer ? parseFloat(product.productOffer.toString().replace(/[^0-9.]/g, '')) : 0;
 
-    // Condition A: Percentage Offer exists (and variant price matches base product price)
-    if (offerPercent > 0 && variantPrice === product.price) {
+    // Condition A: Explicit Variant Discount (Priority 1)
+    if (selectedPricingOption && selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0) {
+      effectiveBasePrice = selectedPricingOption.priceAfterDiscount;
+    }
+    // Condition B: Percentage Offer exists (and variant price matches base product price) (Priority 2)
+    else if (offerPercent > 0 && variantPrice === product.price) {
       const discountAmount = (variantPrice * offerPercent) / 100;
       effectiveBasePrice = Math.round(variantPrice - discountAmount);
     }
-    // Condition B: Explicit Variant Discount
-    else if (selectedPricingOption && selectedPricingOption.priceAfterDiscount && selectedPricingOption.priceAfterDiscount > 0) {
-      effectiveBasePrice = selectedPricingOption.priceAfterDiscount;
-    }
     // Condition C: Explicit Product Discount (fallback)
-    // Relaxed check: If no specific variant discount, and product has discount, try to apply it.
-    // We check if variant price is relatively close to product price to avoid applying absolute discount to a much more expensive variant?
-    // User requested "productPriceAfterDiscount ... is shown in card but not considered".
-    // We'll trust that if priceAfterDiscount exists on product, it's intended for the base config (which this likely is).
     else if (product.priceAfterDiscount && product.priceAfterDiscount > 0) {
       // Only apply if it makes sense (e.g. less than current variant price)
       if (product.priceAfterDiscount < variantPrice) {
@@ -594,7 +590,24 @@ export function AddToCartSheet({ product, children, onAddToCart }: AddToCartShee
     if (hasVariants) return;
     e.stopPropagation();
     e.preventDefault();
-    addToCart(product, {});
+
+    // Calculate effective price for simple product
+    let effectivePrice = product.price;
+
+    // Priority 1: Explicit Price After Discount
+    if (product.priceAfterDiscount && product.priceAfterDiscount > 0 && product.priceAfterDiscount < product.price) {
+      effectivePrice = product.priceAfterDiscount;
+    }
+    // Priority 2: Product Offer Percentage
+    else {
+      const offerPercent = product.productOffer ? parseFloat(product.productOffer.toString().replace(/[^0-9.]/g, '')) : 0;
+      if (offerPercent > 0) {
+        const discountAmount = (product.price * offerPercent) / 100;
+        effectivePrice = Math.round(product.price - discountAmount);
+      }
+    }
+
+    addToCart({ ...product, price: effectivePrice }, {});
 
     // Trigger success confetti
     const count = 200;
