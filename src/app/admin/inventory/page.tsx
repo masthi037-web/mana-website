@@ -999,22 +999,20 @@ export default function AdminInventoryPage() {
                         <div className="space-y-2">
                             <Label>Product Offer</Label>
                             <div className="relative">
-                                {(prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE' ? (
-                                    <Input value="Managed" disabled className="bg-muted text-muted-foreground" />
-                                ) : (
-                                    <>
-                                        <Input
-                                            type="number"
-                                            placeholder="50"
-                                            value={prodOffer}
-                                            onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (Number(val) < 99) setProdOffer(val); }}
-                                            className="pr-16"
-                                        />
-                                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
-                                            % OFF
-                                        </div>
-                                    </>
-                                )}
+
+                                <>
+                                    <Input
+                                        type="number"
+                                        placeholder="50"
+                                        value={prodOffer}
+                                        onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (Number(val) < 99) setProdOffer(val); }}
+                                        className="pr-16"
+                                    />
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
+                                        % OFF
+                                    </div>
+                                </>
+
                             </div>
                         </div>
                         <div className="space-y-2">
