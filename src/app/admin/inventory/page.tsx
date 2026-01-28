@@ -1820,7 +1820,7 @@ export default function AdminInventoryPage() {
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex gap-2 pt-1">
-                                                                    <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="h-7 text-xs w-full">Save Size Colour</Button>
+                                                                    <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !name || !sizeQuantity || (!colourImage && !editingItem?.productPics)} className="h-7 text-xs w-full">Save Size Colour</Button>
                                                                     <Button size="sm" variant="ghost" onClick={() => setManageMode('VIEW')} className="h-7 text-xs w-full">Cancel</Button>
                                                                 </div>
                                                             </div>
