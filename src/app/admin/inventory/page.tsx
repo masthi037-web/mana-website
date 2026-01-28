@@ -1279,7 +1279,7 @@ export default function AdminInventoryPage() {
 
                                     if (currentType === 'SIMPLE') {
                                         return (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-medium animate-in fade-in">
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in">
                                                 <Tag className="w-3 h-3" />
                                                 Disabled for Standard Product
                                             </div>
@@ -1317,13 +1317,13 @@ export default function AdminInventoryPage() {
 
                             {/* Standard Product Warning */}
                             {(prodType || editingItem?.productType) === 'SIMPLE' && (
-                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                                    <div className="bg-white p-2 rounded-full shadow-sm text-blue-500 mt-0.5">
+                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 mt-0.5">
                                         <Tag className="w-4 h-4" />
                                     </div>
                                     <div className="space-y-1">
-                                        <h4 className="text-sm font-bold text-blue-900">Standard Product (Simple)</h4>
-                                        <p className="text-xs text-blue-700/80 leading-relaxed">
+                                        <h4 className="text-sm font-bold text-amber-900">Standard Product (Simple)</h4>
+                                        <p className="text-xs text-amber-700/80 leading-relaxed">
                                             This product is set to <b>Type: Standard</b>. Colour variants cannot be added to this type.
                                         </p>
                                     </div>
@@ -1447,7 +1447,7 @@ export default function AdminInventoryPage() {
 
                                     if (currentType === 'SIMPLE') {
                                         return (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-medium animate-in fade-in">
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in">
                                                 <Tag className="w-3 h-3" />
                                                 Disabled for Standard Product
                                             </div>
@@ -1512,13 +1512,13 @@ export default function AdminInventoryPage() {
 
                             {/* Standard Product Warning */}
                             {(prodType || editingItem?.productType) === 'SIMPLE' && (
-                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                                    <div className="bg-white p-2 rounded-full shadow-sm text-blue-500 mt-0.5">
+                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 mt-0.5">
                                         <Tag className="w-4 h-4" />
                                     </div>
                                     <div className="space-y-1">
-                                        <h4 className="text-sm font-bold text-blue-900">Standard Product (Simple)</h4>
-                                        <p className="text-xs text-blue-700/80 leading-relaxed">
+                                        <h4 className="text-sm font-bold text-amber-900">Standard Product (Simple)</h4>
+                                        <p className="text-xs text-amber-700/80 leading-relaxed">
                                             This product is set to <b>Type: Standard</b>. Size/Pricing variants cannot be added to this type.
                                         </p>
                                     </div>
