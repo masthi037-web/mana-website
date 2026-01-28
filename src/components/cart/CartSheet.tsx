@@ -1366,6 +1366,106 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     item.price = resolvedDiscountPrice;
                 }
 
+                // --- 5.5 NEW VALIDATIONS ---
+
+                // Validate productSizeColourId
+                if (item.productSizeColourId && detail.productSizeColourId) {
+                    if (parseInt(item.productSizeColourId) !== detail.productSizeColourId) {
+                        blockingChanges = true;
+                        pushChange(`Configuration changed for "${item.name}". Please re-add to cart.`);
+                        item.cartItemId = 'REMOVE_ME';
+                        return;
+                    }
+                }
+
+                // Validate Size Colour Status
+                if (detail.sizeColourStatus && detail.sizeColourStatus !== 'ACTIVE') {
+                    blockingChanges = true;
+                    pushChange(`"${item.name}" (Size Variant) is currently unavailable and has been removed.`);
+                    item.cartItemId = 'REMOVE_ME';
+                    return;
+                }
+
+                // Validate Size Colour Name
+                // Assuming item.selectedSizeColours contains the relevant SizeColour
+                if (detail.sizeColourName && item.selectedSizeColours && item.selectedSizeColours.length > 0) {
+                    // Check if any of the selected size colours match the name, or if the MAIN one matches
+                    // Since we only send one productSizeColourId (presumably), checking the first one or finding by ID is best.
+                    // But we don't strictly link the single ID sent to a specific item in the array here easily without map.
+                    // However, usually if productSizeColourId is set, it corresponds to a specific SizeColour.
+                    // Let's check name against the one matching the ID if possible, or just strict check if single.
+                    const matchingSc = item.selectedSizeColours.find(sc => sc.id === (detail.productSizeColourId?.toString() || item.productSizeColourId));
+                    if (matchingSc && matchingSc.name !== detail.sizeColourName) {
+                        blockingChanges = true;
+                        pushChange(`Variant name changed for "${item.name}" (Server: ${detail.sizeColourName}, Cart: ${matchingSc.name}).`);
+                    }
+                }
+
+                // Validate Colour Extra Price
+                if (detail.colourExtraPrice !== undefined && detail.colourExtraPrice !== null) {
+                    // This implies the specific SizeColour option selected has a price
+                    // We need to apply this price to the relevant SizeColours in the cart
+                    if (item.selectedSizeColours) {
+                        item.selectedSizeColours.forEach(sc => {
+                            if (sc.id === (detail.productSizeColourId?.toString() || item.productSizeColourId)) {
+                                if (sc.price !== detail.colourExtraPrice) {
+                                    blockingChanges = true;
+                                    pushChange(`Extra price for "${sc.name}" updated from ₹${sc.price} to ₹${detail.colourExtraPrice}.`, item.cartItemId);
+                                    sc.price = detail.colourExtraPrice;
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // Validate Size Colour Quantity (Stock)
+                if (detail.productSizeColourQuantity) {
+                    const scLimit = parseInt(detail.productSizeColourQuantity);
+                    const scKey = `${detail.productId}-sc-${detail.productSizeColourId}`;
+                    const scConsumed = stockUsageMap.get(scKey) || 0;
+                    const remainingSc = scLimit - scConsumed;
+
+                    if (!isNaN(scLimit)) {
+                        if (item.quantity > remainingSc) {
+                            blockingChanges = true;
+                            if (remainingSc <= 0) {
+                                pushChange(`"${item.name}" (Size Variant) is out of stock and has been removed.`);
+                                item.cartItemId = 'REMOVE_ME';
+                            } else {
+                                pushChange(`"${item.name}" (Size Variant) quantity updated to available stock: ${remainingSc}.`, item.cartItemId);
+                                item.quantity = remainingSc;
+                                stockUsageMap.set(scKey, scConsumed + item.quantity);
+                            }
+                        } else {
+                            stockUsageMap.set(scKey, scConsumed + item.quantity);
+                        }
+                    }
+                }
+
+                // Validate Colour Quantity Available (Standard Colour Variant)
+                if (detail.colourQuantityAvailable) {
+                    const colLimit = parseInt(detail.colourQuantityAvailable);
+                    const colKey = `${detail.productId}-col-${detail.productColourId}`;
+                    const colConsumed = stockUsageMap.get(colKey) || 0;
+                    const remainingCol = colLimit - colConsumed;
+
+                    if (!isNaN(colLimit)) {
+                        if (item.quantity > remainingCol) {
+                            blockingChanges = true;
+                            if (remainingCol <= 0) {
+                                pushChange(`"${item.name}" (${detail.colour}) is out of stock and has been removed.`);
+                                item.cartItemId = 'REMOVE_ME';
+                            } else {
+                                pushChange(`"${item.name}" (${detail.colour}) quantity updated to available stock: ${remainingCol}.`, item.cartItemId);
+                                item.quantity = remainingCol;
+                                stockUsageMap.set(colKey, colConsumed + item.quantity);
+                            }
+                        } else {
+                            stockUsageMap.set(colKey, colConsumed + item.quantity);
+                        }
+                    }
+                }
+
                 // --- 6. SIZE COLOUR CHECKS ---
                 if (item.selectedSizeColours && item.selectedSizeColours.length > 0) {
                     // Parse server sizeColours: ["id:price", "1:20"]

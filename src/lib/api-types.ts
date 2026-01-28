@@ -381,21 +381,32 @@ export interface CheckoutValidationItem {
 }
 
 export interface CheckoutCheckResponse {
-    multipleSetDiscount: string;
-    multipleDiscountMoreThan: string;
-    productOffer: string;
-    productStatus: string; // Enums.Status
+    multipleSetDiscount: string | null;
+    multipleDiscountMoreThan: string | null;
+    productOffer: string | null;
+    productStatus: string;
     productPrice: number;
     productPriceAfterDiscount: number;
-    colourStatus: string; // Enums.Status
-    colour: string;
-    sizeStatus: string; // Enums.Status
-    productSizePrice: number;
+    colourStatus: string | null;
+    colour: string | null;
+    colourQuantityAvailable: string | null;
+    sizeStatus: string | null;
+    productSizePrice: number | null;
     productSizePriceAfterDiscount: number;
-    productSize: string;
+    productSize: string | null;
     productQuantityAvailable: string;
     sizeQuantity: string;
-    sizeColourAndPrice: string[];
+
+    // New fields requested
+    sizeColourName: string | null;
+    colourExtraPrice: number;
+    productSizeColourQuantity: string | null;
+    sizeColourStatus: string | null;
+    productSizeColourId: number | null;
+
+    // Existing but maybe deprecated or still used? Keeping for safety unless removal requested.
+    sizeColourAndPrice?: string[];
+
     productId: number;
     sizeId: number | null;
     productColourId: number | null;
