@@ -298,7 +298,8 @@ export default function AdminInventoryPage() {
                 return true;
             }
             if (manageMode === 'ADD_PRICING') {
-                if (!qty || !sizeQuantity || !price) {
+                const isComplex = (selectedProduct?.productType || prodType || editingItem?.productType) === 'SIZE_COLOUR';
+                if (!qty || (!isComplex && !sizeQuantity) || !price) {
                     if (!silent) toast({ title: "Validation Error", description: "Size, Quantity, and Price are required", variant: "destructive", duration: 2000 });
                     return false;
                 }
@@ -1619,12 +1620,12 @@ export default function AdminInventoryPage() {
                                                 <Input value={qty} onChange={e => setQty(e.target.value)} className="h-8 bg-background" placeholder="Qty" />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-xs">Quantity <span className="text-destructive">*</span></Label>
+                                                <Label className="text-xs">Quantity {(selectedProduct?.productType || prodType || editingItem?.productType) !== 'SIZE_COLOUR' && <span className="text-destructive">*</span>}</Label>
                                                 <Input
                                                     value={sizeQuantity}
                                                     onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (val.length <= 5) setSizeQuantity(val); }}
                                                     className="h-8 bg-background"
-                                                    placeholder={(selectedProduct?.productQuantity || (selectedProduct?.productType || prodType) === 'SIZE_COLOUR') ? "Managed by Product/Colours" : "Unit Qty"}
+                                                    placeholder={(selectedProduct?.productQuantity || (selectedProduct?.productType || prodType) === 'SIZE_COLOUR') ? "Managed by Product Size/Colours" : "Unit Qty"}
                                                     disabled={!!selectedProduct?.productQuantity || (selectedProduct?.productType || prodType || editingItem?.productType) === 'SIZE_COLOUR'}
                                                 />
 
