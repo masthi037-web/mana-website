@@ -53,6 +53,7 @@ export interface Product {
     multipleSetDiscount?: string;
     multipleDiscountMoreThan?: string;
     productColour?: ProductColour[];
+    productType?: string;
 }
 
 export interface ProductColour {
@@ -84,6 +85,7 @@ export interface UpdateProductRequest {
     famous: boolean;
     createdAt?: string;
     updatedAt?: string;
+    productType?: string;
 }
 
 export interface Catalogue {
@@ -256,7 +258,9 @@ export interface CreateProductRequest {
     productImage?: string;
     productOffer?: string;
     multipleSetDiscount?: string;
+
     multipleDiscountMoreThan?: string;
+    productType?: string;
 }
 
 export interface CreateProductResponse {
@@ -270,7 +274,9 @@ export interface CreateProductResponse {
     productImage?: string;
     productOffer?: string;
     multipleSetDiscount?: string;
+
     multipleDiscountMoreThan?: string;
+    productType?: string;
 }
 
 export interface CreatePricingRequest {

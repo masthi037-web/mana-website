@@ -62,6 +62,7 @@ export default function AdminInventoryPage() {
     const [prodDeliveryCost, setProdDeliveryCost] = useState("40");
     const [prodQuantity, setProdQuantity] = useState("");
     const [prodStatus, setProdStatus] = useState("ACTIVE");
+    const [prodType, setProdType] = useState("");
     const [isFamous, setIsFamous] = useState(false);
     const [price, setPrice] = useState("");
     const [discountedPrice, setDiscountedPrice] = useState("");
@@ -159,7 +160,8 @@ export default function AdminInventoryPage() {
                 createdAt: p.createdAt,
                 productPics: p.productPics, // In case needed
                 productQuantity: p.productQuantity,
-                productStatus: p.productStatus // Added missing field
+                productStatus: p.productStatus,
+                productType: p.productType // Added missing field
             }));
         }
     });
@@ -482,7 +484,8 @@ export default function AdminInventoryPage() {
                         multipleDiscountMoreThan: (moreThanQty && moreThanDiscount)
                             ? `${moreThanQty}-${moreThanDiscount}`
                             : undefined,
-                        productQuantity: prodQuantity
+                        productQuantity: prodQuantity,
+                        productType: prodType
                     });
                 } else {
                     return adminService.createProduct({
@@ -504,7 +507,8 @@ export default function AdminInventoryPage() {
                         multipleSetDiscount: bulkDiscounts.length > 0
                             ? bulkDiscounts.map(bd => `${bd.qty}-${bd.discount}`).join('&&&')
                             : undefined,
-                        productQuantity: prodQuantity
+                        productQuantity: prodQuantity,
+                        productType: prodType
                     });
                 }
             } else if (level === 'PRICING' && selectedProduct && !isManageSheetOpen) {
@@ -623,7 +627,7 @@ export default function AdminInventoryPage() {
         // Full reset for Product
         setName(""); setDesc(""); setProdIng(""); setProdBest(""); setProdInst(""); setProdOffer("");
         setProdDeliveryCost("40"); setProdQuantity(""); setIsFamous(false); setPrice(""); setDiscountedPrice(""); setQty(""); setSizeQuantity(""); setSizeStatus("ACTIVE"); setIsMandatory(false);
-        setProdStatus("ACTIVE");
+        setProdStatus("ACTIVE"); setProdType("");
         setBulkDiscounts([]); setTempBulkQty(""); setTempBulkDiscount("");
         setMoreThanQty(""); setMoreThanDiscount("");
         setImage(null);
@@ -669,6 +673,7 @@ export default function AdminInventoryPage() {
         setProdBest(prod.bestBefore || prod.productBestBefore || "");
         setProdInst(prod.instructions || prod.productInst || "");
         setProdStatus(prod.productStatus || "ACTIVE");
+        setProdType(prod.productType || "");
 
         // Price & Offer
         setPrice(String(prod.productPrice || prod.price || ""));
@@ -810,13 +815,112 @@ export default function AdminInventoryPage() {
                     </div>
                 )}
 
-                {level === 'PRODUCT' && (
-                    <div className="grid grid-cols-2 gap-6 pt-2">
-                        {/* Row 1: Available Quantity & Price */}
-                        <div className="space-y-2">
-                            <Label>Available Quantity</Label>
-                            <Input placeholder="10" value={prodQuantity} onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (val.length <= 5) setProdQuantity(val); }} min={0} />
+                {/* PRODUCT STRUCTURE SELECTION (New Product Only) */}
+                {level === 'PRODUCT' && !editingItem && !prodType ? (
+                    <div className="space-y-6 animate-in hover:fade-in slide-in-from-bottom-5 duration-500">
+                        <div className="text-center space-y-2 mb-8">
+                            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                                <Sparkles className="w-8 h-8 text-primary" />
+                            </div>
+                            <h3 className="text-xl font-bold tracking-tight">Select Product Category</h3>
+                            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                                Choose the structure that best fits your product inventory needs.
+                            </p>
                         </div>
+
+                        <div className="grid gap-3">
+                            {[
+                                {
+                                    id: 'SIMPLE',
+                                    title: 'Standard Product',
+                                    desc: 'No Colour, No Size (e.g. Jewellery)',
+                                    icon: Tag,
+                                    color: 'bg-blue-50 text-blue-600 border-blue-200'
+                                },
+                                {
+                                    id: 'COLOUR',
+                                    title: 'Colour Variant',
+                                    desc: 'With Colour Only (e.g. Sarees)',
+                                    icon: Layers,
+                                    color: 'bg-pink-50 text-pink-600 border-pink-200'
+                                },
+                                {
+                                    id: 'SIZE',
+                                    title: 'Size Variant',
+                                    desc: 'With Size Only (e.g. Pickles)',
+                                    icon: Package,
+                                    color: 'bg-amber-50 text-amber-600 border-amber-200'
+                                },
+                                {
+                                    id: 'SIZE_COLOUR',
+                                    title: 'Complex Variant',
+                                    desc: 'With Size & Colour (e.g. Dress)',
+                                    icon: Folder,
+                                    color: 'bg-purple-50 text-purple-600 border-purple-200'
+                                }
+                            ].map((opt) => (
+                                <button
+                                    key={opt.id}
+                                    onClick={() => {
+                                        setProdType(opt.id);
+                                        // Auto-configure form based on type
+                                        if (opt.id === 'SIMPLE') {
+                                            // Ensure quantity is editable (cleared or default)
+                                            setProdQuantity("");
+                                        } else {
+                                            // Disable main quantity to force variants
+                                            setProdQuantity("");
+                                        }
+                                    }}
+                                    className={`relative group flex items-start gap-4 p-4 rounded-xl border text-left transition-all duration-300 hover:shadow-md hover:scale-[1.02] bg-white hover:border-primary/50`}
+                                >
+                                    <div className={`p-3 rounded-full ${opt.color} shadow-sm group-hover:shadow-md transition-all`}>
+                                        <opt.icon className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-foreground group-hover:text-primary transition-colors">{opt.title}</h4>
+                                        <p className="text-xs text-muted-foreground mt-1 font-medium">{opt.desc}</p>
+                                    </div>
+                                    <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        {/* Hidden Input for Type Logic Persistence */}
+                        {level === 'PRODUCT' && (
+                            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-primary" />
+                                    <span className="text-xs font-bold text-primary uppercase tracking-wider">
+                                        Type: {editingItem ? (editingItem.productType || "Standard") : (prodType === 'SIMPLE' ? 'Standard' : prodType === 'COLOUR' ? 'Colour Variant' : prodType === 'SIZE' ? 'Size Variant' : 'Complex')}
+                                    </span>
+                                </div>
+                                {!editingItem && (
+                                    <Button variant="ghost" size="sm" className="h-6 text-[10px] uppercase font-bold text-muted-foreground hover:text-foreground" onClick={() => setProdType("")}>Change</Button>
+                                )}
+                            </div>
+                        )}
+                        {/* Remainder of Form... */}
+                    </>
+                )}
+
+                {/* MAIN PRODUCT FORM (Only if Type selected or Editing) */}
+                {level === 'PRODUCT' && (!!prodType || !!editingItem) && (
+                    <div className="grid grid-cols-2 gap-6 pt-2">
+                        {/* Row 1: Available Quantity (Only for Simple/Standard) */}
+                        {(prodType === 'SIMPLE' || (editingItem && !editingItem.multipleSetDiscount && !editingItem.pricing?.length && !editingItem.colours?.length)) ? (
+                            <div className="space-y-2">
+                                <Label>Available Quantity</Label>
+                                <Input placeholder="10" value={prodQuantity} onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (val.length <= 5) setProdQuantity(val); }} min={0} />
+                            </div>
+                        ) : (
+                            <div className="space-y-2 opacity-50 pointer-events-none">
+                                <Label>Available Quantity</Label>
+                                <Input value="Managed by Variants" disabled className="bg-muted" />
+                            </div>
+                        )}
                         <div className="space-y-2">
                             <Label>Price {prodQuantity ? <span className="text-destructive">*</span> : null}</Label>
                             <Input type="number" placeholder="100" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} min={0} />

@@ -151,7 +151,8 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
             rating: r.productRating,
             text: r.productReview,
             date: new Date(r.createdAt).toLocaleDateString()
-        })) || []
+        })) || [],
+        productType: apiProd.productType
     };
 }
 

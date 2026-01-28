@@ -64,6 +64,7 @@ export type Product = {
   productQuantity?: string;
   colors?: ProductColor[];
   productStatus?: string;
+  productType?: string;
   reviews?: Review[];
 };
 
