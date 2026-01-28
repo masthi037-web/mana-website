@@ -1045,13 +1045,25 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 let availableStock = 0;
                 let stockKey = "";
-                if (sizeId) {
+
+                // PRIORITIZED STOCK CHECK
+                if (detail.productSizeColourId) {
+                    availableStock = parseInt(detail.productSizeColourQuantity || '0');
+                    stockKey = `${detail.productId}-sc-${detail.productSizeColourId}`;
+                }
+                else if (sizeId) {
                     availableStock = parseInt(detail.sizeQuantity || '0');
                     stockKey = `${detail.productId}-size-${sizeId}`;
-                } else {
+                }
+                else if (detail.productColourId) {
+                    availableStock = parseInt(detail.colourQuantityAvailable || '0');
+                    stockKey = `${detail.productId}-col-${detail.productColourId}`;
+                }
+                else {
                     availableStock = parseInt(detail.productQuantityAvailable || '0');
                     stockKey = `${detail.productId}-master`;
                 }
+
                 if (isNaN(availableStock)) availableStock = 0;
 
                 stockLimits.set(stockKey, { limit: availableStock, name: item.name });
