@@ -455,6 +455,29 @@ export default function AdminInventoryPage() {
                     toast({ title: "Validation Error", description: "Name and Description are required", variant: "destructive", duration: 2000 });
                     return;
                 }
+
+                if (!editingItem && !prodType) {
+                    toast({ title: "Validation Error", description: "Please select a Product Type", variant: "destructive", duration: 2000 });
+                    return;
+                }
+
+                // Standard Product Validation (Strict)
+                const currentType = prodType || editingItem?.productType;
+                if (currentType === 'SIMPLE') {
+                    if (!prodQuantity) {
+                        toast({ title: "Validation Error", description: "Available Quantity is required for Standard Product", variant: "destructive", duration: 2000 });
+                        return;
+                    }
+                    if (!price) {
+                        toast({ title: "Validation Error", description: "Price is required for Standard Product", variant: "destructive", duration: 2000 });
+                        return;
+                    }
+                    if (!image && !editingItem?.productImage) {
+                        toast({ title: "Validation Error", description: "Product Image is required for Standard Product", variant: "destructive", duration: 2000 });
+                        return;
+                    }
+                }
+
                 if (prodQuantity && (!price || !image && !editingItem?.productImage)) {
                     toast({ title: "Validation Error", description: "Price and Image are required when Quantity is set", variant: "destructive", duration: 2000 });
                     return;
@@ -1236,7 +1259,12 @@ export default function AdminInventoryPage() {
                                     <Sparkles className="w-4 h-4 text-primary" /> Product Colours
                                 </h3>
                                 {manageMode !== 'ADD_COLOUR' && (
-                                    (!selectedProduct?.price || selectedProduct.price <= 0) ? (
+                                    (prodType || editingItem?.productType) === 'SIMPLE' ? (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-medium animate-in fade-in">
+                                            <Tag className="w-3 h-3" />
+                                            Disabled for Standard Product
+                                        </div>
+                                    ) : (!selectedProduct?.price || selectedProduct.price <= 0) ? (
                                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 text-xs font-medium animate-in fade-in">
                                             <AlertCircle className="w-3 h-3" />
                                             Add Price to enable colours
@@ -1256,6 +1284,21 @@ export default function AdminInventoryPage() {
                                     )
                                 )}
                             </div>
+
+                            {/* Standard Product Warning */}
+                            {(prodType || editingItem?.productType) === 'SIMPLE' && (
+                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-white p-2 rounded-full shadow-sm text-blue-500 mt-0.5">
+                                        <Tag className="w-4 h-4" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-blue-900">Colour Variants Disabled</h4>
+                                        <p className="text-xs text-blue-700/80 leading-relaxed">
+                                            This is a Standard Product which does not have colour variants.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                             {(!selectedProduct?.price || selectedProduct.price <= 0) && (
                                 <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
@@ -1383,7 +1426,12 @@ export default function AdminInventoryPage() {
                                     <Tag className="w-4 h-4 text-primary" /> Pricing Variants
                                 </h3>
                                 {manageMode !== 'ADD_PRICING' && (
-                                    selectedProduct?.productQuantity ? (
+                                    (prodType || editingItem?.productType) === 'SIMPLE' ? (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-medium animate-in fade-in">
+                                            <Tag className="w-3 h-3" />
+                                            Disabled for Standard Product
+                                        </div>
+                                    ) : selectedProduct?.productQuantity ? (
                                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in slide-in-from-right-2">
                                             <span className="relative flex h-2 w-2">
                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -1421,6 +1469,21 @@ export default function AdminInventoryPage() {
                                     )
                                 )}
                             </div>
+
+                            {/* Standard Product Warning */}
+                            {(prodType || editingItem?.productType) === 'SIMPLE' && (
+                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-white p-2 rounded-full shadow-sm text-blue-500 mt-0.5">
+                                        <Tag className="w-4 h-4" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-blue-900">Pricing Variants Disabled</h4>
+                                        <p className="text-xs text-blue-700/80 leading-relaxed">
+                                            This is a Standard Product which does not have size variants.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                             {selectedProduct?.productQuantity && (
                                 <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
