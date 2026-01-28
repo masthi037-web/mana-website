@@ -1316,7 +1316,7 @@ export default function AdminInventoryPage() {
                             </div>
 
                             {/* Standard Product Warning */}
-                            {(prodType || editingItem?.productType) === 'SIMPLE' && (
+                            {(prodType || selectedProduct?.productType || editingItem?.productType) === 'SIMPLE' && (
                                 <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
                                     <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 mt-0.5">
                                         <Tag className="w-4 h-4" />
@@ -1511,7 +1511,7 @@ export default function AdminInventoryPage() {
                             </div>
 
                             {/* Standard Product Warning */}
-                            {(prodType || editingItem?.productType) === 'SIMPLE' && (
+                            {(prodType || selectedProduct?.productType || editingItem?.productType) === 'SIMPLE' && (
                                 <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
                                     <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 mt-0.5">
                                         <Tag className="w-4 h-4" />
@@ -1526,7 +1526,7 @@ export default function AdminInventoryPage() {
                             )}
 
                             {/* Colour Variant Warning */}
-                            {(prodType || editingItem?.productType) === 'COLOUR' && (
+                            {(prodType || selectedProduct?.productType || editingItem?.productType) === 'COLOUR' && (
                                 <div className="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
                                     <div className="bg-white p-2 rounded-full shadow-sm text-pink-500 mt-0.5">
                                         <Tag className="w-4 h-4" />
@@ -1815,7 +1815,10 @@ export default function AdminInventoryPage() {
                                         </div>
                                     )
                                 })}
-                                {pricingOptions.length === 0 && <div className="text-center py-8 text-muted-foreground text-sm">No sizes found. Add one to get started.</div>}
+                                {pricingOptions.length === 0 && !selectedProduct?.productQuantity && !hasColourWithQuantity &&
+                                    (prodType || selectedProduct?.productType || editingItem?.productType) !== 'SIMPLE' &&
+                                    (prodType || selectedProduct?.productType || editingItem?.productType) !== 'COLOUR' &&
+                                    <div className="text-center py-8 text-muted-foreground text-sm">No sizes found. Add one to get started.</div>}
                             </div>
                         </div>
                     </SheetContent>
