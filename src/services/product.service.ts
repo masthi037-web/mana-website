@@ -120,6 +120,7 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
         name: apiProd.productName,
         description: apiProd.productInfo,
         price: (apiProd.productPrice && apiProd.productPrice > 0) ? apiProd.productPrice : (firstPricing ? firstPricing.productSizePrice : apiProd.productDeliveryCost),
+        priceAfterDiscount: apiProd.productPriceAfterDiscount,
         pricing: pricingOptions,
         imageId: String(apiProd.productId),
         imageUrl: imageUrl,
