@@ -1315,7 +1315,7 @@ export default function AdminInventoryPage() {
 
                                     if (currentType === 'SIZE_COLOUR') {
                                         return (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 text-purple-600 border border-purple-200 text-xs font-medium animate-in fade-in">
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in">
                                                 <Layers className="w-3 h-3" />
                                                 Managed in Size Variant
                                             </div>
@@ -1849,7 +1849,7 @@ export default function AdminInventoryPage() {
                                                                         </div>
                                                                     </div>
                                                                     <div className="flex items-center gap-2">
-                                                                        <span className="font-mono font-bold text-xs text-emerald-600">+₹{sc.price}</span>
+                                                                        {sc.price > 0 && <span className="font-mono font-bold text-xs text-emerald-600">+₹{sc.price}</span>}
                                                                         <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-muted" onClick={() => {
                                                                             setEditingItem(sc);
                                                                             setName(sc.name);

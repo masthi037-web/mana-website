@@ -518,11 +518,12 @@ export default function ProductDetailPage() {
                           </div>
                         )}
                         <span className={cn("text-lg font-bold mb-1", selectedPricingId === option.id ? "text-primary" : "text-foreground")}>
-                          {option.quantity}
+                          <div className="font-medium text-center">
+                            {option.quantity}
+                            {option.price > 0 && !allPricesSame && <span className="ml-1 text-xs text-primary font-bold">+₹{option.price}</span>}
+                          </div>
                         </span>
-                        {!allPricesSame && (
-                          <span className="text-sm text-muted-foreground">₹{option.price}</span>
-                        )}
+                        {/* The original price display below quantity is now integrated into the span above */}
                       </button>
                     ));
                   })()}
@@ -596,7 +597,9 @@ export default function ProductDetailPage() {
                           </div>
                           <span className="text-base font-semibold text-foreground">{sc.name}</span>
                         </div>
-                        <span className={cn("text-base font-bold", isSelected ? "text-primary" : "text-primary")}>+₹{sc.price}</span>
+                        <span className={cn("text-base font-bold", isSelected ? "text-primary" : "text-primary")}>
+                          {sc.price > 0 && `+₹${sc.price}`}
+                        </span>
                       </button>
                     );
                   })}
