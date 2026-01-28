@@ -986,7 +986,11 @@ export default function AdminInventoryPage() {
                         )}
                         <div className="space-y-2">
                             <Label>Price {(prodQuantity || (prodType || editingItem?.productType) === 'SIMPLE' || (prodType || editingItem?.productType) === 'COLOUR') ? <span className="text-destructive">*</span> : null}</Label>
-                            <Input type="number" placeholder="100" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} min={0} />
+                            {(prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE' ? (
+                                <Input value="Managed by Variants" disabled className="bg-muted" />
+                            ) : (
+                                <Input type="number" placeholder="100" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} min={0} />
+                            )}
                         </div>
 
 
@@ -995,16 +999,22 @@ export default function AdminInventoryPage() {
                         <div className="space-y-2">
                             <Label>Product Offer</Label>
                             <div className="relative">
-                                <Input
-                                    type="number"
-                                    placeholder="50"
-                                    value={prodOffer}
-                                    onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (Number(val) < 99) setProdOffer(val); }}
-                                    className="pr-16"
-                                />
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
-                                    % OFF
-                                </div>
+                                {(prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE' ? (
+                                    <Input value="Managed" disabled className="bg-muted text-muted-foreground" />
+                                ) : (
+                                    <>
+                                        <Input
+                                            type="number"
+                                            placeholder="50"
+                                            value={prodOffer}
+                                            onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (Number(val) < 99) setProdOffer(val); }}
+                                            className="pr-16"
+                                        />
+                                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
+                                            % OFF
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                         <div className="space-y-2">
@@ -1295,6 +1305,15 @@ export default function AdminInventoryPage() {
                                         );
                                     }
 
+                                    if (currentType === 'SIZE') {
+                                        return (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in">
+                                                <Tag className="w-3 h-3" />
+                                                Disabled for Size Variant
+                                            </div>
+                                        );
+                                    }
+
                                     if ((!selectedProduct?.price || selectedProduct.price <= 0)) {
                                         return (
                                             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 text-xs font-medium animate-in fade-in">
@@ -1339,7 +1358,21 @@ export default function AdminInventoryPage() {
                                 </div>
                             )}
 
-                            {(!selectedProduct?.price || selectedProduct.price <= 0) && (
+                            {((prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE') && (
+                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 mt-0.5">
+                                        <Tag className="w-4 h-4" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-amber-900">Disabled for Size Variant</h4>
+                                        <p className="text-xs text-amber-700/80 leading-relaxed">
+                                            This product is set to <b>Type: Size Variant</b>. Colour variants cannot be added to this type.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {(!selectedProduct?.price || selectedProduct.price <= 0) && (prodType || selectedProduct?.productType || editingItem?.productType) !== 'SIZE' && (prodType || selectedProduct?.productType || editingItem?.productType) !== 'SIMPLE' && (
                                 <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
                                     <div className="bg-white p-2 rounded-full shadow-sm text-red-500 mt-0.5">
                                         <AlertCircle className="w-4 h-4" />
@@ -1551,20 +1584,7 @@ export default function AdminInventoryPage() {
 
 
 
-                            {hasColourWithQuantity && !selectedProduct?.productQuantity && (
-                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                                    <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 mt-0.5">
-                                        <Tag className="w-4 h-4" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <h4 className="text-sm font-bold text-amber-900">Pricing Variants Disabled (Colour Quantities Set)</h4>
-                                        <p className="text-xs text-amber-700/80 leading-relaxed">
-                                            Quantities are set on Colour variants (including 0/Out of Stock).
-                                            To add multiple pricing variants (Sizes), please remove quantities (make them blank/null) from your Colours.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+
 
                             {/* ADD PRICING FORM */}
                             {manageMode === 'ADD_PRICING' && (
