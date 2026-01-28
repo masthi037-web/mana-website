@@ -2035,7 +2035,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                     <div key={`${item.cartItemId}-${discountPercent}`} className={cn("relative group/item flex gap-4", isNew && "ring-2 ring-primary/20 rounded-xl p-2 -m-2 bg-primary/5 transition-all duration-1000")}>
                                                                         <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-border/50 bg-secondary/30">
                                                                             <Image
-                                                                                src={item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
+                                                                                src={item.selectedSizeColours?.[0]?.productPics || item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
                                                                                 alt={item.name}
                                                                                 fill
                                                                                 className={cn("object-cover", (item.productStatus === 'INACTIVE' || item.productStatus === 'OUTOFSTOCK') && "grayscale opacity-60")}
