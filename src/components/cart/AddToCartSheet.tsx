@@ -151,11 +151,11 @@ const SizeColourRow = ({
     <div className="flex items-center gap-3">
       <div
         className={cn(
-          "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-300",
-          isSelected ? "bg-primary border-primary scale-110" : "border-muted-foreground/30 group-hover:border-primary/50"
+          "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300",
+          isSelected ? "bg-primary border-primary" : "border-muted-foreground/30 group-hover:border-primary/50"
         )}
       >
-        {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />}
+        {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-primary-foreground shadow-sm" />}
       </div>
 
       {sizeColour.productPics && (

@@ -667,9 +667,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     return {
                         productId: parseInt(item.id),
                         pricingId: pricingId,
-                        productSizeColourIds: item.selectedSizeColours && item.selectedSizeColours.length > 0
-                            ? item.selectedSizeColours.map(sc => sc.id).join('&&&')
-                            : "",
+                        productSizeColourId: item.productSizeColourId || "",
                         quantity: item.quantity
                     };
                 })
@@ -788,9 +786,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     return {
                         productId: parseInt(item.id),
                         pricingId: pricingId,
-                        productSizeColourIds: item.selectedSizeColours && item.selectedSizeColours.length > 0
-                            ? item.selectedSizeColours.map(sc => sc.id).join('&&&')
-                            : "",
+                        productSizeColourId: item.productSizeColourId || "",
                         quantity: item.quantity
                     };
                 })
@@ -995,10 +991,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     productId: parseInt(item.id),
                     sizeId: sizeId,
                     productColourId: productColourId ? parseInt(productColourId) : null,
-                    multipleSetDiscount: item.multipleSetDiscount,
-                    multipleDiscountMoreThan: item.multipleDiscountMoreThan,
-                    productOffer: item.productOffer,
-                    productSizeColourIds: item.selectedSizeColours ? item.selectedSizeColours.map(sc => sc.id).join('&&&') : ""
+                    productSizeColourId: item.productSizeColourId || ""
                 };
             });
 

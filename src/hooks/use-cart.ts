@@ -15,6 +15,7 @@ export type CartItem = ProductWithImage & {
   selectedSizeColours?: ProductSizeColourOption[];
   priceAfterDiscount?: number;
   productSizeId?: string;
+  productSizeColourId?: string;
   selectedColour?: {
     id: string;
     name: string;
@@ -108,6 +109,7 @@ export const useCart = create<CartState>()(
             quantity: 1,
             selectedVariants,
             selectedSizeColours,
+            productSizeColourId: (selectedSizeColours && selectedSizeColours.length > 0) ? selectedSizeColours[0].id : undefined,
             selectedColour
           }];
         }

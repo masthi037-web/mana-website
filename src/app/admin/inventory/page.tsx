@@ -822,7 +822,7 @@ export default function AdminInventoryPage() {
                             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
                                 <Sparkles className="w-8 h-8 text-primary" />
                             </div>
-                            <h3 className="text-xl font-bold tracking-tight">Select Product Category</h3>
+                            <h3 className="text-xl font-bold tracking-tight">Select Product Type</h3>
                             <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                                 Choose the structure that best fits your product inventory needs.
                             </p>
@@ -991,7 +991,7 @@ export default function AdminInventoryPage() {
                     </div>
                 )}
 
-                {(level === 'CATEGORY' || level === 'CATALOGUE' || level === 'PRODUCT') && (
+                {((level === 'CATEGORY' || level === 'CATALOGUE') || (level === 'PRODUCT' && (!!prodType || !!editingItem))) && (
                     <div className="pt-2">
                         <ImageUpload
                             value={image || undefined}
@@ -1004,7 +1004,7 @@ export default function AdminInventoryPage() {
                 )}
 
                 {/* Product Extra Fields */}
-                {level === 'PRODUCT' && (
+                {level === 'PRODUCT' && (!!prodType || !!editingItem) && (
                     <>
 
                         <div className="space-y-2">

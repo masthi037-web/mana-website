@@ -377,7 +377,7 @@ export interface CheckoutValidationItem {
     productId: number;
     sizeId: number | null; // Renamed from pricingId to sizeId as per requirement
     productColourId: number | null;
-    productSizeColourIds: string; // "id1&&&id2"
+    productSizeColourId: string; // "id"
 }
 
 export interface CheckoutCheckResponse {
@@ -411,7 +411,7 @@ export interface CheckoutValidationRequest {
 export interface PaymentInitializationItem {
     productId: number;
     pricingId: number | null;
-    productSizeColourIds: string;
+    productSizeColourId: string;
     quantity: number;
 }
 
