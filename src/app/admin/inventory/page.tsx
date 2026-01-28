@@ -340,6 +340,14 @@ export default function AdminInventoryPage() {
                 }
             }
 
+            // Colour Variant Validation (Strict)
+            if (currentType === 'COLOUR') {
+                if (!price) {
+                    if (!silent) toast({ title: "Validation Error", description: "Price is required for Colour Variant Products", variant: "destructive", duration: 2000 });
+                    return false;
+                }
+            }
+
             if (prodQuantity && (!price || (!image && !editingItem?.productImage))) {
                 if (!silent) toast({ title: "Validation Error", description: "Price and Image are required when Quantity is set", variant: "destructive", duration: 2000 });
                 return false;
@@ -958,7 +966,7 @@ export default function AdminInventoryPage() {
                         {/* Row 1: Available Quantity (Only for Simple/Standard) */}
                         {(prodType === 'SIMPLE' || (editingItem && !editingItem.multipleSetDiscount && !editingItem.pricing?.length && !editingItem.colours?.length)) ? (
                             <div className="space-y-2">
-                                <Label>Available Quantity</Label>
+                                <Label>Available Quantity {(prodType || editingItem?.productType) === 'SIMPLE' && <span className="text-destructive">*</span>}</Label>
                                 <Input placeholder="10" value={prodQuantity} onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (val.length <= 5) setProdQuantity(val); }} min={0} />
                             </div>
                         ) : (
@@ -968,26 +976,11 @@ export default function AdminInventoryPage() {
                             </div>
                         )}
                         <div className="space-y-2">
-                            <Label>Price {prodQuantity ? <span className="text-destructive">*</span> : null}</Label>
+                            <Label>Price {(prodQuantity || (prodType || editingItem?.productType) === 'SIMPLE' || (prodType || editingItem?.productType) === 'COLOUR') ? <span className="text-destructive">*</span> : null}</Label>
                             <Input type="number" placeholder="100" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} min={0} />
                         </div>
 
-                        {/* Warning about Single Variant Mode */}
-                        {prodQuantity && (
-                            <div className="col-span-2 bg-amber-50/50 border border-amber-100 rounded-lg p-3 flex gap-3 items-start">
-                                <div className="mt-0.5 text-amber-600">
-                                    <Sparkles className="w-4 h-4" />
-                                </div>
-                                <div className="space-y-0.5">
-                                    <p className="text-xs font-medium text-amber-800">
-                                        Setting a quantity here enables "Single Variant Mode"
-                                    </p>
-                                    <p className="text-[11px] text-amber-600/90 leading-relaxed">
-                                        To add multiple colour or size variants (e.g. Red, Blue, Small, Large) with their own quantities, leave this <b>Available Quantity</b> empty or 0.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
+
 
                         {/* Row 2: Product Offer & Offer Price */}
                         <div className="space-y-2">
@@ -1042,7 +1035,7 @@ export default function AdminInventoryPage() {
                         <ImageUpload
                             value={image || undefined}
                             onChange={setImage}
-                            label={<span>{level.charAt(0) + level.slice(1).toLowerCase()} Image {level === 'PRODUCT' && prodQuantity ? <span className="text-destructive">*</span> : null}</span>}
+                            label={<span>{level.charAt(0) + level.slice(1).toLowerCase()} Image {level === 'PRODUCT' && (prodQuantity || (prodType || editingItem?.productType) === 'SIMPLE') ? <span className="text-destructive">*</span> : null}</span>}
                             companyDomain={domain || ""}
                             maxFiles={level === 'CATEGORY' || level === 'CATALOGUE' ? 1 : level === 'PRODUCT' ? 4 : 3}
                         />
@@ -1315,9 +1308,9 @@ export default function AdminInventoryPage() {
                                         <Tag className="w-4 h-4" />
                                     </div>
                                     <div className="space-y-1">
-                                        <h4 className="text-sm font-bold text-blue-900">Colour Variants Disabled</h4>
+                                        <h4 className="text-sm font-bold text-blue-900">Standard Product (Simple)</h4>
                                         <p className="text-xs text-blue-700/80 leading-relaxed">
-                                            This is a Standard Product which does not have colour variants.
+                                            This product is set to <b>Type: Standard</b>. Colour variants cannot be added to this type.
                                         </p>
                                     </div>
                                 </div>
@@ -1345,8 +1338,8 @@ export default function AdminInventoryPage() {
                                     <div className="space-y-1">
                                         <h4 className="text-sm font-bold text-amber-900">Colour Variants Disabled</h4>
                                         <p className="text-xs text-amber-700/80 leading-relaxed">
-                                            This product has a fixed quantity set, which enables simplified inventory tracking.
-                                            To add multiple colour variants, please remove the quantity from the main product settings.
+                                            This section is disabled because a <b>Total Quantity</b> is set on the main product.
+                                            To add colour variants, please clear the <b>Available Quantity</b> field in the main settings above.
                                         </p>
                                     </div>
                                 </div>
@@ -1454,6 +1447,11 @@ export default function AdminInventoryPage() {
                                             <Tag className="w-3 h-3" />
                                             Disabled for Standard Product
                                         </div>
+                                    ) : (prodType || editingItem?.productType) === 'COLOUR' ? (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-50 text-pink-600 border border-pink-200 text-xs font-medium animate-in fade-in">
+                                            <Tag className="w-3 h-3" />
+                                            Disabled for Colour Variant
+                                        </div>
                                     ) : selectedProduct?.productQuantity ? (
                                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in slide-in-from-right-2">
                                             <span className="relative flex h-2 w-2">
@@ -1500,9 +1498,24 @@ export default function AdminInventoryPage() {
                                         <Tag className="w-4 h-4" />
                                     </div>
                                     <div className="space-y-1">
-                                        <h4 className="text-sm font-bold text-blue-900">Pricing Variants Disabled</h4>
+                                        <h4 className="text-sm font-bold text-blue-900">Standard Product (Simple)</h4>
                                         <p className="text-xs text-blue-700/80 leading-relaxed">
-                                            This is a Standard Product which does not have size variants.
+                                            This product is set to <b>Type: Standard</b>. Size/Pricing variants cannot be added to this type.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Colour Variant Warning */}
+                            {(prodType || editingItem?.productType) === 'COLOUR' && (
+                                <div className="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-white p-2 rounded-full shadow-sm text-pink-500 mt-0.5">
+                                        <Tag className="w-4 h-4" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-pink-900">Pricing Variants Disabled</h4>
+                                        <p className="text-xs text-pink-700/80 leading-relaxed">
+                                            This is a Colour Variant product which does not have size variants. Pricing is managed within each colour.
                                         </p>
                                     </div>
                                 </div>
@@ -1516,8 +1529,8 @@ export default function AdminInventoryPage() {
                                     <div className="space-y-1">
                                         <h4 className="text-sm font-bold text-amber-900">Pricing Variants Disabled</h4>
                                         <p className="text-xs text-amber-700/80 leading-relaxed">
-                                            This product has a fixed quantity set, which enables simplified inventory tracking.
-                                            To add multiple pricing variants (Sizes), please remove the quantity from the main product settings.
+                                            This section is disabled because a <b>Total Quantity</b> is set on the main product.
+                                            To add size variants, please clear the <b>Available Quantity</b> field in the main settings above.
                                         </p>
                                     </div>
                                 </div>
@@ -1856,6 +1869,15 @@ export default function AdminInventoryPage() {
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-base font-bold truncate pr-6">{prod.name}</CardTitle>
                                     <div className="flex items-center gap-2">
+                                        <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${!prod.productType || prod.productType === 'SIMPLE' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                            prod.productType === 'COLOUR' ? 'bg-pink-50 text-pink-600 border-pink-100' :
+                                                prod.productType === 'SIZE' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                    'bg-purple-50 text-purple-600 border-purple-100'
+                                            }`}>
+                                            {!prod.productType || prod.productType === 'SIMPLE' ? 'Standard' :
+                                                prod.productType === 'COLOUR' ? 'Colour' :
+                                                    prod.productType === 'SIZE' ? 'Size' : 'Complex'}
+                                        </div>
                                         <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditProduct(prod, e)}>
                                             <Pencil className="h-3 w-3 text-muted-foreground" />
                                         </Button>
