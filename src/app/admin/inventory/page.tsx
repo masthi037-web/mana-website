@@ -1439,36 +1439,54 @@ export default function AdminInventoryPage() {
                         <div className="space-y-6 mt-8 border-t pt-6">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-bold flex items-center gap-2">
-                                    <Tag className="w-4 h-4 text-primary" /> Pricing Variants
+                                    <Tag className="w-4 h-4 text-primary" /> Size Variants
                                 </h3>
-                                {manageMode !== 'ADD_PRICING' && (
-                                    (prodType || editingItem?.productType) === 'SIMPLE' ? (
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-medium animate-in fade-in">
-                                            <Tag className="w-3 h-3" />
-                                            Disabled for Standard Product
-                                        </div>
-                                    ) : (prodType || editingItem?.productType) === 'COLOUR' ? (
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-50 text-pink-600 border border-pink-200 text-xs font-medium animate-in fade-in">
-                                            <Tag className="w-3 h-3" />
-                                            Disabled for Colour Variant
-                                        </div>
-                                    ) : selectedProduct?.productQuantity ? (
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in slide-in-from-right-2">
-                                            <span className="relative flex h-2 w-2">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                                            </span>
-                                            Single variant mode active
-                                        </div>
-                                    ) : hasColourWithQuantity ? (
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in slide-in-from-right-2">
-                                            <span className="relative flex h-2 w-2">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                                            </span>
-                                            Colour Quantities Set
-                                        </div>
-                                    ) : (
+                                {manageMode !== 'ADD_PRICING' && (() => {
+                                    const currentType = prodType || editingItem?.productType;
+
+                                    if (currentType === 'SIMPLE') {
+                                        return (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-medium animate-in fade-in">
+                                                <Tag className="w-3 h-3" />
+                                                Disabled for Standard Product
+                                            </div>
+                                        );
+                                    }
+
+                                    if (currentType === 'COLOUR') {
+                                        return (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-50 text-pink-600 border border-pink-200 text-xs font-medium animate-in fade-in">
+                                                <Tag className="w-3 h-3" />
+                                                Disabled for Colour Variant
+                                            </div>
+                                        );
+                                    }
+
+                                    if (selectedProduct?.productQuantity) {
+                                        return (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in slide-in-from-right-2">
+                                                <span className="relative flex h-2 w-2">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                                </span>
+                                                Single variant mode active
+                                            </div>
+                                        );
+                                    }
+
+                                    if (hasColourWithQuantity) {
+                                        return (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in slide-in-from-right-2">
+                                                <span className="relative flex h-2 w-2">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                                </span>
+                                                Colour Quantities Set
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
                                         <Button size="sm" onClick={() => {
                                             setManageMode('ADD_PRICING');
                                             resetVariantFieldsOnly();
@@ -1485,10 +1503,10 @@ export default function AdminInventoryPage() {
                                                 }
                                             }
                                         }} variant="outline" className="h-8 rounded-full">
-                                            <Plus className="w-3 h-3 mr-1" /> Add Variant
+                                            <Plus className="w-3 h-3 mr-1" /> Add Size
                                         </Button>
-                                    )
-                                )}
+                                    );
+                                })()}
                             </div>
 
                             {/* Standard Product Warning */}
@@ -1554,7 +1572,7 @@ export default function AdminInventoryPage() {
                             {/* ADD PRICING FORM */}
                             {manageMode === 'ADD_PRICING' && (
                                 <div className="bg-muted/30 p-4 rounded-xl border border-dashed border-primary/30 animate-in fade-in zoom-in-95 duration-300">
-                                    <h4 className="font-semibold text-sm mb-3 text-primary">{editingItem ? "Edit Pricing Variant" : "New Pricing Variant"}</h4>
+                                    <h4 className="font-semibold text-sm mb-3 text-primary">{editingItem ? "Edit Pricing Variant" : "New Size Variant"}</h4>
                                     <div className="space-y-3">
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-1">
@@ -1809,7 +1827,7 @@ export default function AdminInventoryPage() {
                                         </div>
                                     )
                                 })}
-                                {pricingOptions.length === 0 && <div className="text-center py-8 text-muted-foreground text-sm">No pricing variants found. Add one to get started.</div>}
+                                {pricingOptions.length === 0 && <div className="text-center py-8 text-muted-foreground text-sm">No sizes found. Add one to get started.</div>}
                             </div>
                         </div>
                     </SheetContent>
