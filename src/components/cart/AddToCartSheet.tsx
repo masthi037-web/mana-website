@@ -87,6 +87,7 @@ const ColourCard = ({
   active,
   statusLabel,
   onClick,
+  extraPrice = 0, // Default to 0
 }: {
   name: string;
   image?: string;
@@ -94,6 +95,7 @@ const ColourCard = ({
   active: boolean;
   statusLabel?: string;
   onClick: () => void;
+  extraPrice?: number; // Optional prop
 }) => (
   <div
     onClick={active ? onClick : undefined}
@@ -120,11 +122,12 @@ const ColourCard = ({
       )}
     </div>
     <span className={cn(
-      "text-xs font-bold tracking-tight line-clamp-1 max-w-full text-center px-1",
+      "text-xs font-bold tracking-tight line-clamp-1 max-w-full text-center px-1 group-disabled:text-muted-foreground/50",
       isSelected ? "text-primary" : "text-foreground",
       !active && "line-through decoration-destructive/50 decoration-2"
     )}>
       {name}
+      {extraPrice > 0 && <span className="ml-0.5 text-[10px] text-emerald-600 font-extrabold">(+₹{extraPrice})</span>}
     </span>
   </div>
 );
@@ -442,6 +445,7 @@ const AddToCartContent = ({
                     active={true} // Always active
                     isSelected={selectedSizeColourIds.has(sc.id)}
                     onClick={() => handleSizeColourToggle(sc.id)}
+                    extraPrice={sc.price}
                   />
                 ))}
               </div>
