@@ -1442,7 +1442,7 @@ export default function AdminInventoryPage() {
                                     <Tag className="w-4 h-4 text-primary" /> Size Variants
                                 </h3>
                                 {manageMode !== 'ADD_PRICING' && (() => {
-                                    const currentType = prodType || editingItem?.productType;
+                                    const currentType = prodType || selectedProduct?.productType || editingItem?.productType;
 
                                     if (currentType === 'SIMPLE') {
                                         return (
@@ -1487,27 +1487,24 @@ export default function AdminInventoryPage() {
                                     }
 
                                     return (
-                                        <div className="flex flex-col items-end gap-1">
-                                            <span className="text-[10px] text-red-500 font-mono">DEBUG: T="{prodType}" ET="{editingItem?.productType}" CT="{currentType}"</span>
-                                            <Button size="sm" onClick={() => {
-                                                setManageMode('ADD_PRICING');
-                                                resetVariantFieldsOnly();
-                                                // Pre-fill if base price exists
-                                                if (selectedProduct && selectedProduct.price > 0) {
-                                                    setPrice(String(selectedProduct.price));
-                                                    // Auto-calc discount if offer exists (Prioritize active edited offer)
-                                                    const offerToUse = prodOffer || selectedProduct?.productOffer;
-                                                    if (offerToUse) {
-                                                        const calculated = calculateDiscount(selectedProduct.price, offerToUse);
-                                                        setDiscountedPrice(String(calculated));
-                                                    } else {
-                                                        setDiscountedPrice(String(selectedProduct.price));
-                                                    }
+                                        <Button size="sm" onClick={() => {
+                                            setManageMode('ADD_PRICING');
+                                            resetVariantFieldsOnly();
+                                            // Pre-fill if base price exists
+                                            if (selectedProduct && selectedProduct.price > 0) {
+                                                setPrice(String(selectedProduct.price));
+                                                // Auto-calc discount if offer exists (Prioritize active edited offer)
+                                                const offerToUse = prodOffer || selectedProduct?.productOffer;
+                                                if (offerToUse) {
+                                                    const calculated = calculateDiscount(selectedProduct.price, offerToUse);
+                                                    setDiscountedPrice(String(calculated));
+                                                } else {
+                                                    setDiscountedPrice(String(selectedProduct.price));
                                                 }
-                                            }} variant="outline" className="h-8 rounded-full">
-                                                <Plus className="w-3 h-3 mr-1" /> Add Size
-                                            </Button>
-                                        </div>
+                                            }
+                                        }} variant="outline" className="h-8 rounded-full">
+                                            <Plus className="w-3 h-3 mr-1" /> Add Size
+                                        </Button>
                                     );
                                 })()}
                             </div>
