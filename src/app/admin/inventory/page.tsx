@@ -1330,20 +1330,7 @@ export default function AdminInventoryPage() {
                                 </div>
                             )}
 
-                            {selectedProduct?.productQuantity && (
-                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                                    <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 mt-0.5">
-                                        <Layers className="w-4 h-4" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <h4 className="text-sm font-bold text-amber-900">Colour Variants Disabled</h4>
-                                        <p className="text-xs text-amber-700/80 leading-relaxed">
-                                            This section is disabled because a <b>Total Quantity</b> is set on the main product.
-                                            To add colour variants, please clear the <b>Available Quantity</b> field in the main settings above.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+
 
                             {/* ADD COLOUR FORM */}
                             {manageMode === 'ADD_COLOUR' && (
@@ -1539,20 +1526,7 @@ export default function AdminInventoryPage() {
                                 </div>
                             )}
 
-                            {selectedProduct?.productQuantity && (
-                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                                    <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 mt-0.5">
-                                        <Tag className="w-4 h-4" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <h4 className="text-sm font-bold text-amber-900">Pricing Variants Disabled</h4>
-                                        <p className="text-xs text-amber-700/80 leading-relaxed">
-                                            This section is disabled because a <b>Total Quantity</b> is set on the main product.
-                                            To add size variants, please clear the <b>Available Quantity</b> field in the main settings above.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+
 
                             {hasColourWithQuantity && !selectedProduct?.productQuantity && (
                                 <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
