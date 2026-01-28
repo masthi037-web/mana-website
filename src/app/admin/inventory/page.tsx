@@ -1645,7 +1645,10 @@ export default function AdminInventoryPage() {
                                             </div>
                                         </div>
                                         <div className="space-y-1">
-                                            <Label className="text-xs">Discounted Price (Auto)</Label>
+                                            <Label className="text-xs">
+                                                Discounted Price (Auto)
+                                                {(prodOffer || selectedProduct?.productOffer) && <span className="text-emerald-600 font-medium ml-1">({prodOffer || selectedProduct?.productOffer}% OFF)</span>}
+                                            </Label>
                                             <Input
                                                 type="number"
                                                 value={discountedPrice}
@@ -1668,7 +1671,7 @@ export default function AdminInventoryPage() {
                                             </select>
                                         </div>
                                         <div className="flex gap-2 pt-2">
-                                            <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending} className="flex-1">
+                                            <Button size="sm" onClick={() => { if (qty && sizeQuantity && price) createMutation.mutate(); }} disabled={createMutation.isPending || !qty || !sizeQuantity || !price} className="flex-1">
                                                 {createMutation.isPending && <Loader2 className="w-3 h-3 mr-2 animate-spin" />} {editingItem ? "Update Variant" : "Save Variant"}
                                             </Button>
                                             <Button size="sm" variant="ghost" onClick={() => { setManageMode('VIEW'); resetForm(); }} className="flex-1">Cancel</Button>
@@ -1735,7 +1738,12 @@ export default function AdminInventoryPage() {
                                                     <div className="flex items-center justify-between mb-4">
                                                         <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Size Colours</h5>
                                                         {manageMode !== 'ADD_SIZE_COLOUR' && (
-                                                            (p.sizeQuantity && Number(p.sizeQuantity) > 0) ? (
+                                                            ((prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE') ? (
+                                                                <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2 py-1 rounded text-[10px] font-medium border border-amber-100">
+                                                                    <Tag className="w-3 h-3" />
+                                                                    <span>Disabled for Size Variant</span>
+                                                                </div>
+                                                            ) : (p.sizeQuantity && Number(p.sizeQuantity) > 0) ? (
                                                                 <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2 py-1 rounded text-[10px] font-medium border border-amber-100">
                                                                     <AlertCircle className="w-3 h-3" />
                                                                     <span>Remove Quantity from Variant to add colours</span>
