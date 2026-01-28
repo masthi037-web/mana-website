@@ -282,10 +282,19 @@ export default function AdminInventoryPage() {
         // 1. Manage Sheet Validations (Prioritize these if active)
         if (isManageSheetOpen) {
             if (manageMode === 'ADD_COLOUR') {
+                const currentType = prodType || selectedProduct?.productType || editingItem?.productType;
+                const isMandatory = currentType === 'COLOUR';
+
                 if (!colourName || (!colourImage && !editingItem?.productPics)) {
                     if (!silent) toast({ title: "Validation Error", description: "Colour Name and Image are required", variant: "destructive", duration: 2000 });
                     return false;
                 }
+
+                if (isMandatory && (!colourQuantity || Number(colourQuantity) < 0)) {
+                    if (!silent) toast({ title: "Validation Error", description: "Quantity is required for Colour Variant", variant: "destructive", duration: 2000 });
+                    return false;
+                }
+
                 return true;
             }
             if (manageMode === 'ADD_PRICING') {
@@ -964,7 +973,7 @@ export default function AdminInventoryPage() {
                 {level === 'PRODUCT' && (!!prodType || !!editingItem) && (
                     <div className="grid grid-cols-2 gap-6 pt-2">
                         {/* Row 1: Available Quantity (Only for Simple/Standard) */}
-                        {(prodType === 'SIMPLE' || (editingItem && !editingItem.multipleSetDiscount && !editingItem.pricing?.length && !editingItem.colours?.length)) ? (
+                        {(prodType === 'SIMPLE' || (editingItem && (editingItem.productType === 'SIMPLE' || (!editingItem.productType && !editingItem.multipleSetDiscount && !editingItem.pricing?.length && !editingItem.colours?.length)))) ? (
                             <div className="space-y-2">
                                 <Label>Available Quantity {(prodType || editingItem?.productType) === 'SIMPLE' && <span className="text-destructive">*</span>}</Label>
                                 <Input placeholder="10" value={prodQuantity} onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (val.length <= 5) setProdQuantity(val); }} min={0} />
@@ -1356,7 +1365,7 @@ export default function AdminInventoryPage() {
                                             <Input value={colourName} onChange={e => setColourName(e.target.value)} className="h-8 bg-background" placeholder="e.g. Red, Blue, Army Green" />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="text-xs">Quantity</Label>
+                                            <Label className="text-xs">Quantity {(prodType || selectedProduct?.productType || editingItem?.productType) === 'COLOUR' && <span className="text-destructive">*</span>}</Label>
                                             <Input
                                                 value={colourQuantity}
                                                 onChange={e => setColourQuantity(e.target.value)}
@@ -1456,7 +1465,7 @@ export default function AdminInventoryPage() {
 
                                     if (currentType === 'COLOUR') {
                                         return (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-50 text-pink-600 border border-pink-200 text-xs font-medium animate-in fade-in">
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium animate-in fade-in">
                                                 <Tag className="w-3 h-3" />
                                                 Disabled for Colour Variant
                                             </div>
@@ -1527,13 +1536,13 @@ export default function AdminInventoryPage() {
 
                             {/* Colour Variant Warning */}
                             {(prodType || selectedProduct?.productType || editingItem?.productType) === 'COLOUR' && (
-                                <div className="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                                    <div className="bg-white p-2 rounded-full shadow-sm text-pink-500 mt-0.5">
+                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 mt-0.5">
                                         <Tag className="w-4 h-4" />
                                     </div>
                                     <div className="space-y-1">
-                                        <h4 className="text-sm font-bold text-pink-900">Pricing Variants Disabled</h4>
-                                        <p className="text-xs text-pink-700/80 leading-relaxed">
+                                        <h4 className="text-sm font-bold text-amber-900">Pricing Variants Disabled</h4>
+                                        <p className="text-xs text-amber-700/80 leading-relaxed">
                                             This is a Colour Variant product which does not have size variants. Pricing is managed within each colour.
                                         </p>
                                     </div>
