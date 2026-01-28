@@ -667,7 +667,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     return {
                         productId: parseInt(item.id),
                         pricingId: pricingId,
-                        productSizeColourId: item.productSizeColourId || "",
+                        productSizeColourId: item.productSizeColourId ? parseInt(item.productSizeColourId) : null,
                         quantity: item.quantity
                     };
                 })
@@ -786,7 +786,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     return {
                         productId: parseInt(item.id),
                         pricingId: pricingId,
-                        productSizeColourId: item.productSizeColourId || "",
+                        productSizeColourId: item.productSizeColourId ? parseInt(item.productSizeColourId) : null,
                         quantity: item.quantity
                     };
                 })
@@ -991,7 +991,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     productId: parseInt(item.id),
                     sizeId: sizeId,
                     productColourId: productColourId ? parseInt(productColourId) : null,
-                    productSizeColourId: item.productSizeColourId || ""
+                    productSizeColourId: item.productSizeColourId ? parseInt(item.productSizeColourId) : null
                 };
             });
 
