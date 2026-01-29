@@ -145,10 +145,10 @@ export const useCart = create<CartState>()(
         cart.forEach(item => {
           productQuantities[item.id] = (productQuantities[item.id] || 0) + item.quantity;
           if (item.multipleSetDiscount) {
-            productRules[item.id] = item.multipleSetDiscount.trim();
+            productRules[item.id] = String(item.multipleSetDiscount).trim();
           }
           if (item.multipleDiscountMoreThan) {
-            productMoreThanRules[item.id] = item.multipleDiscountMoreThan.trim();
+            productMoreThanRules[item.id] = String(item.multipleDiscountMoreThan).trim();
           }
         });
 
@@ -182,10 +182,10 @@ export const useCart = create<CartState>()(
           let maxGreedyDiscount = 0;
 
           if (ruleKey) {
-            const segments = ruleKey.split('&&&');
+            const segments = String(ruleKey).split('&&&');
             const tiers: { threshold: number, percent: number }[] = [];
             segments.forEach(seg => {
-              const parts = seg.split('-');
+              const parts = String(seg).split('-');
               if (parts.length === 2) {
                 tiers.push({ threshold: parseFloat(parts[0]), percent: parseFloat(parts[1]) });
               }
@@ -210,7 +210,7 @@ export const useCart = create<CartState>()(
 
           // 'More Than' Override
           if (moreThanRule) {
-            const parts = moreThanRule.split('-');
+            const parts = String(moreThanRule).split('-');
             if (parts.length === 2) {
               const threshold = parseFloat(parts[0]);
               const discount = parseFloat(parts[1]);
