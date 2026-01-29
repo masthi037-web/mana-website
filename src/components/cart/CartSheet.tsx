@@ -69,7 +69,7 @@ import { useSheetBackHandler } from '@/hooks/use-sheet-back-handler';
 import { ImageUpload } from '@/components/common/ImageUpload';
 
 export function CartSheet({ children }: { children: React.ReactNode }) {
-    const { cart, updateQuantity, removeFromCart, getCartTotal, getCartItemsCount, isCartOpen, setCartOpen, companyDetails, lastAddedItemId, clearCart } = useCart();
+    const { cart, updateQuantity, removeFromCart, getCartTotal, getCartItemsCount, isCartOpen, setCartOpen, companyDetails, lastAddedItemId, clearCart, setCart } = useCart();
     const { isLoaded: isRazorpayLoaded, loadRazorpay } = useRazorpay();
 
     // Handle back button on mobile
@@ -1792,7 +1792,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 </ul>
 
                                 <Button className="w-full" onClick={() => {
-                                    useCart.setState({ cart: validatedCart });
+                                    setCart(validatedCart);
                                     setValidatedCart([]);
                                     setShowValidationPopup(false);
                                 }}>

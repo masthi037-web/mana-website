@@ -41,6 +41,7 @@ interface CartState {
   setCompanyDetails: (details: CompanyDetails) => void;
   checkExpiration: () => void;
   clearCart: () => void;
+  setCart: (cart: CartItem[]) => void;
   timestamp: number;
   lastAddedItemId: string | null;
 }
@@ -256,6 +257,7 @@ export const useCart = create<CartState>()(
           set({ cart: [], timestamp: now });
         }
       },
+      setCart: (newCart) => set({ cart: newCart, timestamp: Date.now() }),
       clearCart: () => set({ cart: [], timestamp: Date.now() })
     }),
     {
