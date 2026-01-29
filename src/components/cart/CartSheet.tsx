@@ -1227,8 +1227,28 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     }
 
                     // 3. Validate Prices (productSizePrice, productSizePriceAfterDiscount)
-                    const serverSizePrice = detail.productSizePrice || 0;
-                    let resolvedPrice = detail.productSizePriceAfterDiscount;
+                    let serverSizePrice = 0;
+                    let resolvedPrice: number | undefined = undefined;
+
+                    // PRIMARY STRATEGY (User Request): Check item.pricing for the specific size first
+                    if (item.pricing && item.pricing.length > 0) {
+                        const matchedVariant = item.pricing.find(p => p.id === item.productSizeId);
+                        if (matchedVariant) {
+                            console.log(`CartSheet: Using known pricing for Size Variant "${item.name}":`, matchedVariant);
+                            serverSizePrice = matchedVariant.price;
+                            resolvedPrice = matchedVariant.priceAfterDiscount;
+                        }
+                    }
+
+                    // Fallback to server response if local lookup failed or was 0
+                    if (!serverSizePrice || serverSizePrice <= 0) {
+                        // Only take from server if we didn't find it locally
+                        serverSizePrice = detail.productSizePrice || 0;
+                        // resolvedPrice might still be undefined, so we check detail
+                        if (resolvedPrice === undefined) {
+                            resolvedPrice = detail.productSizePriceAfterDiscount;
+                        }
+                    }
 
                     // Fallback logic for discount
                     if ((!resolvedPrice || resolvedPrice <= 0) && detail.productOffer) {
