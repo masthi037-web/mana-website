@@ -463,6 +463,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     // Auth State
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showLoginPopup, setShowLoginPopup] = useState(false);
+    const [pendingStockConflicts, setPendingStockConflicts] = useState<StockConflict[]>([]); // "Chained Popup" buffer
 
     const checkAuth = () => {
         if (typeof window !== 'undefined') {
@@ -1025,7 +1026,14 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             // Handle wrapped response (server returns { productDetails: [...] }) or direct array
             const details = Array.isArray(response) ? response : ((response as any).productDetails || []);
 
-            // --- PHASE 0: CONFLICT DETECTION (Shared Stock) ---
+
+            // --- PHASE 1: STANDARD VALIDATION (Item-level checks & Updates) ---
+            // We run this FIRST so that even if stock conflicts exist (Phase 0), price updates/syncs are captured.
+
+            // Track used stock across iterations to handle duplicate product entries sharing the same stock
+            const stockUsageMap = new Map<string, number>();
+
+            // Stock tracking for Conflict Detection (Phase 0) - Built during Phase 1
             const stockGroups = new Map<string, CartItem[]>();
             const stockLimits = new Map<string, { limit: number, name: string }>();
 
@@ -1033,9 +1041,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 const detail = details[index];
                 if (!detail) return;
 
-                // Determine Variant/Stock Key
+                // --- STOCK METADATA GATHERING (For Phase 0) ---
+                // Determine Variant/Stock Key & Limit
                 let sizeId: number | null = null;
-                if (item.pricing && item.pricing.length > 0) {
+                // Try to derive sizeId if missing (Fallback logic)
+                if (item.productSizeId) {
+                    sizeId = parseInt(item.productSizeId);
+                } else if (item.pricing && item.pricing.length > 0) {
                     const quantityVariant = item.selectedVariants?.['Quantity'];
                     if (quantityVariant) {
                         const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
@@ -1044,15 +1056,19 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
                 }
 
+
                 let availableStock = 0;
                 let stockKey = "";
 
-                // PRIORITIZED STOCK CHECK
                 if (detail.productSizeColourId) {
                     availableStock = parseInt(detail.productSizeColourQuantity || '0');
                     stockKey = `${detail.productId}-sc-${detail.productSizeColourId}`;
                 }
                 else if (sizeId) {
+                    // Note: If sizeId was auto-corrected in Identity Check, we use the corrected one.
+                    // But we haven't done Identity Check yet!
+                    // Wait, we need to do Identity Check FIRST.
+                    // Let's refine the order inside the loop.
                     availableStock = parseInt(detail.sizeQuantity || '0');
                     stockKey = `${detail.productId}-size-${sizeId}`;
                 }
@@ -1064,67 +1080,25 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     availableStock = parseInt(detail.productQuantityAvailable || '0');
                     stockKey = `${detail.productId}-master`;
                 }
-
                 if (isNaN(availableStock)) availableStock = 0;
-
+                // Store limits for Phase 0 check later
                 stockLimits.set(stockKey, { limit: availableStock, name: item.name });
-
                 const group = stockGroups.get(stockKey) || [];
                 group.push(item);
                 stockGroups.set(stockKey, group);
-            });
 
-            const currentConflicts: StockConflict[] = [];
-            stockGroups.forEach((items, key) => {
-                const limitInfo = stockLimits.get(key);
-                if (!limitInfo) return;
-                const totalRequested = items.reduce((sum, it) => sum + it.quantity, 0);
-
-                // If total demand exceeds limit, this is a conflict the user must resolve manually
-                // If total demand exceeds limit, this is a conflict the user must resolve manually
-                if (totalRequested > limitInfo.limit) {
-                    blockingChanges = true;
-                    // Create deep copies of items so user can edit them in popup without mutating main cart yet
-                    const itemCopies = items.map(i => ({ ...i }));
-                    currentConflicts.push({
-                        stockKey: key,
-                        productName: limitInfo.name,
-                        availableStock: limitInfo.limit,
-                        items: itemCopies,
-                        totalRequested: totalRequested
-                    });
-                }
-            });
-
-            if (currentConflicts.length > 0) {
-                setStockConflicts(currentConflicts);
-                setShowConflictPopup(true);
-                setIsCheckingOut(false);
-                return; // HALT VALIDATION. User must resolve conflicts first.
-            }
-
-            // --- PHASE 1: STANDARD VALIDATION (If no conflicts) ---
-            // Track used stock across iterations to handle duplicate product entries sharing the same stock
-            const stockUsageMap = new Map<string, number>();
-
-            newCart.forEach((item, index) => {
-                const detail = details[index];
-                if (!detail) return;
 
                 // --- 0. IDENTITY CHECK (Data Mismatch) ---
                 // Re-derive keys to verify response matches request
-                // Re-derive keys to verify response matches request
-                // Re-derive keys to verify response matches request
-                let sizeId = item.productSizeId ? parseInt(item.productSizeId) : null;
-
-                // Fallback: Try to derive sizeId if strict property is missing
-                if (!sizeId && item.pricing && item.pricing.length > 0) {
+                let checkSizeId = item.productSizeId ? parseInt(item.productSizeId) : null;
+                if (!checkSizeId && item.pricing && item.pricing.length > 0) {
+                    // Same logic as above, just ensuring variable consistency
                     const quantityVariant = item.selectedVariants?.['Quantity'];
                     if (quantityVariant) {
                         const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
-                        if (matchedPricing) sizeId = parseInt(matchedPricing.id);
+                        if (matchedPricing) checkSizeId = parseInt(matchedPricing.id);
                     }
-                    if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
+                    if (!checkSizeId && item.pricing.length > 0) checkSizeId = parseInt(item.pricing[0].id);
                 }
 
                 const productColourId = item.selectedColour?.id ? parseInt(item.selectedColour.id) : null;
@@ -1134,17 +1108,12 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     (detail.productColourId !== undefined && detail.productColourId !== productColourId);
 
                 // Smart Check for Size ID Mismatch (Auto-Recover)
-                if (detail.sizeId !== undefined && detail.sizeId !== sizeId) {
-                    // Check if the Server's Size ID actually exists in our local pricing options
+                if (detail.sizeId !== undefined && detail.sizeId !== checkSizeId) {
                     const serverSizeExistsLocally = item.pricing?.some(p => parseInt(p.id) === detail.sizeId);
-
                     if (serverSizeExistsLocally) {
-                        console.log(`CartSheet: Auto-correcting Size ID for "${item.name}" from ${sizeId} to ${detail.sizeId}`);
-                        // Auto-correct the cart item's size ID for this session so validation proceeds
+                        console.log(`CartSheet: Auto-correcting Size ID for "${item.name}" from ${checkSizeId} to ${detail.sizeId}`);
                         item.productSizeId = detail.sizeId.toString();
-                        sizeId = detail.sizeId;
-
-                        // Do NOT flag as mismatch. Allow validation to update price/stock for the correct size.
+                        checkSizeId = detail.sizeId; // Update local var
                     } else {
                         isIdMismatch = true;
                     }
@@ -1245,23 +1214,20 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     }
 
                     // 3. Validate Prices (productSizePrice, productSizePriceAfterDiscount)
-                    // 3. Validate Prices (productSizePrice, productSizePriceAfterDiscount)
-                    let serverSizePrice = detail.productSizePrice || 0;
-                    let resolvedPrice = detail.productSizePriceAfterDiscount;
+                    let serverSizePrice = parseFloat((detail.productSizePrice || 0).toString());
+                    let resolvedPrice = parseFloat((detail.productSizePriceAfterDiscount || 0).toString());
 
-                    // Fallback to local pricing ONLY if server returns null/0 (Server is Truth)
-                    if ((!serverSizePrice || serverSizePrice <= 0) && item.pricing && item.pricing.length > 0) {
-                        // Only take from local if server failed
-                        const matchedVariant = item.pricing.find(p => p.id === (item.productSizeId || sizeId?.toString()));
+                    // Fallback to local pricing ONLY if server logic lacks data (Server is Truth)
+                    if ((isNaN(serverSizePrice) || serverSizePrice <= 0) && item.pricing && item.pricing.length > 0) {
+                        const matchedVariant = item.pricing.find(p => p.id === (item.productSizeId || checkSizeId?.toString()));
                         if (matchedVariant) {
-                            serverSizePrice = matchedVariant.price;
-                            resolvedPrice = matchedVariant.priceAfterDiscount;
+                            serverSizePrice = parseFloat(matchedVariant.price.toString());
+                            resolvedPrice = parseFloat((matchedVariant.priceAfterDiscount || 0).toString());
                         }
                     }
 
                     // Fallback logic for discount (only if resolvedPrice is still missing)
-                    if ((!resolvedPrice || resolvedPrice <= 0) && detail.productOffer) {
-                        // ... (keep existing discount percent logic as backup) ...
+                    if ((isNaN(resolvedPrice) || resolvedPrice <= 0) && detail.productOffer && serverSizePrice > 0) {
                         const match = detail.productOffer.match(/(\d+)\s*%?|(\d+)\s*OFF/i);
                         if (match) {
                             const percent = parseFloat(match[1] || match[2]);
@@ -1271,23 +1237,30 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             }
                         }
                     }
-                    if (!resolvedPrice || resolvedPrice <= 0) resolvedPrice = serverSizePrice;
+                    if (isNaN(resolvedPrice) || resolvedPrice <= 0) resolvedPrice = serverSizePrice;
 
-                    // FORCE UPDATE if server provides a different price (User Request Step 1417)
-                    if (resolvedPrice !== undefined && resolvedPrice > 0) {
-                        if (item.price !== resolvedPrice) {
-                            blockingChanges = true;
-                            pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedPrice}.`, item.cartItemId);
-                            item.price = resolvedPrice;
+                    // Log for debugging
+                    console.log(`CartSheet [${item.name}]: ServerBase=${serverSizePrice}, Resolved=${resolvedPrice}, LocalBase=${item.price}, LocalAfter=${item.priceAfterDiscount}`);
+
+                    // FORCE UPDATE Strict Validation
+                    if (resolvedPrice > 0) {
+                        // 1. Sync Base Price (Silent)
+                        if (serverSizePrice > 0 && item.price !== serverSizePrice) {
+                            console.log(`CartSheet: Syncing Base Price ${item.price} -> ${serverSizePrice}`);
+                            item.price = serverSizePrice;
+                        }
+
+                        // 2. Sync Effective Price (The Price User Pays)
+                        if (item.priceAfterDiscount !== resolvedPrice) {
+                            const previousEffective = item.priceAfterDiscount || item.price;
+                            if (previousEffective !== resolvedPrice) {
+                                blockingChanges = true;
+                                pushChange(`Price for "${item.name}" updated from ₹${previousEffective} to ₹${resolvedPrice}.`, item.cartItemId);
+                            } else {
+                                console.log(`CartSheet: Silent Sync of AfterDiscount for ${item.name} (Effective price unchanged)`);
+                            }
                             item.priceAfterDiscount = resolvedPrice;
                         }
-                    }
-
-                    if (item.price !== resolvedPrice) {
-                        blockingChanges = true;
-                        pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedPrice}.`, item.cartItemId);
-                        item.price = resolvedPrice;
-                        item.priceAfterDiscount = resolvedPrice; // Sync properties
                     }
 
 
@@ -1339,18 +1312,12 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         }
                     }
 
-                    // 3. Validate Prices (productPrice, productPriceAfterDiscount) - Standard items use main product price?
-                    // Usually Colour Variant uses main product price unless specified differently?
-                    // User Request: "validate productPrice: 0.00, productPriceAfterDiscount: 0.00" ???
-                    // Wait, if 0.00, it means use standard? Or it means FREE?
-                    // Usually 0 implies fallback or strictly 0.
-                    // Let's assume standard logic: Check detail.productPrice.
-
-                    const serverProdPrice = detail.productPrice || 0;
-                    let resolvedProdPrice = detail.productPriceAfterDiscount;
+                    // 3. Validate Prices
+                    const serverProdPrice = parseFloat((detail.productPrice || 0).toString());
+                    let resolvedProdPrice = parseFloat((detail.productPriceAfterDiscount || 0).toString());
 
                     // Fallback logic for discount
-                    if ((!resolvedProdPrice || resolvedProdPrice <= 0) && detail.productOffer) {
+                    if ((isNaN(resolvedProdPrice) || resolvedProdPrice <= 0) && detail.productOffer && serverProdPrice > 0) {
                         const match = detail.productOffer.match(/(\d+)\s*%?|(\d+)\s*OFF/i);
                         if (match) {
                             const percent = parseFloat(match[1] || match[2]);
@@ -1360,13 +1327,29 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             }
                         }
                     }
-                    if (!resolvedProdPrice || resolvedProdPrice <= 0) resolvedProdPrice = serverProdPrice;
+                    if (isNaN(resolvedProdPrice) || resolvedProdPrice <= 0) resolvedProdPrice = serverProdPrice;
 
-                    if (item.price !== resolvedProdPrice) {
-                        blockingChanges = true;
-                        pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedProdPrice}.`, item.cartItemId);
-                        item.price = resolvedProdPrice;
-                        item.priceAfterDiscount = resolvedProdPrice;
+                    // Log for debugging
+                    console.log(`CartSheet [${item.name}]: ServerBase=${serverProdPrice}, Resolved=${resolvedProdPrice}, LocalBase=${item.price}, LocalAfter=${item.priceAfterDiscount}`);
+
+                    if (resolvedProdPrice > 0) {
+                        // 1. Sync Base Price (Silent)
+                        if (serverProdPrice > 0 && item.price !== serverProdPrice) {
+                            console.log(`CartSheet: Syncing Base Price ${item.price} -> ${serverProdPrice}`);
+                            item.price = serverProdPrice;
+                        }
+
+                        // 2. Sync Effective Price
+                        if (item.priceAfterDiscount !== resolvedProdPrice) {
+                            const previousEffective = item.priceAfterDiscount || item.price;
+                            if (previousEffective !== resolvedProdPrice) {
+                                blockingChanges = true;
+                                pushChange(`Price for "${item.name}" updated from ₹${previousEffective} to ₹${resolvedProdPrice}.`, item.cartItemId);
+                            } else {
+                                console.log(`CartSheet: Silent Sync of AfterDiscount for ${item.name} (Effective price unchanged)`);
+                            }
+                            item.priceAfterDiscount = resolvedProdPrice;
+                        }
                     }
 
                     // 4. Validate colourQuantityAvailable
@@ -1398,10 +1381,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     console.log(`Validating Case 4: Product Only for "${item.name}"`);
 
                     // 1. Validate Prices
-                    const serverProdPrice = detail.productPrice || 0;
-                    let resolvedProdPrice = detail.productPriceAfterDiscount;
+                    const serverProdPrice = parseFloat((detail.productPrice || 0).toString());
+                    let resolvedProdPrice = parseFloat((detail.productPriceAfterDiscount || 0).toString());
 
-                    if ((!resolvedProdPrice || resolvedProdPrice <= 0) && detail.productOffer) {
+                    if ((isNaN(resolvedProdPrice) || resolvedProdPrice <= 0) && detail.productOffer && serverProdPrice > 0) {
                         const match = detail.productOffer.match(/(\d+)\s*%?|(\d+)\s*OFF/i);
                         if (match) {
                             const percent = parseFloat(match[1] || match[2]);
@@ -1411,13 +1394,29 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             }
                         }
                     }
-                    if (!resolvedProdPrice || resolvedProdPrice <= 0) resolvedProdPrice = serverProdPrice;
+                    if (isNaN(resolvedProdPrice) || resolvedProdPrice <= 0) resolvedProdPrice = serverProdPrice;
 
-                    if (item.price !== resolvedProdPrice) {
-                        blockingChanges = true;
-                        pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedProdPrice}.`, item.cartItemId);
-                        item.price = resolvedProdPrice;
-                        item.priceAfterDiscount = resolvedProdPrice;
+                    // Log for debugging
+                    console.log(`CartSheet [${item.name}]: ServerBase=${serverProdPrice}, Resolved=${resolvedProdPrice}, LocalBase=${item.price}, LocalAfter=${item.priceAfterDiscount}`);
+
+                    if (resolvedProdPrice > 0) {
+                        // 1. Sync Base Price (Silent)
+                        if (serverProdPrice > 0 && item.price !== serverProdPrice) {
+                            console.log(`CartSheet: Syncing Base Price ${item.price} -> ${serverProdPrice}`);
+                            item.price = serverProdPrice;
+                        }
+
+                        // 2. Sync Effective Price
+                        if (item.priceAfterDiscount !== resolvedProdPrice) {
+                            const previousEffective = item.priceAfterDiscount || item.price;
+                            if (previousEffective !== resolvedProdPrice) {
+                                blockingChanges = true;
+                                pushChange(`Price for "${item.name}" updated from ₹${previousEffective} to ₹${resolvedProdPrice}.`, item.cartItemId);
+                            } else {
+                                console.log(`CartSheet: Silent Sync of AfterDiscount for ${item.name} (Effective price unchanged)`);
+                            }
+                            item.priceAfterDiscount = resolvedProdPrice;
+                        }
                     }
 
                     // 2. Validate productQuantityAvailable
@@ -1444,6 +1443,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         }
                     }
                 }
+
 
                 if (item.cartItemId === 'REMOVE_ME') return;
 
@@ -1502,7 +1502,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 if (cartSetDiscount !== serverSetDiscount) {
                     const totalQty = productQuantities[item.id] || item.quantity;
-                    const activeRuleDesc = getActiveRuleDescription(item.multipleSetDiscount, totalQty);
+                    const activeRuleDesc = getActiveRuleDescription(item.multipleSetDiscount || "", totalQty);
                     const newActiveRuleDesc = getActiveRuleDescription(detail.multipleSetDiscount, totalQty);
 
                     if (activeRuleDesc) {
@@ -1542,6 +1542,46 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     item.multipleDiscountMoreThan = detail.multipleDiscountMoreThan;
                 }
             });
+
+            // --- PHASE 0 CHECK: CONFLICT RESOLUTION ---
+            // We do this AFTER Phase 1 so we have the updated stock limits and prices
+            const currentConflicts: StockConflict[] = [];
+            stockGroups.forEach((items, key) => {
+                const limitInfo = stockLimits.get(key);
+                if (!limitInfo) return;
+                const totalRequested = items.reduce((sum, it) => sum + it.quantity, 0);
+
+                // If total demand exceeds limit, this is a conflict user must resolve manually
+                if (totalRequested > limitInfo.limit) {
+                    // Create deep copies for popup editing
+                    const itemCopies = items.map(i => ({ ...i }));
+                    currentConflicts.push({
+                        stockKey: key,
+                        productName: limitInfo.name,
+                        availableStock: limitInfo.limit,
+                        items: itemCopies,
+                        totalRequested: totalRequested
+                    });
+                }
+            });
+
+            if (currentConflicts.length > 0) {
+                // CHAINED POPUP LOGIC:
+                // If we also have Price Updates (blockingChanges), we prioritize showing the Price Popup first.
+                // We defer the Stock Conflict popup to Step 2 (after user accepts price changes).
+                if (blockingChanges) {
+                    console.log('CartSheet: Both Stock and Price updates found. Deferring Stock Conflict to after Price Review.');
+                    setPendingStockConflicts(currentConflicts);
+                    // We DO NOT return here. We allow the function to proceed to 'setValidationErrors' (Price Popup).
+                } else {
+                    // Only Stock Conflicts -> Show immediately
+                    setStockConflicts(currentConflicts);
+                    setShowConflictPopup(true);
+                    setIsCheckingOut(false);
+                    return; // HALT VALIDATION
+                }
+            }
+
             const finalCart = newCart.filter(item => item.cartItemId !== 'REMOVE_ME');
 
             // Always update cart to reflect latest server data (silent updates included)
@@ -1801,6 +1841,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         }).filter(i => i.quantity > 0);
 
                                         useCart.setState({ cart: updatedCart });
+                                        setCart(updatedCart); // Added this line as per instruction
                                         setStockConflicts([]);
                                         setShowConflictPopup(false);
                                         // Ideally, trigger checkout again or let user review
@@ -1844,6 +1885,19 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     }
                                     setValidatedCart([]);
                                     setShowValidationPopup(false);
+
+                                    // CHAINED POPUP LOGIC:
+                                    // Check if we deferred any stock conflicts
+                                    if (pendingStockConflicts.length > 0) {
+                                        console.log('CartSheet: Now showing deferred Stock Conflicts.');
+                                        setStockConflicts(pendingStockConflicts);
+                                        setShowConflictPopup(true);
+                                        setPendingStockConflicts([]); // Clear buffer
+                                    } else {
+                                        // All Good -> Switch to Address Selection
+                                        loadCustomerData();
+                                        setView('list');
+                                    }
                                 }}>
                                     <RefreshCw className="mr-2 w-4 h-4" />
                                     Review & Continue
