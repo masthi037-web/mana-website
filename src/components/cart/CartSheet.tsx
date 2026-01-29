@@ -588,11 +588,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 setCustomer(data);
 
                 // Auto-fill contact info if available (don't overwrite if user has typed something)
-                setContactInfo(prev => ({
-                    name: prev.name ? prev.name : (data.customerName || data.name || ''),
-                    email: prev.email ? prev.email : (data.customerEmailId || data.customerEmail || data.email || ''),
-                    mobile: prev.mobile ? prev.mobile : (data.customerMobileNumber || data.customerMobile || data.mobile || '')
-                }));
+                setContactInfo({
+                    name: data.customerName || '',
+                    email: data.customerEmailId || '',
+                    mobile: data.customerMobileNumber || ''
+                });
                 setAddresses(data.customerAddress || []);
                 // Auto-select first address if none selected and NOT saving (saving handles its own selection)
                 if (!selectedAddressId && data.customerAddress?.length > 0 && !savingAddress) {
