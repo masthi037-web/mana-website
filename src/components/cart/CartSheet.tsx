@@ -2912,188 +2912,179 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                                     {/* View: Payment Method */}
                                     {view === 'payment' && (
-                                        <div className="animate-in slide-in-from-right-8 fade-in duration-300 space-y-8">
+                                        <div className="animate-in slide-in-from-right-8 fade-in duration-500 space-y-6">
 
-                                            {/* Payment Method Selection */}
-                                            <div className="space-y-4">
+                                            {/* Premium Payment Selection Card */}
+                                            <div
+                                                onClick={() => setSelectedPaymentMethod('ONLINE')}
+                                                className={cn(
+                                                    "relative overflow-hidden cursor-pointer p-6 rounded-3xl border transition-all duration-500 group",
+                                                    selectedPaymentMethod === 'ONLINE'
+                                                        ? "border-transparent bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white shadow-2xl shadow-slate-900/20"
+                                                        : "bg-white border-slate-200 hover:border-slate-300"
+                                                )}
+                                            >
+                                                {/* Animated Background Effects */}
+                                                {selectedPaymentMethod === 'ONLINE' && (
+                                                    <div className="absolute inset-0 opacity-20">
+                                                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-[100px] -mr-32 -mt-32" />
+                                                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500 rounded-full blur-[100px] -ml-32 -mb-32" />
+                                                    </div>
+                                                )}
 
-                                                <div
-                                                    onClick={() => setSelectedPaymentMethod('ONLINE')}
-                                                    className={cn(
-                                                        "relative overflow-hidden cursor-pointer p-5 rounded-3xl border-2 transition-all duration-300",
+                                                <div className="relative z-10 flex items-start gap-5">
+                                                    <div className={cn(
+                                                        "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-500 shadow-lg",
                                                         selectedPaymentMethod === 'ONLINE'
-                                                            ? "bg-primary/5 border-primary shadow-lg shadow-primary/10"
-                                                            : "bg-background border-border hover:border-primary/30"
-                                                    )}
-                                                >
-                                                    <div className="flex items-start gap-4 z-10 relative">
-                                                        <div className={cn(
-                                                            "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors",
-                                                            selectedPaymentMethod === 'ONLINE' ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                                                            ? "bg-white/10 backdrop-blur-md border border-white/10 text-white"
+                                                            : "bg-slate-100 text-slate-500"
+                                                    )}>
+                                                        <CreditCard className="w-7 h-7" />
+                                                    </div>
+
+                                                    <div className="flex-1 space-y-1">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className={cn(
+                                                                "font-bold text-xl tracking-tight",
+                                                                selectedPaymentMethod === 'ONLINE' ? "text-white" : "text-slate-900"
+                                                            )}>
+                                                                Online Payment
+                                                            </span>
+                                                            {selectedPaymentMethod === 'ONLINE' && (
+                                                                <div className="h-6 w-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 scale-100 opacity-100 transition-all">
+                                                                    <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <p className={cn(
+                                                            "text-sm leading-relaxed max-w-[90%]",
+                                                            selectedPaymentMethod === 'ONLINE' ? "text-slate-300" : "text-slate-500"
                                                         )}>
-                                                            <CreditCard className="w-6 h-6" />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center justify-between mb-1">
-                                                                <span className={cn(
-                                                                    "font-bold text-lg",
-                                                                    selectedPaymentMethod === 'ONLINE' ? "text-primary" : "text-foreground"
-                                                                )}>
-                                                                    Online Payment
-                                                                </span>
-                                                                {selectedPaymentMethod === 'ONLINE' && (
-                                                                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                                        <Check className="w-3 h-3" /> SELECTED
-                                                                    </span>
-                                                                )}
+                                                            Secure instant payment via UPI, Cards, or Netbanking.
+                                                        </p>
+
+                                                        <div className="pt-3 flex items-center gap-3">
+                                                            <div className={cn(
+                                                                "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider",
+                                                                selectedPaymentMethod === 'ONLINE' ? "bg-white/10 text-white/90" : "bg-slate-100 text-slate-600"
+                                                            )}>
+                                                                <Lock className="w-3 h-3" /> 100% Secure
                                                             </div>
-                                                            <p className="text-sm text-muted-foreground leading-relaxed">
-                                                                Securely pay via UPI, Credit/Debit Cards, or Netbanking.
-                                                            </p>
-                                                            <div className="mt-3 flex items-center gap-2">
-                                                                <span className="text-[10px] font-bold bg-secondary px-2 py-1 rounded-md text-muted-foreground">Powered by Razorpay</span>
-                                                                <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-md">100% Secure</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    {selectedPaymentMethod === 'ONLINE' && (
-                                                        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
-                                                    )}
-                                                </div>
-                                            </div>
-
-
-
-                                            {/* Order Summary */}
-                                            <div className="space-y-4">
-                                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Order Summary</h3>
-                                                <div className="bg-background rounded-3xl border shadow-sm overflow-hidden">
-                                                    <div className="max-h-[300px] overflow-y-auto p-1 space-y-1">
-                                                        {cart.map((item) => (
-                                                            <div key={item.cartItemId} className="flex gap-4 p-4 rounded-2xl border border-transparent hover:border-border/50 hover:bg-white hover:shadow-sm transition-all group/item">
-                                                                {/* Image */}
-                                                                <div className="h-16 w-16 rounded-xl bg-secondary overflow-hidden shrink-0 border border-border/50 bg-white relative">
-                                                                    {item.images && item.images.length > 0 ? (
-                                                                        <img src={item.images[0]} alt={item.name} className="h-full w-full object-cover group-hover/item:scale-105 transition-transform duration-500" />
-                                                                    ) : item.imageUrl ? (
-                                                                        <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover group-hover/item:scale-105 transition-transform duration-500" />
-                                                                    ) : (
-                                                                        <div className="h-full w-full flex items-center justify-center text-muted-foreground text-[10px]">No Img</div>
-                                                                    )}
-                                                                </div>
-                                                                {/* Details */}
-                                                                <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                                                                    <div>
-                                                                        <div className="flex justify-between items-start gap-2">
-                                                                            <h4 className="font-bold text-sm leading-tight text-foreground/90 line-clamp-2">{item.name}</h4>
-                                                                            <span className="font-bold text-sm whitespace-nowrap">₹{((item.price + (item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
-                                                                        </div>
-
-                                                                        {/* Variants & SizeColours Chips */}
-                                                                        <div className="flex flex-wrap gap-1.5 mt-2">
-                                                                            {Object.entries(item.selectedVariants || {}).map(([k, v]) => (
-                                                                                <span key={k} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-border/50">
-                                                                                    {v}
-                                                                                </span>
-                                                                            ))}
-                                                                            {item.selectedSizeColours?.map((sc) => (
-                                                                                <span key={sc.id} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
-                                                                                    <Plus className="w-2 h-2" /> {sc.name}
-                                                                                </span>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="flex items-center gap-2 mt-2">
-                                                                        <span className="text-[10px] font-semibold bg-secondary/50 px-2 py-0.5 rounded text-muted-foreground">
-                                                                            Qty: {item.quantity}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-
-                                                    {/* Bill Details */}
-                                                    <div className="bg-secondary/10 p-5 space-y-3.5 text-sm border-t border-dashed border-border">
-                                                        <div className="flex justify-between text-muted-foreground">
-                                                            <span>Item Total</span>
-                                                            <span className="font-medium text-foreground">₹{subtotal.toFixed(2)}</span>
-                                                        </div>
-
-                                                        {discountAmount > 0 && (
-                                                            <div className="flex justify-between text-emerald-600 font-medium">
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <Tag className="w-3.5 h-3.5" />
-                                                                    <span>Coupon ({couponCode})</span>
-                                                                </div>
-                                                                <span>-₹{discountAmount.toFixed(2)}</span>
-                                                            </div>
-                                                        )}
-
-                                                        <div className="flex justify-between text-muted-foreground">
-                                                            <span>Delivery Charge</span>
-                                                            <span className={isFreeDelivery ? "text-emerald-600 font-medium" : "text-foreground"}>
-                                                                {isFreeDelivery ? "FREE" : "₹" + shipping.toFixed(2)}
-                                                            </span>
-                                                        </div>
-
-                                                        <div className="h-px bg-border my-1" />
-
-                                                        <div className="flex justify-between items-end">
-                                                            <span className="font-bold text-base">Grand Total</span>
-                                                            <span className="font-bold text-xl text-primary leading-none">
-                                                                ₹{finalTotal.toFixed(2)}
+                                                            <span className={cn(
+                                                                "text-[10px] font-medium opacity-60",
+                                                                selectedPaymentMethod === 'ONLINE' ? "text-white" : "text-slate-500"
+                                                            )}>
+                                                                Powered by Razorpay
                                                             </span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {/* Delivery Details */}
-                                            <div className="space-y-4">
-                                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Delivery To</h3>
-                                                <div className="bg-background p-5 rounded-3xl border shadow-sm space-y-5 relative overflow-hidden">
-                                                    {/* Contact Info */}
-                                                    <div className="flex items-start gap-4">
-                                                        <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
-                                                            <User className="w-5 h-5" />
-                                                        </div>
-                                                        <div className="overflow-hidden">
-                                                            <p className="font-bold text-sm truncate">{contactInfo.name}</p>
-                                                            <p className="text-xs text-muted-foreground mt-0.5">{contactInfo.mobile}</p>
-                                                            <p className="text-xs text-muted-foreground truncate">{contactInfo.email}</p>
-                                                        </div>
+                                            {/* Delivery Details Card */}
+                                            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                                                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+
+                                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                                    <MapPin className="w-3 h-3" /> Delivery To
+                                                </h3>
+
+                                                <div className="flex items-start gap-4 sticky z-10">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-600">
+                                                        <User className="w-5 h-5" />
                                                     </div>
-
-                                                    <div className="h-px bg-border/60 w-full" />
-
-                                                    {/* Address */}
-                                                    <div className="flex items-start gap-4">
-                                                        <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
-                                                            <MapPin className="w-5 h-5" />
-                                                        </div>
-                                                        <div className="overflow-hidden">
-                                                            {(() => {
-                                                                const addr = addresses.find(a => a.customerAddressId === selectedAddressId);
-                                                                return addr ? (
-                                                                    <>
-                                                                        <span className="text-[10px] font-bold bg-secondary px-2 py-0.5 rounded text-foreground/70 mb-1 inline-block uppercase tracking-wider">
+                                                    <div className="flex-1">
+                                                        {(() => {
+                                                            const addr = addresses.find(a => a.customerAddressId === selectedAddressId);
+                                                            return addr ? (
+                                                                <div className="space-y-1">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-bold text-slate-900">{contactInfo.name}</span>
+                                                                        <span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-600 uppercase tracking-wider">
                                                                             {addr.addressName || 'Home'}
                                                                         </span>
-                                                                        <p className="text-xs text-muted-foreground leading-relaxed">
-                                                                            {addr.customerDrNum}, {addr.customerRoad}, {addr.customerCity} - {addr.customerPin}
-                                                                        </p>
-                                                                    </>
-                                                                ) : <p className="text-sm text-destructive">No address selected</p>;
-                                                            })()}
-                                                        </div>
+                                                                    </div>
+                                                                    <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                                                                        {addr.customerDrNum}, {addr.customerRoad}, {addr.customerCity} - {addr.customerPin}
+                                                                    </p>
+                                                                    <p className="text-xs text-slate-400 font-medium">
+                                                                        {contactInfo.mobile}
+                                                                    </p>
+                                                                </div>
+                                                            ) : <p className="text-sm text-destructive">No address selected</p>;
+                                                        })()}
                                                     </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 text-xs font-bold text-primary hover:bg-primary/5 hover:text-primary rounded-full px-3"
+                                                        onClick={() => setView('list')}
+                                                    >
+                                                        Change
+                                                    </Button>
                                                 </div>
                                             </div>
 
+                                            {/* Order Summary Card */}
+                                            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                                                <div className="p-5 border-b border-slate-50 flex items-center justify-between">
+                                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                        <ShoppingCart className="w-3 h-3" /> Order Summary
+                                                    </h3>
+                                                    <span className="text-xs font-bold text-slate-900 bg-slate-50 px-2.5 py-1 rounded-full">{cartItemCount} Items</span>
+                                                </div>
 
+                                                <div className="max-h-[220px] overflow-y-auto p-2">
+                                                    {cart.map((item) => (
+                                                        <div key={item.cartItemId} className="flex gap-3 p-3 rounded-2xl hover:bg-slate-50 transition-colors group">
+                                                            {/* Minimal Image */}
+                                                            <div className="h-12 w-12 rounded-lg bg-slate-100 overflow-hidden shrink-0 relative">
+                                                                {item.images && item.images.length > 0 ? (
+                                                                    <img src={item.images[0]} alt={item.name} className="h-full w-full object-cover" />
+                                                                ) : item.imageUrl ? (
+                                                                    <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                                                                ) : null}
+                                                            </div>
 
+                                                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                                                <div className="flex justify-between items-start">
+                                                                    <h4 className="font-bold text-sm text-slate-700 line-clamp-1">{item.name}</h4>
+                                                                    <span className="font-bold text-sm text-slate-900">₹{((item.price + (item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
+                                                                </div>
+                                                                <p className="text-xs text-slate-400 mt-0.5">Qty: {item.quantity} {
+                                                                    Object.values(item.selectedVariants || {}).length > 0 && `• ${Object.values(item.selectedVariants || {}).join(', ')}`
+                                                                }</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Bill Breakdown */}
+                                                <div className="bg-slate-50/50 p-5 space-y-3">
+                                                    <div className="flex justify-between text-sm text-slate-500">
+                                                        <span>Item Total</span>
+                                                        <span className="font-medium text-slate-900">₹{subtotal.toFixed(2)}</span>
+                                                    </div>
+                                                    {discountAmount > 0 && (
+                                                        <div className="flex justify-between text-sm text-emerald-600 font-bold">
+                                                            <span>Discount</span>
+                                                            <span>-₹{discountAmount.toFixed(2)}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex justify-between text-sm text-slate-500">
+                                                        <span>Delivery</span>
+                                                        <span className={isFreeDelivery ? "text-emerald-600 font-bold" : "text-slate-900"}>
+                                                            {isFreeDelivery ? "FREE" : "₹" + shipping.toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-px bg-slate-200/60 my-2" />
+                                                    <div className="flex justify-between items-end">
+                                                        <span className="font-bold text-base text-slate-900">To Pay</span>
+                                                        <span className="font-black text-xl text-primary font-headline">₹{finalTotal.toFixed(2)}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
