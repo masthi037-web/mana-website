@@ -1194,10 +1194,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             if (item.quantity > remainingSc) {
                                 blockingChanges = true;
                                 if (remainingSc <= 0) {
-                                    pushChange(`"${item.name}" (Size Variant) is out of stock and has been removed.`);
+                                    pushChange(`"${item.name}" (${detail.sizeColourName}) is out of stock and has been removed.`);
                                     item.cartItemId = 'REMOVE_ME';
                                 } else {
-                                    pushChange(`"${item.name}" (Size Variant) quantity updated to available stock: ${remainingSc}.`, item.cartItemId);
+                                    pushChange(`"${item.name}" (${detail.sizeColourName}) quantity updated to available stock: ${remainingSc}.`, item.cartItemId);
                                     item.quantity = remainingSc;
                                     stockUsageMap.set(scKey, scConsumed + item.quantity);
                                 }
@@ -1210,7 +1210,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     // 4. Validate sizeColourStatus
                     if (detail.sizeColourStatus && detail.sizeColourStatus !== 'ACTIVE') {
                         blockingChanges = true;
-                        pushChange(`"${item.name}" (Size Variant) is currently unavailable and has been removed.`);
+                        pushChange(`"${item.name}" (${detail.sizeColourName}) is currently unavailable and has been removed.`);
                         item.cartItemId = 'REMOVE_ME';
                         return;
                     }
