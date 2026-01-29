@@ -3096,6 +3096,74 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     {view === 'payment' && (
                                         <div className="animate-in slide-in-from-right-8 fade-in duration-300 space-y-8">
 
+                                            {/* Payment Method Selection */}
+                                            <div className="space-y-4">
+                                                {companyDetails?.razorpay === false ? (
+                                                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl border border-indigo-100 space-y-6">
+                                                        <div className="text-center space-y-2">
+                                                            <h4 className="text-xl font-bold text-indigo-900">Scan & Pay</h4>
+                                                            <p className="text-sm text-indigo-600/80">Complete your payment within the time limit.</p>
+                                                        </div>
+
+                                                        {/* Timer */}
+                                                        <div className="flex justify-center">
+                                                            <div className={cn(
+                                                                "text-3xl font-black font-mono tracking-widest px-6 py-3 rounded-2xl border-2 transition-colors duration-500",
+                                                                timeLeft < 60 ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-white text-indigo-600 border-indigo-100"
+                                                            )}>
+                                                                {formatTime(timeLeft)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div
+                                                        onClick={() => setSelectedPaymentMethod('ONLINE')}
+                                                        className={cn(
+                                                            "relative overflow-hidden cursor-pointer p-5 rounded-3xl border-2 transition-all duration-300",
+                                                            selectedPaymentMethod === 'ONLINE'
+                                                                ? "bg-primary/5 border-primary shadow-lg shadow-primary/10"
+                                                                : "bg-background border-border hover:border-primary/30"
+                                                        )}
+                                                    >
+                                                        <div className="flex items-start gap-4 z-10 relative">
+                                                            <div className={cn(
+                                                                "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors",
+                                                                selectedPaymentMethod === 'ONLINE' ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                                                            )}>
+                                                                <CreditCard className="w-6 h-6" />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center justify-between mb-1">
+                                                                    <span className={cn(
+                                                                        "font-bold text-lg",
+                                                                        selectedPaymentMethod === 'ONLINE' ? "text-primary" : "text-foreground"
+                                                                    )}>
+                                                                        Online Payment
+                                                                    </span>
+                                                                    {selectedPaymentMethod === 'ONLINE' && (
+                                                                        <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                                            <Check className="w-3 h-3" /> SELECTED
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                                                    Securely pay via UPI, Credit/Debit Cards, or Netbanking. <span className="font-semibold text-primary block mt-1">Pay through QR scanner</span>
+                                                                </p>
+                                                                <div className="mt-3 flex items-center gap-2">
+                                                                    <span className="text-[10px] font-bold bg-secondary px-2 py-1 rounded-md text-muted-foreground">Powered by Razorpay</span>
+                                                                    <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-md">100% Secure</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        {selectedPaymentMethod === 'ONLINE' && (
+                                                            <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+
+
                                             {/* Order Summary */}
                                             <div className="space-y-4">
                                                 <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Order Summary</h3>
@@ -3224,77 +3292,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-4">
 
-
-                                                {companyDetails?.razorpay === false ? (
-                                                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl border border-indigo-100 space-y-6">
-                                                        <div className="text-center space-y-2">
-                                                            <h4 className="text-xl font-bold text-indigo-900">Scan & Pay</h4>
-                                                            <p className="text-sm text-indigo-600/80">Complete your payment within the time limit.</p>
-                                                        </div>
-
-                                                        {/* Timer */}
-                                                        <div className="flex justify-center">
-                                                            <div className={cn(
-                                                                "text-3xl font-black font-mono tracking-widest px-6 py-3 rounded-2xl border-2 transition-colors duration-500",
-                                                                timeLeft < 60 ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-white text-indigo-600 border-indigo-100"
-                                                            )}>
-                                                                {formatTime(timeLeft)}
-                                                            </div>
-                                                        </div>
-
-
-
-
-                                                    </div>
-                                                ) : (
-                                                    <div
-                                                        onClick={() => setSelectedPaymentMethod('ONLINE')}
-                                                        className={cn(
-                                                            "relative overflow-hidden cursor-pointer p-5 rounded-3xl border-2 transition-all duration-300",
-                                                            selectedPaymentMethod === 'ONLINE'
-                                                                ? "bg-primary/5 border-primary shadow-lg shadow-primary/10"
-                                                                : "bg-background border-border hover:border-primary/30"
-                                                        )}
-                                                    >
-                                                        <div className="flex items-start gap-4 z-10 relative">
-                                                            <div className={cn(
-                                                                "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors",
-                                                                selectedPaymentMethod === 'ONLINE' ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-                                                            )}>
-                                                                <CreditCard className="w-6 h-6" />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center justify-between mb-1">
-                                                                    <span className={cn(
-                                                                        "font-bold text-lg",
-                                                                        selectedPaymentMethod === 'ONLINE' ? "text-primary" : "text-foreground"
-                                                                    )}>
-                                                                        Online Payment
-                                                                    </span>
-                                                                    {selectedPaymentMethod === 'ONLINE' && (
-                                                                        <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                                            <Check className="w-3 h-3" /> SELECTED
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                                                    Securely pay via UPI, Credit/Debit Cards, or Netbanking. <span className="font-semibold text-primary block mt-1">Pay through QR scanner</span>
-                                                                </p>
-                                                                <div className="mt-3 flex items-center gap-2">
-                                                                    <span className="text-[10px] font-bold bg-secondary px-2 py-1 rounded-md text-muted-foreground">Powered by Razorpay</span>
-                                                                    <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-md">100% Secure</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        {/* Background Glow */}
-                                                        {selectedPaymentMethod === 'ONLINE' && (
-                                                            <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
 
                                         </div>
                                     )}
