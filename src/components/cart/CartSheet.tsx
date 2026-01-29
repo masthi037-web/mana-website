@@ -40,7 +40,9 @@ import {
     CreditCard,
     Info,
     User,
-    Briefcase
+    Briefcase,
+    Download,
+    DownloadCloud
 } from 'lucide-react';
 import {
     AlertDialog,
@@ -58,7 +60,7 @@ import { cn } from '@/lib/utils';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { customerService } from '@/services/customer.service';
 import { orderService } from '@/services/order.service';
-import { CustomerDetails, CustomerAddress, PaymentInitializationRequest, CheckoutValidationItem, CheckoutValidationRequest } from '@/lib/api-types';
+import { CustomerDetails, CustomerAddress, PaymentInitializationRequest, CheckoutValidationItem, CheckoutValidationRequest, SaveOrderRequest, SaveOrderItem } from '@/lib/api-types';
 import { Label } from '@/components/ui/label';
 import { useRazorpay } from '@/hooks/use-razorpay';
 import { fetchCompanyDetails } from '@/services/company.service';
@@ -82,6 +84,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const [bulkCelebrated, setBulkCelebrated] = useState(false);
     const [showFreeDeliveryPopup, setShowFreeDeliveryPopup] = useState(false);
     const [showCouponPopup, setShowCouponPopup] = useState(false);
+    const [showQrPopup, setShowQrPopup] = useState(false);
 
     // Track initial render to prevent confetti on reload
     // Track initial render to prevent confetti on reload
@@ -642,6 +645,16 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             return;
         }
 
+        // QR Code Payment Interception
+        if (!companyDetails?.razorpay && companyDetails?.upiQrCode) {
+            setShowQrPopup(true);
+            return;
+        }
+
+        await executeSaveOrder();
+    };
+
+    const executeSaveOrder = async () => {
         setIsInitializingPayment(true);
         try {
             const subtotal = getCartTotal();
@@ -655,43 +668,97 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             const selectedAddress = addresses.find(a => a.customerAddressId === selectedAddressId);
             if (!selectedAddress) throw new Error("Address not found");
 
-            const payload: PaymentInitializationRequest = {
+            const payload: SaveOrderRequest = {
+                companyId: companyDetails?.companyId || '',
+                companyDomain: companyDetails?.companyDomain || window.location.hostname,
+                customerId: customer.customerId,
                 customerName: contactInfo.name,
-                customerPhoneNumber: contactInfo.mobile,
-                customerEmailId: contactInfo.email,
-                domainName: companyDetails?.companyDomain || window.location.hostname,
-                customerAddress: `${selectedAddress.customerDrNum}, ${selectedAddress.customerRoad}`,
-                customerCity: selectedAddress.customerCity,
-                customerState: selectedAddress.customerState,
-                customerCountry: selectedAddress.customerCountry,
-                addressName: selectedAddress.addressName,
-                shipmentAmount: shipping,
-                discount: "PERCENTAGE",
-                discountName: "MANUAL",
-                discountAmount: 0,
-                totalCost: totalCost,
-                paymentMethod: "UPI_MANUAL",
-                customerNote: manualProof ? `Payment Proof: ${manualProof}` : "Manual Payment",
-                items: cart.map(item => {
-                    let pricingId: number | null = null;
+                customerPhone: contactInfo.mobile,
+                deliveryRoad: `${selectedAddress.customerDrNum}, ${selectedAddress.customerRoad}`,
+                deliveryPin: selectedAddress.customerPin || '', // Ensure api-types has this or fallback
+                deliveryCity: selectedAddress.customerCity,
+                deliveryState: selectedAddress.customerState,
+                orderStatus: "CREATED",
+                subTotal: subtotal,
+                allDiscount: discountAmount,
+                finalTotalAmount: totalCost,
+                paymentPic: manualProof || null,
+                items: cart.map((item): SaveOrderItem => {
+                    // 1. Identify Product Type & Variant IDs
+                    let sizeId: number | null = null;
+                    let sizeName: string = "";
+                    let sizePriceAfterDiscount: number = item.priceAfterDiscount || item.price;
+
+                    // Try to match Size Pricing ID
                     if (item.pricing && item.pricing.length > 0) {
                         const quantityVariant = item.selectedVariants?.['Quantity'];
                         if (quantityVariant) {
+                            sizeName = quantityVariant;
                             const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
-                            if (matchedPricing) pricingId = parseInt(matchedPricing.id);
+                            if (matchedPricing) sizeId = parseInt(matchedPricing.id);
                         }
-                        if (!pricingId) pricingId = parseInt(item.pricing[0].id);
+                        if (!sizeId && item.pricing.length > 0) {
+                            // Fallback to first
+                            sizeId = parseInt(item.pricing[0].id);
+                            sizeName = item.pricing[0].quantity;
+                        }
                     }
-                    return {
+
+                    const baseItem: SaveOrderItem = {
                         productId: parseInt(item.id),
-                        pricingId: pricingId,
-                        productSizeColourId: item.productSizeColourId ? parseInt(item.productSizeColourId) : null,
-                        quantity: item.quantity
+                        productName: item.name,
+                        productImage: item.imageUrl,
+                        productPriceAfterDiscount: item.priceAfterDiscount || item.price,
+                        quantity: item.quantity,
+                        totalCost: 0 // Will calculate below
                     };
+
+                    // --- Variant Specifics ---
+
+                    // A. Complex (Size + Colour)
+                    if (item.selectedSizeColours && item.selectedSizeColours.length > 0) {
+                        const sc = item.selectedSizeColours[0];
+                        baseItem.productSizeColourId = parseInt(sc.id);
+                        baseItem.productSizeColourName = sc.name;
+                        baseItem.productSizeColourImage = sc.productPics;
+                        baseItem.productSizeColourExtraPrice = sc.price;
+
+                        // Size Info (Context for Colour)
+                        baseItem.productSizeId = sizeId;
+                        baseItem.productSizeName = sizeName;
+                        baseItem.productSizePriceAfterDiscount = sizePriceAfterDiscount;
+
+                        if (sc.productPics) baseItem.productImage = sc.productPics;
+
+                        // Total Cost = (BaseSizePrice + ExtraPrice) * Qty
+                        baseItem.totalCost = (sizePriceAfterDiscount + sc.price) * item.quantity;
+                    }
+                    // B. Colour Only
+                    else if (item.selectedColour) {
+                        baseItem.productColourId = parseInt(item.selectedColour.id);
+                        baseItem.productColour = item.selectedColour.name;
+                        baseItem.productColourImage = item.selectedColour.image;
+
+                        if (item.selectedColour.image) baseItem.productImage = item.selectedColour.image;
+                        baseItem.totalCost = (item.priceAfterDiscount || item.price) * item.quantity;
+                    }
+                    // C. Size Only
+                    else if (sizeId) {
+                        baseItem.productSizeId = sizeId;
+                        baseItem.productSizeName = sizeName;
+                        baseItem.productSizePriceAfterDiscount = sizePriceAfterDiscount;
+                        baseItem.totalCost = sizePriceAfterDiscount * item.quantity;
+                    }
+                    // D. Standard
+                    else {
+                        baseItem.totalCost = (item.priceAfterDiscount || item.price) * item.quantity;
+                    }
+
+                    return baseItem;
                 })
             };
 
-            await orderService.initializePayment(payload, '', '');
+            await orderService.saveOrder(payload);
 
             setCelebrated(true);
             toast({
@@ -1763,6 +1830,105 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             >
                                 <X className="w-4 h-4" />
                             </Button>
+                        </div>
+                    </div>
+                )}
+
+
+                {/* QR Payment Popup Overlay */}
+                {showQrPopup && companyDetails?.upiQrCode && (
+                    <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="w-full max-w-sm bg-white/90 backdrop-blur-2xl rounded-[32px] overflow-hidden shadow-2xl border border-white/50 relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-500">
+
+                            {/* Premium Gradient Header */}
+                            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-br from-violet-600 via-indigo-600 to-purple-600 opacity-100" />
+                            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-white/20 rounded-full blur-3xl pointer-events-none" />
+                            <div className="absolute top-20 left-0 -ml-8 w-32 h-32 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-3 right-3 text-white/80 hover:text-white hover:bg-white/10 rounded-full z-20"
+                                onClick={() => setShowQrPopup(false)}
+                            >
+                                <X className="w-5 h-5" />
+                            </Button>
+
+                            <div className="relative pt-12 pb-8 px-8 flex flex-col items-center text-center">
+                                {/* Title Section */}
+                                <div className="mb-8 relative z-10 text-white">
+                                    <div className="w-16 h-16 mx-auto bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-white/30 shadow-lg">
+                                        <Image
+                                            src={companyDetails.logo || "/placeholder.png"}
+                                            alt="Logo"
+                                            width={40}
+                                            height={40}
+                                            className="rounded-xl object-cover"
+                                        />
+                                    </div>
+                                    <h3 className="text-2xl font-bold tracking-tight mb-1">Payment</h3>
+                                    <p className="text-indigo-100 text-sm font-medium">Scan to pay securely</p>
+                                </div>
+
+                                {/* QR Code Container - Floating Card Effect */}
+                                <div className="relative bg-white p-4 rounded-3xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] mb-8 border border-gray-100 transform hover:scale-[1.02] transition-transform duration-300">
+                                    <div className="relative aspect-square w-48 overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center">
+                                        <Image
+                                            src={companyDetails.upiQrCode}
+                                            alt="UPI QR Code"
+                                            width={192}
+                                            height={192}
+                                            className="w-full h-full object-contain p-2"
+                                        />
+                                    </div>
+                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white px-3 py-1 rounded-full border border-gray-100 shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+                                        <Lock className="w-3 h-3 text-emerald-500" />
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Secure UPI</span>
+                                    </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="w-full space-y-3 relative z-10">
+                                    <Button
+                                        onClick={async () => {
+                                            if (companyDetails.upiQrCode) {
+                                                try {
+                                                    const response = await fetch(companyDetails.upiQrCode);
+                                                    const blob = await response.blob();
+                                                    const url = window.URL.createObjectURL(blob);
+                                                    const link = document.createElement('a');
+                                                    link.href = url;
+                                                    link.download = `payment-qr-${companyDetails.companyName}.png`; // Custom name
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    document.body.removeChild(link);
+                                                    window.URL.revokeObjectURL(url);
+                                                    toast({ description: "QR Code downloaded!" });
+                                                } catch (err) {
+                                                    console.error("Failed to download QR", err);
+                                                    window.open(companyDetails.upiQrCode, '_blank');
+                                                }
+                                            }
+                                        }}
+                                        variant="outline"
+                                        className="w-full rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 font-medium"
+                                    >
+                                        <DownloadCloud className="w-4 h-4 mr-2" />
+                                        Download QR
+                                    </Button>
+
+                                    <Button
+                                        onClick={() => {
+                                            setShowQrPopup(false);
+                                            executeSaveOrder();
+                                        }}
+                                        className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-lg shadow-indigo-200 h-12 text-base font-semibold tracking-wide"
+                                    >
+                                        Place Order & Pay
+                                        <ArrowRight className="w-4 h-4 ml-2 opacity-80" />
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

@@ -21,5 +21,13 @@ export const orderService = {
             body: JSON.stringify(data),
             next: { revalidate: 0 }
         });
+    },
+
+    saveOrder: async (data: any) => {
+        return apiClient('/product/order/create', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            next: { revalidate: 0 }
+        });
     }
 };
