@@ -850,6 +850,15 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 });
                 // Build fresh cache so profile reflects changes
                 await loadCustomerData(true);
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('profile-updated', {
+                        detail: {
+                            customerName: contactInfo.name,
+                            customerEmailId: contactInfo.email,
+                            customerMobileNumber: contactInfo.mobile
+                        }
+                    }));
+                }
             }
 
             // Calculate Costs
