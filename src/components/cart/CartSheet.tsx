@@ -3026,7 +3026,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                 )}
                                                             </div>
                                                             <p className="text-sm text-muted-foreground leading-relaxed">
-                                                                Securely pay via UPI, Credit/Debit Cards, or Netbanking.
+                                                                Securely pay via UPI, Credit/Debit Cards, or Netbanking. <span className="font-semibold text-primary block mt-1">Pay through QR scanner</span>
                                                             </p>
                                                             <div className="mt-3 flex items-center gap-2">
                                                                 <span className="text-[10px] font-bold bg-secondary px-2 py-1 rounded-md text-muted-foreground">Powered by Razorpay</span>
@@ -3068,7 +3068,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         </>
                                     ) : (
                                         <span className="flex items-center gap-2">
-                                            Pay & Place Order <ArrowRight className="w-5 h-5" />
+                                            Place Order & Pay <ArrowRight className="w-5 h-5" />
                                         </span>
                                     )}
                                 </Button>
