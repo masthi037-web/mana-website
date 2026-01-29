@@ -38,7 +38,7 @@ export function ImageUpload({
     // Parse initial value
     useEffect(() => {
         if (value) {
-            const paths = value.split("&&&").filter(Boolean);
+            const paths = String(value).split("&&&").filter(Boolean);
             setFilePaths(paths);
             // For existing remote URLs, we use them as previews too
             setPreviews(paths);
