@@ -225,7 +225,14 @@ export const useCart = create<CartState>()(
           let distributionIndex = 0;
           productItems.forEach(pItem => {
             const sizeColoursCost = (pItem.selectedSizeColours || []).reduce((acc, a) => acc + a.price, 0);
-            const basePrice = (pItem.priceAfterDiscount ?? pItem.price);
+
+            // LOGGING FOR DEBUGGING
+            console.log(`Cart Calc: ID=${pItem.id}, Price=${pItem.price}, AfterDiscount=${pItem.priceAfterDiscount}`);
+
+            let basePrice = (pItem.priceAfterDiscount && pItem.priceAfterDiscount > 0) ? pItem.priceAfterDiscount : pItem.price;
+
+            // Fallback if basePrice is still 0/undefined/null (shouldn't happen if price is set, but safety first)
+            if (!basePrice || basePrice <= 0) basePrice = pItem.price;
             // Note: Discount applies to (Base + SizeColours)
             // CartSheet logic: singleItemTotal = basePrice + sizeColoursCost; finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
             // So it applies to the SUM.
