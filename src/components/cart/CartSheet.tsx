@@ -981,6 +981,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             setView('list');
             // If we have a pending stock conflict (from chained logic), show it now?
             // Actually, Review & Continue clears it. So we are good.
+            setIsCheckingOut(false);
             return;
         }
 
@@ -1183,6 +1184,53 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         }
                     }
 
+
+                    // 1.5 Validate Prices (Base Size Price) for Complex Variant
+                    // Complex items have a Base Price (Size) + Extra Price (Colour). This checks the Base Price.
+                    let serverSizePrice = parseFloat((detail.productSizePrice || 0).toString());
+                    let resolvedPrice = parseFloat((detail.productSizePriceAfterDiscount || 0).toString());
+
+                    // Fallback to local pricing ONLY if server logic lacks data
+                    if ((isNaN(serverSizePrice) || serverSizePrice <= 0) && item.pricing && item.pricing.length > 0) {
+                        const matchedVariant = item.pricing.find(p => p.id === (item.productSizeId || checkSizeId?.toString()));
+                        if (matchedVariant) {
+                            serverSizePrice = parseFloat(matchedVariant.price.toString());
+                            resolvedPrice = parseFloat((matchedVariant.priceAfterDiscount || 0).toString());
+                        }
+                    }
+
+                    // Fallback logic for discount
+                    if ((isNaN(resolvedPrice) || resolvedPrice <= 0) && detail.productOffer && serverSizePrice > 0) {
+                        const match = detail.productOffer.match(/(\d+)\s*%?|(\d+)\s*OFF/i);
+                        if (match) {
+                            const percent = parseFloat(match[1] || match[2]);
+                            if (!isNaN(percent)) {
+                                const discountVal = (serverSizePrice * percent) / 100;
+                                resolvedPrice = Math.round(serverSizePrice - discountVal);
+                            }
+                        }
+                    }
+                    if (isNaN(resolvedPrice) || resolvedPrice <= 0) resolvedPrice = serverSizePrice;
+
+                    if (resolvedPrice > 0) {
+                        const previousEffective = item.priceAfterDiscount || item.price;
+
+                        // Sync Base Price
+                        if (serverSizePrice > 0 && item.price !== serverSizePrice) {
+                            console.log(`CartSheet: Syncing Base Price (Case 1) ${item.price} -> ${serverSizePrice}`);
+                            item.price = serverSizePrice;
+                        }
+
+                        // Sync Effective Price
+                        if (item.priceAfterDiscount !== resolvedPrice) {
+                            if (previousEffective !== resolvedPrice) {
+                                blockingChanges = true;
+                                pushChange(`Price for "${item.name}" (${detail.productSize ? detail.productSize + ' - ' : ''}${detail.sizeColourName}) updated from ₹${previousEffective} to ₹${resolvedPrice}.`, item.cartItemId);
+                            }
+                            item.priceAfterDiscount = resolvedPrice;
+                        }
+                    }
+
                     // 3. Validate productSizeColourQuantity (Stock)
                     if (detail.productSizeColourQuantity) {
                         const scLimit = parseInt(detail.productSizeColourQuantity);
@@ -1194,10 +1242,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             if (item.quantity > remainingSc) {
                                 blockingChanges = true;
                                 if (remainingSc <= 0) {
-                                    pushChange(`"${item.name}" (${detail.sizeColourName}) is out of stock and has been removed.`);
+                                    pushChange(`"${item.name}" (${detail.productSize ? detail.productSize + ' - ' : ''}${detail.sizeColourName}) is out of stock and has been removed.`);
                                     item.cartItemId = 'REMOVE_ME';
                                 } else {
-                                    pushChange(`"${item.name}" (${detail.sizeColourName}) quantity updated to available stock: ${remainingSc}.`, item.cartItemId);
+                                    pushChange(`"${item.name}" (${detail.productSize ? detail.productSize + ' - ' : ''}${detail.sizeColourName}) quantity updated to available stock: ${remainingSc}.`, item.cartItemId);
                                     item.quantity = remainingSc;
                                     stockUsageMap.set(scKey, scConsumed + item.quantity);
                                 }
@@ -1210,7 +1258,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     // 4. Validate sizeColourStatus
                     if (detail.sizeColourStatus && detail.sizeColourStatus !== 'ACTIVE') {
                         blockingChanges = true;
-                        pushChange(`"${item.name}" (${detail.sizeColourName}) is currently unavailable and has been removed.`);
+                        pushChange(`"${item.name}" (${detail.productSize ? detail.productSize + ' - ' : ''}${detail.sizeColourName}) is currently unavailable and has been removed.`);
                         item.cartItemId = 'REMOVE_ME';
                         return;
                     }
