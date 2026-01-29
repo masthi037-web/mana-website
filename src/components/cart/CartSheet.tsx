@@ -2181,7 +2181,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 <ArrowRight className="w-4 h-4 rotate-180" />
                             </Button>
                             <SheetTitle className="text-xl font-bold font-headline flex items-center gap-2">
-                                {view === 'add' ? 'Add New Address' : view === 'payment' ? 'Select Payment Method' : 'Select Delivery Address'}
+                                {view === 'add' ? 'Add New Address' : view === 'payment' ? 'Verify Details' : 'Select Delivery Address'}
                             </SheetTitle>
                         </div>
                     )}
@@ -2916,108 +2916,50 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                                             {/* Payment Method Selection */}
                                             <div className="space-y-4">
-                                                {companyDetails?.razorpay === false ? (
-                                                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl border border-indigo-100 space-y-6 shadow-sm overflow-hidden relative">
-                                                        {/* Decorative Background Elements */}
-                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                                                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none" />
 
-                                                        <div className="text-center space-y-2 relative z-10">
-                                                            <h4 className="text-xl font-bold text-indigo-900">Scan & Pay</h4>
-                                                            <p className="text-sm text-indigo-600/80">Complete your payment within the time limit.</p>
+                                                <div
+                                                    onClick={() => setSelectedPaymentMethod('ONLINE')}
+                                                    className={cn(
+                                                        "relative overflow-hidden cursor-pointer p-5 rounded-3xl border-2 transition-all duration-300",
+                                                        selectedPaymentMethod === 'ONLINE'
+                                                            ? "bg-primary/5 border-primary shadow-lg shadow-primary/10"
+                                                            : "bg-background border-border hover:border-primary/30"
+                                                    )}
+                                                >
+                                                    <div className="flex items-start gap-4 z-10 relative">
+                                                        <div className={cn(
+                                                            "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors",
+                                                            selectedPaymentMethod === 'ONLINE' ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                                                        )}>
+                                                            <CreditCard className="w-6 h-6" />
                                                         </div>
-
-                                                        {/* Timer */}
-                                                        <div className="flex justify-center relative z-10">
-                                                            <div className={cn(
-                                                                "text-3xl font-black font-mono tracking-widest px-8 py-4 rounded-2xl border-2 transition-all duration-500 shadow-sm bg-white/60 backdrop-blur-sm",
-                                                                timeLeft < 60 ? "text-red-500 border-red-200 animate-pulse bg-red-50/50" : "text-indigo-600 border-indigo-100"
-                                                            )}>
-                                                                {formatTime(timeLeft)}
-                                                            </div>
-                                                        </div>
-
-                                                        {/* QR Code Card */}
-                                                        <div className="relative group perspective-1000 z-10">
-                                                            <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500/30 to-purple-600/30 rounded-[24px] blur opacity-40 group-hover:opacity-60 transition duration-1000" />
-                                                            <div className="relative w-64 h-64 mx-auto bg-white p-4 rounded-3xl shadow-xl border border-white/50 flex items-center justify-center backdrop-blur-xl">
-                                                                {companyDetails.upiQrCode ? (
-                                                                    <div className="relative w-full h-full">
-                                                                        <img
-                                                                            src={companyDetails.upiQrCode}
-                                                                            alt="Payment QR"
-                                                                            className="w-full h-full object-contain rounded-xl"
-                                                                        />
-                                                                        {/* Premium Scan Markers */}
-                                                                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-indigo-600 rounded-tl-xl -mt-1 -ml-1 shadow-sm" />
-                                                                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-indigo-600 rounded-tr-xl -mt-1 -mr-1 shadow-sm" />
-                                                                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-indigo-600 rounded-bl-xl -mb-1 -ml-1 shadow-sm" />
-                                                                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-indigo-600 rounded-br-xl -mb-1 -mr-1 shadow-sm" />
-
-                                                                        {/* Scanning Line Animation */}
-                                                                        <div className="absolute inset-0 overflow-hidden rounded-xl">
-                                                                            <div className="w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent absolute top-0 animate-[scan_2s_ease-in-out_infinite]" />
-                                                                        </div>
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="text-center p-4">
-                                                                        <p className="text-sm text-indigo-400 font-medium bg-indigo-50 px-3 py-1.5 rounded-lg">No QR Code Available</p>
-                                                                    </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <span className={cn(
+                                                                    "font-bold text-lg",
+                                                                    selectedPaymentMethod === 'ONLINE' ? "text-primary" : "text-foreground"
+                                                                )}>
+                                                                    Online Payment
+                                                                </span>
+                                                                {selectedPaymentMethod === 'ONLINE' && (
+                                                                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                                        <Check className="w-3 h-3" /> SELECTED
+                                                                    </span>
                                                                 )}
                                                             </div>
-                                                            <div className="text-center mt-4">
-                                                                <span className="text-[10px] font-bold text-indigo-500 bg-white/80 backdrop-blur px-3 py-1 rounded-full border border-indigo-100 shadow-sm uppercase tracking-wider">
-                                                                    Scan with any UPI App
-                                                                </span>
+                                                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                                                Securely pay via UPI, Credit/Debit Cards, or Netbanking.
+                                                            </p>
+                                                            <div className="mt-3 flex items-center gap-2">
+                                                                <span className="text-[10px] font-bold bg-secondary px-2 py-1 rounded-md text-muted-foreground">Powered by Razorpay</span>
+                                                                <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-md">100% Secure</span>
                                                             </div>
                                                         </div>
-
                                                     </div>
-                                                ) : (
-                                                    <div
-                                                        onClick={() => setSelectedPaymentMethod('ONLINE')}
-                                                        className={cn(
-                                                            "relative overflow-hidden cursor-pointer p-5 rounded-3xl border-2 transition-all duration-300",
-                                                            selectedPaymentMethod === 'ONLINE'
-                                                                ? "bg-primary/5 border-primary shadow-lg shadow-primary/10"
-                                                                : "bg-background border-border hover:border-primary/30"
-                                                        )}
-                                                    >
-                                                        <div className="flex items-start gap-4 z-10 relative">
-                                                            <div className={cn(
-                                                                "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors",
-                                                                selectedPaymentMethod === 'ONLINE' ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-                                                            )}>
-                                                                <CreditCard className="w-6 h-6" />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center justify-between mb-1">
-                                                                    <span className={cn(
-                                                                        "font-bold text-lg",
-                                                                        selectedPaymentMethod === 'ONLINE' ? "text-primary" : "text-foreground"
-                                                                    )}>
-                                                                        Online Payment
-                                                                    </span>
-                                                                    {selectedPaymentMethod === 'ONLINE' && (
-                                                                        <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                                            <Check className="w-3 h-3" /> SELECTED
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                                                    Securely pay via UPI, Credit/Debit Cards, or Netbanking. <span className="font-semibold text-primary block mt-1">Pay through QR scanner</span>
-                                                                </p>
-                                                                <div className="mt-3 flex items-center gap-2">
-                                                                    <span className="text-[10px] font-bold bg-secondary px-2 py-1 rounded-md text-muted-foreground">Powered by Razorpay</span>
-                                                                    <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-md">100% Secure</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        {selectedPaymentMethod === 'ONLINE' && (
-                                                            <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
-                                                        )}
-                                                    </div>
-                                                )}
+                                                    {selectedPaymentMethod === 'ONLINE' && (
+                                                        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
+                                                    )}
+                                                </div>
                                             </div>
 
 
