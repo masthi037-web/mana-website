@@ -1143,6 +1143,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         // Auto-correct the cart item's size ID for this session so validation proceeds
                         item.productSizeId = detail.sizeId.toString();
                         sizeId = detail.sizeId;
+
                         // Do NOT flag as mismatch. Allow validation to update price/stock for the correct size.
                     } else {
                         isIdMismatch = true;
