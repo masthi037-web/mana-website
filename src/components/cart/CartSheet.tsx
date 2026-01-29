@@ -1114,7 +1114,19 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 // --- 0. IDENTITY CHECK (Data Mismatch) ---
                 // Re-derive keys to verify response matches request
                 // Re-derive keys to verify response matches request
-                const sizeId = item.productSizeId ? parseInt(item.productSizeId) : null;
+                // Re-derive keys to verify response matches request
+                let sizeId = item.productSizeId ? parseInt(item.productSizeId) : null;
+
+                // Fallback: Try to derive sizeId if strict property is missing
+                if (!sizeId && item.pricing && item.pricing.length > 0) {
+                    const quantityVariant = item.selectedVariants?.['Quantity'];
+                    if (quantityVariant) {
+                        const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
+                        if (matchedPricing) sizeId = parseInt(matchedPricing.id);
+                    }
+                    if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
+                }
+
                 const productColourId = item.selectedColour?.id ? parseInt(item.selectedColour.id) : null;
 
                 // Verify IDs match (Server vs Client)
