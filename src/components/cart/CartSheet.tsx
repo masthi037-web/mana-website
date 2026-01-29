@@ -42,7 +42,8 @@ import {
     User,
     Briefcase,
     Download,
-    DownloadCloud
+    DownloadCloud,
+    UploadCloud
 } from 'lucide-react';
 import {
     AlertDialog,
@@ -1685,70 +1686,86 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         <div className="w-full max-w-sm bg-white/90 backdrop-blur-2xl rounded-[32px] overflow-hidden shadow-2xl border border-white/50 relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-500">
 
                             {/* Premium Gradient Header */}
-                            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-br from-violet-600 via-indigo-600 to-purple-600 opacity-100" />
-                            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-white/20 rounded-full blur-3xl pointer-events-none" />
-                            <div className="absolute top-20 left-0 -ml-8 w-32 h-32 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
+                            <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 opacity-100 shadow-[inset_0_-40px_40px_-20px_rgba(255,255,255,0.1)]" />
+                            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 h-48 bg-white/20 rounded-full blur-3xl pointer-events-none" />
+                            <div className="absolute top-24 left-0 -ml-10 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
 
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="absolute top-3 right-3 text-white/80 hover:text-white hover:bg-white/10 rounded-full z-20"
+                                className="absolute top-4 right-4 text-white/90 hover:text-white hover:bg-white/20 rounded-full z-20 backdrop-blur-md border border-white/10"
                                 onClick={() => setShowExitConfirmation(true)}
                             >
                                 <X className="w-5 h-5" />
                             </Button>
 
-                            <div className="relative pt-8 pb-8 px-6 flex flex-col items-center text-center">
+                            <div className="relative pt-12 pb-8 px-6 flex flex-col items-center text-center">
                                 {/* Logo & Title Section */}
-                                <div className="mb-6 relative z-10 text-white w-full flex flex-col items-center">
-                                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-3 border border-white/30 shadow-lg">
+                                <div className="mb-8 relative z-10 text-white w-full flex flex-col items-center animate-in slide-in-from-top-4 duration-700">
+                                    <div className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-[24px] flex items-center justify-center mb-4 border border-white/30 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)]">
                                         <Image
                                             src={companyDetails?.logo || "/placeholder.png"}
                                             alt="Logo"
-                                            width={40}
-                                            height={40}
-                                            className="rounded-xl object-cover"
+                                            width={50}
+                                            height={50}
+                                            className="rounded-2xl object-cover"
                                         />
                                     </div>
-                                    <h3 className="text-2xl font-bold tracking-tight mb-0.5">Payment</h3>
-                                    <p className="text-indigo-100 text-sm font-medium opacity-90">Scan to pay securely</p>
+                                    <h3 className="text-3xl font-black tracking-tight mb-1 drop-shadow-sm font-headline">Payment</h3>
+                                    <div className="flex items-center gap-2 text-indigo-100/90 text-sm font-bold opacity-100 bg-white/10 px-4 py-1.5 rounded-full border border-white/10 backdrop-blur-sm">
+                                        <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                                        Scan to pay securely
+                                    </div>
                                 </div>
 
                                 {/* QR Code Container */}
-                                <div className="relative bg-white p-3 rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] mb-6 border border-gray-100 w-full max-w-[240px]">
-                                    <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center">
+                                <div className="relative bg-white p-4 rounded-[40px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] mb-8 border border-white group transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] w-full max-w-[260px]">
+                                    <div className="relative aspect-square w-full overflow-hidden rounded-[32px] bg-slate-50 border border-slate-100 flex items-center justify-center">
                                         <Image
                                             src={companyDetails?.upiQrCode || "https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"}
                                             alt="UPI QR Code"
-                                            width={192}
-                                            height={192}
-                                            className="w-full h-full object-contain p-2"
+                                            width={200}
+                                            height={200}
+                                            className="w-full h-full object-contain p-4"
                                         />
+
+                                        {/* Animated Scan Line */}
+                                        <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500 to-transparent animate-[scan_2s_ease-in-out_infinite] opacity-40 shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
                                     </div>
-                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white px-3 py-1 rounded-full border border-gray-100 shadow-sm flex items-center gap-1.5 whitespace-nowrap z-10">
-                                        <Lock className="w-3 h-3 text-emerald-500" />
-                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Secure UPI</span>
+                                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white px-5 py-2 rounded-full border border-slate-100 shadow-xl flex items-center gap-2 whitespace-nowrap z-10">
+                                        <div className="bg-emerald-100 p-1 rounded-full">
+                                            <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                                        </div>
+                                        <span className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Secure UPI</span>
                                     </div>
                                 </div>
 
                                 {/* Timer & Upload Section */}
-                                <div className="w-full bg-gray-50/50 rounded-2xl p-4 border border-gray-100 mb-4 space-y-4">
+                                <div className="w-full bg-slate-50/80 backdrop-blur-md rounded-[32px] p-5 border border-slate-200/50 mb-6 space-y-5 shadow-inner">
 
                                     {/* Timer */}
-                                    <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-100 shadow-sm">
-                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Time Remaining</span>
-                                        <span className="text-lg font-mono font-bold text-gray-900" style={{ color: theme }}>
+                                    <div className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-slate-100 shadow-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Time Remaining</span>
+                                        </div>
+                                        <span className="text-xl font-mono font-black text-slate-900 tracking-tighter" style={{ color: theme }}>
                                             {formatTime(timeLeft)}
                                         </span>
                                     </div>
 
                                     {/* Upload */}
-                                    <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-xs font-semibold text-gray-700">Upload Screenshot</span>
-                                            <span className="text-[10px] text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">Optional</span>
+                                    <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-1.5 bg-indigo-50 rounded-lg">
+                                                    <UploadCloud className="w-3.5 h-3.5 text-indigo-600" />
+                                                </div>
+                                                <span className="text-xs font-bold text-slate-700">Upload Screenshot</span>
+                                            </div>
+                                            <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100/50 uppercase tracking-wider">Optional</span>
                                         </div>
-                                        <div className="h-20">
+                                        <div className="min-h-[100px]">
                                             <ImageUpload
                                                 value={manualProof ? [manualProof] : []}
                                                 onChange={(url) => setManualProof(url[0])}
@@ -2972,7 +2989,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                 "text-[10px] font-medium opacity-60",
                                                                 selectedPaymentMethod === 'ONLINE' ? "text-white" : "text-slate-500"
                                                             )}>
-                                                                Powered by Razorpay
                                                             </span>
                                                         </div>
                                                     </div>

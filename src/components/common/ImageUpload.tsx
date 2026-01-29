@@ -171,11 +171,11 @@ export function ImageUpload({
                     <div
                         onClick={handleClick}
                         className={cn(
-                            "relative flex flex-col items-center justify-center aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 transition-all hover:bg-secondary/50 cursor-pointer overflow-hidden",
-                            (disabled || isUploading) && "opacity-50 cursor-not-allowed hover:bg-transparent"
+                            "relative flex flex-col items-center justify-center aspect-square rounded-2xl border-2 border-dashed border-muted-foreground/25 transition-all duration-300 hover:bg-secondary/50 hover:border-primary/50 hover:scale-[1.02] active:scale-[0.98] cursor-pointer overflow-hidden group",
+                            (disabled || isUploading) && "opacity-50 cursor-not-allowed hover:bg-transparent hover:scale-100"
                         )}
                     >
-                        <Input
+                        <input
                             ref={inputRef}
                             type="file"
                             accept="image/*"
@@ -185,11 +185,14 @@ export function ImageUpload({
                         />
 
                         {isUploading ? (
-                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                            <div className="flex flex-col items-center justify-center space-y-2">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                <span className="text-[10px] font-medium text-muted-foreground animate-pulse">Uploading...</span>
+                            </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center text-muted-foreground p-2 text-center">
-                                <Plus className="w-8 h-8 mb-2" />
-                                <span className="text-xs font-medium">Add Image</span>
+                            <div className="flex flex-col items-center justify-center text-muted-foreground transition-colors group-hover:text-primary">
+                                <Plus className="w-8 h-8 mb-1 transition-transform group-hover:rotate-90 duration-500" />
+                                <span className="text-xs font-bold tracking-tight">Add Image</span>
                             </div>
                         )}
                     </div>
