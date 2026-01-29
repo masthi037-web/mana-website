@@ -1130,13 +1130,24 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 const productColourId = item.selectedColour?.id ? parseInt(item.selectedColour.id) : null;
 
                 // Verify IDs match (Server vs Client)
-                const isIdMismatch = detail.productId !== parseInt(item.id) ||
-                    (detail.sizeId !== undefined && detail.sizeId !== sizeId) ||
+                let isIdMismatch = detail.productId !== parseInt(item.id) ||
                     (detail.productColourId !== undefined && detail.productColourId !== productColourId);
 
-                // Note: detail.sizeId might be null/undefined if not returned by older servers,
-                // but user asked us to add it, so valid server should return it.
-                // We strictly check if it IS returned.
+                // Smart Check for Size ID Mismatch (Auto-Recover)
+                if (detail.sizeId !== undefined && detail.sizeId !== sizeId) {
+                    // Check if the Server's Size ID actually exists in our local pricing options
+                    const serverSizeExistsLocally = item.pricing?.some(p => parseInt(p.id) === detail.sizeId);
+
+                    if (serverSizeExistsLocally) {
+                        console.log(`CartSheet: Auto-correcting Size ID for "${item.name}" from ${sizeId} to ${detail.sizeId}`);
+                        // Auto-correct the cart item's size ID for this session so validation proceeds
+                        item.productSizeId = detail.sizeId.toString();
+                        sizeId = detail.sizeId;
+                        // Do NOT flag as mismatch. Allow validation to update price/stock for the correct size.
+                    } else {
+                        isIdMismatch = true;
+                    }
+                }
 
                 if (isIdMismatch) {
                     blockingChanges = true;
@@ -1233,14 +1244,15 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     }
 
                     // 3. Validate Prices (productSizePrice, productSizePriceAfterDiscount)
+                    // 3. Validate Prices (productSizePrice, productSizePriceAfterDiscount)
                     let serverSizePrice = detail.productSizePrice || 0;
                     let resolvedPrice = detail.productSizePriceAfterDiscount;
 
-                    // Fallback to local pricing ONLY if server returns null/0
+                    // Fallback to local pricing ONLY if server returns null/0 (Server is Truth)
                     if ((!serverSizePrice || serverSizePrice <= 0) && item.pricing && item.pricing.length > 0) {
-                        const matchedVariant = item.pricing.find(p => p.id === item.productSizeId);
+                        // Only take from local if server failed
+                        const matchedVariant = item.pricing.find(p => p.id === (item.productSizeId || sizeId?.toString()));
                         if (matchedVariant) {
-                            console.log(`CartSheet: Fallback for Size Variant "${item.name}". Server sent 0, using local pricing:`, matchedVariant);
                             serverSizePrice = matchedVariant.price;
                             resolvedPrice = matchedVariant.priceAfterDiscount;
                         }
@@ -1248,6 +1260,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                     // Fallback logic for discount (only if resolvedPrice is still missing)
                     if ((!resolvedPrice || resolvedPrice <= 0) && detail.productOffer) {
+                        // ... (keep existing discount percent logic as backup) ...
                         const match = detail.productOffer.match(/(\d+)\s*%?|(\d+)\s*OFF/i);
                         if (match) {
                             const percent = parseFloat(match[1] || match[2]);
@@ -1258,6 +1271,16 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         }
                     }
                     if (!resolvedPrice || resolvedPrice <= 0) resolvedPrice = serverSizePrice;
+
+                    // FORCE UPDATE if server provides a different price (User Request Step 1417)
+                    if (resolvedPrice !== undefined && resolvedPrice > 0) {
+                        if (item.price !== resolvedPrice) {
+                            blockingChanges = true;
+                            pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedPrice}.`, item.cartItemId);
+                            item.price = resolvedPrice;
+                            item.priceAfterDiscount = resolvedPrice;
+                        }
+                    }
 
                     if (item.price !== resolvedPrice) {
                         blockingChanges = true;
