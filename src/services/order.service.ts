@@ -24,7 +24,7 @@ export const orderService = {
     },
 
     saveOrder: async (data: any) => {
-        return apiClient('/product/order/create', {
+        return apiClient('/order/create', {
             method: 'POST',
             body: JSON.stringify(data),
             next: { revalidate: 0 }
