@@ -3099,21 +3099,61 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             {/* Payment Method Selection */}
                                             <div className="space-y-4">
                                                 {companyDetails?.razorpay === false ? (
-                                                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl border border-indigo-100 space-y-6">
-                                                        <div className="text-center space-y-2">
+                                                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl border border-indigo-100 space-y-6 shadow-sm overflow-hidden relative">
+                                                        {/* Decorative Background Elements */}
+                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                                                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none" />
+
+                                                        <div className="text-center space-y-2 relative z-10">
                                                             <h4 className="text-xl font-bold text-indigo-900">Scan & Pay</h4>
                                                             <p className="text-sm text-indigo-600/80">Complete your payment within the time limit.</p>
                                                         </div>
 
                                                         {/* Timer */}
-                                                        <div className="flex justify-center">
+                                                        <div className="flex justify-center relative z-10">
                                                             <div className={cn(
-                                                                "text-3xl font-black font-mono tracking-widest px-6 py-3 rounded-2xl border-2 transition-colors duration-500",
-                                                                timeLeft < 60 ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-white text-indigo-600 border-indigo-100"
+                                                                "text-3xl font-black font-mono tracking-widest px-8 py-4 rounded-2xl border-2 transition-all duration-500 shadow-sm bg-white/60 backdrop-blur-sm",
+                                                                timeLeft < 60 ? "text-red-500 border-red-200 animate-pulse bg-red-50/50" : "text-indigo-600 border-indigo-100"
                                                             )}>
                                                                 {formatTime(timeLeft)}
                                                             </div>
                                                         </div>
+
+                                                        {/* QR Code Card */}
+                                                        <div className="relative group perspective-1000 z-10">
+                                                            <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500/30 to-purple-600/30 rounded-[24px] blur opacity-40 group-hover:opacity-60 transition duration-1000" />
+                                                            <div className="relative w-64 h-64 mx-auto bg-white p-4 rounded-3xl shadow-xl border border-white/50 flex items-center justify-center backdrop-blur-xl">
+                                                                {companyDetails.upiQrCode ? (
+                                                                    <div className="relative w-full h-full">
+                                                                        <img
+                                                                            src={companyDetails.upiQrCode}
+                                                                            alt="Payment QR"
+                                                                            className="w-full h-full object-contain rounded-xl"
+                                                                        />
+                                                                        {/* Premium Scan Markers */}
+                                                                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-indigo-600 rounded-tl-xl -mt-1 -ml-1 shadow-sm" />
+                                                                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-indigo-600 rounded-tr-xl -mt-1 -mr-1 shadow-sm" />
+                                                                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-indigo-600 rounded-bl-xl -mb-1 -ml-1 shadow-sm" />
+                                                                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-indigo-600 rounded-br-xl -mb-1 -mr-1 shadow-sm" />
+
+                                                                        {/* Scanning Line Animation */}
+                                                                        <div className="absolute inset-0 overflow-hidden rounded-xl">
+                                                                            <div className="w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent absolute top-0 animate-[scan_2s_ease-in-out_infinite]" />
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="text-center p-4">
+                                                                        <p className="text-sm text-indigo-400 font-medium bg-indigo-50 px-3 py-1.5 rounded-lg">No QR Code Available</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-center mt-4">
+                                                                <span className="text-[10px] font-bold text-indigo-500 bg-white/80 backdrop-blur px-3 py-1 rounded-full border border-indigo-100 shadow-sm uppercase tracking-wider">
+                                                                    Scan with any UPI App
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
                                                     </div>
                                                 ) : (
                                                     <div
