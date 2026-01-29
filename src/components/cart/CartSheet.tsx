@@ -542,7 +542,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
     // Centralized Bill Calculation
     let discountAmount = 0;
-    if (couponCode && companyDetails?.companyCoupon) {
+    if (couponCode && companyDetails?.companyCoupon && typeof companyDetails.companyCoupon === 'string') {
         const couponData = companyDetails.companyCoupon.split(',').find(c => c.startsWith(couponCode + '&&&'));
         if (couponData) {
             const [, discountStr, minOrderStr] = couponData.split('&&&');
@@ -587,12 +587,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 setCustomer(data);
                 setCustomer(data);
 
-                // Only overwrite contact info if it's empty (initial load) so we don't wipe user input
-                // Or if the server has data and we have nothing.
+                // Auto-fill contact info if available (don't overwrite if user has typed something)
                 setContactInfo(prev => ({
-                    name: prev.name || data.customerName || '',
-                    email: prev.email || data.customerEmailId || '',
-                    mobile: prev.mobile || data.customerMobileNumber || ''
+                    name: prev.name ? prev.name : (data.customerName || data.name || ''),
+                    email: prev.email ? prev.email : (data.customerEmailId || data.customerEmail || data.email || ''),
+                    mobile: prev.mobile ? prev.mobile : (data.customerMobileNumber || data.customerMobile || data.mobile || '')
                 }));
                 setAddresses(data.customerAddress || []);
                 // Auto-select first address if none selected and NOT saving (saving handles its own selection)
