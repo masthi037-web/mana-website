@@ -105,8 +105,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     }, [showQrPopup, timeLeft]);
 
     const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
+        const totalSeconds = Math.max(0, seconds);
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
         return `${mins} : ${secs.toString().padStart(2, '0')}`;
     };
 
@@ -424,11 +425,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     }, [view, companyDetails?.razorpay, timeLeft]);
 
 
-    // const formatTime = (seconds: number) => {
-    //     const mins = Math.floor(seconds / 60);
-    //     const secs = seconds % 60;
-    //     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-    // };
+
 
     // Address Form State
     const [newAddress, setNewAddress] = useState<Partial<CustomerAddress>>({
