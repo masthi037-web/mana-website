@@ -285,6 +285,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
     const [validationErrors, setValidationErrors] = useState<ValidationMessage[]>([]);
     const [showValidationPopup, setShowValidationPopup] = useState(false);
+    const [validatedCart, setValidatedCart] = useState<CartItem[]>([]);
 
     // Stock Conflict State
     interface StockConflict {
@@ -1505,6 +1506,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
             if (blockingChanges && changes.length > 0) {
                 setValidationErrors(changes);
+                setValidatedCart(newCart);
                 setShowValidationPopup(true);
             } else {
                 // All Good -> Switch to Address Selection
@@ -1789,7 +1791,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     ))}
                                 </ul>
 
-                                <Button className="w-full" onClick={() => setShowValidationPopup(false)}>
+                                <Button className="w-full" onClick={() => {
+                                    useCart.setState({ cart: validatedCart });
+                                    setValidatedCart([]);
+                                    setShowValidationPopup(false);
+                                }}>
                                     <RefreshCw className="mr-2 w-4 h-4" />
                                     Review & Continue
                                 </Button>
