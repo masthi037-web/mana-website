@@ -465,6 +465,22 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const [showLoginPopup, setShowLoginPopup] = useState(false);
     const [pendingStockConflicts, setPendingStockConflicts] = useState<StockConflict[]>([]); // "Chained Popup" buffer
 
+    // SKIP VALIDATION LOGIC
+    const [isValidated, setIsValidated] = useState(false);
+    const isInternalUpdate = useRef(false);
+
+    // Reset validation if user changes quantity manually
+    useEffect(() => {
+        if (isInternalUpdate.current) {
+            isInternalUpdate.current = false; // Reset flag, keep validated
+        } else {
+            if (isValidated) {
+                console.log("CartSheet: Cart changed by user. Resetting validation status.");
+                setIsValidated(false);
+            }
+        }
+    }, [cart]);
+
     const checkAuth = () => {
         if (typeof window !== 'undefined') {
             setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
@@ -957,6 +973,17 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         }
 
         setIsCheckingOut(true);
+
+        // 0. SKIP VALIDATION CHECK
+        if (isValidated) {
+            console.log("CartSheet: Cart is already validated. Skipping API check.");
+            loadCustomerData();
+            setView('list');
+            // If we have a pending stock conflict (from chained logic), show it now?
+            // Actually, Review & Continue clears it. So we are good.
+            return;
+        }
+
         console.log("Starting checkout validation process...");
         try {
             // 1. Get Customer Details (Phone, Name)
@@ -1244,21 +1271,27 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                     // FORCE UPDATE Strict Validation
                     if (resolvedPrice > 0) {
-                        // 1. Sync Base Price (Silent)
+                        const previousEffective = item.priceAfterDiscount || item.price;
+
+                        // 1. Sync Base Price (Silent unless it creates a visual anomaly we handle elsewhere)
+                        // This ensures the "strikethrough" price is correct.
                         if (serverSizePrice > 0 && item.price !== serverSizePrice) {
                             console.log(`CartSheet: Syncing Base Price ${item.price} -> ${serverSizePrice}`);
                             item.price = serverSizePrice;
                         }
 
                         // 2. Sync Effective Price (The Price User Pays)
+                        // If item.priceAfterDiscount differs from resolvedPrice (or is missing), we MUST update it.
                         if (item.priceAfterDiscount !== resolvedPrice) {
-                            const previousEffective = item.priceAfterDiscount || item.price;
+
+                            // Only block/notify if the EFFECTIVE price changes for the user
                             if (previousEffective !== resolvedPrice) {
                                 blockingChanges = true;
                                 pushChange(`Price for "${item.name}" updated from ₹${previousEffective} to ₹${resolvedPrice}.`, item.cartItemId);
                             } else {
                                 console.log(`CartSheet: Silent Sync of AfterDiscount for ${item.name} (Effective price unchanged)`);
                             }
+                            // Always apply the correct discount value
                             item.priceAfterDiscount = resolvedPrice;
                         }
                     }
@@ -1333,6 +1366,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     console.log(`CartSheet [${item.name}]: ServerBase=${serverProdPrice}, Resolved=${resolvedProdPrice}, LocalBase=${item.price}, LocalAfter=${item.priceAfterDiscount}`);
 
                     if (resolvedProdPrice > 0) {
+                        const previousEffective = item.priceAfterDiscount || item.price;
+
                         // 1. Sync Base Price (Silent)
                         if (serverProdPrice > 0 && item.price !== serverProdPrice) {
                             console.log(`CartSheet: Syncing Base Price ${item.price} -> ${serverProdPrice}`);
@@ -1341,7 +1376,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                         // 2. Sync Effective Price
                         if (item.priceAfterDiscount !== resolvedProdPrice) {
-                            const previousEffective = item.priceAfterDiscount || item.price;
                             if (previousEffective !== resolvedProdPrice) {
                                 blockingChanges = true;
                                 pushChange(`Price for "${item.name}" updated from ₹${previousEffective} to ₹${resolvedProdPrice}.`, item.cartItemId);
@@ -1400,6 +1434,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     console.log(`CartSheet [${item.name}]: ServerBase=${serverProdPrice}, Resolved=${resolvedProdPrice}, LocalBase=${item.price}, LocalAfter=${item.priceAfterDiscount}`);
 
                     if (resolvedProdPrice > 0) {
+                        const previousEffective = item.priceAfterDiscount || item.price;
+
                         // 1. Sync Base Price (Silent)
                         if (serverProdPrice > 0 && item.price !== serverProdPrice) {
                             console.log(`CartSheet: Syncing Base Price ${item.price} -> ${serverProdPrice}`);
@@ -1408,7 +1444,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                         // 2. Sync Effective Price
                         if (item.priceAfterDiscount !== resolvedProdPrice) {
-                            const previousEffective = item.priceAfterDiscount || item.price;
                             if (previousEffective !== resolvedProdPrice) {
                                 blockingChanges = true;
                                 pushChange(`Price for "${item.name}" updated from ₹${previousEffective} to ₹${resolvedProdPrice}.`, item.cartItemId);
@@ -1878,6 +1913,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                                 <Button className="w-full" onClick={() => {
                                     console.log('CartSheet: Review & Continue clicked. Applying validatedCart:', validatedCart);
+                                    // Manual Review Logic:
+                                    // 1. Mark this as an internal update so useEffect doesn't clear validation
+                                    isInternalUpdate.current = true;
+
+                                    // 2. Apply Changes
                                     if (validatedCart.length > 0) {
                                         setCart(validatedCart);
                                     } else {
@@ -1885,6 +1925,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     }
                                     setValidatedCart([]);
                                     setShowValidationPopup(false);
+
+                                    // 3. Set Validated Flag
+                                    setIsValidated(true);
 
                                     // CHAINED POPUP LOGIC:
                                     // Check if we deferred any stock conflicts
@@ -1894,9 +1937,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         setShowConflictPopup(true);
                                         setPendingStockConflicts([]); // Clear buffer
                                     } else {
-                                        // All Good -> Switch to Address Selection
-                                        loadCustomerData();
-                                        setView('list');
+                                        // All Good -> Stay on Cart View (Manual Review Request)
+                                        console.log('CartSheet: Changes applied. User can now review cart before proceeding.');
+                                        // We DO NOT auto-advance to 'list' view.
+                                        // When user clicks "Checkout" again, handleCheckout will see isValidated=true and skip API.
                                     }
                                 }}>
                                     <RefreshCw className="mr-2 w-4 h-4" />
