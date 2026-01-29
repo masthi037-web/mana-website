@@ -1007,7 +1007,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!companyDetails?.companyCoupon) return;
 
-        const couponList = companyDetails.companyCoupon.split(',').map(cStr => {
+        const couponList = String(companyDetails.companyCoupon).split(',').map(cStr => {
             const [code, discountStr, minOrderStr] = cStr.split('&&&');
             return {
                 code,
@@ -1663,7 +1663,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 // 3. Validate multipleSetDiscount
                 const normalizeDiscount = (s: string | null | undefined) => {
                     if (!s) return "";
-                    return s.split('&&&').sort().join('&&&');
+                    return String(s).split('&&&').sort().join('&&&');
                 };
 
                 const cartSetDiscount = normalizeDiscount(item.multipleSetDiscount);
@@ -1672,7 +1672,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 // Helper: Get description of the BEST rule currently active (Copied for scope)
                 const getActiveRuleDescription = (rule: string, qty: number) => {
                     if (!rule || qty <= 0) return null;
-                    const segments = rule.split('&&&');
+                    const segments = String(rule).split('&&&');
                     let bestParams: { t: number, p: number } | null = null;
                     for (const seg of segments) {
                         const [thresholdStr, percentStr] = seg.split('-');
@@ -1710,7 +1710,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 const isUsingMoreThan = (rule: string, qty: number) => {
                     if (!rule || qty <= 0) return false;
-                    const [thresholdStr] = rule.split('-');
+                    const [thresholdStr] = String(rule).split('-');
                     const threshold = parseFloat(thresholdStr);
                     return !isNaN(threshold) && qty > threshold;
                 };
