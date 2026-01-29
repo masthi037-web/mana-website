@@ -1081,6 +1081,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 const totalRequested = items.reduce((sum, it) => sum + it.quantity, 0);
 
                 // If total demand exceeds limit, this is a conflict the user must resolve manually
+                // If total demand exceeds limit, this is a conflict the user must resolve manually
                 if (totalRequested > limitInfo.limit) {
                     blockingChanges = true;
                     // Create deep copies of items so user can edit them in popup without mutating main cart yet
