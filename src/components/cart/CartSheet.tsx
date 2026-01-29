@@ -1247,6 +1247,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         blockingChanges = true;
                         pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedPrice}.`, item.cartItemId);
                         item.price = resolvedPrice;
+                        item.priceAfterDiscount = resolvedPrice; // Sync properties
                     }
 
 
@@ -1375,6 +1376,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         blockingChanges = true;
                         pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedProdPrice}.`, item.cartItemId);
                         item.price = resolvedProdPrice;
+                        item.priceAfterDiscount = resolvedProdPrice;
                     }
 
                     // 2. Validate productQuantityAvailable
