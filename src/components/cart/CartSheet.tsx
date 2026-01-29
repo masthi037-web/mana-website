@@ -1326,6 +1326,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         blockingChanges = true;
                         pushChange(`Price for "${item.name}" updated from ₹${item.price} to ₹${resolvedProdPrice}.`, item.cartItemId);
                         item.price = resolvedProdPrice;
+                        item.priceAfterDiscount = resolvedProdPrice;
                     }
 
                     // 4. Validate colourQuantityAvailable
@@ -2081,7 +2082,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                                     <Link href={`/product/${item.id}`} className="font-bold text-sm leading-tight hover:text-primary line-clamp-2">
                                                                                         {item.name}
                                                                                     </Link>
-                                                                                    {(item.selectedVariants || item.selectedSizeColours) && (
+                                                                                    {(item.selectedVariants || item.selectedSizeColours || item.selectedColour) && (
                                                                                         <div className="flex flex-wrap gap-1">
                                                                                             {Object.values(item.selectedVariants || {}).map((v, i) => (
                                                                                                 <span key={i} className="text-[10px] uppercase font-medium text-muted-foreground">{v}</span>
@@ -2091,6 +2092,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                                                     <span className="text-[10px] font-bold text-foreground tracking-tight leading-none">{sc.name}</span>
                                                                                                 </div>
                                                                                             ))}
+                                                                                            {item.selectedColour && (
+                                                                                                <div className="flex items-center px-2 py-0.5 bg-background border border-border/50 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                                                                                                    <span className="text-[10px] font-bold text-foreground tracking-tight leading-none">{item.selectedColour.name}</span>
+                                                                                                </div>
+                                                                                            )}
                                                                                         </div>
                                                                                     )}
                                                                                 </div>
