@@ -1287,7 +1287,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             // Only block/notify if the EFFECTIVE price changes for the user
                             if (previousEffective !== resolvedPrice) {
                                 blockingChanges = true;
-                                pushChange(`Price for "${item.name}" updated from ₹${previousEffective} to ₹${resolvedPrice}.`, item.cartItemId);
+                                pushChange(`Price for "${item.name}" (${detail.productSize}) updated from ₹${previousEffective} to ₹${resolvedPrice}.`, item.cartItemId);
                             } else {
                                 console.log(`CartSheet: Silent Sync of AfterDiscount for ${item.name} (Effective price unchanged)`);
                             }
@@ -1378,7 +1378,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (item.priceAfterDiscount !== resolvedProdPrice) {
                             if (previousEffective !== resolvedProdPrice) {
                                 blockingChanges = true;
-                                pushChange(`Price for "${item.name}" updated from ₹${previousEffective} to ₹${resolvedProdPrice}.`, item.cartItemId);
+                                pushChange(`Price for "${item.name}" (${detail.colour}) updated from ₹${previousEffective} to ₹${resolvedProdPrice}.`, item.cartItemId);
                             } else {
                                 console.log(`CartSheet: Silent Sync of AfterDiscount for ${item.name} (Effective price unchanged)`);
                             }
