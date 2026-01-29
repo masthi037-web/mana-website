@@ -166,10 +166,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         let maxGreedyDiscount = 0;
 
         if (ruleKey) {
-            const segments = ruleKey.split('&&&');
+            const segments = String(ruleKey).split('&&&');
             const tiers: { threshold: number, percent: number }[] = [];
             segments.forEach(seg => {
-                const parts = seg.split('-');
+                const parts = String(seg).split('-');
                 if (parts.length === 2) {
                     const t = parseFloat(parts[0]);
                     const p = parseFloat(parts[1]);
@@ -203,7 +203,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         // Logic B: More Than Override
         discountsToApply = greedyDiscounts;
         if (moreThanRule) {
-            const parts = moreThanRule.split('-');
+            const parts = String(moreThanRule).split('-');
             if (parts.length === 2) {
                 const threshold = parseFloat(parts[0]);
                 const discount = parseFloat(parts[1]);
@@ -543,9 +543,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     // Centralized Bill Calculation
     let discountAmount = 0;
     if (couponCode && companyDetails?.companyCoupon && typeof companyDetails.companyCoupon === 'string') {
-        const couponData = companyDetails.companyCoupon.split(',').find(c => c.startsWith(couponCode + '&&&'));
+        const couponData = String(companyDetails.companyCoupon).split(',').find(c => c.startsWith(couponCode + '&&&'));
         if (couponData) {
-            const [, discountStr, minOrderStr] = couponData.split('&&&');
+            const [, discountStr, minOrderStr] = String(couponData).split('&&&');
             const discountPercent = parseFloat(discountStr || '0');
             const minCouponOrder = parseFloat(minOrderStr || '0');
             if (subtotal >= minCouponOrder) {
@@ -1008,7 +1008,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         if (!companyDetails?.companyCoupon) return;
 
         const couponList = String(companyDetails.companyCoupon).split(',').map(cStr => {
-            const [code, discountStr, minOrderStr] = cStr.split('&&&');
+            const [code, discountStr, minOrderStr] = String(cStr).split('&&&');
             return {
                 code,
                 discount: parseFloat(discountStr || '0'),
@@ -1675,7 +1675,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     const segments = String(rule).split('&&&');
                     let bestParams: { t: number, p: number } | null = null;
                     for (const seg of segments) {
-                        const [thresholdStr, percentStr] = seg.split('-');
+                        const [thresholdStr, percentStr] = String(seg).split('-');
                         const threshold = parseFloat(thresholdStr);
                         const percent = parseFloat(percentStr);
                         if (!isNaN(threshold) && !isNaN(percent) && qty >= threshold) {
@@ -2418,13 +2418,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                 // 1. Gather Tiers
                                                 const allTiers: { threshold: number, percent: number }[] = [];
                                                 if (ruleKey) {
-                                                    ruleKey.split('&&&').forEach(seg => {
-                                                        const [t, p] = seg.split('-');
+                                                    String(ruleKey).split('&&&').forEach(seg => {
+                                                        const [t, p] = String(seg).split('-');
                                                         if (t && p) allTiers.push({ threshold: parseFloat(t), percent: parseFloat(p) });
                                                     });
                                                 }
                                                 if (moreThanRule) {
-                                                    const [t, p] = moreThanRule.split('-');
+                                                    const [t, p] = String(moreThanRule).split('-');
                                                     if (t && p) {
                                                         // "More than 6" -> Needs 7.
                                                         allTiers.push({ threshold: parseFloat(t) + 1, percent: parseFloat(p) });
@@ -2598,8 +2598,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                                             // Add Coupon Milestones
                                             if (companyDetails?.companyCoupon) {
-                                                companyDetails.companyCoupon.split(',').forEach(c => {
-                                                    const [code, , minStr] = c.split('&&&');
+                                                String(companyDetails.companyCoupon).split(',').forEach(c => {
+                                                    const [code, , minStr] = String(c).split('&&&');
                                                     const min = parseInt(minStr || '0');
                                                     if (code && min > 0) {
                                                         milestones.push({
@@ -2670,8 +2670,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             {companyDetails?.companyCoupon && (
                                                 <div className="grid grid-cols-2 gap-2 mt-2">
                                                     {(() => {
-                                                        const coupons = companyDetails.companyCoupon.split(',').map((cStr, idx) => {
-                                                            const [code, discountStr, minOrderStr] = cStr.split('&&&');
+                                                        const coupons = String(companyDetails.companyCoupon).split(',').map((cStr, idx) => {
+                                                            const [code, discountStr, minOrderStr] = String(cStr).split('&&&');
                                                             const discount = parseFloat(discountStr || '0');
                                                             const minOrder = parseFloat(minOrderStr || '0');
                                                             if (!code) return null;
