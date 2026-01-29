@@ -1506,6 +1506,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
             if (blockingChanges && changes.length > 0) {
                 setValidationErrors(changes);
+                console.log('CartSheet: Blocking changes found. Storing newCart in validatedCart:', newCart);
                 setValidatedCart(newCart);
                 setShowValidationPopup(true);
             } else {
@@ -1792,7 +1793,12 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 </ul>
 
                                 <Button className="w-full" onClick={() => {
-                                    setCart(validatedCart);
+                                    console.log('CartSheet: Review & Continue clicked. Applying validatedCart:', validatedCart);
+                                    if (validatedCart.length > 0) {
+                                        setCart(validatedCart);
+                                    } else {
+                                        console.error('CartSheet: validatedCart is empty!');
+                                    }
                                     setValidatedCart([]);
                                     setShowValidationPopup(false);
                                 }}>

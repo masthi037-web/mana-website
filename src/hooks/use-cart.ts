@@ -257,7 +257,10 @@ export const useCart = create<CartState>()(
           set({ cart: [], timestamp: now });
         }
       },
-      setCart: (newCart) => set({ cart: newCart, timestamp: Date.now() }),
+      setCart: (newCart) => {
+        console.log('useCart: setCart called with', newCart);
+        set({ cart: newCart, timestamp: Date.now() });
+      },
       clearCart: () => set({ cart: [], timestamp: Date.now() })
     }),
     {
