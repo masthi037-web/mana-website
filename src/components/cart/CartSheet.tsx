@@ -646,7 +646,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         }
 
         // QR Code Payment Interception
-        if (!companyDetails?.razorpay && companyDetails?.upiQrCode) {
+        // QR Code Payment Interception
+        if (!companyDetails?.razorpay) {
             setShowQrPopup(true);
             return;
         }
@@ -797,6 +798,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         const selectedAddress = addresses.find(a => a.customerAddressId === selectedAddressId);
         if (!selectedAddress) {
             toast({ variant: "destructive", description: "Invalid address selected." });
+            return;
+        }
+
+        if (!companyDetails?.razorpay) {
+            console.log("Razorpay is disabled. Skipping initialization.");
             return;
         }
 
@@ -1836,7 +1842,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
 
                 {/* QR Payment Popup Overlay */}
-                {showQrPopup && companyDetails?.upiQrCode && (
+                {showQrPopup && (
                     <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
                         <div className="w-full max-w-sm bg-white/90 backdrop-blur-2xl rounded-[32px] overflow-hidden shadow-2xl border border-white/50 relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-500">
 
@@ -1859,7 +1865,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 <div className="mb-8 relative z-10 text-white">
                                     <div className="w-16 h-16 mx-auto bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-white/30 shadow-lg">
                                         <Image
-                                            src={companyDetails.logo || "/placeholder.png"}
+                                            src={companyDetails?.logo || "/placeholder.png"}
                                             alt="Logo"
                                             width={40}
                                             height={40}
@@ -1874,7 +1880,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 <div className="relative bg-white p-4 rounded-3xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] mb-8 border border-gray-100 transform hover:scale-[1.02] transition-transform duration-300">
                                     <div className="relative aspect-square w-48 overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center">
                                         <Image
-                                            src={companyDetails.upiQrCode}
+                                            src={companyDetails?.upiQrCode || "https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"}
                                             alt="UPI QR Code"
                                             width={192}
                                             height={192}
@@ -1891,7 +1897,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 <div className="w-full space-y-3 relative z-10">
                                     <Button
                                         onClick={async () => {
-                                            if (companyDetails.upiQrCode) {
+                                            if (companyDetails?.upiQrCode) {
                                                 try {
                                                     const response = await fetch(companyDetails.upiQrCode);
                                                     const blob = await response.blob();
@@ -1908,6 +1914,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                     console.error("Failed to download QR", err);
                                                     window.open(companyDetails.upiQrCode, '_blank');
                                                 }
+                                            } else {
+                                                toast({ description: "Using default QR Code. Cannot download." });
                                             }
                                         }}
                                         variant="outline"
