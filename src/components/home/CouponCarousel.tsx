@@ -17,8 +17,8 @@ export function CouponCarousel({ companyCoupon }: CouponCarouselProps) {
 
     if (!companyCoupon) return null;
 
-    const coupons = companyCoupon.split(',').map((cStr, idx) => {
-        const [code, discountStr, minOrderStr] = cStr.split('&&&');
+    const coupons = String(companyCoupon).split(',').map((cStr, idx) => {
+        const [code, discountStr, minOrderStr] = String(cStr).split('&&&');
         return {
             id: idx,
             code,

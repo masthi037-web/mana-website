@@ -17,7 +17,7 @@ export function Footer({ companyName = "ManaBuy", socialLinks }: FooterProps) {
     const { isOwner } = useAuth();
 
     // Parse social links
-    const links = socialLinks?.split(',') || [];
+    const links = String(socialLinks || '').split(',').filter(Boolean);
 
     const getLink = (keyword: string) => {
         const found = links.find(l => l.toLowerCase().includes(keyword));

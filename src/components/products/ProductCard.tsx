@@ -163,7 +163,7 @@ export const ProductCard = ({ product, hideDescription = false }: ProductCardPro
           <div className="absolute top-12 right-3 flex flex-col items-end gap-2 z-10 pointer-events-none">
             {(() => {
               if (product.multipleDiscountMoreThan) {
-                const parts = product.multipleDiscountMoreThan.toString().split('-');
+                const parts = String(product.multipleDiscountMoreThan).split('-');
                 if (parts.length === 2) {
                   const threshold = parts[0].trim();
                   const discount = parts[1].trim();
@@ -305,9 +305,9 @@ export const ProductCard = ({ product, hideDescription = false }: ProductCardPro
             {/* Multiple Set Discount Badges */}
             {product.multipleSetDiscount && typeof product.multipleSetDiscount === 'string' && (
               <div className="flex flex-wrap gap-1 justify-end max-w-[60%]">
-                {product.multipleSetDiscount.split('&&&').map((offer, idx) => {
+                {String(product.multipleSetDiscount).split('&&&').map((offer, idx) => {
                   if (!offer) return null;
-                  const parts = offer.trim().split('-');
+                  const parts = String(offer).trim().split('-');
                   if (parts.length !== 2) return null;
 
                   const qty = parts[0].trim();

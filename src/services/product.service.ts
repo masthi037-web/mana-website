@@ -83,7 +83,7 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
     let images: string[] = [];
 
     if (rawImageField) {
-        images = rawImageField.split('&&&').filter(Boolean);
+        images = String(rawImageField).split('&&&').filter(Boolean);
     }
 
     const seed = apiProd.productId.toString();
