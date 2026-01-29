@@ -85,9 +85,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const [showFreeDeliveryPopup, setShowFreeDeliveryPopup] = useState(false);
     const [showCouponPopup, setShowCouponPopup] = useState(false);
     const [showQrPopup, setShowQrPopup] = useState(false);
+    const [showExitConfirmation, setShowExitConfirmation] = useState(false);
 
     // Timer Logic for QR
-    const [timeLeft, setTimeLeft] = useState(324); // 5:24 or matching requirement
+    // Timer Logic for QR
+    const [timeLeft, setTimeLeft] = useState(240); // 4 minutes
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -97,7 +99,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             }, 1000);
         } else if (!showQrPopup) {
             // Reset when closed
-            setTimeLeft(204); // Reset to 3:24 (204 seconds) as per image
+            setTimeLeft(240); // Reset to 4:00
         }
         return () => clearInterval(timer);
     }, [showQrPopup, timeLeft]);
@@ -223,7 +225,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             }
             // We can't just push because loop order might differ from original item indexing if we mixed items
             // But we stored cartItemId. We need to store it in a way that we can retrieve it by index.
-            // Actually, itemDiscountMap needs to be sorted by indexInItem ultimately? 
+            // Actually, itemDiscountMap needs to be sorted by indexInItem ultimately?
             // array[unit.indexInItem] = discount
 
             // Initialize if needed (though we might not know total size here efficiently without pre-alloc)
@@ -253,7 +255,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     // Let's keep productDiscounts as is BUT... wait, the logic below (lines 183+) iterates cart items.
     // If I change the key to cartItemId, I need to update the consumption.
     // Let's check lines 868+ (in render).
-    // It likely does: const discounts = productDiscounts[item.id]; 
+    // It likely does: const discounts = productDiscounts[item.id];
     // If I have 2 different items (variants) of same product, they share the pool.
     // Previous logic: productDiscounts[item.id] returned an array of length TotalQty.
     // The render loop likely sliced this array based on index?
@@ -405,7 +407,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
     // Manual Payment State
     const [manualProof, setManualProof] = useState<string | null>(null);
-    const [timeLeft, setTimeLeft] = useState(240); // 4 minutes in seconds
+    // const [timeLeft, setTimeLeft] = useState(240); // 4 minutes in seconds
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -422,11 +424,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     }, [view, companyDetails?.razorpay, timeLeft]);
 
 
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-    };
+    // const formatTime = (seconds: number) => {
+    //     const mins = Math.floor(seconds / 60);
+    //     const secs = seconds % 60;
+    //     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    // };
 
     // Address Form State
     const [newAddress, setNewAddress] = useState<Partial<CustomerAddress>>({
@@ -1865,87 +1867,90 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 {/* QR Payment Popup Overlay */}
                 {showQrPopup && (
                     <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
-                        {/* Main Card */}
-                        <div className="w-full max-w-xs bg-purple-50 rounded-[32px] overflow-hidden shadow-2xl relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-500 border border-purple-100">
+                        <div className="w-full max-w-sm bg-white/90 backdrop-blur-2xl rounded-[32px] overflow-hidden shadow-2xl border border-white/50 relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-500">
 
-                            {/* Bookmark Tab */}
-                            <div className="flex justify-center -mt-px relative z-10">
-                                <div className="bg-gray-800 text-white text-[10px] uppercase font-bold px-3 py-1 rounded-b-lg shadow-sm">
-                                    Bookmark this tab
-                                </div>
-                            </div>
+                            {/* Premium Gradient Header */}
+                            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-br from-violet-600 via-indigo-600 to-purple-600 opacity-100" />
+                            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-white/20 rounded-full blur-3xl pointer-events-none" />
+                            <div className="absolute top-20 left-0 -ml-8 w-32 h-32 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
 
-                            {/* Close Button */}
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="absolute top-3 right-3 text-gray-400 hover:text-gray-900 hover:bg-black/5 rounded-full z-20 h-8 w-8"
-                                onClick={() => setShowQrPopup(false)}
+                                className="absolute top-3 right-3 text-white/80 hover:text-white hover:bg-white/10 rounded-full z-20"
+                                onClick={() => setShowExitConfirmation(true)}
                             >
-                                <X className="w-4 h-4" />
+                                <X className="w-5 h-5" />
                             </Button>
 
-                            <div className="pt-6 pb-6 px-6 flex flex-col items-center text-center">
-                                {/* Header */}
-                                <h3 className="text-xl font-bold text-gray-900 mb-1" style={{ color: theme }}>Scan & Pay</h3>
-                                <p className="text-gray-500 text-xs mb-4">Complete your payment within the time limit.</p>
-
-                                {/* Timer */}
-                                <div className="bg-white border border-gray-100 rounded-2xl px-6 py-2 shadow-sm mb-6 w-full max-w-[180px]">
-                                    <span className="text-3xl font-mono font-bold text-indigo-500 tracking-wider" style={{ color: theme }}>
-                                        {formatTime(timeLeft)}
-                                    </span>
+                            <div className="relative pt-8 pb-8 px-6 flex flex-col items-center text-center">
+                                {/* Logo & Title Section */}
+                                <div className="mb-6 relative z-10 text-white w-full flex flex-col items-center">
+                                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-3 border border-white/30 shadow-lg">
+                                        <Image
+                                            src={companyDetails?.logo || "/placeholder.png"}
+                                            alt="Logo"
+                                            width={40}
+                                            height={40}
+                                            className="rounded-xl object-cover"
+                                        />
+                                    </div>
+                                    <h3 className="text-2xl font-bold tracking-tight mb-0.5">Payment</h3>
+                                    <p className="text-indigo-100 text-sm font-medium opacity-90">Scan to pay securely</p>
                                 </div>
 
-                                {/* QR Code Scanner Frame */}
-                                <div className="relative w-48 h-48 mb-6">
-                                    {/* Frame Corners - Simulated with borders */}
-                                    <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-indigo-500 rounded-tl-xl" style={{ borderColor: theme }} />
-                                    <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-indigo-500 rounded-tr-xl" style={{ borderColor: theme }} />
-                                    <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-indigo-500 rounded-bl-xl" style={{ borderColor: theme }} />
-                                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-indigo-500 rounded-br-xl" style={{ borderColor: theme }} />
-
-                                    {/* QR Content */}
-                                    {/* Dashed Inner Border */}
-                                    <div className="absolute inset-3 border-2 border-dashed border-indigo-200 rounded-xl bg-white flex items-center justify-center overflow-hidden">
+                                {/* QR Code Container */}
+                                <div className="relative bg-white p-3 rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] mb-6 border border-gray-100 w-full max-w-[240px]">
+                                    <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center">
                                         <Image
                                             src={companyDetails?.upiQrCode || "https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"}
                                             alt="UPI QR Code"
-                                            width={160}
-                                            height={160}
+                                            width={192}
+                                            height={192}
                                             className="w-full h-full object-contain p-2"
                                         />
-                                        {!companyDetails?.upiQrCode && (
-                                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                                                <span className="text-xs text-center text-indigo-400 font-medium px-2">No QR Code</span>
-                                            </div>
-                                        )}
+                                    </div>
+                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white px-3 py-1 rounded-full border border-gray-100 shadow-sm flex items-center gap-1.5 whitespace-nowrap z-10">
+                                        <Lock className="w-3 h-3 text-emerald-500" />
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Secure UPI</span>
                                     </div>
                                 </div>
 
-                                {/* Upload Screenshot Section */}
-                                <div className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
-                                    <p className="text-left text-sm font-semibold text-gray-800 mb-2">Upload Payment Screenshot (Optional)</p>
-                                    <p className="text-left text-xs text-gray-400 mb-3">(Max 1)</p>
+                                {/* Timer & Upload Section */}
+                                <div className="w-full bg-gray-50/50 rounded-2xl p-4 border border-gray-100 mb-4 space-y-4">
 
-                                    <div className="h-32">
-                                        <ImageUpload
-                                            value={manualProof ? [manualProof] : []}
-                                            onChange={(url) => setManualProof(url[0])}
-                                            onRemove={() => setManualProof(null)}
-                                            maxFiles={1}
-                                        />
+                                    {/* Timer */}
+                                    <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-100 shadow-sm">
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Time Remaining</span>
+                                        <span className="text-lg font-mono font-bold text-gray-900" style={{ color: theme }}>
+                                            {formatTime(timeLeft)}
+                                        </span>
+                                    </div>
+
+                                    {/* Upload */}
+                                    <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-xs font-semibold text-gray-700">Upload Screenshot</span>
+                                            <span className="text-[10px] text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">Optional</span>
+                                        </div>
+                                        <div className="h-20">
+                                            <ImageUpload
+                                                value={manualProof ? [manualProof] : []}
+                                                onChange={(url) => setManualProof(url[0])}
+                                                onRemove={() => setManualProof(null)}
+                                                maxFiles={1}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
-
-                                {/* Action Button */}
+                                {/* Pay Button */}
                                 <Button
                                     onClick={() => {
                                         setShowQrPopup(false);
                                         executeSaveOrder();
                                     }}
-                                    className="w-full rounded-xl h-12 text-base font-semibold shadow-lg text-white"
+                                    className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-lg shadow-indigo-200 h-12 text-base font-semibold tracking-wide"
                                     style={{ backgroundColor: theme || '#6366f1' }}
                                 >
                                     Place Order & Pay
@@ -1953,1388 +1958,1380 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 </Button>
 
                             </div>
-                        </div>
-                    </div>
                 )}
 
+                            {/* Free Delivery Popup Overlay */}
+                            {
+                                showFreeDeliveryPopup && (
+                                    <div className="absolute inset-x-4 top-1/4 z-[100] animate-in zoom-in-95 fade-in slide-in-from-bottom-10 duration-500 pointer-events-none">
+                                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-6 rounded-3xl shadow-2xl relative overflow-hidden border border-white/20 pointer-events-auto">
+                                            {/* Decorative Background */}
+                                            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/20 rounded-full blur-2xl" />
+                                            <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-black/10 rounded-full blur-xl" />
 
-            </div>
-        </div>
-    )
-}
-
-{/* Free Delivery Popup Overlay */ }
-{
-    showFreeDeliveryPopup && (
-        <div className="absolute inset-x-4 top-1/4 z-[100] animate-in zoom-in-95 fade-in slide-in-from-bottom-10 duration-500 pointer-events-none">
-            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-6 rounded-3xl shadow-2xl relative overflow-hidden border border-white/20 pointer-events-auto">
-                {/* Decorative Background */}
-                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/20 rounded-full blur-2xl" />
-                <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-black/10 rounded-full blur-xl" />
-
-                <div className="flex flex-col items-center text-center relative z-10">
-                    <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mb-3 backdrop-blur-sm shadow-inner">
-                        <Gift className="w-7 h-7 text-white animate-bounce" />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-1 tracking-tight">Free Shipment!</h3>
-                    <p className="text-white/90 text-sm font-medium">You've unlocked free delivery for this order.</p>
-                </div>
-
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full h-8 w-8"
-                    onClick={() => setShowFreeDeliveryPopup(false)}
-                >
-                    <X className="w-4 h-4" />
-                </Button>
-            </div>
-        </div>
-    )
-}
-
-{/* Stock Conflict Resolution Popup */ }
-{
-    showConflictPopup && stockConflicts.length > 0 && (
-        <div className="absolute inset-0 z-[120] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-background w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 slide-in-from-bottom-5">
-                {(() => {
-                    const hasUnresolved = stockConflicts.some(c => c.items.reduce((s, i) => s + i.quantity, 0) > c.availableStock);
-                    return (
-                        <div className={cn(
-                            "p-6 flex flex-col items-center text-center border-b transition-colors duration-300",
-                            hasUnresolved ? "bg-rose-500/10 border-rose-500/20" : "bg-emerald-500/10 border-emerald-500/20"
-                        )}>
-                            <div className={cn(
-                                "w-14 h-14 rounded-full flex items-center justify-center mb-3 shadow-inner transition-colors duration-300",
-                                hasUnresolved
-                                    ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-500"
-                                    : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-500"
-                            )}>
-                                {hasUnresolved ? <AlertTriangle className="w-7 h-7" /> : <Check className="w-7 h-7" />}
-                            </div>
-                            <h3 className="text-xl font-bold text-foreground tracking-tight transition-all">
-                                {hasUnresolved ? "Stock Limit Exceeded" : "Issues Resolved"}
-                            </h3>
-                            <p className="text-sm text-muted-foreground mt-2 px-4 leading-relaxed transition-all">
-                                {hasUnresolved
-                                    ? "You have requested more items than are currently available. Please adjust quantities below."
-                                    : "All quantity issues have been resolved. You can now update your cart."}
-                            </p>
-                        </div>
-                    );
-                })()}
-
-                <ScrollArea className="max-h-[60vh]">
-                    <div className="p-6 space-y-8">
-                        {stockConflicts.map((conflict, idx) => {
-                            const totalSelected = conflict.items.reduce((sum, i) => sum + i.quantity, 0);
-                            const isOverLimit = totalSelected > conflict.availableStock;
-
-                            return (
-                                <div key={idx} className="space-y-4">
-                                    <div className="flex items-center justify-between border-b pb-2">
-                                        <h4 className="font-bold text-base">{conflict.productName}</h4>
-                                        <Badge variant={isOverLimit ? "destructive" : "secondary"} className="text-xs">
-                                            Limit: {conflict.availableStock}
-                                        </Badge>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        {conflict.items.map((item) => (
-                                            <div key={item.cartItemId} className="flex items-center justify-between bg-secondary/30 p-3 rounded-xl">
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-medium">{item.name}</span>
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {item.selectedVariants?.['Quantity'] || item.selectedColour?.name || "Standard Identity"}
-                                                    </span>
+                                            <div className="flex flex-col items-center text-center relative z-10">
+                                                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mb-3 backdrop-blur-sm shadow-inner">
+                                                    <Gift className="w-7 h-7 text-white animate-bounce" />
                                                 </div>
-
-                                                <div className="flex items-center gap-3 bg-background rounded-lg p-1 border shadow-sm">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 rounded-md"
-                                                        onClick={() => {
-                                                            const updatedItems = [...conflict.items];
-                                                            const target = updatedItems.find(i => i.cartItemId === item.cartItemId);
-                                                            if (target && target.quantity > 0) target.quantity--;
-
-                                                            const newConflicts = [...stockConflicts];
-                                                            newConflicts[idx].items = updatedItems;
-                                                            setStockConflicts(newConflicts);
-                                                        }}
-                                                    >
-                                                        <Minus className="w-3 h-3" />
-                                                    </Button>
-                                                    <span className={`text-sm font-bold w-4 text-center ${item.quantity === 0 ? 'text-muted-foreground' : 'text-foreground'}`}>
-                                                        {item.quantity}
-                                                    </span>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 rounded-md"
-                                                        onClick={() => {
-                                                            const updatedItems = [...conflict.items];
-                                                            const target = updatedItems.find(i => i.cartItemId === item.cartItemId);
-                                                            if (target) target.quantity++;
-
-                                                            const newConflicts = [...stockConflicts];
-                                                            newConflicts[idx].items = updatedItems;
-                                                            setStockConflicts(newConflicts);
-                                                        }}
-                                                    >
-                                                        <Plus className="w-3 h-3" />
-                                                    </Button>
-                                                </div>
+                                                <h3 className="text-2xl font-bold mb-1 tracking-tight">Free Shipment!</h3>
+                                                <p className="text-white/90 text-sm font-medium">You've unlocked free delivery for this order.</p>
                                             </div>
-                                        ))}
-                                    </div>
 
-                                    <div className="flex justify-between items-center text-sm font-medium pt-2">
-                                        <span className="text-muted-foreground">Total Selected:</span>
-                                        <span className={isOverLimit ? "text-rose-500 font-bold" : "text-emerald-500 font-bold"}>
-                                            {totalSelected} / {conflict.availableStock}
-                                        </span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </ScrollArea>
-
-                <div className="p-6 pt-0 bg-background/50 backdrop-blur-sm">
-                    <Button
-                        className="w-full h-11 rounded-xl font-bold shadow-lg"
-                        disabled={stockConflicts.some(c => c.items.reduce((s, i) => s + i.quantity, 0) > c.availableStock)}
-                        onClick={() => {
-                            // Apply Resolved Changes to Main Cart
-                            const resolvedMap = new Map<string, number>();
-                            stockConflicts.forEach(c => {
-                                c.items.forEach(i => resolvedMap.set(i.cartItemId, i.quantity));
-                            });
-
-                            const updatedCart = cart.map(item => {
-                                if (resolvedMap.has(item.cartItemId)) {
-                                    const newQty = resolvedMap.get(item.cartItemId)!;
-                                    return { ...item, quantity: newQty };
-                                }
-                                return item;
-                            }).filter(i => i.quantity > 0);
-
-                            useCart.setState({ cart: updatedCart });
-                            setCart(updatedCart); // Added this line as per instruction
-                            setStockConflicts([]);
-                            setShowConflictPopup(false);
-                            // Ideally, trigger checkout again or let user review
-                        }}
-                    >
-                        Update Cart & Continue
-                    </Button>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-{/* Validation Popup */ }
-{
-    showValidationPopup && (
-        <div className="absolute inset-0 z-[110] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-background w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 slide-in-from-bottom-5">
-                <div className="bg-amber-500/10 p-6 flex flex-col items-center text-center border-b border-amber-500/20">
-                    <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-3 text-amber-600 dark:text-amber-500">
-                        <AlertTriangle className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-lg font-bold text-foreground">Cart Updated</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Some items have changed since you added them.</p>
-                </div>
-
-                <div className="p-6 space-y-4">
-                    <ul className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                        {validationErrors.map((err, i) => (
-                            <li key={i} className="text-sm border-l-2 border-amber-500 pl-3 py-1 text-muted-foreground flex items-start justify-between gap-2 bg-amber-50/50 dark:bg-amber-950/10 rounded-r-md">
-                                <span className="leading-snug">{err.message}</span>
-
-                            </li>
-                        ))}
-                    </ul>
-
-                    <Button className="w-full" onClick={() => {
-                        console.log('CartSheet: Review & Continue clicked. Applying validatedCart:', validatedCart);
-                        // Manual Review Logic:
-                        // 1. Mark this as an internal update so useEffect doesn't clear validation
-                        isInternalUpdate.current = true;
-
-                        // 2. Apply Changes
-                        if (validatedCart.length > 0) {
-                            setCart(validatedCart);
-                        } else {
-                            console.error('CartSheet: validatedCart is empty!');
-                        }
-                        setValidatedCart([]);
-                        setShowValidationPopup(false);
-
-                        // 3. Set Validated Flag
-                        setIsValidated(true);
-
-                        // CHAINED POPUP LOGIC:
-                        // Check if we deferred any stock conflicts
-                        if (pendingStockConflicts.length > 0) {
-                            console.log('CartSheet: Now showing deferred Stock Conflicts.');
-                            setStockConflicts(pendingStockConflicts);
-                            setShowConflictPopup(true);
-                            setPendingStockConflicts([]); // Clear buffer
-                        } else {
-                            // All Good -> Stay on Cart View (Manual Review Request)
-                            console.log('CartSheet: Changes applied. User can now review cart before proceeding.');
-                            // We DO NOT auto-advance to 'list' view.
-                            // When user clicks "Checkout" again, handleCheckout will see isValidated=true and skip API.
-                        }
-                    }}>
-                        <RefreshCw className="mr-2 w-4 h-4" />
-                        Review & Continue
-                    </Button>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-{/* Delete Confirmation Popup */ }
-<AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
-    <AlertDialogContent className="w-[90%] sm:max-w-[400px] border-none bg-background/80 backdrop-blur-xl shadow-2xl rounded-3xl p-6 gap-0">
-        <div className="flex flex-col items-center text-center space-y-4 pt-2">
-            {/* Animated Icon */}
-            <div className="relative group">
-                <div className="absolute inset-0 bg-destructive/20 blur-xl rounded-full animate-pulse" />
-                <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center relative border border-destructive/20 shadow-inner group-hover:scale-105 transition-transform duration-300">
-                    <Trash className="w-7 h-7 text-destructive animate-bounce" />
-                </div>
-            </div>
-
-            <AlertDialogHeader>
-                <AlertDialogTitle className="text-xl font-bold tracking-tight">Remove Item?</AlertDialogTitle>
-                <AlertDialogDescription className="text-muted-foreground text-sm font-medium leading-relaxed max-w-[260px] mx-auto">
-                    Are you sure you want to remove this item from your cart? This action cannot be undone.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-        </div>
-        <AlertDialogFooter className="grid grid-cols-2 gap-3 mt-8">
-            <AlertDialogCancel className="rounded-xl h-11 border-border/50 bg-secondary/50 hover:bg-secondary hover:text-foreground font-semibold transition-all duration-200 mt-0">
-                Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-                onClick={() => {
-                    if (itemToDelete) {
-                        removeFromCart(itemToDelete);
-                        setItemToDelete(null);
-                        toast({
-                            description: "Item removed from cart",
-                            className: "bg-background border-border"
-                        });
-                    }
-                }}
-                className="rounded-xl h-11 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold shadow-lg shadow-destructive/20 transition-all duration-200 hover:shadow-destructive/40 hover:-translate-y-0.5"
-            >
-                Remove
-            </AlertDialogAction>
-        </AlertDialogFooter>
-    </AlertDialogContent>
-</AlertDialog>
-
-{/* Premium Login Required Popup */ }
-{
-    showLoginPopup && (
-        <div className="absolute inset-0 z-[120] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-background w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border border-border/50 animate-in zoom-in-95 slide-in-from-bottom-5 relative">
-                {/* Close Button */}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-4 right-4 h-8 w-8 rounded-full hover:bg-secondary"
-                    onClick={() => setShowLoginPopup(false)}
-                >
-                    <X className="w-4 h-4" />
-                </Button>
-
-                <div className="p-8 flex flex-col items-center text-center">
-                    {/* Animated Lock Icon */}
-                    <div className="relative mb-6 group">
-                        <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
-                        <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-primary/5 rounded-full flex items-center justify-center relative border border-primary/20 shadow-inner">
-                            <Lock className="w-8 h-8 text-primary group-hover:scale-110 transition-transform duration-500" strokeWidth={2.5} />
-                        </div>
-                        <div className="absolute top-0 right-0 w-6 h-6 bg-background rounded-full flex items-center justify-center shadow-sm border border-border z-10">
-                            <div className="w-2 h-2 bg-rose-500 rounded-full animate-ping" />
-                        </div>
-                    </div>
-
-                    <h3 className="text-2xl font-bold tracking-tight mb-2">Login Required</h3>
-                    <p className="text-muted-foreground leading-relaxed text-sm mb-8">
-                        Please log in to your account to verify your identity and secure your order.
-                    </p>
-
-                    <Button
-                        className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-300 bg-gradient-to-r from-primary to-primary/90"
-                        onClick={() => {
-                            setShowLoginPopup(false); // Clear popup
-                            setCartOpen(false); // Close Cart Sidebar
-                            // Set flag to reopen cart after login
-                            if (typeof window !== 'undefined') {
-                                sessionStorage.setItem('loginRedirect', 'cart');
-                            }
-                            // Small timeout to allow cart close animation to start/finish
-                            setTimeout(() => {
-                                window.dispatchEvent(new Event('open-profile-sidebar'));
-                            }, 300);
-                        }}
-                    >
-                        Log In / Sign Up
-                    </Button>
-
-                    <p className="text-xs text-muted-foreground mt-6">
-                        Don't have an account? No problem, we'll create one for you instantly using your phone number.
-                    </p>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-{/* Header */ }
-<SheetHeader className="px-6 py-5 border-b border-border/40 bg-background/50 backdrop-blur-md sticky top-0 z-20">
-    {view === 'cart' ? (
-        <SheetTitle className="flex items-center gap-2.5 text-xl font-bold tracking-tight">
-            <div className="relative group/icon">
-                <ShoppingCart className="w-5 h-5 text-primary group-hover/icon:scale-110 transition-transform duration-300" />
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
-                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover/icon:opacity-100 transition-opacity duration-500" />
-            </div>
-            My Cart
-            {cartItemCount > 0 && (
-                <span className="ml-auto mr-12 text-xs font-bold px-2.5 py-1 rounded-full bg-secondary text-primary">
-                    {cartItemCount} items
-                </span>
-            )}
-        </SheetTitle>
-    ) : (
-        <div className="flex items-center gap-3">
-            <Button
-                variant="ghost"
-                size="icon"
-                className="-ml-2 h-8 w-8 rounded-full"
-                onClick={() => {
-                    if (view === 'add') setView('list');
-                    else if (view === 'payment') setView('list');
-                    else setView('cart');
-                }}
-            >
-                <ArrowRight className="w-4 h-4 rotate-180" />
-            </Button>
-            <SheetTitle className="text-xl font-bold font-headline flex items-center gap-2">
-                {view === 'add' ? 'Add New Address' : view === 'payment' ? 'Select Payment Method' : 'Select Delivery Address'}
-            </SheetTitle>
-        </div>
-    )}
-</SheetHeader>
-
-{
-    view === 'cart' ? (
-        cart.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6 animate-in fade-in zoom-in-95 duration-300">
-                <div className="relative mb-2">
-                    <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
-                    <div className="w-24 h-24 bg-secondary/50 rounded-full flex items-center justify-center relative backdrop-blur-sm border border-white/10">
-                        <ShoppingCart className="w-10 h-10 text-muted-foreground/60" />
-                    </div>
-                </div>
-                <div className="space-y-2 max-w-[250px]">
-                    <h3 className="font-bold text-xl tracking-tight">Your cart is empty</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                        Looks like you haven't added anything yet. Discover our best sellers!
-                    </p>
-                </div>
-                <SheetClose asChild>
-                    <Button className="rounded-full w-full max-w-[200px] h-11 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-105 transition-all">
-                        Start Shopping
-                    </Button>
-                </SheetClose>
-            </div>
-        ) : (
-            <>
-                <ScrollArea className="flex-1 px-6">
-                    <ul className="py-6 space-y-6">
-                        {
-                            Array.from(new Set(cart.map(item => item.id))).sort((a, b) => a.localeCompare(b)).map((productId, productIndex) => {
-                                const groupItems = cart.filter(item => item.id === productId);
-                                // Get product-level info from the first item (since they are variants of same product)
-                                const representativeItem = groupItems[0];
-                                const ruleKey = productRules[productId] || "";
-                                const moreThanRule = representativeItem.multipleDiscountMoreThan || "";
-                                const totalQty = productQuantities[productId.toString()] || 0;
-
-                                // --- Upsell Calculation (Compact) ---
-                                let upsellNode: React.ReactNode = null;
-
-                                // 1. Gather Tiers
-                                const allTiers: { threshold: number, percent: number }[] = [];
-                                if (ruleKey) {
-                                    ruleKey.split('&&&').forEach(seg => {
-                                        const [t, p] = seg.split('-');
-                                        if (t && p) allTiers.push({ threshold: parseFloat(t), percent: parseFloat(p) });
-                                    });
-                                }
-                                if (moreThanRule) {
-                                    const [t, p] = moreThanRule.split('-');
-                                    if (t && p) {
-                                        // "More than 6" -> Needs 7.
-                                        allTiers.push({ threshold: parseFloat(t) + 1, percent: parseFloat(p) });
-                                    }
-                                }
-
-                                // 2. Find Next Best Option
-                                const potentialUpsell = allTiers
-                                    .filter(t => t.threshold > totalQty)
-                                    .sort((a, b) => a.threshold - b.threshold)[0];
-
-                                if (potentialUpsell) {
-                                    const needed = potentialUpsell.threshold - totalQty;
-                                    upsellNode = (
-                                        <div className="mt-2 animate-in slide-in-from-bottom-2 duration-500">
-                                            <div className="group flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 cursor-default mx-auto w-fit">
-                                                <Tag className="w-4 h-4 text-white fill-white/20" />
-                                                <span className="text-xs font-bold text-white uppercase tracking-wide">
-                                                    Add {needed} more to get {potentialUpsell.percent}% Off
-                                                </span>
-                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="absolute top-2 right-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full h-8 w-8"
+                                                onClick={() => setShowFreeDeliveryPopup(false)}
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </Button>
                                         </div>
-                                    );
-                                }
+                                    </div>
+                                )
+                            }
 
-                                return (
-                                    <li key={`group-${productId}`} className="bg-card border border-border/40 rounded-xl p-3 shadow-sm space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${productIndex * 50}ms` }}>
-                                        {/* Product Items List (Grouped) */}
-                                        <div className="space-y-4">
-                                            {groupItems.map((item, itemIndex) => {
-                                                const isNew = lastAddedItemId === item.cartItemId;
-                                                // Calculate Rendered Discount for this specific line item
-                                                // We now use the pre-calculated itemDiscountMap which honors price sorting
-                                                const distribution = productDiscounts[item.cartItemId] || [];
+                            {/* Stock Conflict Resolution Popup */}
+                            {
+                                showConflictPopup && stockConflicts.length > 0 && (
+                                    <div className="absolute inset-0 z-[120] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+                                        <div className="bg-background w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 slide-in-from-bottom-5">
+                                            {(() => {
+                                                const hasUnresolved = stockConflicts.some(c => c.items.reduce((s, i) => s + i.quantity, 0) > c.availableStock);
+                                                return (
+                                                    <div className={cn(
+                                                        "p-6 flex flex-col items-center text-center border-b transition-colors duration-300",
+                                                        hasUnresolved ? "bg-rose-500/10 border-rose-500/20" : "bg-emerald-500/10 border-emerald-500/20"
+                                                    )}>
+                                                        <div className={cn(
+                                                            "w-14 h-14 rounded-full flex items-center justify-center mb-3 shadow-inner transition-colors duration-300",
+                                                            hasUnresolved
+                                                                ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-500"
+                                                                : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-500"
+                                                        )}>
+                                                            {hasUnresolved ? <AlertTriangle className="w-7 h-7" /> : <Check className="w-7 h-7" />}
+                                                        </div>
+                                                        <h3 className="text-xl font-bold text-foreground tracking-tight transition-all">
+                                                            {hasUnresolved ? "Stock Limit Exceeded" : "Issues Resolved"}
+                                                        </h3>
+                                                        <p className="text-sm text-muted-foreground mt-2 px-4 leading-relaxed transition-all">
+                                                            {hasUnresolved
+                                                                ? "You have requested more items than are currently available. Please adjust quantities below."
+                                                                : "All quantity issues have been resolved. You can now update your cart."}
+                                                        </p>
+                                                    </div>
+                                                );
+                                            })()}
 
-                                                // The distribution array corresponds 1:1 to the units in this specific cart item
-                                                // So we don't need to slice based on group offset anymore, because the map is keyed by cartItemId.
-                                                let itemDiscounts = distribution; // It should already be length == item.quantity
+                                            <ScrollArea className="max-h-[60vh]">
+                                                <div className="p-6 space-y-8">
+                                                    {stockConflicts.map((conflict, idx) => {
+                                                        const totalSelected = conflict.items.reduce((sum, i) => sum + i.quantity, 0);
+                                                        const isOverLimit = totalSelected > conflict.availableStock;
 
-                                                // Fallback safety
-                                                if (!itemDiscounts || itemDiscounts.length !== item.quantity) {
-                                                    // If mismatch (shouldn't happen with correct logic), fill 0 or trim
-                                                    // console.warn("Discount mismatch for item", item.cartItemId);
-                                                    itemDiscounts = itemDiscounts ? itemDiscounts.slice(0, item.quantity) : [];
-                                                    while (itemDiscounts.length < item.quantity) itemDiscounts.push(0);
-                                                }
+                                                        return (
+                                                            <div key={idx} className="space-y-4">
+                                                                <div className="flex items-center justify-between border-b pb-2">
+                                                                    <h4 className="font-bold text-base">{conflict.productName}</h4>
+                                                                    <Badge variant={isOverLimit ? "destructive" : "secondary"} className="text-xs">
+                                                                        Limit: {conflict.availableStock}
+                                                                    </Badge>
+                                                                </div>
 
-                                                // Group by Discount Percentage
-                                                const groups: Record<number, number> = {};
-                                                itemDiscounts.forEach(d => groups[d] = (groups[d] || 0) + 1);
-                                                const distinctDiscounts = Object.keys(groups).map(Number).sort((a, b) => b - a);
-
-                                                return distinctDiscounts.map((discountPercent, dIdx) => {
-                                                    const qty = groups[discountPercent];
-                                                    const isDiscounted = discountPercent > 0;
-                                                    const basePrice = item.priceAfterDiscount || item.price;
-                                                    // Note: we don't have item-specific sizeColours easily here if splitting variants.
-                                                    // Actually item is the cart item. SizeColours are on the item.
-                                                    const sizeColoursCost = item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0;
-                                                    const singleItemTotal = basePrice + sizeColoursCost;
-                                                    const finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
-
-                                                    return (
-                                                        <div key={`${item.cartItemId}-${discountPercent}`} className={cn("relative group/item flex gap-4", isNew && "ring-2 ring-primary/20 rounded-xl p-2 -m-2 bg-primary/5 transition-all duration-1000")}>
-                                                            <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-border/50 bg-secondary/30">
-                                                                <Image
-                                                                    src={item.selectedSizeColours?.[0]?.productPics || item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
-                                                                    alt={item.name}
-                                                                    fill
-                                                                    className={cn("object-cover", (item.productStatus === 'INACTIVE' || item.productStatus === 'OUTOFSTOCK') && "grayscale opacity-60")}
-                                                                />
-                                                                {(item.productStatus === 'INACTIVE' || item.productStatus === 'OUTOFSTOCK') && (
-                                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
-                                                                        <span className="text-[10px] font-bold text-white bg-rose-500/90 px-1.5 py-0.5 rounded-full shadow-sm">
-                                                                            {item.productStatus === 'OUTOFSTOCK' ? 'SOLD OUT' : 'UNAVAILABLE'}
-                                                                        </span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            <div className="flex flex-1 flex-col justify-between py-0.5">
-                                                                <div className="flex justify-between items-start gap-2">
-                                                                    <div className="space-y-1">
-                                                                        <Link href={`/product/${item.id}`} className="font-bold text-sm leading-tight hover:text-primary line-clamp-2">
-                                                                            {item.name}
-                                                                        </Link>
-                                                                        {(item.selectedVariants || item.selectedSizeColours || item.selectedColour) && (
-                                                                            <div className="flex flex-wrap gap-1">
-                                                                                {Object.values(item.selectedVariants || {}).map((v, i) => (
-                                                                                    <span key={i} className="text-[10px] uppercase font-medium text-muted-foreground">{v}</span>
-                                                                                ))}
-                                                                                {item.selectedSizeColours?.map((sc) => (
-                                                                                    <div key={sc.id} className="flex items-center px-2 py-0.5 bg-background border border-border/50 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                                                                                        <span className="text-[10px] font-bold text-foreground tracking-tight leading-none">{sc.name}</span>
-                                                                                    </div>
-                                                                                ))}
-                                                                                {item.selectedColour && (
-                                                                                    <div className="flex items-center px-2 py-0.5 bg-background border border-border/50 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                                                                                        <span className="text-[10px] font-bold text-foreground tracking-tight leading-none">{item.selectedColour.name}</span>
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="text-right">
-                                                                        {isDiscounted ? (
-                                                                            <div className="flex flex-col items-end">
-                                                                                <span className="text-[10px] text-muted-foreground line-through">₹{(singleItemTotal * qty).toFixed(0)}</span>
-                                                                                <span className="font-bold text-sm text-emerald-600">₹{finalTotal.toFixed(0)}</span>
-                                                                                <span className="text-[9px] font-bold text-white bg-emerald-500 px-1.5 py-0.5 rounded-sm shadow-sm mt-0.5">
-                                                                                    {discountPercent}% OFF
+                                                                <div className="space-y-3">
+                                                                    {conflict.items.map((item) => (
+                                                                        <div key={item.cartItemId} className="flex items-center justify-between bg-secondary/30 p-3 rounded-xl">
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-sm font-medium">{item.name}</span>
+                                                                                <span className="text-xs text-muted-foreground">
+                                                                                    {item.selectedVariants?.['Quantity'] || item.selectedColour?.name || "Standard Identity"}
                                                                                 </span>
                                                                             </div>
-                                                                        ) : (
-                                                                            <span className="font-bold text-sm">₹{finalTotal.toFixed(0)}</span>
-                                                                        )}
-                                                                    </div>
+
+                                                                            <div className="flex items-center gap-3 bg-background rounded-lg p-1 border shadow-sm">
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    size="icon"
+                                                                                    className="h-7 w-7 rounded-md"
+                                                                                    onClick={() => {
+                                                                                        const updatedItems = [...conflict.items];
+                                                                                        const target = updatedItems.find(i => i.cartItemId === item.cartItemId);
+                                                                                        if (target && target.quantity > 0) target.quantity--;
+
+                                                                                        const newConflicts = [...stockConflicts];
+                                                                                        newConflicts[idx].items = updatedItems;
+                                                                                        setStockConflicts(newConflicts);
+                                                                                    }}
+                                                                                >
+                                                                                    <Minus className="w-3 h-3" />
+                                                                                </Button>
+                                                                                <span className={`text-sm font-bold w-4 text-center ${item.quantity === 0 ? 'text-muted-foreground' : 'text-foreground'}`}>
+                                                                                    {item.quantity}
+                                                                                </span>
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    size="icon"
+                                                                                    className="h-7 w-7 rounded-md"
+                                                                                    onClick={() => {
+                                                                                        const updatedItems = [...conflict.items];
+                                                                                        const target = updatedItems.find(i => i.cartItemId === item.cartItemId);
+                                                                                        if (target) target.quantity++;
+
+                                                                                        const newConflicts = [...stockConflicts];
+                                                                                        newConflicts[idx].items = updatedItems;
+                                                                                        setStockConflicts(newConflicts);
+                                                                                    }}
+                                                                                >
+                                                                                    <Plus className="w-3 h-3" />
+                                                                                </Button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
                                                                 </div>
 
-                                                                <div className="flex items-center justify-between mt-2">
-                                                                    <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-0.5 border border-border/50 h-7">
-                                                                        <Button variant="ghost" className="h-6 w-6 rounded-md hover:bg-white p-0"
-                                                                            onClick={() => updateQuantity(item.cartItemId, Math.max(0, item.quantity - 1))}>
-                                                                            <Minus className="h-3 w-3" />
-                                                                        </Button>
-                                                                        <span className="w-6 text-center text-xs font-bold tabular-nums">{qty}</span>
-                                                                        <Button variant="ghost" className="h-6 w-6 rounded-md hover:bg-white p-0"
-                                                                            onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}>
-                                                                            <Plus className="h-3 w-3" />
-                                                                        </Button>
+                                                                <div className="flex justify-between items-center text-sm font-medium pt-2">
+                                                                    <span className="text-muted-foreground">Total Selected:</span>
+                                                                    <span className={isOverLimit ? "text-rose-500 font-bold" : "text-emerald-500 font-bold"}>
+                                                                        {totalSelected} / {conflict.availableStock}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </ScrollArea>
+
+                                            <div className="p-6 pt-0 bg-background/50 backdrop-blur-sm">
+                                                <Button
+                                                    className="w-full h-11 rounded-xl font-bold shadow-lg"
+                                                    disabled={stockConflicts.some(c => c.items.reduce((s, i) => s + i.quantity, 0) > c.availableStock)}
+                                                    onClick={() => {
+                                                        // Apply Resolved Changes to Main Cart
+                                                        const resolvedMap = new Map<string, number>();
+                                                        stockConflicts.forEach(c => {
+                                                            c.items.forEach(i => resolvedMap.set(i.cartItemId, i.quantity));
+                                                        });
+
+                                                        const updatedCart = cart.map(item => {
+                                                            if (resolvedMap.has(item.cartItemId)) {
+                                                                const newQty = resolvedMap.get(item.cartItemId)!;
+                                                                return { ...item, quantity: newQty };
+                                                            }
+                                                            return item;
+                                                        }).filter(i => i.quantity > 0);
+
+                                                        useCart.setState({ cart: updatedCart });
+                                                        setCart(updatedCart); // Added this line as per instruction
+                                                        setStockConflicts([]);
+                                                        setShowConflictPopup(false);
+                                                        // Ideally, trigger checkout again or let user review
+                                                    }}
+                                                >
+                                                    Update Cart & Continue
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            }
+
+                            {/* Validation Popup */}
+                            {
+                                showValidationPopup && (
+                                    <div className="absolute inset-0 z-[110] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                                        <div className="bg-background w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 slide-in-from-bottom-5">
+                                            <div className="bg-amber-500/10 p-6 flex flex-col items-center text-center border-b border-amber-500/20">
+                                                <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-3 text-amber-600 dark:text-amber-500">
+                                                    <AlertTriangle className="w-6 h-6" />
+                                                </div>
+                                                <h3 className="text-lg font-bold text-foreground">Cart Updated</h3>
+                                                <p className="text-sm text-muted-foreground mt-1">Some items have changed since you added them.</p>
+                                            </div>
+
+                                            <div className="p-6 space-y-4">
+                                                <ul className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                                                    {validationErrors.map((err, i) => (
+                                                        <li key={i} className="text-sm border-l-2 border-amber-500 pl-3 py-1 text-muted-foreground flex items-start justify-between gap-2 bg-amber-50/50 dark:bg-amber-950/10 rounded-r-md">
+                                                            <span className="leading-snug">{err.message}</span>
+
+                                                        </li>
+                                                    ))}
+                                                </ul>
+
+                                                <Button className="w-full" onClick={() => {
+                                                    console.log('CartSheet: Review & Continue clicked. Applying validatedCart:', validatedCart);
+                                                    // Manual Review Logic:
+                                                    // 1. Mark this as an internal update so useEffect doesn't clear validation
+                                                    isInternalUpdate.current = true;
+
+                                                    // 2. Apply Changes
+                                                    if (validatedCart.length > 0) {
+                                                        setCart(validatedCart);
+                                                    } else {
+                                                        console.error('CartSheet: validatedCart is empty!');
+                                                    }
+                                                    setValidatedCart([]);
+                                                    setShowValidationPopup(false);
+
+                                                    // 3. Set Validated Flag
+                                                    setIsValidated(true);
+
+                                                    // CHAINED POPUP LOGIC:
+                                                    // Check if we deferred any stock conflicts
+                                                    if (pendingStockConflicts.length > 0) {
+                                                        console.log('CartSheet: Now showing deferred Stock Conflicts.');
+                                                        setStockConflicts(pendingStockConflicts);
+                                                        setShowConflictPopup(true);
+                                                        setPendingStockConflicts([]); // Clear buffer
+                                                    } else {
+                                                        // All Good -> Stay on Cart View (Manual Review Request)
+                                                        console.log('CartSheet: Changes applied. User can now review cart before proceeding.');
+                                                        // We DO NOT auto-advance to 'list' view.
+                                                        // When user clicks "Checkout" again, handleCheckout will see isValidated=true and skip API.
+                                                    }
+                                                }}>
+                                                    <RefreshCw className="mr-2 w-4 h-4" />
+                                                    Review & Continue
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            }
+
+                            {/* Delete Confirmation Popup */}
+                            <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+                                <AlertDialogContent className="w-[90%] sm:max-w-[400px] border-none bg-background/80 backdrop-blur-xl shadow-2xl rounded-3xl p-6 gap-0">
+                                    <div className="flex flex-col items-center text-center space-y-4 pt-2">
+                                        {/* Animated Icon */}
+                                        <div className="relative group">
+                                            <div className="absolute inset-0 bg-destructive/20 blur-xl rounded-full animate-pulse" />
+                                            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center relative border border-destructive/20 shadow-inner group-hover:scale-105 transition-transform duration-300">
+                                                <Trash className="w-7 h-7 text-destructive animate-bounce" />
+                                            </div>
+                                        </div>
+
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle className="text-xl font-bold tracking-tight">Remove Item?</AlertDialogTitle>
+                                            <AlertDialogDescription className="text-muted-foreground text-sm font-medium leading-relaxed max-w-[260px] mx-auto">
+                                                Are you sure you want to remove this item from your cart? This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                    </div>
+                                    <AlertDialogFooter className="grid grid-cols-2 gap-3 mt-8">
+                                        <AlertDialogCancel className="rounded-xl h-11 border-border/50 bg-secondary/50 hover:bg-secondary hover:text-foreground font-semibold transition-all duration-200 mt-0">
+                                            Cancel
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={() => {
+                                                if (itemToDelete) {
+                                                    removeFromCart(itemToDelete);
+                                                    setItemToDelete(null);
+                                                    toast({
+                                                        description: "Item removed from cart",
+                                                        className: "bg-background border-border"
+                                                    });
+                                                }
+                                            }}
+                                            className="rounded-xl h-11 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold shadow-lg shadow-destructive/20 transition-all duration-200 hover:shadow-destructive/40 hover:-translate-y-0.5"
+                                        >
+                                            Remove
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+
+                            {/* Premium Login Required Popup */}
+                            {
+                                showLoginPopup && (
+                                    <div className="absolute inset-0 z-[120] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md animate-in fade-in duration-300">
+                                        <div className="bg-background w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border border-border/50 animate-in zoom-in-95 slide-in-from-bottom-5 relative">
+                                            {/* Close Button */}
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="absolute top-4 right-4 h-8 w-8 rounded-full hover:bg-secondary"
+                                                onClick={() => setShowLoginPopup(false)}
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </Button>
+
+                                            <div className="p-8 flex flex-col items-center text-center">
+                                                {/* Animated Lock Icon */}
+                                                <div className="relative mb-6 group">
+                                                    <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+                                                    <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-primary/5 rounded-full flex items-center justify-center relative border border-primary/20 shadow-inner">
+                                                        <Lock className="w-8 h-8 text-primary group-hover:scale-110 transition-transform duration-500" strokeWidth={2.5} />
+                                                    </div>
+                                                    <div className="absolute top-0 right-0 w-6 h-6 bg-background rounded-full flex items-center justify-center shadow-sm border border-border z-10">
+                                                        <div className="w-2 h-2 bg-rose-500 rounded-full animate-ping" />
+                                                    </div>
+                                                </div>
+
+                                                <h3 className="text-2xl font-bold tracking-tight mb-2">Login Required</h3>
+                                                <p className="text-muted-foreground leading-relaxed text-sm mb-8">
+                                                    Please log in to your account to verify your identity and secure your order.
+                                                </p>
+
+                                                <Button
+                                                    className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-300 bg-gradient-to-r from-primary to-primary/90"
+                                                    onClick={() => {
+                                                        setShowLoginPopup(false); // Clear popup
+                                                        setCartOpen(false); // Close Cart Sidebar
+                                                        // Set flag to reopen cart after login
+                                                        if (typeof window !== 'undefined') {
+                                                            sessionStorage.setItem('loginRedirect', 'cart');
+                                                        }
+                                                        // Small timeout to allow cart close animation to start/finish
+                                                        setTimeout(() => {
+                                                            window.dispatchEvent(new Event('open-profile-sidebar'));
+                                                        }, 300);
+                                                    }}
+                                                >
+                                                    Log In / Sign Up
+                                                </Button>
+
+                                                <p className="text-xs text-muted-foreground mt-6">
+                                                    Don't have an account? No problem, we'll create one for you instantly using your phone number.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            }
+
+                            {/* Header */}
+                            <SheetHeader className="px-6 py-5 border-b border-border/40 bg-background/50 backdrop-blur-md sticky top-0 z-20">
+                                {view === 'cart' ? (
+                                    <SheetTitle className="flex items-center gap-2.5 text-xl font-bold tracking-tight">
+                                        <div className="relative group/icon">
+                                            <ShoppingCart className="w-5 h-5 text-primary group-hover/icon:scale-110 transition-transform duration-300" />
+                                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
+                                            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover/icon:opacity-100 transition-opacity duration-500" />
+                                        </div>
+                                        My Cart
+                                        {cartItemCount > 0 && (
+                                            <span className="ml-auto mr-12 text-xs font-bold px-2.5 py-1 rounded-full bg-secondary text-primary">
+                                                {cartItemCount} items
+                                            </span>
+                                        )}
+                                    </SheetTitle>
+                                ) : (
+                                    <div className="flex items-center gap-3">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="-ml-2 h-8 w-8 rounded-full"
+                                            onClick={() => {
+                                                if (view === 'add') setView('list');
+                                                else if (view === 'payment') setView('list');
+                                                else setView('cart');
+                                            }}
+                                        >
+                                            <ArrowRight className="w-4 h-4 rotate-180" />
+                                        </Button>
+                                        <SheetTitle className="text-xl font-bold font-headline flex items-center gap-2">
+                                            {view === 'add' ? 'Add New Address' : view === 'payment' ? 'Select Payment Method' : 'Select Delivery Address'}
+                                        </SheetTitle>
+                                    </div>
+                                )}
+                            </SheetHeader>
+
+                            {
+                                view === 'cart' ? (
+                                    cart.length === 0 ? (
+                                        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                                            <div className="relative mb-2">
+                                                <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+                                                <div className="w-24 h-24 bg-secondary/50 rounded-full flex items-center justify-center relative backdrop-blur-sm border border-white/10">
+                                                    <ShoppingCart className="w-10 h-10 text-muted-foreground/60" />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2 max-w-[250px]">
+                                                <h3 className="font-bold text-xl tracking-tight">Your cart is empty</h3>
+                                                <p className="text-muted-foreground text-sm leading-relaxed">
+                                                    Looks like you haven't added anything yet. Discover our best sellers!
+                                                </p>
+                                            </div>
+                                            <SheetClose asChild>
+                                                <Button className="rounded-full w-full max-w-[200px] h-11 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-105 transition-all">
+                                                    Start Shopping
+                                                </Button>
+                                            </SheetClose>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <ScrollArea className="flex-1 px-6">
+                                                <ul className="py-6 space-y-6">
+                                                    {
+                                                        Array.from(new Set(cart.map(item => item.id))).sort((a, b) => a.localeCompare(b)).map((productId, productIndex) => {
+                                                            const groupItems = cart.filter(item => item.id === productId);
+                                                            // Get product-level info from the first item (since they are variants of same product)
+                                                            const representativeItem = groupItems[0];
+                                                            const ruleKey = productRules[productId] || "";
+                                                            const moreThanRule = representativeItem.multipleDiscountMoreThan || "";
+                                                            const totalQty = productQuantities[productId.toString()] || 0;
+
+                                                            // --- Upsell Calculation (Compact) ---
+                                                            let upsellNode: React.ReactNode = null;
+
+                                                            // 1. Gather Tiers
+                                                            const allTiers: { threshold: number, percent: number }[] = [];
+                                                            if (ruleKey) {
+                                                                ruleKey.split('&&&').forEach(seg => {
+                                                                    const [t, p] = seg.split('-');
+                                                                    if (t && p) allTiers.push({ threshold: parseFloat(t), percent: parseFloat(p) });
+                                                                });
+                                                            }
+                                                            if (moreThanRule) {
+                                                                const [t, p] = moreThanRule.split('-');
+                                                                if (t && p) {
+                                                                    // "More than 6" -> Needs 7.
+                                                                    allTiers.push({ threshold: parseFloat(t) + 1, percent: parseFloat(p) });
+                                                                }
+                                                            }
+
+                                                            // 2. Find Next Best Option
+                                                            const potentialUpsell = allTiers
+                                                                .filter(t => t.threshold > totalQty)
+                                                                .sort((a, b) => a.threshold - b.threshold)[0];
+
+                                                            if (potentialUpsell) {
+                                                                const needed = potentialUpsell.threshold - totalQty;
+                                                                upsellNode = (
+                                                                    <div className="mt-2 animate-in slide-in-from-bottom-2 duration-500">
+                                                                        <div className="group flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 cursor-default mx-auto w-fit">
+                                                                            <Tag className="w-4 h-4 text-white fill-white/20" />
+                                                                            <span className="text-xs font-bold text-white uppercase tracking-wide">
+                                                                                Add {needed} more to get {potentialUpsell.percent}% Off
+                                                                            </span>
+                                                                        </div>
                                                                     </div>
-                                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-lg" onClick={() => {
-                                                                        if (qty < item.quantity) {
-                                                                            updateQuantity(item.cartItemId, Math.max(0, item.quantity - qty));
-                                                                        } else {
-                                                                            setItemToDelete(item.cartItemId);
-                                                                        }
-                                                                    }}>
-                                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                                );
+                                                            }
+
+                                                            return (
+                                                                <li key={`group-${productId}`} className="bg-card border border-border/40 rounded-xl p-3 shadow-sm space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${productIndex * 50}ms` }}>
+                                                                    {/* Product Items List (Grouped) */}
+                                                                    <div className="space-y-4">
+                                                                        {groupItems.map((item, itemIndex) => {
+                                                                            const isNew = lastAddedItemId === item.cartItemId;
+                                                                            // Calculate Rendered Discount for this specific line item
+                                                                            // We now use the pre-calculated itemDiscountMap which honors price sorting
+                                                                            const distribution = productDiscounts[item.cartItemId] || [];
+
+                                                                            // The distribution array corresponds 1:1 to the units in this specific cart item
+                                                                            // So we don't need to slice based on group offset anymore, because the map is keyed by cartItemId.
+                                                                            let itemDiscounts = distribution; // It should already be length == item.quantity
+
+                                                                            // Fallback safety
+                                                                            if (!itemDiscounts || itemDiscounts.length !== item.quantity) {
+                                                                                // If mismatch (shouldn't happen with correct logic), fill 0 or trim
+                                                                                // console.warn("Discount mismatch for item", item.cartItemId);
+                                                                                itemDiscounts = itemDiscounts ? itemDiscounts.slice(0, item.quantity) : [];
+                                                                                while (itemDiscounts.length < item.quantity) itemDiscounts.push(0);
+                                                                            }
+
+                                                                            // Group by Discount Percentage
+                                                                            const groups: Record<number, number> = {};
+                                                                            itemDiscounts.forEach(d => groups[d] = (groups[d] || 0) + 1);
+                                                                            const distinctDiscounts = Object.keys(groups).map(Number).sort((a, b) => b - a);
+
+                                                                            return distinctDiscounts.map((discountPercent, dIdx) => {
+                                                                                const qty = groups[discountPercent];
+                                                                                const isDiscounted = discountPercent > 0;
+                                                                                const basePrice = item.priceAfterDiscount || item.price;
+                                                                                // Note: we don't have item-specific sizeColours easily here if splitting variants.
+                                                                                // Actually item is the cart item. SizeColours are on the item.
+                                                                                const sizeColoursCost = item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0;
+                                                                                const singleItemTotal = basePrice + sizeColoursCost;
+                                                                                const finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
+
+                                                                                return (
+                                                                                    <div key={`${item.cartItemId}-${discountPercent}`} className={cn("relative group/item flex gap-4", isNew && "ring-2 ring-primary/20 rounded-xl p-2 -m-2 bg-primary/5 transition-all duration-1000")}>
+                                                                                        <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-border/50 bg-secondary/30">
+                                                                                            <Image
+                                                                                                src={item.selectedSizeColours?.[0]?.productPics || item.selectedColour?.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl)}
+                                                                                                alt={item.name}
+                                                                                                fill
+                                                                                                className={cn("object-cover", (item.productStatus === 'INACTIVE' || item.productStatus === 'OUTOFSTOCK') && "grayscale opacity-60")}
+                                                                                            />
+                                                                                            {(item.productStatus === 'INACTIVE' || item.productStatus === 'OUTOFSTOCK') && (
+                                                                                                <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
+                                                                                                    <span className="text-[10px] font-bold text-white bg-rose-500/90 px-1.5 py-0.5 rounded-full shadow-sm">
+                                                                                                        {item.productStatus === 'OUTOFSTOCK' ? 'SOLD OUT' : 'UNAVAILABLE'}
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
+
+                                                                                        <div className="flex flex-1 flex-col justify-between py-0.5">
+                                                                                            <div className="flex justify-between items-start gap-2">
+                                                                                                <div className="space-y-1">
+                                                                                                    <Link href={`/product/${item.id}`} className="font-bold text-sm leading-tight hover:text-primary line-clamp-2">
+                                                                                                        {item.name}
+                                                                                                    </Link>
+                                                                                                    {(item.selectedVariants || item.selectedSizeColours || item.selectedColour) && (
+                                                                                                        <div className="flex flex-wrap gap-1">
+                                                                                                            {Object.values(item.selectedVariants || {}).map((v, i) => (
+                                                                                                                <span key={i} className="text-[10px] uppercase font-medium text-muted-foreground">{v}</span>
+                                                                                                            ))}
+                                                                                                            {item.selectedSizeColours?.map((sc) => (
+                                                                                                                <div key={sc.id} className="flex items-center px-2 py-0.5 bg-background border border-border/50 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                                                                                                                    <span className="text-[10px] font-bold text-foreground tracking-tight leading-none">{sc.name}</span>
+                                                                                                                </div>
+                                                                                                            ))}
+                                                                                                            {item.selectedColour && (
+                                                                                                                <div className="flex items-center px-2 py-0.5 bg-background border border-border/50 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                                                                                                                    <span className="text-[10px] font-bold text-foreground tracking-tight leading-none">{item.selectedColour.name}</span>
+                                                                                                                </div>
+                                                                                                            )}
+                                                                                                        </div>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                                <div className="text-right">
+                                                                                                    {isDiscounted ? (
+                                                                                                        <div className="flex flex-col items-end">
+                                                                                                            <span className="text-[10px] text-muted-foreground line-through">₹{(singleItemTotal * qty).toFixed(0)}</span>
+                                                                                                            <span className="font-bold text-sm text-emerald-600">₹{finalTotal.toFixed(0)}</span>
+                                                                                                            <span className="text-[9px] font-bold text-white bg-emerald-500 px-1.5 py-0.5 rounded-sm shadow-sm mt-0.5">
+                                                                                                                {discountPercent}% OFF
+                                                                                                            </span>
+                                                                                                        </div>
+                                                                                                    ) : (
+                                                                                                        <span className="font-bold text-sm">₹{finalTotal.toFixed(0)}</span>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div className="flex items-center justify-between mt-2">
+                                                                                                <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-0.5 border border-border/50 h-7">
+                                                                                                    <Button variant="ghost" className="h-6 w-6 rounded-md hover:bg-white p-0"
+                                                                                                        onClick={() => updateQuantity(item.cartItemId, Math.max(0, item.quantity - 1))}>
+                                                                                                        <Minus className="h-3 w-3" />
+                                                                                                    </Button>
+                                                                                                    <span className="w-6 text-center text-xs font-bold tabular-nums">{qty}</span>
+                                                                                                    <Button variant="ghost" className="h-6 w-6 rounded-md hover:bg-white p-0"
+                                                                                                        onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}>
+                                                                                                        <Plus className="h-3 w-3" />
+                                                                                                    </Button>
+                                                                                                </div>
+                                                                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-lg" onClick={() => {
+                                                                                                    if (qty < item.quantity) {
+                                                                                                        updateQuantity(item.cartItemId, Math.max(0, item.quantity - qty));
+                                                                                                    } else {
+                                                                                                        setItemToDelete(item.cartItemId);
+                                                                                                    }
+                                                                                                }}>
+                                                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                                                </Button>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            });
+                                                                        })}
+                                                                    </div>
+
+                                                                    {/* Compact Upsell Nudge (Bottom of Group) */}
+                                                                    {upsellNode}
+                                                                </li>
+                                                            );
+                                                        })
+                                                    }
+                                                </ul>
+                                                {/* Summary Content Moved to ScrollArea */}
+                                                <div className="pb-6">
+                                                    {/* Smart Reward Progress Bar (Combined) */}
+                                                    {(() => {
+                                                        const milestones = [];
+
+                                                        // Add Free Delivery Milestone
+                                                        if (freeDeliveryThreshold > 0) {
+                                                            milestones.push({
+                                                                type: 'delivery',
+                                                                value: freeDeliveryThreshold,
+                                                                label: 'Free Delivery',
+                                                                icon: Gift
+                                                            });
+                                                        }
+
+                                                        // Add Coupon Milestones
+                                                        if (companyDetails?.companyCoupon) {
+                                                            companyDetails.companyCoupon.split(',').forEach(c => {
+                                                                const [code, , minStr] = c.split('&&&');
+                                                                const min = parseInt(minStr || '0');
+                                                                if (code && min > 0) {
+                                                                    milestones.push({
+                                                                        type: 'coupon',
+                                                                        value: min,
+                                                                        label: `Unlock ${code}`,
+                                                                        icon: Tag
+                                                                    });
+                                                                }
+                                                            });
+                                                        }
+
+                                                        // Sort by value
+                                                        milestones.sort((a, b) => a.value - b.value);
+
+                                                        // Find first unreached milestone
+                                                        const nextMilestone = milestones.find(m => subtotal < m.value);
+
+                                                        // If all unlocked (or no milestones), show generic success or nothing
+                                                        if (!nextMilestone) {
+                                                            if (milestones.length > 0 && subtotal >= milestones[milestones.length - 1].value) {
+                                                                return (
+                                                                    <div className="mb-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-3 rounded-lg border border-emerald-500/20 text-center">
+                                                                        <p className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-2">
+                                                                            <Gift className="w-3.5 h-3.5 fill-emerald-700" />
+                                                                            Awesome! All rewards unlocked on this order.
+                                                                        </p>
+                                                                    </div>
+                                                                );
+                                                            }
+                                                            return null;
+                                                        }
+
+                                                        const amountNeeded = nextMilestone.value - subtotal;
+                                                        const progress = (subtotal / nextMilestone.value) * 100;
+
+                                                        return (
+                                                            <div className="mb-6 bg-secondary/30 p-3 rounded-xl border border-border/60 shadow-sm relative overflow-hidden group">
+                                                                {/* Background Shimmer */}
+                                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
+
+                                                                <div className="flex justify-between items-center mb-2 relative z-10">
+                                                                    <p className="text-xs font-bold text-foreground/80 flex items-center gap-2">
+                                                                        <div className="bg-primary/10 p-1 rounded-full text-primary">
+                                                                            <nextMilestone.icon className="w-3 h-3" />
+                                                                        </div>
+                                                                        Add <span className="text-primary text-sm font-extrabold">₹{amountNeeded.toFixed(0)}</span> for <span className="uppercase">{nextMilestone.label}</span>
+                                                                    </p>
+                                                                    <span className="text-[10px] font-medium text-muted-foreground">{Math.round(progress)}%</span>
+                                                                </div>
+
+                                                                <div className="h-1.5 w-full bg-background rounded-full overflow-hidden border border-border/50 relative z-10">
+                                                                    <div
+                                                                        className={cn(
+                                                                            "h-full rounded-full transition-all duration-700 ease-out",
+                                                                            nextMilestone.type === 'delivery' ? "bg-emerald-500" : "bg-primary"
+                                                                        )}
+                                                                        style={{ width: `${Math.min(100, progress)}%` }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })()}
+
+                                                    {/* Coupon Section */}
+                                                    <div className="mb-6 space-y-3">
+                                                        {/* Available Coupons List (Simple Version) */}
+                                                        {companyDetails?.companyCoupon && (
+                                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                                {(() => {
+                                                                    const coupons = companyDetails.companyCoupon.split(',').map((cStr, idx) => {
+                                                                        const [code, discountStr, minOrderStr] = cStr.split('&&&');
+                                                                        const discount = parseFloat(discountStr || '0');
+                                                                        const minOrder = parseFloat(minOrderStr || '0');
+                                                                        if (!code) return null;
+
+                                                                        return {
+                                                                            code,
+                                                                            discount,
+                                                                            minOrder,
+                                                                            isEligible: subtotal >= minOrder,
+                                                                            idx
+                                                                        };
+                                                                    }).filter((c): c is NonNullable<typeof c> => c !== null);
+
+                                                                    coupons.sort((a, b) => a.discount - b.discount);
+                                                                    const selectedCouponData = coupons.find(c => c.code === couponCode);
+                                                                    const hasActiveCoupon = !!selectedCouponData;
+
+                                                                    return coupons.map((coupon) => {
+                                                                        const isBlocked = hasActiveCoupon && coupon.code !== couponCode;
+                                                                        const isDisabled = !coupon.isEligible || isBlocked;
+
+                                                                        return (
+                                                                            <button
+                                                                                key={coupon.idx}
+                                                                                onClick={() => {
+                                                                                    if (!isDisabled) {
+                                                                                        setCouponCode(coupon.code);
+                                                                                    }
+                                                                                }}
+                                                                                disabled={isDisabled}
+                                                                                className={cn(
+                                                                                    "group relative flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all duration-300 overflow-hidden",
+                                                                                    !isDisabled
+                                                                                        ? "bg-white border-primary/30 shadow-sm hover:border-primary hover:shadow-md cursor-pointer"
+                                                                                        : "bg-slate-50 border-slate-200 cursor-not-allowed opacity-60"
+                                                                                )}
+                                                                            >
+                                                                                {couponCode === coupon.code && coupon.isEligible && (
+                                                                                    <div className="absolute inset-0 bg-primary/5 animate-pulse" />
+                                                                                )}
+
+                                                                                <div className="flex flex-col">
+                                                                                    <span className={cn(
+                                                                                        "text-sm font-black tracking-wide font-mono leading-none",
+                                                                                        coupon.isEligible ? "text-foreground" : "text-slate-400"
+                                                                                    )}>{coupon.code}</span>
+                                                                                    <span className="text-[10px] font-medium text-muted-foreground leading-none mt-1">
+                                                                                        {coupon.isEligible ? `Get ${coupon.discount}% OFF` : `${coupon.discount}% OFF • Orders above ₹${coupon.minOrder}`}
+                                                                                    </span>
+                                                                                </div>
+
+                                                                                {couponCode === coupon.code && coupon.isEligible ? (
+                                                                                    <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
+                                                                                        <div className="h-1.5 w-1.5 bg-white rounded-full" />
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    coupon.isEligible && (
+                                                                                        <div className="h-4 w-4 rounded-full border border-primary/30 group-hover:border-primary transition-colors" />
+                                                                                    )
+                                                                                )}
+                                                                            </button>
+                                                                        );
+                                                                    });
+                                                                })()}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="space-y-3 mb-6">
+                                                        <div className="flex justify-between text-sm text-muted-foreground">
+                                                            <span>Subtotal</span>
+                                                            <span>₹{subtotal.toFixed(2)}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-sm text-muted-foreground">
+                                                            <span>Shipping</span>
+                                                            <span className={cn(isFreeDelivery ? "text-green-600 font-medium" : "")}>
+                                                                {isFreeDelivery ? "FREE" : "Calculated at checkout"}
+                                                            </span>
+                                                        </div>
+                                                        {discountAmount > 0 && (
+                                                            <div className="flex justify-between text-sm text-emerald-600 font-medium animate-in slide-in-from-left-2">
+                                                                <span>Coupon ({couponCode})</span>
+                                                                <span>-₹{discountAmount.toFixed(2)}</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                                                    </div>
+                                                </div>
+                                            </ScrollArea>
+
+                                            {/* Minimal Footer */}
+                                            <div className="p-4 bg-background/80 backdrop-blur-xl border-t border-border/50 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] z-20">
+                                                <div className="flex justify-between items-baseline mb-4">
+                                                    <span className="font-semibold text-lg">Total</span>
+                                                    <span className="font-bold text-2xl text-primary tracking-tight">₹{finalTotal.toFixed(2)}</span>
+                                                </div>
+
+                                                {!canCheckout && (
+                                                    <p className="text-xs text-destructive text-center mb-2 font-medium bg-destructive/10 py-1 px-2 rounded-lg">
+                                                        Minimum order amount is ₹{minOrder.toFixed(0)}
+                                                    </p>
+                                                )}
+
+                                                <Button
+                                                    className={cn(
+                                                        "w-full h-12 rounded-full text-base font-bold shadow-lg transition-all duration-300",
+                                                        canCheckout
+                                                            ? "shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 bg-gradient-to-r from-primary to-primary/90"
+                                                            : "bg-muted text-muted-foreground shadow-none cursor-not-allowed"
+                                                    )}
+                                                    disabled={!canCheckout || isCheckingOut}
+                                                    onClick={canCheckout ? handleCheckout : undefined}
+                                                >
+                                                    {canCheckout ? (
+                                                        <div className="flex items-center w-full justify-center">
+                                                            {isCheckingOut ? (
+                                                                <>Validating <RefreshCw className="ml-2 w-4 h-4 animate-spin" /></>
+                                                            ) : (
+                                                                <> {text.checkoutButton || "Checkout securely"} <ArrowRight className="ml-2 w-4 h-4" /></>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span>Checkout Disabled</span>
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        </>
+                                    )) : (
+                                    <>
+                                        <ScrollArea className="flex-1 bg-secondary/10">
+                                            <div className="p-6 space-y-8">
+                                                {/* Address List View */}
+                                                {view === 'list' && (
+                                                    <>
+                                                        {/* Contact Details */}
+                                                        <div className="space-y-4 mb-6">
+                                                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Contact Details</h3>
+                                                            <div className="bg-background p-5 rounded-2xl border shadow-sm space-y-4">
+                                                                <div className="grid gap-2">
+                                                                    <Label htmlFor="cName">
+                                                                        Full Name <span className="text-destructive">*</span>
+                                                                    </Label>
+                                                                    <Input
+                                                                        id="cName"
+                                                                        placeholder="John Doe"
+                                                                        value={contactInfo.name}
+                                                                        onChange={e => setContactInfo({ ...contactInfo, name: e.target.value })}
+                                                                        className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                                    />
+                                                                </div>
+                                                                <div className="grid gap-2">
+                                                                    <Label htmlFor="cPhone">Phone Number</Label>
+                                                                    <Input
+                                                                        id="cPhone"
+                                                                        placeholder="9876543210"
+                                                                        value={contactInfo.mobile}
+                                                                        readOnly
+                                                                        className="bg-secondary/10 border-transparent text-muted-foreground focus-visible:ring-0 cursor-not-allowed rounded-xl opacity-90 font-medium"
+                                                                    />
+                                                                </div>
+                                                                <div className="grid gap-2">
+                                                                    <Label htmlFor="cEmail">
+                                                                        Email Address <span className="text-destructive">*</span>
+                                                                    </Label>
+                                                                    <Input
+                                                                        id="cEmail"
+                                                                        placeholder="john@example.com"
+                                                                        value={contactInfo.email}
+                                                                        onChange={e => setContactInfo({ ...contactInfo, email: e.target.value })}
+                                                                        className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                                    />
+                                                                    <div className="flex items-center gap-2 mt-2 px-1 opacity-80">
+                                                                        <Info className="w-3 h-3 text-primary animate-pulse" />
+                                                                        <p className="text-[10px] text-muted-foreground font-medium">
+                                                                            Please enter correctly for order confirmation.
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Saved Addresses */}
+                                                        <div className="space-y-4">
+                                                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Saved Addresses</h3>
+
+                                                            {loadingAddresses ? (
+                                                                <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+                                                                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                                                    <p className="text-xs font-medium">Loading addresses...</p>
+                                                                </div>
+                                                            ) : addresses.length === 0 ? (
+                                                                <div className="text-center py-10 px-4 bg-background rounded-3xl border border-dashed border-border/60">
+                                                                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3">
+                                                                        <MapPin className="w-6 h-6" />
+                                                                    </div>
+                                                                    <p className="font-semibold text-foreground">No addresses found</p>
+                                                                    <Button onClick={() => setView('add')} variant="secondary" className="mt-4 rounded-full">
+                                                                        Add First Address
                                                                     </Button>
                                                                 </div>
-                                                            </div>
+                                                            ) : (
+                                                                <div className="grid gap-4">
+                                                                    {[...addresses].sort((a, b) => a.customerAddressId === selectedAddressId ? -1 : b.customerAddressId === selectedAddressId ? 1 : 0).map((addr) => {
+                                                                        const isSelected = selectedAddressId === addr.customerAddressId;
+                                                                        return (
+                                                                            <div
+                                                                                key={addr.customerAddressId}
+                                                                                onClick={() => setSelectedAddressId(addr.customerAddressId)}
+                                                                                className={cn(
+                                                                                    "relative group cursor-pointer p-4 rounded-2xl border transition-all duration-300",
+                                                                                    isSelected
+                                                                                        ? "bg-primary/5 border-primary shadow-sm"
+                                                                                        : "bg-background border-border hover:border-primary/30 hover:shadow-md"
+                                                                                )}
+                                                                            >
+                                                                                <div className="flex items-start gap-4">
+                                                                                    <div className={cn(
+                                                                                        "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors",
+                                                                                        isSelected ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground group-hover:bg-secondary/80"
+                                                                                    )}>
+                                                                                        <Home className="w-5 h-5" />
+                                                                                    </div>
+                                                                                    <div className="flex-1 min-w-0">
+                                                                                        <div className="flex items-center justify-between mb-1">
+                                                                                            <span className={cn(
+                                                                                                "font-bold text-base truncate",
+                                                                                                isSelected ? "text-primary" : "text-foreground"
+                                                                                            )}>
+                                                                                                {addr.addressName}
+                                                                                            </span>
+                                                                                            {isSelected && (
+                                                                                                <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0 text-center rounded-full flex items-center gap-1">
+                                                                                                    <Check className="w-3 h-3" /> Selected
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                                                                                            {addr.customerDrNum}, {addr.customerRoad}, {addr.customerCity} - {addr.customerPin}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                    <button
+                                                                        onClick={() => setView('add')}
+                                                                        className="flex items-center justify-center gap-2 p-4 rounded-2xl border border-dashed border-border/60 hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                                                                    >
+                                                                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                                                            <Plus className="w-4 h-4" />
+                                                                        </div>
+                                                                        <span className="font-semibold text-sm text-muted-foreground group-hover:text-primary">Add New Address</span>
+                                                                    </button>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                    );
-                                                });
-                                            })}
-                                        </div>
 
-                                        {/* Compact Upsell Nudge (Bottom of Group) */}
-                                        {upsellNode}
-                                    </li>
-                                );
-                            })
-                        }
-                    </ul>
-                    {/* Summary Content Moved to ScrollArea */}
-                    <div className="pb-6">
-                        {/* Smart Reward Progress Bar (Combined) */}
-                        {(() => {
-                            const milestones = [];
+                                                        <div className="pt-4 sticky bottom-0 bg-background/95 backdrop-blur pb-6 mt-auto border-t">
+                                                            <Button
+                                                                className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] transition-all bg-gradient-to-r from-primary to-primary/90"
+                                                                disabled={!selectedAddressId}
+                                                                onClick={async () => {
+                                                                    if (!contactInfo.name || !contactInfo.email) {
+                                                                        toast({
+                                                                            variant: "destructive",
+                                                                            title: "Missing Details",
+                                                                            description: "Please enter your Full Name and Email Address."
+                                                                        });
+                                                                        return;
+                                                                    }
 
-                            // Add Free Delivery Milestone
-                            if (freeDeliveryThreshold > 0) {
-                                milestones.push({
-                                    type: 'delivery',
-                                    value: freeDeliveryThreshold,
-                                    label: 'Free Delivery',
-                                    icon: Gift
-                                });
-                            }
+                                                                    // Update customer details if changed
+                                                                    if (customer && (
+                                                                        contactInfo.name !== customer.customerName ||
+                                                                        contactInfo.email !== customer.customerEmailId ||
+                                                                        contactInfo.mobile !== customer.customerMobileNumber
+                                                                    )) {
+                                                                        try {
+                                                                            const updatedCustomer = await customerService.updateCustomer({
+                                                                                customerId: customer.customerId,
+                                                                                companyId: customer.companyId || companyDetails?.companyId || '',
+                                                                                customerName: contactInfo.name,
+                                                                                customerEmailId: contactInfo.email,
+                                                                                customerMobileNumber: contactInfo.mobile,
+                                                                                customerStatus: customer.customerStatus,
+                                                                                createdAt: customer.createdAt,
+                                                                                customerImage: customer.customerImage
+                                                                            });
 
-                            // Add Coupon Milestones
-                            if (companyDetails?.companyCoupon) {
-                                companyDetails.companyCoupon.split(',').forEach(c => {
-                                    const [code, , minStr] = c.split('&&&');
-                                    const min = parseInt(minStr || '0');
-                                    if (code && min > 0) {
-                                        milestones.push({
-                                            type: 'coupon',
-                                            value: min,
-                                            label: `Unlock ${code}`,
-                                            icon: Tag
-                                        });
-                                    }
-                                });
-                            }
+                                                                            // Update local state without fetching
+                                                                            if (updatedCustomer) {
+                                                                                setCustomer(updatedCustomer);
+                                                                                // Notify other components with the NEW data
+                                                                                window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedCustomer }));
+                                                                                toast({ description: "Profile details updated." });
+                                                                            }
+                                                                        } catch (error) {
+                                                                            console.error("Failed to update profile", error);
+                                                                            // We continue anyway so they can pay? Or stop? 
+                                                                            // Let's continue but warn? Or maybe just log. User wants update, so best to try.
+                                                                        }
+                                                                    }
 
-                            // Sort by value
-                            milestones.sort((a, b) => a.value - b.value);
-
-                            // Find first unreached milestone
-                            const nextMilestone = milestones.find(m => subtotal < m.value);
-
-                            // If all unlocked (or no milestones), show generic success or nothing
-                            if (!nextMilestone) {
-                                if (milestones.length > 0 && subtotal >= milestones[milestones.length - 1].value) {
-                                    return (
-                                        <div className="mb-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-3 rounded-lg border border-emerald-500/20 text-center">
-                                            <p className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-2">
-                                                <Gift className="w-3.5 h-3.5 fill-emerald-700" />
-                                                Awesome! All rewards unlocked on this order.
-                                            </p>
-                                        </div>
-                                    );
-                                }
-                                return null;
-                            }
-
-                            const amountNeeded = nextMilestone.value - subtotal;
-                            const progress = (subtotal / nextMilestone.value) * 100;
-
-                            return (
-                                <div className="mb-6 bg-secondary/30 p-3 rounded-xl border border-border/60 shadow-sm relative overflow-hidden group">
-                                    {/* Background Shimmer */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
-
-                                    <div className="flex justify-between items-center mb-2 relative z-10">
-                                        <p className="text-xs font-bold text-foreground/80 flex items-center gap-2">
-                                            <div className="bg-primary/10 p-1 rounded-full text-primary">
-                                                <nextMilestone.icon className="w-3 h-3" />
-                                            </div>
-                                            Add <span className="text-primary text-sm font-extrabold">₹{amountNeeded.toFixed(0)}</span> for <span className="uppercase">{nextMilestone.label}</span>
-                                        </p>
-                                        <span className="text-[10px] font-medium text-muted-foreground">{Math.round(progress)}%</span>
-                                    </div>
-
-                                    <div className="h-1.5 w-full bg-background rounded-full overflow-hidden border border-border/50 relative z-10">
-                                        <div
-                                            className={cn(
-                                                "h-full rounded-full transition-all duration-700 ease-out",
-                                                nextMilestone.type === 'delivery' ? "bg-emerald-500" : "bg-primary"
-                                            )}
-                                            style={{ width: `${Math.min(100, progress)}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            );
-                        })()}
-
-                        {/* Coupon Section */}
-                        <div className="mb-6 space-y-3">
-                            {/* Available Coupons List (Simple Version) */}
-                            {companyDetails?.companyCoupon && (
-                                <div className="grid grid-cols-2 gap-2 mt-2">
-                                    {(() => {
-                                        const coupons = companyDetails.companyCoupon.split(',').map((cStr, idx) => {
-                                            const [code, discountStr, minOrderStr] = cStr.split('&&&');
-                                            const discount = parseFloat(discountStr || '0');
-                                            const minOrder = parseFloat(minOrderStr || '0');
-                                            if (!code) return null;
-
-                                            return {
-                                                code,
-                                                discount,
-                                                minOrder,
-                                                isEligible: subtotal >= minOrder,
-                                                idx
-                                            };
-                                        }).filter((c): c is NonNullable<typeof c> => c !== null);
-
-                                        coupons.sort((a, b) => a.discount - b.discount);
-                                        const selectedCouponData = coupons.find(c => c.code === couponCode);
-                                        const hasActiveCoupon = !!selectedCouponData;
-
-                                        return coupons.map((coupon) => {
-                                            const isBlocked = hasActiveCoupon && coupon.code !== couponCode;
-                                            const isDisabled = !coupon.isEligible || isBlocked;
-
-                                            return (
-                                                <button
-                                                    key={coupon.idx}
-                                                    onClick={() => {
-                                                        if (!isDisabled) {
-                                                            setCouponCode(coupon.code);
-                                                        }
-                                                    }}
-                                                    disabled={isDisabled}
-                                                    className={cn(
-                                                        "group relative flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all duration-300 overflow-hidden",
-                                                        !isDisabled
-                                                            ? "bg-white border-primary/30 shadow-sm hover:border-primary hover:shadow-md cursor-pointer"
-                                                            : "bg-slate-50 border-slate-200 cursor-not-allowed opacity-60"
-                                                    )}
-                                                >
-                                                    {couponCode === coupon.code && coupon.isEligible && (
-                                                        <div className="absolute inset-0 bg-primary/5 animate-pulse" />
-                                                    )}
-
-                                                    <div className="flex flex-col">
-                                                        <span className={cn(
-                                                            "text-sm font-black tracking-wide font-mono leading-none",
-                                                            coupon.isEligible ? "text-foreground" : "text-slate-400"
-                                                        )}>{coupon.code}</span>
-                                                        <span className="text-[10px] font-medium text-muted-foreground leading-none mt-1">
-                                                            {coupon.isEligible ? `Get ${coupon.discount}% OFF` : `${coupon.discount}% OFF • Orders above ₹${coupon.minOrder}`}
-                                                        </span>
-                                                    </div>
-
-                                                    {couponCode === coupon.code && coupon.isEligible ? (
-                                                        <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center shadow-sm">
-                                                            <div className="h-1.5 w-1.5 bg-white rounded-full" />
+                                                                    setView('payment');
+                                                                }}
+                                                            >
+                                                                Proceed to Payment <ArrowRight className="w-5 h-5 ml-2 Group-hover:translate-x-1 transition-transform" />
+                                                            </Button>
                                                         </div>
-                                                    ) : (
-                                                        coupon.isEligible && (
-                                                            <div className="h-4 w-4 rounded-full border border-primary/30 group-hover:border-primary transition-colors" />
-                                                        )
-                                                    )}
-                                                </button>
-                                            );
-                                        });
-                                    })()}
-                                </div>
-                            )}
-                        </div>
+                                                    </>
+                                                )}
 
-                        <div className="space-y-3 mb-6">
-                            <div className="flex justify-between text-sm text-muted-foreground">
-                                <span>Subtotal</span>
-                                <span>₹{subtotal.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between text-sm text-muted-foreground">
-                                <span>Shipping</span>
-                                <span className={cn(isFreeDelivery ? "text-green-600 font-medium" : "")}>
-                                    {isFreeDelivery ? "FREE" : "Calculated at checkout"}
-                                </span>
-                            </div>
-                            {discountAmount > 0 && (
-                                <div className="flex justify-between text-sm text-emerald-600 font-medium animate-in slide-in-from-left-2">
-                                    <span>Coupon ({couponCode})</span>
-                                    <span>-₹{discountAmount.toFixed(2)}</span>
-                                </div>
-                            )}
-                            <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                        </div>
-                    </div>
-                </ScrollArea>
+                                                {/* Add Address View */}
+                                                {view === 'add' && (
+                                                    <div className="animate-in slide-in-from-right-8 fade-in duration-300 space-y-6">
+                                                        <div className="space-y-4 bg-background p-6 rounded-3xl border shadow-sm">
+                                                            <div className="grid gap-2">
+                                                                <Label>Address Label</Label>
+                                                                <div className="flex gap-3">
+                                                                    {[
+                                                                        { id: 'Home', icon: Home, label: 'Home' },
+                                                                        { id: 'Work', icon: Briefcase, label: 'Work' },
+                                                                        { id: 'Other', icon: MapPin, label: 'Other' }
+                                                                    ].map((type) => (
+                                                                        <button
+                                                                            key={type.id}
+                                                                            onClick={() => handleLabelChange(type.id as any)}
+                                                                            className={cn(
+                                                                                "flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-200 text-sm font-medium",
+                                                                                addressLabel === type.id
+                                                                                    ? "bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-500/20"
+                                                                                    : "bg-white text-slate-600 border-slate-200 hover:border-teal-200 hover:bg-teal-50"
+                                                                            )}
+                                                                        >
+                                                                            <type.icon className={cn("w-4 h-4", addressLabel === type.id ? "text-white" : "text-slate-400")} />
+                                                                            {type.label}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
 
-                {/* Minimal Footer */}
-                <div className="p-4 bg-background/80 backdrop-blur-xl border-t border-border/50 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] z-20">
-                    <div className="flex justify-between items-baseline mb-4">
-                        <span className="font-semibold text-lg">Total</span>
-                        <span className="font-bold text-2xl text-primary tracking-tight">₹{finalTotal.toFixed(2)}</span>
-                    </div>
-
-                    {!canCheckout && (
-                        <p className="text-xs text-destructive text-center mb-2 font-medium bg-destructive/10 py-1 px-2 rounded-lg">
-                            Minimum order amount is ₹{minOrder.toFixed(0)}
-                        </p>
-                    )}
-
-                    <Button
-                        className={cn(
-                            "w-full h-12 rounded-full text-base font-bold shadow-lg transition-all duration-300",
-                            canCheckout
-                                ? "shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 bg-gradient-to-r from-primary to-primary/90"
-                                : "bg-muted text-muted-foreground shadow-none cursor-not-allowed"
-                        )}
-                        disabled={!canCheckout || isCheckingOut}
-                        onClick={canCheckout ? handleCheckout : undefined}
-                    >
-                        {canCheckout ? (
-                            <div className="flex items-center w-full justify-center">
-                                {isCheckingOut ? (
-                                    <>Validating <RefreshCw className="ml-2 w-4 h-4 animate-spin" /></>
-                                ) : (
-                                    <> {text.checkoutButton || "Checkout securely"} <ArrowRight className="ml-2 w-4 h-4" /></>
-                                )}
-                            </div>
-                        ) : (
-                            <span>Checkout Disabled</span>
-                        )}
-                    </Button>
-                </div>
-            </>
-        )) : (
-        <>
-            <ScrollArea className="flex-1 bg-secondary/10">
-                <div className="p-6 space-y-8">
-                    {/* Address List View */}
-                    {view === 'list' && (
-                        <>
-                            {/* Contact Details */}
-                            <div className="space-y-4 mb-6">
-                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Contact Details</h3>
-                                <div className="bg-background p-5 rounded-2xl border shadow-sm space-y-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="cName">
-                                            Full Name <span className="text-destructive">*</span>
-                                        </Label>
-                                        <Input
-                                            id="cName"
-                                            placeholder="John Doe"
-                                            value={contactInfo.name}
-                                            onChange={e => setContactInfo({ ...contactInfo, name: e.target.value })}
-                                            className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
-                                        />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="cPhone">Phone Number</Label>
-                                        <Input
-                                            id="cPhone"
-                                            placeholder="9876543210"
-                                            value={contactInfo.mobile}
-                                            readOnly
-                                            className="bg-secondary/10 border-transparent text-muted-foreground focus-visible:ring-0 cursor-not-allowed rounded-xl opacity-90 font-medium"
-                                        />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="cEmail">
-                                            Email Address <span className="text-destructive">*</span>
-                                        </Label>
-                                        <Input
-                                            id="cEmail"
-                                            placeholder="john@example.com"
-                                            value={contactInfo.email}
-                                            onChange={e => setContactInfo({ ...contactInfo, email: e.target.value })}
-                                            className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
-                                        />
-                                        <div className="flex items-center gap-2 mt-2 px-1 opacity-80">
-                                            <Info className="w-3 h-3 text-primary animate-pulse" />
-                                            <p className="text-[10px] text-muted-foreground font-medium">
-                                                Please enter correctly for order confirmation.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Saved Addresses */}
-                            <div className="space-y-4">
-                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Saved Addresses</h3>
-
-                                {loadingAddresses ? (
-                                    <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
-                                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                        <p className="text-xs font-medium">Loading addresses...</p>
-                                    </div>
-                                ) : addresses.length === 0 ? (
-                                    <div className="text-center py-10 px-4 bg-background rounded-3xl border border-dashed border-border/60">
-                                        <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <MapPin className="w-6 h-6" />
-                                        </div>
-                                        <p className="font-semibold text-foreground">No addresses found</p>
-                                        <Button onClick={() => setView('add')} variant="secondary" className="mt-4 rounded-full">
-                                            Add First Address
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <div className="grid gap-4">
-                                        {[...addresses].sort((a, b) => a.customerAddressId === selectedAddressId ? -1 : b.customerAddressId === selectedAddressId ? 1 : 0).map((addr) => {
-                                            const isSelected = selectedAddressId === addr.customerAddressId;
-                                            return (
-                                                <div
-                                                    key={addr.customerAddressId}
-                                                    onClick={() => setSelectedAddressId(addr.customerAddressId)}
-                                                    className={cn(
-                                                        "relative group cursor-pointer p-4 rounded-2xl border transition-all duration-300",
-                                                        isSelected
-                                                            ? "bg-primary/5 border-primary shadow-sm"
-                                                            : "bg-background border-border hover:border-primary/30 hover:shadow-md"
-                                                    )}
-                                                >
-                                                    <div className="flex items-start gap-4">
-                                                        <div className={cn(
-                                                            "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors",
-                                                            isSelected ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground group-hover:bg-secondary/80"
-                                                        )}>
-                                                            <Home className="w-5 h-5" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center justify-between mb-1">
-                                                                <span className={cn(
-                                                                    "font-bold text-base truncate",
-                                                                    isSelected ? "text-primary" : "text-foreground"
-                                                                )}>
-                                                                    {addr.addressName}
-                                                                </span>
-                                                                {isSelected && (
-                                                                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0 text-center rounded-full flex items-center gap-1">
-                                                                        <Check className="w-3 h-3" /> Selected
-                                                                    </span>
+                                                                {addressLabel === 'Other' && (
+                                                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300 mt-2 relative">
+                                                                        <Label htmlFor="customName" className="sr-only">Custom Name</Label>
+                                                                        <Input
+                                                                            id="customName"
+                                                                            placeholder="e.g. Grandma's House, My Office"
+                                                                            className="h-12 bg-secondary/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
+                                                                            value={newAddress.addressName === 'Other' ? '' : newAddress.addressName}
+                                                                            onChange={(e) => setNewAddress({ ...newAddress, addressName: e.target.value })}
+                                                                            autoFocus
+                                                                        />
+                                                                    </div>
                                                                 )}
                                                             </div>
-                                                            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                                                                {addr.customerDrNum}, {addr.customerRoad}, {addr.customerCity} - {addr.customerPin}
-                                                            </p>
+
+                                                            <div className="grid gap-4">
+                                                                <div className="grid gap-2">
+                                                                    <Label htmlFor="road">Street Address</Label>
+                                                                    <div className="relative">
+                                                                        <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                                                                        <textarea
+                                                                            id="road"
+                                                                            placeholder="e.g. 123 Main St, Apt 4B"
+                                                                            className="w-full min-h-[80px] pl-10 pt-3 rounded-xl border-transparent bg-secondary/20 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all focus:bg-background focus:border-input"
+                                                                            value={newAddress.customerRoad}
+                                                                            onChange={e => setNewAddress({ ...newAddress, customerRoad: e.target.value })}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="grid grid-cols-2 gap-4">
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="pincode">Pincode</Label>
+                                                                        <Input
+                                                                            id="pincode"
+                                                                            placeholder="560001"
+                                                                            value={newAddress.customerPin}
+                                                                            onChange={e => handlePincodeChange(e.target.value)}
+                                                                            className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                                        />
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label htmlFor="city">City</Label>
+                                                                        <Input
+                                                                            id="city"
+                                                                            placeholder="City"
+                                                                            value={newAddress.customerCity}
+                                                                            readOnly
+                                                                            className="bg-secondary/10 border-transparent text-muted-foreground cursor-not-allowed rounded-xl"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="grid gap-2">
+                                                                    <Label htmlFor="state">State</Label>
+                                                                    <Input
+                                                                        id="state"
+                                                                        placeholder="State"
+                                                                        value={newAddress.customerState}
+                                                                        readOnly
+                                                                        className="bg-secondary/10 border-transparent text-muted-foreground cursor-not-allowed rounded-xl"
+                                                                    />
+                                                                </div>
+
+                                                            </div>
                                                         </div>
+
+                                                        <div className="bg-blue-50 text-blue-800 p-4 rounded-2xl text-xs font-medium leading-relaxed border border-blue-100 flex gap-3">
+                                                            <div className="bg-blue-100 p-1.5 rounded-full h-fit">
+                                                                <Info className="w-4 h-4" />
+                                                            </div>
+                                                            <p>Ensure your address details are accurate to avoid delivery delays. Pincode is crucial for serviceability checks.</p>
+                                                        </div>
+
+                                                        <Button
+                                                            className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-primary/20"
+                                                            onClick={handleSaveAddress}
+                                                            disabled={savingAddress}
+                                                        >
+                                                            {savingAddress ? (
+                                                                <>
+                                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                                                                </>
+                                                            ) : (
+                                                                "Save Address"
+                                                            )}
+                                                        </Button>
                                                     </div>
-                                                </div>
-                                            );
-                                        })}
-                                        <button
-                                            onClick={() => setView('add')}
-                                            className="flex items-center justify-center gap-2 p-4 rounded-2xl border border-dashed border-border/60 hover:border-primary/50 hover:bg-primary/5 transition-all group"
-                                        >
-                                            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                                                <Plus className="w-4 h-4" />
-                                            </div>
-                                            <span className="font-semibold text-sm text-muted-foreground group-hover:text-primary">Add New Address</span>
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="pt-4 sticky bottom-0 bg-background/95 backdrop-blur pb-6 mt-auto border-t">
-                                <Button
-                                    className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] transition-all bg-gradient-to-r from-primary to-primary/90"
-                                    disabled={!selectedAddressId}
-                                    onClick={async () => {
-                                        if (!contactInfo.name || !contactInfo.email) {
-                                            toast({
-                                                variant: "destructive",
-                                                title: "Missing Details",
-                                                description: "Please enter your Full Name and Email Address."
-                                            });
-                                            return;
-                                        }
-
-                                        // Update customer details if changed
-                                        if (customer && (
-                                            contactInfo.name !== customer.customerName ||
-                                            contactInfo.email !== customer.customerEmailId ||
-                                            contactInfo.mobile !== customer.customerMobileNumber
-                                        )) {
-                                            try {
-                                                const updatedCustomer = await customerService.updateCustomer({
-                                                    customerId: customer.customerId,
-                                                    companyId: customer.companyId || companyDetails?.companyId || '',
-                                                    customerName: contactInfo.name,
-                                                    customerEmailId: contactInfo.email,
-                                                    customerMobileNumber: contactInfo.mobile,
-                                                    customerStatus: customer.customerStatus,
-                                                    createdAt: customer.createdAt,
-                                                    customerImage: customer.customerImage
-                                                });
-
-                                                // Update local state without fetching
-                                                if (updatedCustomer) {
-                                                    setCustomer(updatedCustomer);
-                                                    // Notify other components with the NEW data
-                                                    window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedCustomer }));
-                                                    toast({ description: "Profile details updated." });
-                                                }
-                                            } catch (error) {
-                                                console.error("Failed to update profile", error);
-                                                // We continue anyway so they can pay? Or stop? 
-                                                // Let's continue but warn? Or maybe just log. User wants update, so best to try.
-                                            }
-                                        }
-
-                                        setView('payment');
-                                    }}
-                                >
-                                    Proceed to Payment <ArrowRight className="w-5 h-5 ml-2 Group-hover:translate-x-1 transition-transform" />
-                                </Button>
-                            </div>
-                        </>
-                    )}
-
-                    {/* Add Address View */}
-                    {view === 'add' && (
-                        <div className="animate-in slide-in-from-right-8 fade-in duration-300 space-y-6">
-                            <div className="space-y-4 bg-background p-6 rounded-3xl border shadow-sm">
-                                <div className="grid gap-2">
-                                    <Label>Address Label</Label>
-                                    <div className="flex gap-3">
-                                        {[
-                                            { id: 'Home', icon: Home, label: 'Home' },
-                                            { id: 'Work', icon: Briefcase, label: 'Work' },
-                                            { id: 'Other', icon: MapPin, label: 'Other' }
-                                        ].map((type) => (
-                                            <button
-                                                key={type.id}
-                                                onClick={() => handleLabelChange(type.id as any)}
-                                                className={cn(
-                                                    "flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-200 text-sm font-medium",
-                                                    addressLabel === type.id
-                                                        ? "bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-500/20"
-                                                        : "bg-white text-slate-600 border-slate-200 hover:border-teal-200 hover:bg-teal-50"
                                                 )}
-                                            >
-                                                <type.icon className={cn("w-4 h-4", addressLabel === type.id ? "text-white" : "text-slate-400")} />
-                                                {type.label}
-                                            </button>
-                                        ))}
-                                    </div>
 
-                                    {addressLabel === 'Other' && (
-                                        <div className="animate-in fade-in slide-in-from-top-2 duration-300 mt-2 relative">
-                                            <Label htmlFor="customName" className="sr-only">Custom Name</Label>
-                                            <Input
-                                                id="customName"
-                                                placeholder="e.g. Grandma's House, My Office"
-                                                className="h-12 bg-secondary/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
-                                                value={newAddress.addressName === 'Other' ? '' : newAddress.addressName}
-                                                onChange={(e) => setNewAddress({ ...newAddress, addressName: e.target.value })}
-                                                autoFocus
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                                                {/* View: Payment Method */}
+                                                {view === 'payment' && (
+                                                    <div className="animate-in slide-in-from-right-8 fade-in duration-300 space-y-8">
 
-                                <div className="grid gap-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="road">Street Address</Label>
-                                        <div className="relative">
-                                            <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                                            <textarea
-                                                id="road"
-                                                placeholder="e.g. 123 Main St, Apt 4B"
-                                                className="w-full min-h-[80px] pl-10 pt-3 rounded-xl border-transparent bg-secondary/20 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all focus:bg-background focus:border-input"
-                                                value={newAddress.customerRoad}
-                                                onChange={e => setNewAddress({ ...newAddress, customerRoad: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="pincode">Pincode</Label>
-                                            <Input
-                                                id="pincode"
-                                                placeholder="560001"
-                                                value={newAddress.customerPin}
-                                                onChange={e => handlePincodeChange(e.target.value)}
-                                                className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
-                                            />
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="city">City</Label>
-                                            <Input
-                                                id="city"
-                                                placeholder="City"
-                                                value={newAddress.customerCity}
-                                                readOnly
-                                                className="bg-secondary/10 border-transparent text-muted-foreground cursor-not-allowed rounded-xl"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="state">State</Label>
-                                        <Input
-                                            id="state"
-                                            placeholder="State"
-                                            value={newAddress.customerState}
-                                            readOnly
-                                            className="bg-secondary/10 border-transparent text-muted-foreground cursor-not-allowed rounded-xl"
-                                        />
-                                    </div>
+                                                        {/* Order Summary */}
+                                                        <div className="space-y-4">
+                                                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Order Summary</h3>
+                                                            <div className="bg-background rounded-3xl border shadow-sm overflow-hidden">
+                                                                <div className="max-h-[300px] overflow-y-auto p-1 space-y-1">
+                                                                    {cart.map((item) => (
+                                                                        <div key={item.cartItemId} className="flex gap-4 p-4 rounded-2xl border border-transparent hover:border-border/50 hover:bg-white hover:shadow-sm transition-all group/item">
+                                                                            {/* Image */}
+                                                                            <div className="h-16 w-16 rounded-xl bg-secondary overflow-hidden shrink-0 border border-border/50 bg-white relative">
+                                                                                {item.images && item.images.length > 0 ? (
+                                                                                    <img src={item.images[0]} alt={item.name} className="h-full w-full object-cover group-hover/item:scale-105 transition-transform duration-500" />
+                                                                                ) : item.imageUrl ? (
+                                                                                    <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover group-hover/item:scale-105 transition-transform duration-500" />
+                                                                                ) : (
+                                                                                    <div className="h-full w-full flex items-center justify-center text-muted-foreground text-[10px]">No Img</div>
+                                                                                )}
+                                                                            </div>
+                                                                            {/* Details */}
+                                                                            <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                                                                                <div>
+                                                                                    <div className="flex justify-between items-start gap-2">
+                                                                                        <h4 className="font-bold text-sm leading-tight text-foreground/90 line-clamp-2">{item.name}</h4>
+                                                                                        <span className="font-bold text-sm whitespace-nowrap">₹{((item.price + (item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
+                                                                                    </div>
 
-                                </div>
-                            </div>
+                                                                                    {/* Variants & SizeColours Chips */}
+                                                                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                                                                        {Object.entries(item.selectedVariants || {}).map(([k, v]) => (
+                                                                                            <span key={k} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-border/50">
+                                                                                                {v}
+                                                                                            </span>
+                                                                                        ))}
+                                                                                        {item.selectedSizeColours?.map((sc) => (
+                                                                                            <span key={sc.id} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
+                                                                                                <Plus className="w-2 h-2" /> {sc.name}
+                                                                                            </span>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </div>
 
-                            <div className="bg-blue-50 text-blue-800 p-4 rounded-2xl text-xs font-medium leading-relaxed border border-blue-100 flex gap-3">
-                                <div className="bg-blue-100 p-1.5 rounded-full h-fit">
-                                    <Info className="w-4 h-4" />
-                                </div>
-                                <p>Ensure your address details are accurate to avoid delivery delays. Pincode is crucial for serviceability checks.</p>
-                            </div>
+                                                                                <div className="flex items-center gap-2 mt-2">
+                                                                                    <span className="text-[10px] font-semibold bg-secondary/50 px-2 py-0.5 rounded text-muted-foreground">
+                                                                                        Qty: {item.quantity}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
 
-                            <Button
-                                className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-primary/20"
-                                onClick={handleSaveAddress}
-                                disabled={savingAddress}
-                            >
-                                {savingAddress ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
-                                    </>
-                                ) : (
-                                    "Save Address"
-                                )}
-                            </Button>
-                        </div>
-                    )}
+                                                                {/* Bill Details */}
+                                                                <div className="bg-secondary/10 p-5 space-y-3.5 text-sm border-t border-dashed border-border">
+                                                                    <div className="flex justify-between text-muted-foreground">
+                                                                        <span>Item Total</span>
+                                                                        <span className="font-medium text-foreground">₹{subtotal.toFixed(2)}</span>
+                                                                    </div>
 
-                    {/* View: Payment Method */}
-                    {view === 'payment' && (
-                        <div className="animate-in slide-in-from-right-8 fade-in duration-300 space-y-8">
+                                                                    {discountAmount > 0 && (
+                                                                        <div className="flex justify-between text-emerald-600 font-medium">
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <Tag className="w-3.5 h-3.5" />
+                                                                                <span>Coupon ({couponCode})</span>
+                                                                            </div>
+                                                                            <span>-₹{discountAmount.toFixed(2)}</span>
+                                                                        </div>
+                                                                    )}
 
-                            {/* Order Summary */}
-                            <div className="space-y-4">
-                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Order Summary</h3>
-                                <div className="bg-background rounded-3xl border shadow-sm overflow-hidden">
-                                    <div className="max-h-[300px] overflow-y-auto p-1 space-y-1">
-                                        {cart.map((item) => (
-                                            <div key={item.cartItemId} className="flex gap-4 p-4 rounded-2xl border border-transparent hover:border-border/50 hover:bg-white hover:shadow-sm transition-all group/item">
-                                                {/* Image */}
-                                                <div className="h-16 w-16 rounded-xl bg-secondary overflow-hidden shrink-0 border border-border/50 bg-white relative">
-                                                    {item.images && item.images.length > 0 ? (
-                                                        <img src={item.images[0]} alt={item.name} className="h-full w-full object-cover group-hover/item:scale-105 transition-transform duration-500" />
-                                                    ) : item.imageUrl ? (
-                                                        <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover group-hover/item:scale-105 transition-transform duration-500" />
+                                                                    <div className="flex justify-between text-muted-foreground">
+                                                                        <span>Delivery Charge</span>
+                                                                        <span className={isFreeDelivery ? "text-emerald-600 font-medium" : "text-foreground"}>
+                                                                            {isFreeDelivery ? "FREE" : "₹" + shipping.toFixed(2)}
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div className="h-px bg-border my-1" />
+
+                                                                    <div className="flex justify-between items-end">
+                                                                        <span className="font-bold text-base">Grand Total</span>
+                                                                        <span className="font-bold text-xl text-primary leading-none">
+                                                                            ₹{finalTotal.toFixed(2)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Delivery Details */}
+                                                        <div className="space-y-4">
+                                                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Delivery To</h3>
+                                                            <div className="bg-background p-5 rounded-3xl border shadow-sm space-y-5 relative overflow-hidden">
+                                                                {/* Contact Info */}
+                                                                <div className="flex items-start gap-4">
+                                                                    <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                                                                        <User className="w-5 h-5" />
+                                                                    </div>
+                                                                    <div className="overflow-hidden">
+                                                                        <p className="font-bold text-sm truncate">{contactInfo.name}</p>
+                                                                        <p className="text-xs text-muted-foreground mt-0.5">{contactInfo.mobile}</p>
+                                                                        <p className="text-xs text-muted-foreground truncate">{contactInfo.email}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="h-px bg-border/60 w-full" />
+
+                                                                {/* Address */}
+                                                                <div className="flex items-start gap-4">
+                                                                    <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                                                                        <MapPin className="w-5 h-5" />
+                                                                    </div>
+                                                                    <div className="overflow-hidden">
+                                                                        {(() => {
+                                                                            const addr = addresses.find(a => a.customerAddressId === selectedAddressId);
+                                                                            return addr ? (
+                                                                                <>
+                                                                                    <span className="text-[10px] font-bold bg-secondary px-2 py-0.5 rounded text-foreground/70 mb-1 inline-block uppercase tracking-wider">
+                                                                                        {addr.addressName || 'Home'}
+                                                                                    </span>
+                                                                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                                        {addr.customerDrNum}, {addr.customerRoad}, {addr.customerCity} - {addr.customerPin}
+                                                                                    </p>
+                                                                                </>
+                                                                            ) : <p className="text-sm text-destructive">No address selected</p>;
+                                                                        })()}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="space-y-4">
+                                                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Payment Method</h3>
+
+                                                            {companyDetails?.razorpay === false ? (
+                                                                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl border border-indigo-100 space-y-6">
+                                                                    <div className="text-center space-y-2">
+                                                                        <h4 className="text-xl font-bold text-indigo-900">Scan & Pay</h4>
+                                                                        <p className="text-sm text-indigo-600/80">Complete your payment within the time limit.</p>
+                                                                    </div>
+
+                                                                    {/* Timer */}
+                                                                    <div className="flex justify-center">
+                                                                        <div className={cn(
+                                                                            "text-3xl font-black font-mono tracking-widest px-6 py-3 rounded-2xl border-2 transition-colors duration-500",
+                                                                            timeLeft < 60 ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-white text-indigo-600 border-indigo-100"
+                                                                        )}>
+                                                                            {formatTime(timeLeft)}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* QR Code */}
+                                                                    <div className="relative w-48 h-48 mx-auto bg-white p-3 rounded-2xl shadow-sm border border-indigo-100">
+                                                                        {companyDetails.upiQrCode ? (
+                                                                            <div className="relative w-full h-full">
+                                                                                <img
+                                                                                    src={companyDetails.upiQrCode}
+                                                                                    alt="Payment QR"
+                                                                                    className="w-full h-full object-contain rounded-xl"
+                                                                                />
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="w-full h-full flex items-center justify-center bg-indigo-50/50 rounded-xl border-2 border-dashed border-indigo-200">
+                                                                                <p className="text-xs text-indigo-400 font-medium">No QR Code</p>
+                                                                            </div>
+                                                                        )}
+                                                                        {/* Scan Corner Markers */}
+                                                                        <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-indigo-500 rounded-tl-xl -mt-1 -ml-1" />
+                                                                        <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-indigo-500 rounded-tr-xl -mt-1 -mr-1" />
+                                                                        <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-indigo-500 rounded-bl-xl -mb-1 -ml-1" />
+                                                                        <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-indigo-500 rounded-br-xl -mb-1 -mr-1" />
+                                                                    </div>
+
+                                                                    {/* Proof Upload (Optional) */}
+                                                                    <div className="bg-white p-4 rounded-2xl border border-indigo-100/50 shadow-sm">
+                                                                        <ImageUpload
+                                                                            value={manualProof || ''}
+                                                                            onChange={(url) => setManualProof(url)}
+                                                                            companyDomain={companyDetails.companyDomain}
+                                                                            label="Upload Payment Screenshot (Optional)"
+                                                                            maxFiles={1}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div
+                                                                    onClick={() => setSelectedPaymentMethod('ONLINE')}
+                                                                    className={cn(
+                                                                        "relative overflow-hidden cursor-pointer p-5 rounded-3xl border-2 transition-all duration-300",
+                                                                        selectedPaymentMethod === 'ONLINE'
+                                                                            ? "bg-primary/5 border-primary shadow-lg shadow-primary/10"
+                                                                            : "bg-background border-border hover:border-primary/30"
+                                                                    )}
+                                                                >
+                                                                    <div className="flex items-start gap-4 z-10 relative">
+                                                                        <div className={cn(
+                                                                            "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors",
+                                                                            selectedPaymentMethod === 'ONLINE' ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                                                                        )}>
+                                                                            <CreditCard className="w-6 h-6" />
+                                                                        </div>
+                                                                        <div className="flex-1">
+                                                                            <div className="flex items-center justify-between mb-1">
+                                                                                <span className={cn(
+                                                                                    "font-bold text-lg",
+                                                                                    selectedPaymentMethod === 'ONLINE' ? "text-primary" : "text-foreground"
+                                                                                )}>
+                                                                                    Online Payment
+                                                                                </span>
+                                                                                {selectedPaymentMethod === 'ONLINE' && (
+                                                                                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                                                        <Check className="w-3 h-3" /> SELECTED
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                                                                Securely pay via UPI, Credit/Debit Cards, or Netbanking. <span className="font-semibold text-primary block mt-1">Pay through QR scanner</span>
+                                                                            </p>
+                                                                            <div className="mt-3 flex items-center gap-2">
+                                                                                <span className="text-[10px] font-bold bg-secondary px-2 py-1 rounded-md text-muted-foreground">Powered by Razorpay</span>
+                                                                                <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-md">100% Secure</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    {/* Background Glow */}
+                                                                    {selectedPaymentMethod === 'ONLINE' && (
+                                                                        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </ScrollArea>
+
+
+                                        {/* Footer for Payment View */}
+                                        {view === 'payment' && (
+                                            <div className="p-6 bg-background pt-4 border-t border-border/50 backdrop-blur-md">
+                                                <Button
+                                                    size="lg"
+                                                    className={cn(
+                                                        "w-full h-14 rounded-2xl text-lg font-bold shadow-xl transition-all",
+                                                        companyDetails?.razorpay === false
+                                                            ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200"
+                                                            : "bg-primary hover:bg-primary/90 shadow-primary/30"
+                                                    )}
+                                                    onClick={companyDetails?.razorpay === false ? handleManualPayment : handlePaymentInitialize}
+                                                    disabled={isInitializingPayment || (companyDetails?.razorpay === false && timeLeft === 0)}
+                                                >
+                                                    {isInitializingPayment ? (
+                                                        <>
+                                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...
+                                                        </>
                                                     ) : (
-                                                        <div className="h-full w-full flex items-center justify-center text-muted-foreground text-[10px]">No Img</div>
-                                                    )}
-                                                </div>
-                                                {/* Details */}
-                                                <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                                                    <div>
-                                                        <div className="flex justify-between items-start gap-2">
-                                                            <h4 className="font-bold text-sm leading-tight text-foreground/90 line-clamp-2">{item.name}</h4>
-                                                            <span className="font-bold text-sm whitespace-nowrap">₹{((item.price + (item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
-                                                        </div>
-
-                                                        {/* Variants & SizeColours Chips */}
-                                                        <div className="flex flex-wrap gap-1.5 mt-2">
-                                                            {Object.entries(item.selectedVariants || {}).map(([k, v]) => (
-                                                                <span key={k} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-border/50">
-                                                                    {v}
-                                                                </span>
-                                                            ))}
-                                                            {item.selectedSizeColours?.map((sc) => (
-                                                                <span key={sc.id} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
-                                                                    <Plus className="w-2 h-2" /> {sc.name}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-2 mt-2">
-                                                        <span className="text-[10px] font-semibold bg-secondary/50 px-2 py-0.5 rounded text-muted-foreground">
-                                                            Qty: {item.quantity}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* Bill Details */}
-                                    <div className="bg-secondary/10 p-5 space-y-3.5 text-sm border-t border-dashed border-border">
-                                        <div className="flex justify-between text-muted-foreground">
-                                            <span>Item Total</span>
-                                            <span className="font-medium text-foreground">₹{subtotal.toFixed(2)}</span>
-                                        </div>
-
-                                        {discountAmount > 0 && (
-                                            <div className="flex justify-between text-emerald-600 font-medium">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Tag className="w-3.5 h-3.5" />
-                                                    <span>Coupon ({couponCode})</span>
-                                                </div>
-                                                <span>-₹{discountAmount.toFixed(2)}</span>
-                                            </div>
-                                        )}
-
-                                        <div className="flex justify-between text-muted-foreground">
-                                            <span>Delivery Charge</span>
-                                            <span className={isFreeDelivery ? "text-emerald-600 font-medium" : "text-foreground"}>
-                                                {isFreeDelivery ? "FREE" : "₹" + shipping.toFixed(2)}
-                                            </span>
-                                        </div>
-
-                                        <div className="h-px bg-border my-1" />
-
-                                        <div className="flex justify-between items-end">
-                                            <span className="font-bold text-base">Grand Total</span>
-                                            <span className="font-bold text-xl text-primary leading-none">
-                                                ₹{finalTotal.toFixed(2)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Delivery Details */}
-                            <div className="space-y-4">
-                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Delivery To</h3>
-                                <div className="bg-background p-5 rounded-3xl border shadow-sm space-y-5 relative overflow-hidden">
-                                    {/* Contact Info */}
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
-                                            <User className="w-5 h-5" />
-                                        </div>
-                                        <div className="overflow-hidden">
-                                            <p className="font-bold text-sm truncate">{contactInfo.name}</p>
-                                            <p className="text-xs text-muted-foreground mt-0.5">{contactInfo.mobile}</p>
-                                            <p className="text-xs text-muted-foreground truncate">{contactInfo.email}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="h-px bg-border/60 w-full" />
-
-                                    {/* Address */}
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
-                                            <MapPin className="w-5 h-5" />
-                                        </div>
-                                        <div className="overflow-hidden">
-                                            {(() => {
-                                                const addr = addresses.find(a => a.customerAddressId === selectedAddressId);
-                                                return addr ? (
-                                                    <>
-                                                        <span className="text-[10px] font-bold bg-secondary px-2 py-0.5 rounded text-foreground/70 mb-1 inline-block uppercase tracking-wider">
-                                                            {addr.addressName || 'Home'}
-                                                        </span>
-                                                        <p className="text-xs text-muted-foreground leading-relaxed">
-                                                            {addr.customerDrNum}, {addr.customerRoad}, {addr.customerCity} - {addr.customerPin}
-                                                        </p>
-                                                    </>
-                                                ) : <p className="text-sm text-destructive">No address selected</p>;
-                                            })()}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Payment Method</h3>
-
-                                {companyDetails?.razorpay === false ? (
-                                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl border border-indigo-100 space-y-6">
-                                        <div className="text-center space-y-2">
-                                            <h4 className="text-xl font-bold text-indigo-900">Scan & Pay</h4>
-                                            <p className="text-sm text-indigo-600/80">Complete your payment within the time limit.</p>
-                                        </div>
-
-                                        {/* Timer */}
-                                        <div className="flex justify-center">
-                                            <div className={cn(
-                                                "text-3xl font-black font-mono tracking-widest px-6 py-3 rounded-2xl border-2 transition-colors duration-500",
-                                                timeLeft < 60 ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-white text-indigo-600 border-indigo-100"
-                                            )}>
-                                                {formatTime(timeLeft)}
-                                            </div>
-                                        </div>
-
-                                        {/* QR Code */}
-                                        <div className="relative w-48 h-48 mx-auto bg-white p-3 rounded-2xl shadow-sm border border-indigo-100">
-                                            {companyDetails.upiQrCode ? (
-                                                <div className="relative w-full h-full">
-                                                    <img
-                                                        src={companyDetails.upiQrCode}
-                                                        alt="Payment QR"
-                                                        className="w-full h-full object-contain rounded-xl"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-indigo-50/50 rounded-xl border-2 border-dashed border-indigo-200">
-                                                    <p className="text-xs text-indigo-400 font-medium">No QR Code</p>
-                                                </div>
-                                            )}
-                                            {/* Scan Corner Markers */}
-                                            <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-indigo-500 rounded-tl-xl -mt-1 -ml-1" />
-                                            <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-indigo-500 rounded-tr-xl -mt-1 -mr-1" />
-                                            <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-indigo-500 rounded-bl-xl -mb-1 -ml-1" />
-                                            <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-indigo-500 rounded-br-xl -mb-1 -mr-1" />
-                                        </div>
-
-                                        {/* Proof Upload (Optional) */}
-                                        <div className="bg-white p-4 rounded-2xl border border-indigo-100/50 shadow-sm">
-                                            <ImageUpload
-                                                value={manualProof || ''}
-                                                onChange={(url) => setManualProof(url)}
-                                                companyDomain={companyDetails.companyDomain}
-                                                label="Upload Payment Screenshot (Optional)"
-                                                maxFiles={1}
-                                            />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div
-                                        onClick={() => setSelectedPaymentMethod('ONLINE')}
-                                        className={cn(
-                                            "relative overflow-hidden cursor-pointer p-5 rounded-3xl border-2 transition-all duration-300",
-                                            selectedPaymentMethod === 'ONLINE'
-                                                ? "bg-primary/5 border-primary shadow-lg shadow-primary/10"
-                                                : "bg-background border-border hover:border-primary/30"
-                                        )}
-                                    >
-                                        <div className="flex items-start gap-4 z-10 relative">
-                                            <div className={cn(
-                                                "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors",
-                                                selectedPaymentMethod === 'ONLINE' ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-                                            )}>
-                                                <CreditCard className="w-6 h-6" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <span className={cn(
-                                                        "font-bold text-lg",
-                                                        selectedPaymentMethod === 'ONLINE' ? "text-primary" : "text-foreground"
-                                                    )}>
-                                                        Online Payment
-                                                    </span>
-                                                    {selectedPaymentMethod === 'ONLINE' && (
-                                                        <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                            <Check className="w-3 h-3" /> SELECTED
+                                                        <span className="flex items-center gap-2">
+                                                            Place Order & Pay <ArrowRight className="w-5 h-5" />
                                                         </span>
                                                     )}
-                                                </div>
-                                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                                    Securely pay via UPI, Credit/Debit Cards, or Netbanking. <span className="font-semibold text-primary block mt-1">Pay through QR scanner</span>
-                                                </p>
-                                                <div className="mt-3 flex items-center gap-2">
-                                                    <span className="text-[10px] font-bold bg-secondary px-2 py-1 rounded-md text-muted-foreground">Powered by Razorpay</span>
-                                                    <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-md">100% Secure</span>
+                                                </Button>
+                                                <div className="flex items-center justify-center gap-2 mt-3 opacity-60">
+                                                    <CreditCard className="w-3 h-3" />
+                                                    <span className="text-[10px] font-medium">Safe & Secure Payment</span>
                                                 </div>
                                             </div>
-                                        </div>
-                                        {/* Background Glow */}
-                                        {selectedPaymentMethod === 'ONLINE' && (
-                                            <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
                                         )}
-                                    </div>
-                                )}
-                            </div>
-
-                        </div>
-                    )}
-                </div>
-            </ScrollArea>
-
-
-            {/* Footer for Payment View */}
-            {view === 'payment' && (
-                <div className="p-6 bg-background pt-4 border-t border-border/50 backdrop-blur-md">
-                    <Button
-                        size="lg"
-                        className={cn(
-                            "w-full h-14 rounded-2xl text-lg font-bold shadow-xl transition-all",
-                            companyDetails?.razorpay === false
-                                ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200"
-                                : "bg-primary hover:bg-primary/90 shadow-primary/30"
-                        )}
-                        onClick={companyDetails?.razorpay === false ? handleManualPayment : handlePaymentInitialize}
-                        disabled={isInitializingPayment || (companyDetails?.razorpay === false && timeLeft === 0)}
-                    >
-                        {isInitializingPayment ? (
-                            <>
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...
-                            </>
-                        ) : (
-                            <span className="flex items-center gap-2">
-                                Place Order & Pay <ArrowRight className="w-5 h-5" />
-                            </span>
-                        )}
-                    </Button>
-                    <div className="flex items-center justify-center gap-2 mt-3 opacity-60">
-                        <CreditCard className="w-3 h-3" />
-                        <span className="text-[10px] font-medium">Safe & Secure Payment</span>
-                    </div>
-                </div>
-            )}
-        </>
-    )
-}
-            </SheetContent >
-        </Sheet >
-    );
+                                    </>
+                                )
+                            }
+                        </SheetContent >
+                    </Sheet >
+                );
 }
