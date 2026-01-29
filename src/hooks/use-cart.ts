@@ -225,7 +225,7 @@ export const useCart = create<CartState>()(
           let distributionIndex = 0;
           productItems.forEach(pItem => {
             const sizeColoursCost = (pItem.selectedSizeColours || []).reduce((acc, a) => acc + a.price, 0);
-            const basePrice = pItem.priceAfterDiscount !== undefined ? pItem.priceAfterDiscount : pItem.price;
+            const basePrice = (pItem.priceAfterDiscount ?? pItem.price);
             // Note: Discount applies to (Base + SizeColours)
             // CartSheet logic: singleItemTotal = basePrice + sizeColoursCost; finalTotal = singleItemTotal * qty * (1 - discountPercent / 100);
             // So it applies to the SUM.
