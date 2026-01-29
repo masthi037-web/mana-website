@@ -3225,7 +3225,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             </div>
 
                                             <div className="space-y-4">
-                                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Payment Method</h3>
+
 
                                                 {companyDetails?.razorpay === false ? (
                                                     <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl border border-indigo-100 space-y-6">
@@ -3244,38 +3244,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                             </div>
                                                         </div>
 
-                                                        {/* QR Code */}
-                                                        <div className="relative w-48 h-48 mx-auto bg-white p-3 rounded-2xl shadow-sm border border-indigo-100">
-                                                            {companyDetails.upiQrCode ? (
-                                                                <div className="relative w-full h-full">
-                                                                    <img
-                                                                        src={companyDetails.upiQrCode}
-                                                                        alt="Payment QR"
-                                                                        className="w-full h-full object-contain rounded-xl"
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center bg-indigo-50/50 rounded-xl border-2 border-dashed border-indigo-200">
-                                                                    <p className="text-xs text-indigo-400 font-medium">No QR Code</p>
-                                                                </div>
-                                                            )}
-                                                            {/* Scan Corner Markers */}
-                                                            <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-indigo-500 rounded-tl-xl -mt-1 -ml-1" />
-                                                            <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-indigo-500 rounded-tr-xl -mt-1 -mr-1" />
-                                                            <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-indigo-500 rounded-bl-xl -mb-1 -ml-1" />
-                                                            <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-indigo-500 rounded-br-xl -mb-1 -mr-1" />
-                                                        </div>
 
-                                                        {/* Proof Upload (Optional) */}
-                                                        <div className="bg-white p-4 rounded-2xl border border-indigo-100/50 shadow-sm">
-                                                            <ImageUpload
-                                                                value={manualProof || ''}
-                                                                onChange={(url) => setManualProof(url)}
-                                                                companyDomain={companyDetails.companyDomain}
-                                                                label="Upload Payment Screenshot (Optional)"
-                                                                maxFiles={1}
-                                                            />
-                                                        </div>
+
+
                                                     </div>
                                                 ) : (
                                                     <div
