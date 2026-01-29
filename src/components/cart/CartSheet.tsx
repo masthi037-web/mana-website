@@ -1682,8 +1682,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 {/* QR Payment Popup Overlay */}
                 {showQrPopup && (
-                    <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
-                        <div className="w-full max-w-sm bg-white/90 backdrop-blur-2xl rounded-[32px] overflow-hidden shadow-2xl border border-white/50 relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-500">
+                    <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto">
+                        <div className="w-full max-w-sm bg-white/90 backdrop-blur-2xl rounded-[32px] overflow-hidden shadow-2xl border border-white/50 relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-500 my-auto max-h-[90vh] flex flex-col">
 
                             {/* Premium Gradient Header */}
                             <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 opacity-100 shadow-[inset_0_-40px_40px_-20px_rgba(255,255,255,0.1)]" />
@@ -1693,13 +1693,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="absolute top-4 right-4 text-white/90 hover:text-white hover:bg-white/20 rounded-full z-20 backdrop-blur-md border border-white/10"
+                                className="absolute top-4 right-4 text-white/90 hover:text-white hover:bg-white/20 rounded-full z-30 backdrop-blur-md border border-white/10"
                                 onClick={() => setShowExitConfirmation(true)}
                             >
                                 <X className="w-5 h-5" />
                             </Button>
 
-                            <div className="relative pt-12 pb-8 px-6 flex flex-col items-center text-center">
+                            <div className="relative flex-1 overflow-y-auto custom-scrollbar pt-12 pb-8 px-6 flex flex-col items-center text-center">
                                 {/* Logo & Title Section */}
                                 <div className="mb-8 relative z-10 text-white w-full flex flex-col items-center animate-in slide-in-from-top-4 duration-700">
                                     <div className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-[24px] flex items-center justify-center mb-4 border border-white/30 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)]">
