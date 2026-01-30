@@ -5,10 +5,14 @@ import { format } from 'date-fns';
 interface InvoiceTemplateProps {
     order: SaveOrderResponse;
     companyDetails: CompanyDetails | null;
+    logoOverride?: string;
+    itemImagesOverride?: Record<string, string>;
 }
 
-export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(({ order, companyDetails }, ref) => {
+export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(({ order, companyDetails, logoOverride, itemImagesOverride }, ref) => {
     if (!order || !companyDetails) return null;
+
+    const logoSrc = logoOverride || companyDetails.logo;
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return '';
@@ -27,20 +31,28 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
         }).format(amount);
     };
 
+    const getItemImage = (item: any) => {
+        // Prioritize specific variant images
+        return item.productSizeColourImage || item.productColourImage || item.productImage;
+    };
+
     return (
         <div ref={ref} className="bg-white p-8 w-[210mm] min-h-[297mm] mx-auto text-slate-900" id="invoice-template">
             {/* Header */}
             <div className="flex justify-between items-start mb-8 border-b-2 border-primary/20 pb-6">
                 <div>
-                    {companyDetails.logo ? (
-                        <div className="h-16 w-16 relative mb-2">
+                    {logoSrc && (
+                        <div className="h-24 max-w-[200px] relative mb-4">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={companyDetails.logo} alt="Logo" className="w-full h-full object-contain" />
+                            <img
+                                src={logoSrc}
+                                alt="Logo"
+                                className="h-full w-auto object-contain"
+                                crossOrigin="anonymous"
+                            />
                         </div>
-                    ) : (
-                        <h1 className="text-3xl font-bold text-primary mb-2">{companyDetails.companyName}</h1>
                     )}
-                    <h1 className="text-xl font-bold text-slate-800">{companyDetails.companyName}</h1>
+                    <h1 className="text-3xl font-bold text-primary mb-2">{companyDetails.companyName}</h1>
                     <div className="text-xs text-slate-500 mt-1 max-w-[250px]">
                         {companyDetails.companyAddress}<br />
                         {companyDetails.companyCity}, {companyDetails.companyState} - {companyDetails.companyPinCode}<br />
@@ -80,28 +92,49 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                 <table className="w-full text-left">
                     <thead>
                         <tr className="border-b border-primary/20">
-                            <th className="pb-3 px-2 text-xs font-black text-primary uppercase tracking-wider w-[50%]">Item Description</th>
+                            <th className="pb-3 px-2 text-xs font-black text-primary uppercase tracking-wider w-[15%]">Image</th>
+                            <th className="pb-3 px-2 text-xs font-black text-primary uppercase tracking-wider w-[40%]">Item Description</th>
                             <th className="pb-3 px-2 text-xs font-black text-primary uppercase tracking-wider text-center">Qty</th>
                             <th className="pb-3 px-2 text-xs font-black text-primary uppercase tracking-wider text-right">Price</th>
                             <th className="pb-3 px-2 text-xs font-black text-primary uppercase tracking-wider text-right">Total</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {order.items.map((item, idx) => (
-                            <tr key={idx} className="text-sm">
-                                <td className="py-4 px-2">
-                                    <p className="font-bold text-slate-900">{item.productName}</p>
-                                    <p className="text-xs text-slate-400">
-                                        {[item.productSizeName, item.productColour, item.productSizeColourName].filter(Boolean).join(' • ')}
-                                    </p>
-                                </td>
-                                <td className="py-4 px-2 text-center text-slate-600 font-medium">{item.quantity}</td>
-                                <td className="py-4 px-2 text-right text-slate-600">{formatCurrency(item.productSizePriceAfterDiscount || item.productPriceAfterDiscount || 0)}</td>
-                                <td className="py-4 px-2 text-right font-bold text-slate-900">
-                                    {formatCurrency((item.productSizePriceAfterDiscount || item.productPriceAfterDiscount || 0) * item.quantity)}
-                                </td>
-                            </tr>
-                        ))}
+                        {order.items.map((item, idx) => {
+                            const imageSrc = (itemImagesOverride && itemImagesOverride[item.orderItemId]) || getItemImage(item);
+                            return (
+                                <tr key={idx} className="text-sm">
+                                    <td className="py-4 px-2 align-middle">
+                                        {imageSrc ? (
+                                            <div className="h-12 w-12 rounded border border-slate-200 overflow-hidden bg-white">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img
+                                                    src={imageSrc}
+                                                    alt={item.productName}
+                                                    className="w-full h-full object-cover"
+                                                    crossOrigin="anonymous"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="h-12 w-12 rounded border border-slate-200 bg-slate-50 flex items-center justify-center">
+                                                <span className="text-[10px] text-slate-400">No Img</span>
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td className="py-4 px-2 align-middle">
+                                        <p className="font-bold text-slate-900">{item.productName}</p>
+                                        <p className="text-xs text-slate-400">
+                                            {[item.productSizeName, item.productColour, item.productSizeColourName].filter(Boolean).join(' • ')}
+                                        </p>
+                                    </td>
+                                    <td className="py-4 px-2 text-center text-slate-600 font-medium align-middle">{item.quantity}</td>
+                                    <td className="py-4 px-2 text-right text-slate-600 align-middle">{formatCurrency(item.productSizePriceAfterDiscount || item.productPriceAfterDiscount || 0)}</td>
+                                    <td className="py-4 px-2 text-right font-bold text-slate-900 align-middle">
+                                        {formatCurrency((item.productSizePriceAfterDiscount || item.productPriceAfterDiscount || 0) * item.quantity)}
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

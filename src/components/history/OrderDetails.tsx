@@ -20,11 +20,57 @@ export function OrderDetails({ order, onBack }: OrderDetailsProps) {
     const { companyDetails } = useCart();
     const [downloading, setDownloading] = useState(false);
 
+    const convertImageToBase64 = (url: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.src = url;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                } else {
+                    reject(new Error('Canvas context failed'));
+                }
+            };
+            img.onerror = (error) => reject(error);
+        });
+    };
+
     const handleDownloadInvoice = async () => {
         if (!companyDetails) return;
         setDownloading(true);
 
         try {
+            // Convert logo to base64 to avoid CORS issues
+            let logoBase64 = undefined;
+            if (companyDetails.logo) {
+                try {
+                    logoBase64 = await convertImageToBase64(companyDetails.logo);
+                } catch (e: any) {
+                    console.warn("Failed to convert logo to base64", e);
+                }
+            }
+
+            // Convert item images to base64
+            const itemImagesOverride: Record<string, string> = {};
+            await Promise.all(order.items.map(async (item) => {
+                const imageUrl = item.productSizeColourImage || item.productColourImage || item.productImage;
+                if (imageUrl) {
+                    try {
+                        const base64 = await convertImageToBase64(imageUrl);
+                        itemImagesOverride[item.orderItemId] = base64;
+                    } catch (e: any) {
+                        console.warn(`Failed to convert image for item ${item.productName}`, e);
+                    }
+                }
+            }));
+
+
             // Create a temporary container for the invoice
             const container = document.createElement('div');
             container.style.position = 'absolute';
@@ -40,6 +86,8 @@ export function OrderDetails({ order, onBack }: OrderDetailsProps) {
                     <InvoiceTemplate
                         order={order}
                         companyDetails={companyDetails}
+                        logoOverride={logoBase64}
+                        itemImagesOverride={itemImagesOverride}
                         ref={(el) => {
                             if (el) resolve();
                         }}
