@@ -2238,6 +2238,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 </span>
                             )}
                         </SheetTitle>
+                    ) : view === 'success' ? (
+                        <SheetTitle className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-emerald-600">
+                            Order Confirmed
+                        </SheetTitle>
                     ) : (
                         <div className="flex items-center gap-3">
                             <Button
