@@ -31,26 +31,33 @@ import { OrderDetails } from '@/components/history/OrderDetails';
 
 export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) => {
     const [open, setOpen] = useState(false);
+    const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [fromDate, setFromDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [toDate, setToDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [mode, setMode] = useState<'single' | 'range'>('single');
     const [orders, setOrders] = useState<SaveOrderResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<SaveOrderResponse | null>(null);
     const { companyDetails } = useCart();
     const { toast } = useToast();
 
-    // Fetch Orders - Refetch when date range changes
+    // Fetch Orders - Refetch when params change
     useEffect(() => {
         if (open && companyDetails?.companyId) {
             fetchOrders();
         }
-    }, [open, fromDate, toDate, companyDetails]);
+    }, [open, date, fromDate, toDate, mode, companyDetails]);
 
     const fetchOrders = async () => {
         if (!companyDetails?.companyId) return;
         setLoading(true);
         try {
-            const data = await orderService.getCompanyOrdersByRange(companyDetails.companyId, fromDate, toDate);
+            let data;
+            if (mode === 'single') {
+                data = await orderService.getCompanyOrdersByDate(companyDetails.companyId, date);
+            } else {
+                data = await orderService.getCompanyOrdersByRange(companyDetails.companyId, fromDate, toDate);
+            }
             setOrders(data || []);
         } catch (error) {
             console.error("Failed to fetch orders", error);
@@ -99,52 +106,91 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                             ) : (
                                 <SheetTitle className="flex items-center gap-2 text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
                                     <ClipboardList className="h-5 w-5 text-primary" />
-                                    Company Orders
+                                    {companyDetails?.companyName || 'Company'} Orders
                                 </SheetTitle>
                             )}
                         </div>
                     </SheetHeader>
 
-                    {/* Date Picker & Stats (Only in List View) */}
+                    {/* Date Controls & Stats (Only in List View) */}
                     {!selectedOrder && (
                         <div className="px-6 pb-4 space-y-4">
-                            {/* Date Selector Range */}
-                            <div className="flex items-center gap-2">
-                                <div className="relative flex-1">
-                                    <span className="absolute left-2.5 top-0.5 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">From</span>
-                                    <Input
-                                        type="date"
-                                        value={fromDate}
-                                        onChange={(e) => setFromDate(e.target.value)}
-                                        className="pt-4 h-11 pl-3 font-medium bg-secondary/50 border-transparent focus:bg-background transition-all text-xs"
-                                    />
-                                </div>
-                                <div className="relative flex-1">
-                                    <span className="absolute left-2.5 top-0.5 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">To</span>
-                                    <Input
-                                        type="date"
-                                        value={toDate}
-                                        onChange={(e) => {
-                                            const newDate = e.target.value;
-                                            // Optional: validations can be added here
-                                            setToDate(newDate);
-                                        }}
-                                        className="pt-4 h-11 pl-3 font-medium bg-secondary/50 border-transparent focus:bg-background transition-all text-xs"
-                                    />
-                                </div>
+                            {/* Mode Switcher */}
+                            <div className="flex p-1 bg-secondary/30 rounded-xl border border-secondary/50 relative">
+                                <button
+                                    onClick={() => setMode('single')}
+                                    className={cn(
+                                        "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all duration-300",
+                                        mode === 'single'
+                                            ? "bg-background shadow-sm text-primary"
+                                            : "text-muted-foreground hover:bg-background/50"
+                                    )}
+                                >
+                                    Single Date
+                                </button>
+                                <button
+                                    onClick={() => setMode('range')}
+                                    className={cn(
+                                        "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all duration-300",
+                                        mode === 'range'
+                                            ? "bg-background shadow-sm text-primary"
+                                            : "text-muted-foreground hover:bg-background/50"
+                                    )}
+                                >
+                                    Date Range
+                                </button>
                             </div>
 
-                            {/* Daily Stats Card */}
+                            {/* Inputs based on Mode */}
+                            {mode === 'single' ? (
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wider z-10">Select Date</span>
+                                    <Input
+                                        type="date"
+                                        value={date}
+                                        onChange={(e) => setDate(e.target.value)}
+                                        className="pt-5 h-12 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all"
+                                    />
+                                    <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <div className="relative flex-1 group">
+                                        <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-focus-within:scale-x-100 transition-transform duration-300 z-20" />
+                                        <span className="absolute left-3 top-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wider z-10">From</span>
+                                        <Input
+                                            type="date"
+                                            value={fromDate}
+                                            onChange={(e) => setFromDate(e.target.value)}
+                                            className="pt-5 h-12 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all"
+                                        />
+                                    </div>
+                                    <div className="relative flex-1 group">
+                                        <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-focus-within:scale-x-100 transition-transform duration-300 z-20" />
+                                        <span className="absolute left-3 top-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wider z-10">To</span>
+                                        <Input
+                                            type="date"
+                                            value={toDate}
+                                            onChange={(e) => setToDate(e.target.value)}
+                                            className="pt-5 h-12 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Dashboard Cards (Premium Look) */}
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-primary/5 border border-primary/10 rounded-2xl p-3 flex flex-col justify-center items-center text-center">
-                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Revenue</span>
-                                    <span className="text-xl font-bold text-primary flex items-center gap-1">
+                                <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10 rounded-2xl p-4 flex flex-col justify-center items-center text-center relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-primary/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                                    <span className="text-[10px] font-black text-primary/60 uppercase tracking-widest mb-1 relative z-10">Revenue</span>
+                                    <span className="text-xl font-headline font-black text-primary flex items-center gap-1 relative z-10">
                                         ₹{totalRevenue.toLocaleString()}
                                     </span>
                                 </div>
-                                <div className="bg-secondary/30 border border-border/50 rounded-2xl p-3 flex flex-col justify-center items-center text-center">
-                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Orders</span>
-                                    <span className="text-xl font-bold text-foreground flex items-center gap-1">
+                                <div className="bg-secondary/30 border border-border/50 rounded-2xl p-4 flex flex-col justify-center items-center text-center relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-secondary/50 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                                    <span className="text-[10px] font-black text-muted-foreground/70 uppercase tracking-widest mb-1 relative z-10">Total Orders</span>
+                                    <span className="text-xl font-headline font-black text-foreground flex items-center gap-1 relative z-10">
                                         <Package className="h-4 w-4 text-muted-foreground" />
                                         {totalOrders}
                                     </span>

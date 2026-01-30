@@ -1,9 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, MapPin, Phone, User, Calendar, Receipt, ShoppingBag, CheckCircle2, Clock, Circle } from 'lucide-react';
+import { ChevronLeft, MapPin, Phone, User, Calendar, Receipt, ShoppingBag, CheckCircle2, Clock, Circle, Download, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { SaveOrderResponse, OrderResponseItem } from '@/lib/api-types';
+import { useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { createRoot } from 'react-dom/client';
+import { InvoiceTemplate } from '@/components/admin/InvoiceTemplate';
+import { useCart } from '@/hooks/use-cart';
 
 interface OrderDetailsProps {
     order: SaveOrderResponse;
@@ -11,6 +17,64 @@ interface OrderDetailsProps {
 }
 
 export function OrderDetails({ order, onBack }: OrderDetailsProps) {
+    const { companyDetails } = useCart();
+    const [downloading, setDownloading] = useState(false);
+
+    const handleDownloadInvoice = async () => {
+        if (!companyDetails) return;
+        setDownloading(true);
+
+        try {
+            // Create a temporary container for the invoice
+            const container = document.createElement('div');
+            container.style.position = 'absolute';
+            container.style.top = '-9999px';
+            container.style.left = '-9999px';
+            document.body.appendChild(container);
+
+            const root = createRoot(container);
+
+            // Promise to handle rendering
+            await new Promise<void>((resolve) => {
+                root.render(
+                    <InvoiceTemplate
+                        order={order}
+                        companyDetails={companyDetails}
+                        ref={(el) => {
+                            if (el) resolve();
+                        }}
+                    />
+                );
+            });
+
+            // Small delay to ensure images/fonts load (simplified)
+            await new Promise(r => setTimeout(r, 1000));
+
+            const element = container.querySelector('#invoice-template') as HTMLElement;
+            if (element) {
+                const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`Invoice_${order.orderNumber}.pdf`);
+            }
+
+            // Cleanup
+            setTimeout(() => {
+                root.unmount();
+                document.body.removeChild(container);
+            }, 100);
+
+        } catch (error) {
+            console.error("PDF Generation failed", error);
+        } finally {
+            setDownloading(false);
+        }
+    };
+
     const formatDate = (dateString?: string) => {
         if (!dateString) return '';
         return new Date(dateString).toLocaleDateString('en-IN', {
@@ -56,21 +120,33 @@ export function OrderDetails({ order, onBack }: OrderDetailsProps) {
     return (
         <div className="flex flex-col h-full bg-white animate-in slide-in-from-right-4 duration-300">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-4 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onBack}
-                    className="h-8 w-8 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"
-                >
-                    <ChevronLeft className="w-5 h-5" />
-                </Button>
-                <div>
-                    <h2 className="font-bold text-slate-900 tracking-tight text-lg">Order Details</h2>
-                    <p className="text-[10px] text-slate-400 font-mono tracking-wide">
-                        #{order.orderNumber?.split('-').pop() || order.orderId}
-                    </p>
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-50">
+                <div className="flex items-center gap-4">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={onBack}
+                        className="h-8 w-8 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </Button>
+                    <div>
+                        <h2 className="font-bold text-slate-900 tracking-tight text-lg">Order Details</h2>
+                        <p className="text-[10px] text-slate-400 font-mono tracking-wide">
+                            #{order.orderNumber?.split('-').pop() || order.orderId}
+                        </p>
+                    </div>
                 </div>
+                <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-2 rounded-full text-xs font-semibold border-slate-200 text-slate-600 hover:text-primary hover:border-primary/50"
+                    onClick={handleDownloadInvoice}
+                    disabled={downloading}
+                >
+                    {downloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                    {downloading ? "Generating..." : "Invoice"}
+                </Button>
             </div>
 
             <ScrollArea className="flex-1">
