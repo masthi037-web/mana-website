@@ -23,10 +23,12 @@ import { useToast } from "@/hooks/use-toast";
 interface OrderDetailsProps {
     order: SaveOrderResponse;
     onBack: () => void;
+    onStatusUpdate?: (newStatus: string) => void;
 }
 
-export function OrderDetails({ order, onBack }: OrderDetailsProps) {
+export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProps) {
     const { companyDetails } = useCart();
+    const { toast } = useToast();
     const [downloading, setDownloading] = useState(false);
 
     const convertImageToBase64 = async (url: string): Promise<string> => {
@@ -229,20 +231,19 @@ export function OrderDetails({ order, onBack }: OrderDetailsProps) {
                                         try {
                                             if (!order.orderId) return;
                                             await orderService.updateOrderStatus(order.orderId, newStatus);
-                                            // Optimistic update or reload logic could go here, 
-                                            // but ideally the parent should re-fetch or we locally update.
-                                            // For now, we will assume the parent (CompanyOrdersSheet) might handle refresh if we had a callback,
-                                            // but since we don't have a callback prop for refresh, we'll force a toast and maybe local state update if practical,
-                                            // essentially treating 'order' prop as initial data but we can't easily mutate it without parent's help.
-                                            // ACTUALLY: The best way is to trigger a refresh.
-                                            // However, limited scope: Let's just show success toast.
-                                            // In a real app, we'd call onUpdate() to refresh the list.
-                                            // Since we are in the sheet, maybe just show it changed.
-                                            window.location.reload(); // Simple refresh for now to see changes? Or better, use a callback?
-                                            // Let's stick to API call success feedback.
-                                            // The user can close/re-open to see formatted changes if needed, but the Select value will update immediately visually.
+                                            // Call the callback to update parent state locally
+                                            onStatusUpdate?.(newStatus);
+                                            toast({
+                                                title: "Status Updated",
+                                                description: `Order status changed to ${newStatus}`,
+                                            });
                                         } catch (e) {
                                             console.error("Failed to update status", e);
+                                            toast({
+                                                title: "Update Failed",
+                                                description: "Could not update order status",
+                                                variant: "destructive"
+                                            });
                                         }
                                     }}
                                 >

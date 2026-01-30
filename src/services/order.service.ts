@@ -157,5 +157,14 @@ export const orderService = {
             },
             next: { revalidate: 0 }
         });
+    },
+
+    getOrderById: async (orderId: number) => {
+        return apiClient<SaveOrderResponse>('/order/get-by-order-id', {
+            params: {
+                orderId
+            },
+            next: { revalidate: 0 }
+        });
     }
 };

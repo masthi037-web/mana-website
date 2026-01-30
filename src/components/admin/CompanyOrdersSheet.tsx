@@ -209,7 +209,33 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                         </div>
                     ) : selectedOrder ? (
                         // Detail View
-                        <OrderDetails order={selectedOrder} onBack={() => setSelectedOrder(null)} />
+                        <OrderDetails
+                            order={selectedOrder}
+                            onBack={() => setSelectedOrder(null)}
+                            onStatusUpdate={async (newStatus) => {
+                                try {
+                                    const updatedOrderData = await orderService.getOrderById(selectedOrder.orderId);
+                                    // Merge updated data but preserve local items as API returns null items
+                                    const mergedOrder: SaveOrderResponse = {
+                                        ...updatedOrderData,
+                                        items: selectedOrder.items
+                                    };
+
+                                    setOrders(prev => prev.map(o =>
+                                        o.orderId === selectedOrder.orderId ? mergedOrder : o
+                                    ));
+                                    setSelectedOrder(mergedOrder);
+                                } catch (error) {
+                                    console.error("Failed to fetch updated order details", error);
+                                    // Fallback to local update
+                                    const fallbackOrder = { ...selectedOrder, orderStatus: newStatus };
+                                    setOrders(prev => prev.map(o =>
+                                        o.orderId === selectedOrder.orderId ? fallbackOrder : o
+                                    ));
+                                    setSelectedOrder(fallbackOrder);
+                                }
+                            }}
+                        />
                     ) : orders.length > 0 ? (
                         // List View
                         <ScrollArea className="h-full px-6 py-4">
