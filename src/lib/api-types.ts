@@ -547,7 +547,7 @@ export interface SaveOrderRequest {
     deliveryState: string;
     orderStatus: string; // 'CREATED'
     subTotal: number;
-    allDiscount: number;
+    allDiscount: string;
     finalTotalAmount: number;
     paymentPic?: string | null;
     createdAt?: string; // Optional

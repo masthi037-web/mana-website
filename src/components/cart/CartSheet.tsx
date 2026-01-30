@@ -684,7 +684,21 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             const freeDeliveryThreshold = parseFloat(companyDetails?.freeDeliveryCost || '0');
             const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
             const shipping = isFreeDelivery ? 0 : (companyDetails?.deliveryBetween ? parseFloat(companyDetails.deliveryBetween) : 40);
-            const discountAmount = 0;
+
+            // Calculate Discount (replicate logic)
+            let discountAmount = 0;
+            if (couponCode && companyDetails?.companyCoupon && typeof companyDetails.companyCoupon === 'string') {
+                const couponData = String(companyDetails.companyCoupon).split(',').find(c => c.startsWith(couponCode + '&&&'));
+                if (couponData) {
+                    const [, discountStr, minOrderStr] = String(couponData).split('&&&');
+                    const discountPercent = parseFloat(discountStr || '0');
+                    const minCouponOrder = parseFloat(minOrderStr || '0');
+                    if (subtotal >= minCouponOrder) {
+                        discountAmount = (subtotal * discountPercent) / 100;
+                    }
+                }
+            }
+
             const totalCost = subtotal + shipping - discountAmount;
 
             const selectedAddress = addresses.find(a => a.customerAddressId === selectedAddressId);
@@ -696,13 +710,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 customerId: customer.customerId,
                 customerName: contactInfo.name,
                 customerPhone: contactInfo.mobile,
-                deliveryRoad: `${selectedAddress.customerDrNum}, ${selectedAddress.customerRoad}`,
+                deliveryRoad: [selectedAddress.customerDrNum, selectedAddress.customerRoad].filter(Boolean).join(', '),
                 deliveryPin: selectedAddress.customerPin || '', // Ensure api-types has this or fallback
                 deliveryCity: selectedAddress.customerCity,
                 deliveryState: selectedAddress.customerState,
                 orderStatus: "CREATED",
                 subTotal: subtotal,
-                allDiscount: discountAmount,
+                allDiscount: (couponCode && discountAmount > 0) ? `applied ${couponCode} changed ${subtotal} to ${subtotal - discountAmount}` : "",
                 finalTotalAmount: totalCost,
                 paymentPic: manualProof || null,
                 items: cart.map((item): SaveOrderItem => {
@@ -3032,7 +3046,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                         </span>
                                                                     </div>
                                                                     <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                                                                        {addr.customerDrNum}, {addr.customerRoad}, {addr.customerCity} - {addr.customerPin}
+                                                                        {[addr.customerDrNum, addr.customerRoad, addr.customerCity].filter(Boolean).join(', ')} - {addr.customerPin}
                                                                     </p>
                                                                     <p className="text-xs text-slate-400 font-medium">
                                                                         {contactInfo.mobile}
