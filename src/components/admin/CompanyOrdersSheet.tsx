@@ -58,7 +58,8 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
             } else {
                 data = await orderService.getCompanyOrdersByRange(companyDetails.companyId, fromDate, toDate);
             }
-            setOrders(data || []);
+            const sortedData = (data || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setOrders(sortedData);
         } catch (error) {
             console.error("Failed to fetch orders", error);
             toast({
