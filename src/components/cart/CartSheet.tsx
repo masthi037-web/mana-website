@@ -398,7 +398,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
     // Checkout / Address State
     // Views: 'cart' -> 'list' (Select Address) -> 'add' (New Address) -> 'payment' (Select Payment)
-    const [view, setView] = useState<'cart' | 'list' | 'add' | 'payment'>('cart');
+    const [view, setView] = useState<'cart' | 'list' | 'add' | 'payment' | 'success'>('cart');
+    const [successOrderData, setSuccessOrderData] = useState<any>(null);
     const [customer, setCustomer] = useState<CustomerDetails | null>(null);
     const [loadingAddresses, setLoadingAddresses] = useState(false);
     const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
@@ -677,6 +678,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     };
 
     const executeSaveOrder = async () => {
+        if (!customer) return;
         setIsInitializingPayment(true);
         try {
             const subtotal = getCartTotal();
@@ -807,19 +809,16 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 })
             };
 
-            await orderService.saveOrder(payload);
+            const response = await orderService.saveOrder(payload);
 
-            setCelebrated(true);
-            toast({
-                title: "Order Placed Successfully! 🎉",
-                description: "Your order has been placed. We will verify your payment shortly.",
-                className: "bg-green-50 border-green-200 text-green-800",
-                duration: 5000
-            });
+            // Set success data (use response if available, or just a flag)
+            setSuccessOrderData(response || { success: true });
 
+            // Clear cart and move to success view
             clearCart();
-            setCartOpen(false);
-            setView('cart');
+            setView('success');
+
+            // Reset other states
             setContactInfo({ name: '', email: '', mobile: '' });
             setSelectedAddressId(null);
             setManualProof(null);
@@ -905,6 +904,33 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             }
         }
     }, [subtotal, companyDetails?.companyCoupon, couponCode]);
+
+    // Confetti Effect for Order Success
+    useEffect(() => {
+        if (view === 'success' && isCartOpen) {
+            const duration = 3000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+            const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+            const interval: any = setInterval(function () {
+                const timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                const particleCount = 50 * (timeLeft / duration);
+
+                // since particles fall down, start a bit higher than random
+                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+            }, 250);
+
+            return () => clearInterval(interval);
+        }
+    }, [view, isCartOpen]);
 
     const handleCheckout = async () => {
         if (!isLoggedIn) {
@@ -1552,7 +1578,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 if (cartMoreThan !== serverMoreThan) {
                     const totalQty = productQuantities[item.id] || item.quantity;
-                    const wasUsing = isUsingMoreThan(item.multipleDiscountMoreThan, totalQty);
+                    const wasUsing = isUsingMoreThan(item.multipleDiscountMoreThan || "", totalQty);
 
                     if (wasUsing) {
                         blockingChanges = true;
@@ -1776,7 +1802,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             <div className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Time Remaining</span>
                                         </div>
-                                        <span className="text-xl font-mono font-black text-slate-900 tracking-tighter" style={{ color: theme }}>
+                                        <span className="text-xl font-mono font-black text-slate-900 tracking-tighter" style={{ color: `hsl(${theme.colors.primary})` }}>
                                             {formatTime(timeLeft)}
                                         </span>
                                     </div>
@@ -1794,10 +1820,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         </div>
                                         <div className="min-h-[100px]">
                                             <ImageUpload
-                                                value={manualProof ? [manualProof] : []}
-                                                onChange={(url) => setManualProof(url[0])}
-                                                onRemove={() => setManualProof(null)}
+                                                value={manualProof || undefined}
+                                                onChange={setManualProof}
                                                 maxFiles={1}
+                                                companyDomain={companyDetails?.companyDomain || ""}
                                             />
                                         </div>
                                     </div>
@@ -1810,7 +1836,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         executeSaveOrder();
                                     }}
                                     className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-lg shadow-indigo-200 h-12 text-base font-semibold tracking-wide"
-                                    style={{ backgroundColor: theme || '#6366f1' }}
+                                    style={{ backgroundColor: `hsl(${theme.colors.primary})` }}
                                 >
                                     Place Order & Pay
                                     <ArrowRight className="w-4 h-4 ml-2 opacity-80" />
@@ -2652,486 +2678,488 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             </>
                         )) : (
                         <>
-                            <ScrollArea className="flex-1 bg-secondary/10">
-                                <div className="p-6 space-y-8">
-                                    {/* Address List View */}
-                                    {view === 'list' && (
-                                        <>
-                                            {/* Contact Details */}
-                                            <div className="space-y-4 mb-6">
-                                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Contact Details</h3>
-                                                <div className="bg-background p-5 rounded-2xl border shadow-sm space-y-4">
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="cName">
-                                                            Full Name <span className="text-destructive">*</span>
-                                                        </Label>
-                                                        <Input
-                                                            id="cName"
-                                                            placeholder="John Doe"
-                                                            value={contactInfo.name}
-                                                            onChange={e => setContactInfo({ ...contactInfo, name: e.target.value })}
-                                                            className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="cPhone">Phone Number</Label>
-                                                        <Input
-                                                            id="cPhone"
-                                                            placeholder="9876543210"
-                                                            value={contactInfo.mobile}
-                                                            readOnly
-                                                            className="bg-secondary/10 border-transparent text-muted-foreground focus-visible:ring-0 cursor-not-allowed rounded-xl opacity-90 font-medium"
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="cEmail">
-                                                            Email Address <span className="text-destructive">*</span>
-                                                        </Label>
-                                                        <Input
-                                                            id="cEmail"
-                                                            placeholder="john@example.com"
-                                                            value={contactInfo.email}
-                                                            onChange={e => setContactInfo({ ...contactInfo, email: e.target.value })}
-                                                            className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
-                                                        />
-                                                        <div className="flex items-center gap-2 mt-2 px-1 opacity-80">
-                                                            <Info className="w-3 h-3 text-primary animate-pulse" />
-                                                            <p className="text-[10px] text-muted-foreground font-medium">
-                                                                Please enter correctly for order confirmation.
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Saved Addresses */}
-                                            <div className="space-y-4">
-                                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Saved Addresses</h3>
-
-                                                {loadingAddresses ? (
-                                                    <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
-                                                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                                        <p className="text-xs font-medium">Loading addresses...</p>
-                                                    </div>
-                                                ) : addresses.length === 0 ? (
-                                                    <div className="text-center py-10 px-4 bg-background rounded-3xl border border-dashed border-border/60">
-                                                        <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3">
-                                                            <MapPin className="w-6 h-6" />
-                                                        </div>
-                                                        <p className="font-semibold text-foreground">No addresses found</p>
-                                                        <Button onClick={() => setView('add')} variant="secondary" className="mt-4 rounded-full">
-                                                            Add First Address
-                                                        </Button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="grid gap-4">
-                                                        {[...addresses].sort((a, b) => a.customerAddressId === selectedAddressId ? -1 : b.customerAddressId === selectedAddressId ? 1 : 0).map((addr) => {
-                                                            const isSelected = selectedAddressId === addr.customerAddressId;
-                                                            return (
-                                                                <div
-                                                                    key={addr.customerAddressId}
-                                                                    onClick={() => setSelectedAddressId(addr.customerAddressId)}
-                                                                    className={cn(
-                                                                        "relative group cursor-pointer p-4 rounded-2xl border transition-all duration-300",
-                                                                        isSelected
-                                                                            ? "bg-primary/5 border-primary shadow-sm"
-                                                                            : "bg-background border-border hover:border-primary/30 hover:shadow-md"
-                                                                    )}
-                                                                >
-                                                                    <div className="flex items-start gap-4">
-                                                                        <div className={cn(
-                                                                            "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors",
-                                                                            isSelected ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground group-hover:bg-secondary/80"
-                                                                        )}>
-                                                                            <Home className="w-5 h-5" />
-                                                                        </div>
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <div className="flex items-center justify-between mb-1">
-                                                                                <span className={cn(
-                                                                                    "font-bold text-base truncate",
-                                                                                    isSelected ? "text-primary" : "text-foreground"
-                                                                                )}>
-                                                                                    {addr.addressName}
-                                                                                </span>
-                                                                                {isSelected && (
-                                                                                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0 text-center rounded-full flex items-center gap-1">
-                                                                                        <Check className="w-3 h-3" /> Selected
-                                                                                    </span>
-                                                                                )}
-                                                                            </div>
-                                                                            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                                                                                {addr.customerDrNum}, {addr.customerRoad}, {addr.customerCity} - {addr.customerPin}
-                                                                            </p>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                        <button
-                                                            onClick={() => setView('add')}
-                                                            className="flex items-center justify-center gap-2 p-4 rounded-2xl border border-dashed border-border/60 hover:border-primary/50 hover:bg-primary/5 transition-all group"
-                                                        >
-                                                            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                                                                <Plus className="w-4 h-4" />
-                                                            </div>
-                                                            <span className="font-semibold text-sm text-muted-foreground group-hover:text-primary">Add New Address</span>
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="pt-4 sticky bottom-0 bg-background/95 backdrop-blur pb-6 mt-auto border-t">
-                                                <Button
-                                                    className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] transition-all bg-gradient-to-r from-primary to-primary/90"
-                                                    disabled={!selectedAddressId}
-                                                    onClick={async () => {
-                                                        if (!contactInfo.name || !contactInfo.email) {
-                                                            toast({
-                                                                variant: "destructive",
-                                                                title: "Missing Details",
-                                                                description: "Please enter your Full Name and Email Address."
-                                                            });
-                                                            return;
-                                                        }
-
-                                                        // Update customer details if changed
-                                                        if (customer && (
-                                                            contactInfo.name !== customer.customerName ||
-                                                            contactInfo.email !== customer.customerEmailId ||
-                                                            contactInfo.mobile !== customer.customerMobileNumber
-                                                        )) {
-                                                            try {
-                                                                const updatedCustomer = await customerService.updateCustomer({
-                                                                    customerId: customer.customerId,
-                                                                    companyId: customer.companyId || companyDetails?.companyId || '',
-                                                                    customerName: contactInfo.name,
-                                                                    customerEmailId: contactInfo.email,
-                                                                    customerMobileNumber: contactInfo.mobile,
-                                                                    customerStatus: customer.customerStatus,
-                                                                    createdAt: customer.createdAt,
-                                                                    customerImage: customer.customerImage
-                                                                });
-
-                                                                // Update local state without fetching
-                                                                if (updatedCustomer) {
-                                                                    setCustomer(updatedCustomer);
-                                                                    // Notify other components with the NEW data
-                                                                    window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedCustomer }));
-                                                                    toast({ description: "Profile details updated." });
-                                                                }
-                                                            } catch (error) {
-                                                                console.error("Failed to update profile", error);
-                                                                // We continue anyway so they can pay? Or stop? 
-                                                                // Let's continue but warn? Or maybe just log. User wants update, so best to try.
-                                                            }
-                                                        }
-
-                                                        setView('payment');
-                                                    }}
-                                                >
-                                                    Proceed to Payment <ArrowRight className="w-5 h-5 ml-2 Group-hover:translate-x-1 transition-transform" />
-                                                </Button>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {/* Add Address View */}
-                                    {view === 'add' && (
-                                        <div className="animate-in slide-in-from-right-8 fade-in duration-300 space-y-6">
-                                            <div className="space-y-4 bg-background p-6 rounded-3xl border shadow-sm">
-                                                <div className="grid gap-2">
-                                                    <Label>Address Label</Label>
-                                                    <div className="flex gap-3">
-                                                        {[
-                                                            { id: 'Home', icon: Home, label: 'Home' },
-                                                            { id: 'Work', icon: Briefcase, label: 'Work' },
-                                                            { id: 'Other', icon: MapPin, label: 'Other' }
-                                                        ].map((type) => (
-                                                            <button
-                                                                key={type.id}
-                                                                onClick={() => handleLabelChange(type.id as any)}
-                                                                className={cn(
-                                                                    "flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-200 text-sm font-medium",
-                                                                    addressLabel === type.id
-                                                                        ? "bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-500/20"
-                                                                        : "bg-white text-slate-600 border-slate-200 hover:border-teal-200 hover:bg-teal-50"
-                                                                )}
-                                                            >
-                                                                <type.icon className={cn("w-4 h-4", addressLabel === type.id ? "text-white" : "text-slate-400")} />
-                                                                {type.label}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-
-                                                    {addressLabel === 'Other' && (
-                                                        <div className="animate-in fade-in slide-in-from-top-2 duration-300 mt-2 relative">
-                                                            <Label htmlFor="customName" className="sr-only">Custom Name</Label>
-                                                            <Input
-                                                                id="customName"
-                                                                placeholder="e.g. Grandma's House, My Office"
-                                                                className="h-12 bg-secondary/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
-                                                                value={newAddress.addressName === 'Other' ? '' : newAddress.addressName}
-                                                                onChange={(e) => setNewAddress({ ...newAddress, addressName: e.target.value })}
-                                                                autoFocus
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <div className="grid gap-4">
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="road">Street Address</Label>
-                                                        <div className="relative">
-                                                            <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                                                            <textarea
-                                                                id="road"
-                                                                placeholder="e.g. 123 Main St, Apt 4B"
-                                                                className="w-full min-h-[80px] pl-10 pt-3 rounded-xl border-transparent bg-secondary/20 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all focus:bg-background focus:border-input"
-                                                                value={newAddress.customerRoad}
-                                                                onChange={e => setNewAddress({ ...newAddress, customerRoad: e.target.value })}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-4">
+                            {view !== 'success' && (
+                                <ScrollArea className="flex-1 bg-secondary/10">
+                                    <div className="p-6 space-y-8">
+                                        {/* Address List View */}
+                                        {view === 'list' && (
+                                            <>
+                                                {/* Contact Details */}
+                                                <div className="space-y-4 mb-6">
+                                                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Contact Details</h3>
+                                                    <div className="bg-background p-5 rounded-2xl border shadow-sm space-y-4">
                                                         <div className="grid gap-2">
-                                                            <Label htmlFor="pincode">Pincode</Label>
+                                                            <Label htmlFor="cName">
+                                                                Full Name <span className="text-destructive">*</span>
+                                                            </Label>
                                                             <Input
-                                                                id="pincode"
-                                                                placeholder="560001"
-                                                                value={newAddress.customerPin}
-                                                                onChange={e => handlePincodeChange(e.target.value)}
+                                                                id="cName"
+                                                                placeholder="John Doe"
+                                                                value={contactInfo.name}
+                                                                onChange={e => setContactInfo({ ...contactInfo, name: e.target.value })}
                                                                 className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
                                                             />
                                                         </div>
                                                         <div className="grid gap-2">
-                                                            <Label htmlFor="city">City</Label>
+                                                            <Label htmlFor="cPhone">Phone Number</Label>
                                                             <Input
-                                                                id="city"
-                                                                placeholder="City"
-                                                                value={newAddress.customerCity}
+                                                                id="cPhone"
+                                                                placeholder="9876543210"
+                                                                value={contactInfo.mobile}
+                                                                readOnly
+                                                                className="bg-secondary/10 border-transparent text-muted-foreground focus-visible:ring-0 cursor-not-allowed rounded-xl opacity-90 font-medium"
+                                                            />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="cEmail">
+                                                                Email Address <span className="text-destructive">*</span>
+                                                            </Label>
+                                                            <Input
+                                                                id="cEmail"
+                                                                placeholder="john@example.com"
+                                                                value={contactInfo.email}
+                                                                onChange={e => setContactInfo({ ...contactInfo, email: e.target.value })}
+                                                                className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                            />
+                                                            <div className="flex items-center gap-2 mt-2 px-1 opacity-80">
+                                                                <Info className="w-3 h-3 text-primary animate-pulse" />
+                                                                <p className="text-[10px] text-muted-foreground font-medium">
+                                                                    Please enter correctly for order confirmation.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Saved Addresses */}
+                                                <div className="space-y-4">
+                                                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider pl-1">Saved Addresses</h3>
+
+                                                    {loadingAddresses ? (
+                                                        <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+                                                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                                            <p className="text-xs font-medium">Loading addresses...</p>
+                                                        </div>
+                                                    ) : addresses.length === 0 ? (
+                                                        <div className="text-center py-10 px-4 bg-background rounded-3xl border border-dashed border-border/60">
+                                                            <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3">
+                                                                <MapPin className="w-6 h-6" />
+                                                            </div>
+                                                            <p className="font-semibold text-foreground">No addresses found</p>
+                                                            <Button onClick={() => setView('add')} variant="secondary" className="mt-4 rounded-full">
+                                                                Add First Address
+                                                            </Button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="grid gap-4">
+                                                            {[...addresses].sort((a, b) => a.customerAddressId === selectedAddressId ? -1 : b.customerAddressId === selectedAddressId ? 1 : 0).map((addr) => {
+                                                                const isSelected = selectedAddressId === addr.customerAddressId;
+                                                                return (
+                                                                    <div
+                                                                        key={addr.customerAddressId}
+                                                                        onClick={() => setSelectedAddressId(addr.customerAddressId)}
+                                                                        className={cn(
+                                                                            "relative group cursor-pointer p-4 rounded-2xl border transition-all duration-300",
+                                                                            isSelected
+                                                                                ? "bg-primary/5 border-primary shadow-sm"
+                                                                                : "bg-background border-border hover:border-primary/30 hover:shadow-md"
+                                                                        )}
+                                                                    >
+                                                                        <div className="flex items-start gap-4">
+                                                                            <div className={cn(
+                                                                                "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors",
+                                                                                isSelected ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground group-hover:bg-secondary/80"
+                                                                            )}>
+                                                                                <Home className="w-5 h-5" />
+                                                                            </div>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="flex items-center justify-between mb-1">
+                                                                                    <span className={cn(
+                                                                                        "font-bold text-base truncate",
+                                                                                        isSelected ? "text-primary" : "text-foreground"
+                                                                                    )}>
+                                                                                        {addr.addressName}
+                                                                                    </span>
+                                                                                    {isSelected && (
+                                                                                        <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0 text-center rounded-full flex items-center gap-1">
+                                                                                            <Check className="w-3 h-3" /> Selected
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                                                                                    {addr.customerDrNum}, {addr.customerRoad}, {addr.customerCity} - {addr.customerPin}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                            <button
+                                                                onClick={() => setView('add')}
+                                                                className="flex items-center justify-center gap-2 p-4 rounded-2xl border border-dashed border-border/60 hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                                                            >
+                                                                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                                                    <Plus className="w-4 h-4" />
+                                                                </div>
+                                                                <span className="font-semibold text-sm text-muted-foreground group-hover:text-primary">Add New Address</span>
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="pt-4 sticky bottom-0 bg-background/95 backdrop-blur pb-6 mt-auto border-t">
+                                                    <Button
+                                                        className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] transition-all bg-gradient-to-r from-primary to-primary/90"
+                                                        disabled={!selectedAddressId}
+                                                        onClick={async () => {
+                                                            if (!contactInfo.name || !contactInfo.email) {
+                                                                toast({
+                                                                    variant: "destructive",
+                                                                    title: "Missing Details",
+                                                                    description: "Please enter your Full Name and Email Address."
+                                                                });
+                                                                return;
+                                                            }
+
+                                                            // Update customer details if changed
+                                                            if (customer && (
+                                                                contactInfo.name !== customer.customerName ||
+                                                                contactInfo.email !== customer.customerEmailId ||
+                                                                contactInfo.mobile !== customer.customerMobileNumber
+                                                            )) {
+                                                                try {
+                                                                    const updatedCustomer = await customerService.updateCustomer({
+                                                                        customerId: customer.customerId,
+                                                                        companyId: customer.companyId || companyDetails?.companyId || '',
+                                                                        customerName: contactInfo.name,
+                                                                        customerEmailId: contactInfo.email,
+                                                                        customerMobileNumber: contactInfo.mobile,
+                                                                        customerStatus: customer.customerStatus,
+                                                                        createdAt: customer.createdAt,
+                                                                        customerImage: customer.customerImage
+                                                                    });
+
+                                                                    // Update local state without fetching
+                                                                    if (updatedCustomer) {
+                                                                        setCustomer(updatedCustomer);
+                                                                        // Notify other components with the NEW data
+                                                                        window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedCustomer }));
+                                                                        toast({ description: "Profile details updated." });
+                                                                    }
+                                                                } catch (error) {
+                                                                    console.error("Failed to update profile", error);
+                                                                    // We continue anyway so they can pay? Or stop? 
+                                                                    // Let's continue but warn? Or maybe just log. User wants update, so best to try.
+                                                                }
+                                                            }
+
+                                                            setView('payment');
+                                                        }}
+                                                    >
+                                                        Proceed to Payment <ArrowRight className="w-5 h-5 ml-2 Group-hover:translate-x-1 transition-transform" />
+                                                    </Button>
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Add Address View */}
+                                        {view === 'add' && (
+                                            <div className="animate-in slide-in-from-right-8 fade-in duration-300 space-y-6">
+                                                <div className="space-y-4 bg-background p-6 rounded-3xl border shadow-sm">
+                                                    <div className="grid gap-2">
+                                                        <Label>Address Label</Label>
+                                                        <div className="flex gap-3">
+                                                            {[
+                                                                { id: 'Home', icon: Home, label: 'Home' },
+                                                                { id: 'Work', icon: Briefcase, label: 'Work' },
+                                                                { id: 'Other', icon: MapPin, label: 'Other' }
+                                                            ].map((type) => (
+                                                                <button
+                                                                    key={type.id}
+                                                                    onClick={() => handleLabelChange(type.id as any)}
+                                                                    className={cn(
+                                                                        "flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-200 text-sm font-medium",
+                                                                        addressLabel === type.id
+                                                                            ? "bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-500/20"
+                                                                            : "bg-white text-slate-600 border-slate-200 hover:border-teal-200 hover:bg-teal-50"
+                                                                    )}
+                                                                >
+                                                                    <type.icon className={cn("w-4 h-4", addressLabel === type.id ? "text-white" : "text-slate-400")} />
+                                                                    {type.label}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+
+                                                        {addressLabel === 'Other' && (
+                                                            <div className="animate-in fade-in slide-in-from-top-2 duration-300 mt-2 relative">
+                                                                <Label htmlFor="customName" className="sr-only">Custom Name</Label>
+                                                                <Input
+                                                                    id="customName"
+                                                                    placeholder="e.g. Grandma's House, My Office"
+                                                                    className="h-12 bg-secondary/30 border-transparent focus:border-primary focus:bg-background transition-all rounded-xl"
+                                                                    value={newAddress.addressName === 'Other' ? '' : newAddress.addressName}
+                                                                    onChange={(e) => setNewAddress({ ...newAddress, addressName: e.target.value })}
+                                                                    autoFocus
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="grid gap-4">
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="road">Street Address</Label>
+                                                            <div className="relative">
+                                                                <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                                                                <textarea
+                                                                    id="road"
+                                                                    placeholder="e.g. 123 Main St, Apt 4B"
+                                                                    className="w-full min-h-[80px] pl-10 pt-3 rounded-xl border-transparent bg-secondary/20 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all focus:bg-background focus:border-input"
+                                                                    value={newAddress.customerRoad}
+                                                                    onChange={e => setNewAddress({ ...newAddress, customerRoad: e.target.value })}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div className="grid gap-2">
+                                                                <Label htmlFor="pincode">Pincode</Label>
+                                                                <Input
+                                                                    id="pincode"
+                                                                    placeholder="560001"
+                                                                    value={newAddress.customerPin}
+                                                                    onChange={e => handlePincodeChange(e.target.value)}
+                                                                    className="bg-secondary/20 border-transparent focus:bg-background focus:border-input rounded-xl"
+                                                                />
+                                                            </div>
+                                                            <div className="grid gap-2">
+                                                                <Label htmlFor="city">City</Label>
+                                                                <Input
+                                                                    id="city"
+                                                                    placeholder="City"
+                                                                    value={newAddress.customerCity}
+                                                                    readOnly
+                                                                    className="bg-secondary/10 border-transparent text-muted-foreground cursor-not-allowed rounded-xl"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="state">State</Label>
+                                                            <Input
+                                                                id="state"
+                                                                placeholder="State"
+                                                                value={newAddress.customerState}
                                                                 readOnly
                                                                 className="bg-secondary/10 border-transparent text-muted-foreground cursor-not-allowed rounded-xl"
                                                             />
                                                         </div>
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="state">State</Label>
-                                                        <Input
-                                                            id="state"
-                                                            placeholder="State"
-                                                            value={newAddress.customerState}
-                                                            readOnly
-                                                            className="bg-secondary/10 border-transparent text-muted-foreground cursor-not-allowed rounded-xl"
-                                                        />
-                                                    </div>
 
+                                                    </div>
                                                 </div>
-                                            </div>
 
-                                            <div className="bg-blue-50 text-blue-800 p-4 rounded-2xl text-xs font-medium leading-relaxed border border-blue-100 flex gap-3">
-                                                <div className="bg-blue-100 p-1.5 rounded-full h-fit">
-                                                    <Info className="w-4 h-4" />
-                                                </div>
-                                                <p>Ensure your address details are accurate to avoid delivery delays. Pincode is crucial for serviceability checks.</p>
-                                            </div>
-
-                                            <Button
-                                                className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-primary/20"
-                                                onClick={handleSaveAddress}
-                                                disabled={savingAddress}
-                                            >
-                                                {savingAddress ? (
-                                                    <>
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
-                                                    </>
-                                                ) : (
-                                                    "Save Address"
-                                                )}
-                                            </Button>
-                                        </div>
-                                    )}
-
-                                    {/* View: Payment Method */}
-                                    {view === 'payment' && (
-                                        <div className="animate-in slide-in-from-right-8 fade-in duration-500 space-y-6">
-
-                                            {/* Premium Payment Selection Card */}
-                                            <div
-                                                onClick={() => setSelectedPaymentMethod('ONLINE')}
-                                                className={cn(
-                                                    "relative overflow-hidden cursor-pointer p-6 rounded-3xl border transition-all duration-500 group",
-                                                    selectedPaymentMethod === 'ONLINE'
-                                                        ? "border-transparent bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white shadow-2xl shadow-slate-900/20"
-                                                        : "bg-white border-slate-200 hover:border-slate-300"
-                                                )}
-                                            >
-                                                {/* Animated Background Effects */}
-                                                {selectedPaymentMethod === 'ONLINE' && (
-                                                    <div className="absolute inset-0 opacity-20">
-                                                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-[100px] -mr-32 -mt-32" />
-                                                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500 rounded-full blur-[100px] -ml-32 -mb-32" />
+                                                <div className="bg-blue-50 text-blue-800 p-4 rounded-2xl text-xs font-medium leading-relaxed border border-blue-100 flex gap-3">
+                                                    <div className="bg-blue-100 p-1.5 rounded-full h-fit">
+                                                        <Info className="w-4 h-4" />
                                                     </div>
-                                                )}
+                                                    <p>Ensure your address details are accurate to avoid delivery delays. Pincode is crucial for serviceability checks.</p>
+                                                </div>
 
-                                                <div className="relative z-10 flex items-start gap-5">
-                                                    <div className={cn(
-                                                        "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-500 shadow-lg",
+                                                <Button
+                                                    className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-primary/20"
+                                                    onClick={handleSaveAddress}
+                                                    disabled={savingAddress}
+                                                >
+                                                    {savingAddress ? (
+                                                        <>
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                                                        </>
+                                                    ) : (
+                                                        "Save Address"
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        )}
+
+                                        {/* View: Payment Method */}
+                                        {view === 'payment' && (
+                                            <div className="animate-in slide-in-from-right-8 fade-in duration-500 space-y-6">
+
+                                                {/* Premium Payment Selection Card */}
+                                                <div
+                                                    onClick={() => setSelectedPaymentMethod('ONLINE')}
+                                                    className={cn(
+                                                        "relative overflow-hidden cursor-pointer p-6 rounded-3xl border transition-all duration-500 group",
                                                         selectedPaymentMethod === 'ONLINE'
-                                                            ? "bg-white/10 backdrop-blur-md border border-white/10 text-white"
-                                                            : "bg-slate-100 text-slate-500"
-                                                    )}>
-                                                        <CreditCard className="w-7 h-7" />
-                                                    </div>
-
-                                                    <div className="flex-1 space-y-1">
-                                                        <div className="flex items-center justify-between">
-                                                            <span className={cn(
-                                                                "font-bold text-xl tracking-tight",
-                                                                selectedPaymentMethod === 'ONLINE' ? "text-white" : "text-slate-900"
-                                                            )}>
-                                                                Online Payment
-                                                            </span>
-                                                            {selectedPaymentMethod === 'ONLINE' && (
-                                                                <div className="h-6 w-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 scale-100 opacity-100 transition-all">
-                                                                    <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        <p className={cn(
-                                                            "text-sm leading-relaxed max-w-[90%]",
-                                                            selectedPaymentMethod === 'ONLINE' ? "text-slate-300" : "text-slate-500"
-                                                        )}>
-                                                            Secure instant payment via UPI, Cards, or Netbanking.
-                                                        </p>
-
-                                                        <div className="pt-3 flex items-center gap-3">
-                                                            <div className={cn(
-                                                                "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider",
-                                                                selectedPaymentMethod === 'ONLINE' ? "bg-white/10 text-white/90" : "bg-slate-100 text-slate-600"
-                                                            )}>
-                                                                <Lock className="w-3 h-3" /> 100% Secure
-                                                            </div>
-                                                            <span className={cn(
-                                                                "text-[10px] font-medium opacity-60",
-                                                                selectedPaymentMethod === 'ONLINE' ? "text-white" : "text-slate-500"
-                                                            )}>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Delivery Details Card */}
-                                            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                                                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
-
-                                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                                    <MapPin className="w-3 h-3" /> Delivery To
-                                                </h3>
-
-                                                <div className="flex items-start gap-4 sticky z-10">
-                                                    <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-600">
-                                                        <User className="w-5 h-5" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        {(() => {
-                                                            const addr = addresses.find(a => a.customerAddressId === selectedAddressId);
-                                                            return addr ? (
-                                                                <div className="space-y-1">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="font-bold text-slate-900">{contactInfo.name}</span>
-                                                                        <span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-600 uppercase tracking-wider">
-                                                                            {addr.addressName || 'Home'}
-                                                                        </span>
-                                                                    </div>
-                                                                    <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                                                                        {[addr.customerDrNum, addr.customerRoad, addr.customerCity].filter(Boolean).join(', ')} - {addr.customerPin}
-                                                                    </p>
-                                                                    <p className="text-xs text-slate-400 font-medium">
-                                                                        {contactInfo.mobile}
-                                                                    </p>
-                                                                </div>
-                                                            ) : <p className="text-sm text-destructive">No address selected</p>;
-                                                        })()}
-                                                    </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-8 text-xs font-bold text-primary hover:bg-primary/5 hover:text-primary rounded-full px-3"
-                                                        onClick={() => setView('list')}
-                                                    >
-                                                        Change
-                                                    </Button>
-                                                </div>
-                                            </div>
-
-                                            {/* Order Summary Card */}
-                                            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                                                <div className="p-5 border-b border-slate-50 flex items-center justify-between">
-                                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                                        <ShoppingCart className="w-3 h-3" /> Order Summary
-                                                    </h3>
-                                                    <span className="text-xs font-bold text-slate-900 bg-slate-50 px-2.5 py-1 rounded-full">{cartItemCount} Items</span>
-                                                </div>
-
-                                                <div className="max-h-[220px] overflow-y-auto p-2">
-                                                    {cart.map((item) => (
-                                                        <div key={item.cartItemId} className="flex gap-3 p-3 rounded-2xl hover:bg-slate-50 transition-colors group">
-                                                            {/* Minimal Image */}
-                                                            <div className="h-12 w-12 rounded-lg bg-slate-100 overflow-hidden shrink-0 relative">
-                                                                {item.images && item.images.length > 0 ? (
-                                                                    <img src={item.images[0]} alt={item.name} className="h-full w-full object-cover" />
-                                                                ) : item.imageUrl ? (
-                                                                    <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
-                                                                ) : null}
-                                                            </div>
-
-                                                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                                <div className="flex justify-between items-start">
-                                                                    <h4 className="font-bold text-sm text-slate-700 line-clamp-1">{item.name}</h4>
-                                                                    <span className="font-bold text-sm text-slate-900">₹{((item.price + (item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
-                                                                </div>
-                                                                <p className="text-xs text-slate-400 mt-0.5">Qty: {item.quantity} {
-                                                                    Object.values(item.selectedVariants || {}).length > 0 && `• ${Object.values(item.selectedVariants || {}).join(', ')}`
-                                                                }
-                                                                    {item.selectedSizeColours?.[0]?.name && ` ${item.selectedSizeColours[0].name.toUpperCase()}`}
-                                                                    {item.selectedColour?.name && ` ${item.selectedColour.name.toUpperCase()}`}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-
-                                                {/* Bill Breakdown */}
-                                                <div className="bg-slate-50/50 p-5 space-y-3">
-                                                    <div className="flex justify-between text-sm text-slate-500">
-                                                        <span>Item Total</span>
-                                                        <span className="font-medium text-slate-900">₹{subtotal.toFixed(2)}</span>
-                                                    </div>
-                                                    {discountAmount > 0 && (
-                                                        <div className="flex justify-between text-sm text-emerald-600 font-bold">
-                                                            <span>Discount</span>
-                                                            <span>-₹{discountAmount.toFixed(2)}</span>
+                                                            ? "border-transparent bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white shadow-2xl shadow-slate-900/20"
+                                                            : "bg-white border-slate-200 hover:border-slate-300"
+                                                    )}
+                                                >
+                                                    {/* Animated Background Effects */}
+                                                    {selectedPaymentMethod === 'ONLINE' && (
+                                                        <div className="absolute inset-0 opacity-20">
+                                                            <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-[100px] -mr-32 -mt-32" />
+                                                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500 rounded-full blur-[100px] -ml-32 -mb-32" />
                                                         </div>
                                                     )}
-                                                    <div className="flex justify-between text-sm text-slate-500">
-                                                        <span>Delivery</span>
-                                                        <span className={isFreeDelivery ? "text-emerald-600 font-bold" : "text-slate-900"}>
-                                                            {isFreeDelivery ? "FREE" : "₹" + shipping.toFixed(2)}
-                                                        </span>
+
+                                                    <div className="relative z-10 flex items-start gap-5">
+                                                        <div className={cn(
+                                                            "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-500 shadow-lg",
+                                                            selectedPaymentMethod === 'ONLINE'
+                                                                ? "bg-white/10 backdrop-blur-md border border-white/10 text-white"
+                                                                : "bg-slate-100 text-slate-500"
+                                                        )}>
+                                                            <CreditCard className="w-7 h-7" />
+                                                        </div>
+
+                                                        <div className="flex-1 space-y-1">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className={cn(
+                                                                    "font-bold text-xl tracking-tight",
+                                                                    selectedPaymentMethod === 'ONLINE' ? "text-white" : "text-slate-900"
+                                                                )}>
+                                                                    Online Payment
+                                                                </span>
+                                                                {selectedPaymentMethod === 'ONLINE' && (
+                                                                    <div className="h-6 w-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 scale-100 opacity-100 transition-all">
+                                                                        <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <p className={cn(
+                                                                "text-sm leading-relaxed max-w-[90%]",
+                                                                selectedPaymentMethod === 'ONLINE' ? "text-slate-300" : "text-slate-500"
+                                                            )}>
+                                                                Secure instant payment via UPI, Cards, or Netbanking.
+                                                            </p>
+
+                                                            <div className="pt-3 flex items-center gap-3">
+                                                                <div className={cn(
+                                                                    "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider",
+                                                                    selectedPaymentMethod === 'ONLINE' ? "bg-white/10 text-white/90" : "bg-slate-100 text-slate-600"
+                                                                )}>
+                                                                    <Lock className="w-3 h-3" /> 100% Secure
+                                                                </div>
+                                                                <span className={cn(
+                                                                    "text-[10px] font-medium opacity-60",
+                                                                    selectedPaymentMethod === 'ONLINE' ? "text-white" : "text-slate-500"
+                                                                )}>
+                                                                </span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div className="h-px bg-slate-200/60 my-2" />
-                                                    <div className="flex justify-between items-end">
-                                                        <span className="font-bold text-base text-slate-900">To Pay</span>
-                                                        <span className="font-black text-xl text-primary font-headline">₹{finalTotal.toFixed(2)}</span>
+                                                </div>
+
+                                                {/* Delivery Details Card */}
+                                                <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                                                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+
+                                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                                        <MapPin className="w-3 h-3" /> Delivery To
+                                                    </h3>
+
+                                                    <div className="flex items-start gap-4 sticky z-10">
+                                                        <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-600">
+                                                            <User className="w-5 h-5" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            {(() => {
+                                                                const addr = addresses.find(a => a.customerAddressId === selectedAddressId);
+                                                                return addr ? (
+                                                                    <div className="space-y-1">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="font-bold text-slate-900">{contactInfo.name}</span>
+                                                                            <span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-600 uppercase tracking-wider">
+                                                                                {addr.addressName || 'Home'}
+                                                                            </span>
+                                                                        </div>
+                                                                        <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                                                                            {[addr.customerDrNum, addr.customerRoad, addr.customerCity].filter(Boolean).join(', ')} - {addr.customerPin}
+                                                                        </p>
+                                                                        <p className="text-xs text-slate-400 font-medium">
+                                                                            {contactInfo.mobile}
+                                                                        </p>
+                                                                    </div>
+                                                                ) : <p className="text-sm text-destructive">No address selected</p>;
+                                                            })()}
+                                                        </div>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 text-xs font-bold text-primary hover:bg-primary/5 hover:text-primary rounded-full px-3"
+                                                            onClick={() => setView('list')}
+                                                        >
+                                                            Change
+                                                        </Button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Order Summary Card */}
+                                                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                                                    <div className="p-5 border-b border-slate-50 flex items-center justify-between">
+                                                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                            <ShoppingCart className="w-3 h-3" /> Order Summary
+                                                        </h3>
+                                                        <span className="text-xs font-bold text-slate-900 bg-slate-50 px-2.5 py-1 rounded-full">{cartItemCount} Items</span>
+                                                    </div>
+
+                                                    <div className="max-h-[220px] overflow-y-auto p-2">
+                                                        {cart.map((item) => (
+                                                            <div key={item.cartItemId} className="flex gap-3 p-3 rounded-2xl hover:bg-slate-50 transition-colors group">
+                                                                {/* Minimal Image */}
+                                                                <div className="h-12 w-12 rounded-lg bg-slate-100 overflow-hidden shrink-0 relative">
+                                                                    {item.images && item.images.length > 0 ? (
+                                                                        <img src={item.images[0]} alt={item.name} className="h-full w-full object-cover" />
+                                                                    ) : item.imageUrl ? (
+                                                                        <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                                                                    ) : null}
+                                                                </div>
+
+                                                                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                                                    <div className="flex justify-between items-start">
+                                                                        <h4 className="font-bold text-sm text-slate-700 line-clamp-1">{item.name}</h4>
+                                                                        <span className="font-bold text-sm text-slate-900">₹{((item.price + (item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
+                                                                    </div>
+                                                                    <p className="text-xs text-slate-400 mt-0.5">Qty: {item.quantity} {
+                                                                        Object.values(item.selectedVariants || {}).length > 0 && `• ${Object.values(item.selectedVariants || {}).join(', ')}`
+                                                                    }
+                                                                        {item.selectedSizeColours?.[0]?.name && ` ${item.selectedSizeColours[0].name.toUpperCase()}`}
+                                                                        {item.selectedColour?.name && ` ${item.selectedColour.name.toUpperCase()}`}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Bill Breakdown */}
+                                                    <div className="bg-slate-50/50 p-5 space-y-3">
+                                                        <div className="flex justify-between text-sm text-slate-500">
+                                                            <span>Item Total</span>
+                                                            <span className="font-medium text-slate-900">₹{subtotal.toFixed(2)}</span>
+                                                        </div>
+                                                        {discountAmount > 0 && (
+                                                            <div className="flex justify-between text-sm text-emerald-600 font-bold">
+                                                                <span>Discount</span>
+                                                                <span>-₹{discountAmount.toFixed(2)}</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex justify-between text-sm text-slate-500">
+                                                            <span>Delivery</span>
+                                                            <span className={isFreeDelivery ? "text-emerald-600 font-bold" : "text-slate-900"}>
+                                                                {isFreeDelivery ? "FREE" : "₹" + shipping.toFixed(2)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="h-px bg-slate-200/60 my-2" />
+                                                        <div className="flex justify-between items-end">
+                                                            <span className="font-bold text-base text-slate-900">To Pay</span>
+                                                            <span className="font-black text-xl text-primary font-headline">₹{finalTotal.toFixed(2)}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </ScrollArea>
+                                        )}
+                                    </div>
+                                </ScrollArea>
+                            )}
 
 
                             {/* Footer for Payment View */}
@@ -3162,6 +3190,44 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         <CreditCard className="w-3 h-3" />
                                         <span className="text-[10px] font-medium">Safe & Secure Payment</span>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Success View */}
+                            {view === 'success' && (
+                                <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-in fade-in zoom-in duration-500">
+                                    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-green-100/50 animate-bounce">
+                                        <Check className="w-12 h-12 text-green-600 stroke-[3]" />
+                                    </div>
+
+                                    <h2 className="text-3xl font-black text-slate-900 mb-2 font-headline tracking-tight">Order Placed!</h2>
+                                    <p className="text-slate-500 mb-8 max-w-[280px] leading-relaxed">
+                                        Thank you for your purchase. Your order has been received and is being processed.
+                                    </p>
+
+                                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 w-full max-w-sm mb-8 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50/50 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+                                        <div className="flex justify-between items-center mb-4">
+                                            <span className="text-sm text-slate-500 font-medium">Status</span>
+                                            <span className="text-xs font-bold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full uppercase tracking-wider">Processing</span>
+                                        </div>
+                                        <div className="h-px bg-slate-200/60 my-2" />
+                                        <p className="text-xs text-slate-400 mt-2">
+                                            We'll update you on WhatsApp/SMS once your order is confirmed.
+                                        </p>
+                                    </div>
+
+                                    <Button
+                                        size="lg"
+                                        className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/30"
+                                        onClick={() => {
+                                            setCartOpen(false);
+                                            // Reset view after closing so next open shows cart
+                                            setTimeout(() => setView('cart'), 300);
+                                        }}
+                                    >
+                                        Continue Shopping
+                                    </Button>
                                 </div>
                             )}
                         </>
