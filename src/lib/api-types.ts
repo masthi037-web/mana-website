@@ -516,8 +516,8 @@ export interface UpdateColourResponse {
 export interface SaveOrderItem {
     productId: number;
     productName: string;
-    productImage: string;
-    productPriceAfterDiscount: number;
+    productImage?: string | null;
+    productPriceAfterDiscount?: number | null;
     quantity: number;
     totalCost: number;
     // Optional Variant Fields

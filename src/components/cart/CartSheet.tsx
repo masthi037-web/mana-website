@@ -751,12 +751,19 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         baseItem.productSizeColourImage = sc.productPics;
                         baseItem.productSizeColourExtraPrice = sc.price;
 
+                        baseItem.productSizeColourExtraPrice = sc.price;
+
                         // Size Info (Context for Colour)
                         baseItem.productSizeId = sizeId;
                         baseItem.productSizeName = sizeName;
                         baseItem.productSizePriceAfterDiscount = sizePriceAfterDiscount;
 
-                        if (sc.productPics) baseItem.productImage = sc.productPics;
+                        // For Complex Variants (Size + Colour), these base fields should be null as per requirement
+                        // The image is handled by productSizeColourImage
+                        baseItem.productImage = undefined;
+                        baseItem.productPriceAfterDiscount = undefined;
+
+                        if (sc.productPics) baseItem.productSizeColourImage = sc.productPics;
 
                         // Total Cost = (BaseSizePrice + ExtraPrice) * Qty
                         baseItem.totalCost = (sizePriceAfterDiscount + sc.price) * item.quantity;
@@ -3073,7 +3080,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                 </div>
                                                                 <p className="text-xs text-slate-400 mt-0.5">Qty: {item.quantity} {
                                                                     Object.values(item.selectedVariants || {}).length > 0 && `• ${Object.values(item.selectedVariants || {}).join(', ')}`
-                                                                }</p>
+                                                                }
+                                                                    {item.selectedSizeColours?.[0]?.name && ` ${item.selectedSizeColours[0].name.toUpperCase()}`}
+                                                                    {item.selectedColour?.name && ` ${item.selectedColour.name.toUpperCase()}`}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                     ))}
