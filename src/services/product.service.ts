@@ -10,6 +10,7 @@ const PLACEHOLDER_BASE = 'https://picsum.photos/seed';
 import { Product } from '@/lib/api-types';
 
 export async function fetchCategories(companyId: string, deliveryTime?: string): Promise<AppCategory[]> {
+    if (!companyId) return [];
     try {
         const data = await apiClient<CompanyInventory>('/company/public/category/catalogue/product/get', {
             params: { companyId },

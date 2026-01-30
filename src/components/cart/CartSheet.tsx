@@ -737,10 +737,16 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                     // --- Variant Specifics ---
 
-                    // A. Complex (Size + Colour)
-                    if (item.selectedSizeColours && item.selectedSizeColours.length > 0) {
-                        const sc = item.selectedSizeColours[0];
-                        baseItem.productSizeColourId = parseInt(sc.id);
+                    // 1. Prepare potential IDs
+                    const productSizeColourId = (item.selectedSizeColours && item.selectedSizeColours.length > 0) ? parseInt(item.selectedSizeColours[0].id) : null;
+                    const productColourId = item.selectedColour ? parseInt(item.selectedColour.id) : null;
+
+                    // 2. Logic Chain
+
+                    // A. Complex (Size + Colour) [productSizeColourId exists]
+                    if (productSizeColourId) {
+                        const sc = item.selectedSizeColours![0];
+                        baseItem.productSizeColourId = productSizeColourId;
                         baseItem.productSizeColourName = sc.name;
                         baseItem.productSizeColourImage = sc.productPics;
                         baseItem.productSizeColourExtraPrice = sc.price;
@@ -755,23 +761,23 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         // Total Cost = (BaseSizePrice + ExtraPrice) * Qty
                         baseItem.totalCost = (sizePriceAfterDiscount + sc.price) * item.quantity;
                     }
-                    // B. Colour Only
-                    else if (item.selectedColour) {
-                        baseItem.productColourId = parseInt(item.selectedColour.id);
-                        baseItem.productColour = item.selectedColour.name;
-                        baseItem.productColourImage = item.selectedColour.image;
-
-                        if (item.selectedColour.image) baseItem.productImage = item.selectedColour.image;
-                        baseItem.totalCost = (item.priceAfterDiscount || item.price) * item.quantity;
-                    }
-                    // C. Size Only
+                    // B. Size Variant [!productSizeColourId && sizeId exists]
                     else if (sizeId) {
                         baseItem.productSizeId = sizeId;
                         baseItem.productSizeName = sizeName;
                         baseItem.productSizePriceAfterDiscount = sizePriceAfterDiscount;
                         baseItem.totalCost = sizePriceAfterDiscount * item.quantity;
                     }
-                    // D. Standard
+                    // C. Colour Variant [!productSizeColourId && !sizeId && productColourId exists]
+                    else if (productColourId) {
+                        baseItem.productColourId = productColourId;
+                        baseItem.productColour = item.selectedColour!.name;
+                        baseItem.productColourImage = item.selectedColour!.image;
+
+                        if (item.selectedColour!.image) baseItem.productImage = item.selectedColour!.image;
+                        baseItem.totalCost = (item.priceAfterDiscount || item.price) * item.quantity;
+                    }
+                    // D. Simple [Everything else]
                     else {
                         baseItem.totalCost = (item.priceAfterDiscount || item.price) * item.quantity;
                     }

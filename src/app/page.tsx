@@ -26,7 +26,7 @@ export default async function Home() {
   }
 
   // Use companyId if available, otherwise empty array (or handle error)
-  const categories = company ? await fetchCategories(company.companyId, company.deliveryBetween) : [];
+  const categories = (company && company.companyId) ? await fetchCategories(company.companyId, company.deliveryBetween) : [];
 
   return (
     <div className="bg-background min-h-screen">
