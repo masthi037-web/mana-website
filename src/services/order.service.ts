@@ -34,7 +34,7 @@ export const orderService = {
     getCustomerOrders: async (customerId: string) => {
         return apiClient<SaveOrderResponse[]>('/order/customer/get', {
             params: { customerId },
-            next: { revalidate: 10800 } // Cache for 3 hours (3 * 60 * 60)
+            next: { revalidate: 10800, tags: ['orders'] } // 3 hours
         });
     }
 };
