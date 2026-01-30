@@ -814,6 +814,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             // Set success data (use response if available, or just a flag)
             setSuccessOrderData(response || { success: true });
 
+            // Prime the cache for customer orders
+            if (customer?.customerId) {
+                orderService.getCustomerOrders(customer.customerId.toString()).catch(err => console.error("Failed to cache orders", err));
+            }
+
             // Clear cart and move to success view
             clearCart();
             setView('success');
@@ -3201,19 +3206,26 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     </div>
 
                                     <h2 className="text-3xl font-black text-slate-900 mb-2 font-headline tracking-tight">Order Placed!</h2>
+                                    {successOrderData?.orderNumber && (
+                                        <div className="mb-4 inline-block bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
+                                            <p className="text-xs font-mono text-slate-500 font-medium tracking-wider">
+                                                ORDER #{successOrderData.orderNumber}
+                                            </p>
+                                        </div>
+                                    )}
                                     <p className="text-slate-500 mb-8 max-w-[280px] leading-relaxed">
-                                        Thank you for your purchase. Your order has been received and is being processed.
+                                        Thank you for your purchase. Your order has been received and is confirmed.
                                     </p>
 
                                     <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 w-full max-w-sm mb-8 relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50/50 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
                                         <div className="flex justify-between items-center mb-4">
                                             <span className="text-sm text-slate-500 font-medium">Status</span>
-                                            <span className="text-xs font-bold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full uppercase tracking-wider">Processing</span>
+                                            <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full uppercase tracking-wider">CONFIRMED</span>
                                         </div>
                                         <div className="h-px bg-slate-200/60 my-2" />
                                         <p className="text-xs text-slate-400 mt-2">
-                                            We'll update you on WhatsApp/SMS once your order is confirmed.
+                                            We'll send you delivery updates via WhatsApp/SMS.
                                         </p>
                                     </div>
 

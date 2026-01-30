@@ -1,5 +1,5 @@
 import { apiClient } from './api-client';
-import { PaymentInitializationRequest, PaymentInitializationResponse } from '@/lib/api-types';
+import { PaymentInitializationRequest, PaymentInitializationResponse, SaveOrderResponse } from '@/lib/api-types';
 
 export const orderService = {
     initializePayment: async (data: PaymentInitializationRequest, razorpayKeyId: string, razorpayKeySecret: string) => {
@@ -24,10 +24,17 @@ export const orderService = {
     },
 
     saveOrder: async (data: any) => {
-        return apiClient('/order/create', {
+        return apiClient<SaveOrderResponse>('/order/create', {
             method: 'POST',
             body: JSON.stringify(data),
             next: { revalidate: 0 }
+        });
+    },
+
+    getCustomerOrders: async (customerId: string) => {
+        return apiClient('/order/customer/get', {
+            params: { customerId },
+            next: { revalidate: 10800 } // Cache for 3 hours (3 * 60 * 60)
         });
     }
 };

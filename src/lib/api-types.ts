@@ -554,3 +554,46 @@ export interface SaveOrderRequest {
     updatedAt?: string; // Optional
     items: SaveOrderItem[];
 }
+
+export interface SaveOrderResponse {
+    orderId: number;
+    orderNumber: string;
+    companyId: string;
+    companyDomain: string;
+    customerId: number;
+    customerName: string;
+    customerPhone: string;
+    deliveryRoad: string;
+    deliveryPin: string;
+    deliveryCity: string;
+    deliveryState: string;
+    orderStatus: string;
+    subTotal: number;
+    allDiscount: string;
+    finalTotalAmount: number;
+    paymentPic: string | null;
+    createdAt: string;
+    updatedAt: string;
+    items: OrderResponseItem[];
+}
+
+export interface OrderResponseItem {
+    orderItemId: number;
+    productId: number;
+    productName: string;
+    productImage?: string | null;
+    productPriceAfterDiscount?: number | null;
+    productColourId?: number | null;
+    productColour?: string | null;
+    productColourImage?: string | null;
+    productSizeId?: number | null;
+    productSizeName?: string | null;
+    productSizePriceAfterDiscount?: number | null;
+    productSizeColourId?: number | null;
+    productSizeColourName?: string | null;
+    productSizeColourImage?: string | null;
+    productSizeColourExtraPrice?: number | null;
+    quantity: number;
+    eachCost?: number | null;
+    totalCost: number;
+}
