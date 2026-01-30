@@ -9,6 +9,13 @@ import {
     SheetTitle,
     SheetTrigger
 } from '@/components/ui/sheet';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -38,6 +45,7 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
     const [orders, setOrders] = useState<SaveOrderResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<SaveOrderResponse | null>(null);
+    const [statusFilter, setStatusFilter] = useState<string>('ALL');
     const { companyDetails } = useCart();
     const { toast } = useToast();
 
@@ -71,6 +79,11 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
             setLoading(false);
         }
     };
+
+    // Filter Orders
+    const filteredOrders = orders.filter(order =>
+        statusFilter === 'ALL' || order.orderStatus === statusFilter
+    );
 
     // Calculate Stats
     const totalRevenue = orders.reduce((sum, order) => sum + order.finalTotalAmount, 0);
@@ -177,7 +190,26 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                                         />
                                     </div>
                                 </div>
+
                             )}
+
+                            {/* Status Filter */}
+                            <div className="relative">
+                                <span className="absolute left-3 top-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wider z-10">Filter Status</span>
+                                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                    <SelectTrigger className="pt-5 h-12 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all">
+                                        <SelectValue placeholder="All Status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ALL">All Orders</SelectItem>
+                                        {['CREATED', 'PAYMENT_PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'].map((status) => (
+                                            <SelectItem key={status} value={status}>
+                                                {status}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
                             {/* Dashboard Cards (Premium Look) */}
                             <div className="grid grid-cols-2 gap-3">
@@ -236,11 +268,11 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                                 }
                             }}
                         />
-                    ) : orders.length > 0 ? (
+                    ) : filteredOrders.length > 0 ? (
                         // List View
                         <ScrollArea className="h-full px-6 py-4">
                             <div className="space-y-3 pb-20">
-                                {orders.map((order, index) => (
+                                {filteredOrders.map((order, index) => (
                                     <div
                                         key={order.orderId}
                                         onClick={() => setSelectedOrder(order)}
@@ -296,13 +328,16 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                             </div>
                             <h3 className="text-lg font-bold text-foreground mb-1">No Orders Found</h3>
                             <p className="text-sm text-muted-foreground max-w-[200px]">
-                                No orders found between {format(new Date(fromDate), "MMM d")} and {format(new Date(toDate), "MMM d")}.
+                                {statusFilter !== 'ALL'
+                                    ? `No ${statusFilter.toLowerCase()} orders found.`
+                                    : `No orders found between ${format(new Date(fromDate), "MMM d")} and ${format(new Date(toDate), "MMM d")}.`
+                                }
                             </p>
                         </div>
                     )}
                 </div>
 
             </SheetContent>
-        </Sheet>
+        </Sheet >
     );
 };

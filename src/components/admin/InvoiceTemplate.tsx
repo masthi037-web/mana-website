@@ -38,8 +38,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
 
     return (
         <div ref={ref} className="bg-white w-[210mm] min-h-[297mm] mx-auto text-slate-800 flex flex-col font-sans" id="invoice-template">
-            {/* Top Decorative Bar */}
-            <div className="h-2 w-full bg-gradient-to-r from-primary to-primary/60"></div>
+            {/* Top Decorative Bar Removed for Speed */}
 
             {/* Header Section */}
             <div className="p-12 pb-8 flex justify-between items-start">
@@ -215,18 +214,15 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                 </div>
             </div>
 
-            {/* Bottom Contact */}
-            <div className="mt-auto bg-slate-900 text-white p-12 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -mr-32 -mt-32"></div>
-                <div className="relative z-10 flex justify-between items-end">
-                    <div>
-                        <p className="font-bold text-lg mb-2">Thank you!</p>
-                        <p className="text-slate-400 text-sm max-w-sm">We appreciate your business. Please check your order details carefully and contact us if you need any assistance.</p>
-                    </div>
-                    <div className="text-right">
-                        <p className="font-bold text-lg">{companyDetails.companyName}</p>
-                        <p className="text-primary text-sm font-medium">{companyDetails.companyDomain}</p>
-                    </div>
+            <div className="mt-auto pt-8 pb-12 px-12 text-center border-t border-slate-100">
+                <h3 className="text-xl font-bold text-slate-900 mb-2 font-serif tracking-tight">Thank you for your business</h3>
+                <p className="text-slate-500 text-sm max-w-md mx-auto mb-6 leading-relaxed">
+                    We appreciate your trust in {companyDetails.companyName}. Please check your order details carefully.
+                </p>
+                <div className="inline-flex items-center gap-6 text-sm font-medium text-slate-600 justify-center">
+                    <span>{companyDetails.companyDomain}</span>
+                    <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                    <span>{companyDetails.companyEmail}</span>
                 </div>
             </div>
         </div>
