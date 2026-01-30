@@ -124,7 +124,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
 
   const [selectedPricingId, setSelectedPricingId] = useState<string | null>(null);
-  const [selectedSizeColourIds, setSelectedSizeColourIds] = useState<string[]>([]);
+  const [selectedSizeColourId, setSelectedSizeColourId] = useState<string | null>(null);
   const [selectedColourId, setSelectedColourId] = useState<string>("");
   // We keep 'selectedVariants' for backward compatibility if backend returns 'variants' array separately,
   // but for pricing options, we primarily use selectedPricingId.
@@ -313,7 +313,7 @@ export default function ProductDetailPage() {
   // Calculate total price
   const basePrice = currentPricingOption ? currentPricingOption.price : product.price;
   const sizeColoursPrice = availableSizeColours
-    .filter(sc => selectedSizeColourIds.includes(sc.id))
+    .filter(sc => sc.id === selectedSizeColourId)
     .reduce((sum, sc) => sum + sc.price, 0);
 
   // Calculate Price Logic (Mirror ProductCard)
@@ -360,7 +360,7 @@ export default function ProductDetailPage() {
       variantInfo['Quantity'] = currentPricingOption.quantity;
     }
 
-    const sizeColourObjects = availableSizeColours.filter(sc => selectedSizeColourIds.includes(sc.id));
+    const sizeColourObjects = availableSizeColours.filter(sc => sc.id === selectedSizeColourId);
 
     // Resolve selected colour object
     const selectedColour = product.colors?.find(c => c.id === selectedColourId);
@@ -394,13 +394,18 @@ export default function ProductDetailPage() {
         <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden bg-secondary/10 border border-border/50 shadow-sm md:aspect-auto md:h-[550px]">
           <Image
             src={(() => {
-              // 1. If colours exist, prioritize selected colour image.
+              // 1. Prioritize selected Size-Colour image
+              if (selectedSizeColourId) {
+                const sc = availableSizeColours.find(sc => sc.id === selectedSizeColourId);
+                if (sc && sc.productPics) return sc.productPics;
+              }
+              // 2. If colours exist, prioritize selected colour image.
               // We avoid falling back to product.productImage here because it might mismatch the selected variant.
               if (product.colors && product.colors.length > 0) {
                 const selected = product.colors.find(c => c.id === selectedColourId);
                 return selected?.image || product.imageUrl || '';
               }
-              // 2. If NO colours, use productImage (new field) or imageUrl (legacy).
+              // 3. If NO colours, use productImage (new field) or imageUrl (legacy).
               return product.productImage || product.imageUrl || '';
             })()}
             alt={product.name}
@@ -503,7 +508,7 @@ export default function ProductDetailPage() {
                         key={option.id}
                         onClick={() => {
                           setSelectedPricingId(option.id);
-                          setSelectedSizeColourIds([]);
+                          setSelectedSizeColourId(null);
                         }}
                         className={cn(
                           "relative flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 transition-all duration-200 h-24",
@@ -563,42 +568,42 @@ export default function ProductDetailPage() {
             {availableSizeColours.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <label className="text-lg font-bold text-foreground">Select Colour</label>
+                  <label className="text-lg font-bold text-foreground">Select Style</label>
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider bg-secondary/50 px-2 py-1 rounded">REQUIRED</span>
                 </div>
-                <div className="space-y-3">
+                <div className="grid grid-cols-4 gap-3">
                   {availableSizeColours.map(sc => {
-                    const isSelected = selectedSizeColourIds.includes(sc.id);
+                    const isSelected = selectedSizeColourId === sc.id;
                     return (
                       <button
                         key={sc.id}
-                        onClick={() => {
-                          // Toggle logic
-                          if (isSelected) {
-                            setSelectedSizeColourIds(prev => prev.filter(id => id !== sc.id));
-                          } else {
-                            setSelectedSizeColourIds(prev => [...prev, sc.id]);
-                          }
-                        }}
+                        onClick={() => setSelectedSizeColourId(sc.id)}
                         className={cn(
-                          "w-full flex items-center justify-between p-4 rounded-xl border-2 text-left transition-all",
+                          "relative flex flex-col items-center p-2 rounded-xl border-2 transition-all duration-300 ease-out h-[110px] sm:h-[120px]",
                           isSelected
-                            ? "border-primary bg-primary/5"
-                            : "border-border bg-background hover:border-primary/30"
+                            ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
+                            : "border-transparent bg-secondary/30 hover:border-primary/30 hover:bg-secondary/50"
                         )}
                       >
-                        <div className="flex items-center gap-3">
-                          {/* Custom Checkbox */}
-                          <div className={cn(
-                            "w-6 h-6 rounded border-2 flex items-center justify-center transition-colors",
-                            isSelected ? "bg-primary border-primary" : "border-muted-foreground"
-                          )}>
-                            {isSelected && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>}
+                        {isSelected && (
+                          <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1 shadow-sm z-10">
+                            <Check className="w-3 h-3" strokeWidth={3} />
                           </div>
-                          <span className="text-base font-semibold text-foreground">{sc.name}</span>
+                        )}
+                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 mb-2 rounded-full overflow-hidden border border-border/50 bg-white">
+                          {sc.productPics ? (
+                            <img src={sc.productPics} alt={sc.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-muted-foreground/50">
+                              {sc.name.charAt(0)}
+                            </div>
+                          )}
                         </div>
-                        <span className={cn("text-base font-bold", isSelected ? "text-primary" : "text-primary")}>
-                          {sc.price > 0 && `+₹${sc.price}`}
+                        <span className={cn("text-xs font-bold tracking-tight line-clamp-1 w-full text-center px-1 mb-0.5", isSelected ? "text-primary" : "text-foreground")}>
+                          {sc.name}
+                        </span>
+                        <span className={cn("text-[10px] font-bold uppercase tracking-wider leading-none", isSelected ? "text-primary/80" : "text-muted-foreground")}>
+                          {sc.price > 0 ? `+₹${sc.price}` : "Standard"}
                         </span>
                       </button>
                     );
