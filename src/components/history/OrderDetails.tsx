@@ -20,25 +20,28 @@ export function OrderDetails({ order, onBack }: OrderDetailsProps) {
     const { companyDetails } = useCart();
     const [downloading, setDownloading] = useState(false);
 
-    const convertImageToBase64 = (url: string): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = 'Anonymous';
-            img.src = url;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas.toDataURL('image/png'));
-                } else {
-                    reject(new Error('Canvas context failed'));
-                }
-            };
-            img.onerror = (error) => reject(error);
-        });
+    const convertImageToBase64 = async (url: string): Promise<string> => {
+        try {
+            const response = await fetch(`/api/proxy-image?url=${encodeURIComponent(url)}`);
+            if (!response.ok) throw new Error('Failed to fetch image');
+            const blob = await response.blob();
+
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    if (typeof reader.result === 'string') {
+                        resolve(reader.result);
+                    } else {
+                        reject(new Error('Failed to convert blob to base64'));
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (error) {
+            console.error('Error converting image to base64:', error);
+            throw error;
+        }
     };
 
     const handleDownloadInvoice = async () => {
