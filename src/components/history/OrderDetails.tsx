@@ -187,7 +187,7 @@ export function OrderDetails({ order, onBack }: OrderDetailsProps) {
                             {order.allDiscount && order.allDiscount !== '0' && (
                                 <div className="flex justify-between text-xs text-emerald-600 font-medium">
                                     <span>Discount</span>
-                                    <span>Discount Applied</span>
+                                    <span>order.allDiscount</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-xs text-slate-500 font-medium">
