@@ -225,7 +225,7 @@ const Header = ({ companyName = "ManaBuy" }: { companyName?: string }) => {
                     >
                       <div className="cursor-pointer font-normal">
                         {Icon && <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />}
-                        {wishlist.length > 0 && (
+                        {mounted && wishlist.length > 0 && (
                           <span className={cn(
                             "absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold shadow-sm animate-in zoom-in",
                             isActive ? "bg-background text-primary" : "bg-primary text-primary-foreground"
