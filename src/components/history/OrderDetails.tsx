@@ -184,10 +184,10 @@ export function OrderDetails({ order, onBack }: OrderDetailsProps) {
                                 <span>Subtotal</span>
                                 <span>{formatCurrency(order.subTotal)}</span>
                             </div>
-                            {order.allDiscount && order.allDiscount !== '0' && (
+                            {order.subTotal > order.finalTotalAmount && (
                                 <div className="flex justify-between text-xs text-emerald-600 font-medium">
                                     <span>Discount</span>
-                                    <span>{order.allDiscount}</span>
+                                    <span>- {formatCurrency(order.subTotal - order.finalTotalAmount)}</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-xs text-slate-500 font-medium">

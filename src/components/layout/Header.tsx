@@ -42,8 +42,17 @@ const Header = ({ companyName = "ManaBuy" }: { companyName?: string }) => {
   const { products: allProducts } = useProduct();
   const { text } = useTenant();
 
+  /* Hydration fix: Ensure client-only values match server on first render */
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Use shared auth hook
   const { isLoggedIn, userRole, isOwner } = useAuth();
+
+  // Safe cart count
+  const displayCartCount = mounted ? cartItemCount : 0;
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -188,12 +197,12 @@ const Header = ({ companyName = "ManaBuy" }: { companyName?: string }) => {
                     >
                       <div className="cursor-pointer font-normal">
                         {Icon && <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />}
-                        {cartItemCount > 0 && (
+                        {displayCartCount > 0 && (
                           <span className={cn(
                             "absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold shadow-sm animate-in zoom-in",
                             isActive ? "bg-background text-primary" : "bg-primary text-primary-foreground"
                           )}>
-                            {cartItemCount}
+                            {displayCartCount}
                           </span>
                         )}
                       </div>
