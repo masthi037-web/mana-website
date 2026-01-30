@@ -49,19 +49,17 @@ export function OrderDetails({ order, onBack }: OrderDetailsProps) {
         setDownloading(true);
 
         try {
-            // Convert logo to base64 to avoid CORS issues
-            let logoBase64 = undefined;
-            if (companyDetails.logo) {
-                try {
-                    logoBase64 = await convertImageToBase64(companyDetails.logo);
-                } catch (e: any) {
-                    console.warn("Failed to convert logo to base64", e);
-                }
-            }
-
-            // Convert item images to base64
+            // Parallelize image fetching
             const itemImagesOverride: Record<string, string> = {};
-            await Promise.all(order.items.map(async (item) => {
+            let logoBase64: string | undefined = undefined;
+
+            const logoPromise = companyDetails.logo
+                ? convertImageToBase64(companyDetails.logo)
+                    .then(res => { logoBase64 = res; })
+                    .catch(e => console.warn("Failed to convert logo", e))
+                : Promise.resolve();
+
+            const itemPromises = order.items.map(async (item) => {
                 const imageUrl = item.productSizeColourImage || item.productColourImage || item.productImage;
                 if (imageUrl) {
                     try {
@@ -71,7 +69,9 @@ export function OrderDetails({ order, onBack }: OrderDetailsProps) {
                         console.warn(`Failed to convert image for item ${item.productName}`, e);
                     }
                 }
-            }));
+            });
+
+            await Promise.all([logoPromise, ...itemPromises]);
 
 
             // Create a temporary container for the invoice
@@ -98,8 +98,8 @@ export function OrderDetails({ order, onBack }: OrderDetailsProps) {
                 );
             });
 
-            // Small delay to ensure images/fonts load (simplified)
-            await new Promise(r => setTimeout(r, 1000));
+            // Small delay to ensure images/fonts load (reduced since we use base64)
+            await new Promise(r => setTimeout(r, 100));
 
             const element = container.querySelector('#invoice-template') as HTMLElement;
             if (element) {
