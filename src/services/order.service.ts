@@ -66,5 +66,87 @@ export const orderService = {
         }
 
         return data;
+    },
+
+    getCompanyOrdersByDate: async (companyId: string, date: string, forceRefresh: boolean = false) => {
+        // date format: YYYY-MM-DD
+        const CACHE_KEY = `company_orders_${companyId}_${date}`;
+        const TIMESTAMP_KEY = `company_orders_timestamp_${companyId}_${date}`;
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+        // 1. Try Cache (if not forced)
+        if (!forceRefresh && typeof window !== 'undefined') {
+            try {
+                const cachedData = localStorage.getItem(CACHE_KEY);
+                const cachedTime = localStorage.getItem(TIMESTAMP_KEY);
+
+                if (cachedData && cachedTime) {
+                    const age = Date.now() - parseInt(cachedTime, 10);
+                    if (age < CACHE_DURATION) {
+                        return JSON.parse(cachedData) as SaveOrderResponse[];
+                    }
+                }
+            } catch (e) {
+                console.error("Cache parse error", e);
+            }
+        }
+
+        // 2. Fetch Fresh Data
+        const data = await apiClient<SaveOrderResponse[]>('/order/company/get-by-date', {
+            params: {
+                companyId,
+                date
+            },
+            next: { revalidate: 300 } // 5 minutes cache
+        });
+
+        // 3. Save to Cache
+        if (typeof window !== 'undefined' && data) {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            localStorage.setItem(TIMESTAMP_KEY, Date.now().toString());
+        }
+
+        return data;
+    },
+
+    getCompanyOrdersByRange: async (companyId: string, fromDate: string, toDate: string, forceRefresh: boolean = false) => {
+        const CACHE_KEY = `company_orders_${companyId}_${fromDate}_${toDate}`;
+        const TIMESTAMP_KEY = `company_orders_timestamp_${companyId}_${fromDate}_${toDate}`;
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+        // 1. Try Cache (if not forced)
+        if (!forceRefresh && typeof window !== 'undefined') {
+            try {
+                const cachedData = localStorage.getItem(CACHE_KEY);
+                const cachedTime = localStorage.getItem(TIMESTAMP_KEY);
+
+                if (cachedData && cachedTime) {
+                    const age = Date.now() - parseInt(cachedTime, 10);
+                    if (age < CACHE_DURATION) {
+                        return JSON.parse(cachedData) as SaveOrderResponse[];
+                    }
+                }
+            } catch (e) {
+                console.error("Cache parse error", e);
+            }
+        }
+
+        // 2. Fetch Fresh Data
+        const data = await apiClient<SaveOrderResponse[]>('/order/company/get-by-range', {
+            params: {
+                companyId,
+                fromDate,
+                toDate
+            },
+            next: { revalidate: 300 }
+        });
+
+        // 3. Save to Cache
+        if (typeof window !== 'undefined' && data) {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            localStorage.setItem(TIMESTAMP_KEY, Date.now().toString());
+        }
+
+        return data;
     }
 };

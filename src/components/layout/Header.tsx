@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Heart, User, ShoppingCart, Search, ShoppingBag, History, Home, Settings } from 'lucide-react';
+import { Heart, User, ShoppingCart, Search, ShoppingBag, History, Home, Settings, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
@@ -21,11 +21,13 @@ import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { useTenant } from '@/components/providers/TenantContext';
 import { AddressSheet } from '@/components/address/AddressSheet';
 import { useAuth } from '@/hooks/use-auth';
+import { CompanyOrdersSheet } from '@/components/admin/CompanyOrdersSheet';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/wishlist', label: 'Wishlist', icon: Heart },
   { href: '/cart', label: 'Cart', icon: ShoppingCart },
+  { href: '/admin/orders', label: 'Company Orders', icon: ClipboardList },
   { href: '/admin/inventory', label: 'Admin', icon: Settings },
 ];
 
@@ -182,6 +184,27 @@ const Header = ({ companyName = "ManaBuy" }: { companyName?: string }) => {
               }
 
               const isActive = pathname === href;
+
+              // Explicitly handle Company Orders (Owner Only)
+              if (label === 'Company Orders') {
+                if (!isLoggedIn || !isOwner) return null;
+                return (
+                  <CompanyOrdersSheet key={label}>
+                    <Button
+                      variant={isActive ? "default" : "ghost"}
+                      size="icon"
+                      className={cn(
+                        "rounded-full relative transition-all duration-300 w-10 h-10 md:w-12 md:h-12",
+                        !isActive && "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      )}
+                    >
+                      <div className="cursor-pointer font-normal">
+                        {Icon && <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />}
+                      </div>
+                    </Button>
+                  </CompanyOrdersSheet>
+                );
+              }
 
               // Explicitly handle Cart
               if (label === 'Cart') {
