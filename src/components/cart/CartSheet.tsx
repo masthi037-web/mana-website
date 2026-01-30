@@ -816,7 +816,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
             // Prime the cache for customer orders
             if (customer?.customerId) {
-                orderService.getCustomerOrders(customer.customerId.toString()).catch(err => console.error("Failed to cache orders", err));
+                orderService.getCustomerOrders(customer.customerId.toString(), true).catch(err => console.error("Failed to cache orders", err));
             }
 
             // Clear cart and move to success view
