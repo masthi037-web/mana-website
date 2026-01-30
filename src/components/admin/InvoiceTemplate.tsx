@@ -105,31 +105,31 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
 
             {/* Client Info Grid */}
             <div className="p-12 py-8 grid grid-cols-2 gap-12">
-                <div>
+                <div className="flex flex-col h-full">
                     <h3 className="text-xs font-bold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                         <span className="w-1 h-4 bg-primary rounded-full"></span>
                         Billed To
                     </h3>
-                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex-grow">
                         <p className="font-bold text-slate-900 text-lg mb-1">{order.customerName}</p>
                         <p className="text-sm text-slate-500 font-medium mb-3">{order.customerPhone}</p>
-                        <div className="flex items-start gap-2 text-sm text-slate-500">
-                            <span className="bg-white p-1 rounded-md shadow-sm text-[10px] font-bold text-slate-400 border border-slate-100">ID</span>
-                            <span className="mt-0.5">#{order.customerId}</span>
+                        <div className="flex items-center gap-2 text-sm text-slate-500">
+                            <span className="bg-white px-2 py-0.5 rounded-md shadow-sm text-[10px] font-bold text-slate-400 border border-slate-100">ID</span>
+                            <span className="font-medium">#{order.customerId}</span>
                         </div>
                     </div>
                 </div>
-                <div>
+                <div className="flex flex-col h-full">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <span className="w-1 h-4 bg-slate-300 rounded-full"></span>
                         Shipped To
                     </h3>
-                    <div className="p-1">
-                        <p className="text-sm text-slate-600 leading-relaxed">
-                            <span className="font-medium text-slate-900 block mb-1">Delivery Address</span>
+                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex-grow">
+                        <p className="text-sm text-slate-600 leading-relaxed h-full">
+                            <span className="font-bold text-slate-900 block mb-2 text-base">Delivery Address</span>
                             {order.deliveryRoad},<br />
                             {order.deliveryCity}, {order.deliveryState}<br />
-                            <span className="font-medium text-slate-900">{order.deliveryPin}</span>
+                            <span className="font-medium text-slate-900 mt-1 block">{order.deliveryPin}</span>
                         </p>
                     </div>
                 </div>
