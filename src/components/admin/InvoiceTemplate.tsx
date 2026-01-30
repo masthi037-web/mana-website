@@ -87,13 +87,6 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                             <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Date Issued</p>
                             <p className="text-base font-medium text-slate-700">{formatDate(order.createdAt)}</p>
                         </div>
-                        <div>
-                            <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Status</p>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.orderStatus === 'Delivered' ? 'bg-emerald-100 text-emerald-800' : 'bg-primary/10 text-primary'
-                                }`}>
-                                {order.orderStatus}
-                            </span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -113,10 +106,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                     <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex-grow">
                         <p className="font-bold text-slate-900 text-lg mb-1">{order.customerName}</p>
                         <p className="text-sm text-slate-500 font-medium mb-3">{order.customerPhone}</p>
-                        <div className="flex items-center gap-2 text-sm text-slate-500">
-                            <span className="bg-white px-2 py-0.5 rounded-md shadow-sm text-[10px] font-bold text-slate-400 border border-slate-100">ID</span>
-                            <span className="font-medium">#{order.customerId}</span>
-                        </div>
+
                     </div>
                 </div>
                 <div className="flex flex-col h-full">
@@ -153,7 +143,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                 const imageSrc = (itemImagesOverride && itemImagesOverride[item.orderItemId]) || getItemImage(item);
                                 return (
                                     <tr key={idx} className="group">
-                                        <td className="py-4 px-6 align-middle">
+                                        <td className="py-4 px-6 align-top">
                                             <div className="h-12 w-12 rounded-lg border border-slate-100 overflow-hidden bg-slate-50 relative group-hover:shadow-md transition-shadow">
                                                 {imageSrc ? (
                                                     // eslint-disable-next-line @next/next/no-img-element
@@ -168,7 +158,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6 align-middle">
+                                        <td className="py-4 px-6 align-top">
                                             <p className="font-bold text-slate-800 text-sm mb-1">{item.productName}</p>
                                             <div className="flex flex-wrap gap-2">
                                                 {[item.productSizeName, item.productColour, item.productSizeColourName].filter(Boolean).map((tag, i) => (
@@ -178,13 +168,13 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                                 ))}
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6 text-center align-middle">
+                                        <td className="py-4 px-6 text-center align-top">
                                             <span className="font-semibold text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-100 text-xs">x{item.quantity}</span>
                                         </td>
-                                        <td className="py-4 px-6 text-right text-slate-600 text-sm align-middle">
+                                        <td className="py-4 px-6 text-right text-slate-600 text-sm align-top">
                                             {formatCurrency(item.productSizePriceAfterDiscount || item.productPriceAfterDiscount || 0)}
                                         </td>
-                                        <td className="py-4 px-6 text-right font-bold text-slate-900 text-sm align-middle">
+                                        <td className="py-4 px-6 text-right font-bold text-slate-900 text-sm align-top">
                                             {formatCurrency((item.productSizePriceAfterDiscount || item.productPriceAfterDiscount || 0) * item.quantity)}
                                         </td>
                                     </tr>
