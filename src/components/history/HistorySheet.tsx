@@ -12,14 +12,25 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Package, Clock, X } from 'lucide-react';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSheetBackHandler } from '@/hooks/use-sheet-back-handler';
+import { orderService } from '@/services/order.service';
 
 export function HistorySheet({ children }: { children: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
 
     // Handle back button on mobile
     useSheetBackHandler(isOpen, setIsOpen);
+
+    // Fetch orders when sheet opens
+    useEffect(() => {
+        if (isOpen) {
+            const customerId = localStorage.getItem('customerId');
+            if (customerId) {
+                orderService.getCustomerOrders(customerId).catch(err => console.error("Failed to fetch history", err));
+            }
+        }
+    }, [isOpen]);
 
     return (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
