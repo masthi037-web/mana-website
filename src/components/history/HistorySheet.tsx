@@ -119,29 +119,33 @@ export function HistorySheet({ children }: { children: React.ReactNode }) {
                             <p className="text-sm font-medium text-muted-foreground animate-pulse">Loading orders...</p>
                         </div>
                     ) : orders.length > 0 ? (
-                        <div className="space-y-4 pb-12">
-                            {orders.map((order) => (
-                                <div key={order.orderId} className="group bg-white rounded-2xl p-4 border border-slate-200/60 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] transition-all duration-300">
+                        <div className="space-y-6 pb-20">
+                            {orders.map((order, index) => (
+                                <div
+                                    key={order.orderId}
+                                    className="group bg-white rounded-[2rem] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all duration-300 border border-slate-100/50 animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards"
+                                    style={{ animationDelay: `${index * 100}ms` }}
+                                >
                                     {/* Order Header */}
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <Badge variant="outline" className={`rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase border ${getStatusColor(order.orderStatus)}`}>
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center gap-2">
+                                                <Badge className={`rounded-full px-3 py-1 text-[10px] font-bold tracking-wider uppercase border-0 shadow-sm ${getStatusColor(order.orderStatus)}`}>
                                                     {order.orderStatus}
                                                 </Badge>
-                                                <span className="text-[10px] text-slate-400 font-medium">
+                                                <span className="text-[11px] font-mono text-slate-400">
                                                     #{order.orderNumber?.split('-').pop() || order.orderId}
                                                 </span>
                                             </div>
-                                            <p className="text-[11px] font-medium text-slate-400">
+                                            <p className="text-xs font-medium text-slate-500 pl-1">
                                                 {formatDate(order.createdAt)}
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-lg font-bold text-slate-900 leading-none">
+                                            <p className="text-2xl font-black text-slate-900 font-headline tracking-tight leading-none">
                                                 {formatCurrency(order.finalTotalAmount)}
                                             </p>
-                                            <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                                            <p className="text-[10px] text-slate-400 mt-1.5 font-bold tracking-wide uppercase">
                                                 {order.items?.length || 0} items
                                             </p>
                                         </div>
@@ -158,8 +162,8 @@ export function HistorySheet({ children }: { children: React.ReactNode }) {
                                             if (item.productColour || item.productSizeColourName) variantText.push(item.productColour || item.productSizeColourName);
 
                                             return (
-                                                <div key={idx} className="flex gap-3 items-center bg-slate-50/50 p-2 rounded-xl border border-slate-100/50">
-                                                    <div className="h-10 w-10 shrink-0 bg-white rounded-lg border border-slate-100 overflow-hidden relative">
+                                                <div key={idx} className="flex gap-4 items-center bg-slate-50 p-3 rounded-2xl group-hover:bg-slate-50/80 transition-colors">
+                                                    <div className="h-12 w-12 shrink-0 bg-white rounded-full border border-slate-100 overflow-hidden relative shadow-sm">
                                                         {displayImage ? (
                                                             <Image
                                                                 src={displayImage}
@@ -169,34 +173,27 @@ export function HistorySheet({ children }: { children: React.ReactNode }) {
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center bg-slate-50">
-                                                                <ShoppingBag className="w-4 h-4 text-slate-300" />
+                                                                <ShoppingBag className="w-5 h-5 text-slate-300" />
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-semibold text-slate-800 truncate leading-tight">
+                                                    <div className="flex-1 min-w-0 py-0.5">
+                                                        <p className="text-sm font-bold text-slate-900 truncate leading-tight mb-1">
                                                             {item.productName}
                                                         </p>
                                                         {variantText.length > 0 && (
-                                                            <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                                                            <p className="text-[10px] font-medium text-slate-500 truncate uppercase tracking-wide">
                                                                 {variantText.join(' • ')}
                                                             </p>
                                                         )}
                                                     </div>
                                                     <div className="text-right pl-2">
-                                                        <p className="text-xs font-bold text-slate-700">x{item.quantity}</p>
+                                                        <span className="text-sm font-black text-slate-900 opacity-60">x{item.quantity}</span>
                                                     </div>
                                                 </div>
                                             );
                                         })}
                                     </div>
-
-                                    {/* Action Footer (Optional, e.g. Track Order) */}
-                                    {/* <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
-                                        <Button variant="ghost" size="sm" className="h-8 text-xs font-semibold text-primary hover:text-primary hover:bg-primary/5">
-                                            Details <ChevronRight className="w-3 h-3 ml-1" />
-                                        </Button>
-                                    </div> */}
                                 </div>
                             ))}
                         </div>
