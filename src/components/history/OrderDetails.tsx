@@ -10,6 +10,15 @@ import jsPDF from 'jspdf';
 import { createRoot } from 'react-dom/client';
 import { InvoiceTemplate } from '@/components/admin/InvoiceTemplate';
 import { useCart } from '@/hooks/use-cart';
+import { orderService } from '@/services/order.service';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 interface OrderDetailsProps {
     order: SaveOrderResponse;
@@ -207,16 +216,52 @@ export function OrderDetails({ order, onBack }: OrderDetailsProps) {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-full blur-3xl -mr-10 -mt-10" />
                         <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-50/50 rounded-full blur-2xl -ml-10 -mb-10" />
 
-                        <div className="relative flex flex-col items-center gap-3">
+                        <div className="relative flex flex-col items-center gap-4 z-10 px-4">
                             <div className={`p-3 rounded-full bg-white shadow-sm ring-1 ${order.orderStatus === 'CANCELLED' ? 'ring-rose-100' : 'ring-indigo-50'}`}>
                                 {getStatusIcon(order.orderStatus)}
                             </div>
-                            <div>
-                                <h3 className="text-lg font-black text-slate-900 tracking-tight mb-1">{order.orderStatus}</h3>
-                                <p className="text-xs text-slate-500 font-medium">
-                                    Placed on {formatDate(order.createdAt)}
-                                </p>
+
+                            <div className="w-full max-w-xs">
+                                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2 block">Current Status</label>
+                                <Select
+                                    value={order.orderStatus}
+                                    onValueChange={async (newStatus) => {
+                                        try {
+                                            if (!order.orderId) return;
+                                            await orderService.updateOrderStatus(order.orderId, newStatus);
+                                            // Optimistic update or reload logic could go here, 
+                                            // but ideally the parent should re-fetch or we locally update.
+                                            // For now, we will assume the parent (CompanyOrdersSheet) might handle refresh if we had a callback,
+                                            // but since we don't have a callback prop for refresh, we'll force a toast and maybe local state update if practical,
+                                            // essentially treating 'order' prop as initial data but we can't easily mutate it without parent's help.
+                                            // ACTUALLY: The best way is to trigger a refresh.
+                                            // However, limited scope: Let's just show success toast.
+                                            // In a real app, we'd call onUpdate() to refresh the list.
+                                            // Since we are in the sheet, maybe just show it changed.
+                                            window.location.reload(); // Simple refresh for now to see changes? Or better, use a callback?
+                                            // Let's stick to API call success feedback.
+                                            // The user can close/re-open to see formatted changes if needed, but the Select value will update immediately visually.
+                                        } catch (e) {
+                                            console.error("Failed to update status", e);
+                                        }
+                                    }}
+                                >
+                                    <SelectTrigger className="w-full text-center justify-between bg-white border-slate-200 h-10 font-bold text-slate-800 focus:ring-primary/20">
+                                        <SelectValue placeholder="Status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {['CREATED', 'PAYMENT_PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'].map((status) => (
+                                            <SelectItem key={status} value={status} className="font-medium text-slate-600 focus:bg-slate-50 focus:text-primary">
+                                                {status}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
+
+                            <p className="text-xs text-slate-500 font-medium mt-1">
+                                Placed on {formatDate(order.createdAt)}
+                            </p>
                         </div>
                     </div>
 

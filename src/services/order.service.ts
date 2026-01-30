@@ -148,5 +148,15 @@ export const orderService = {
         }
 
         return data;
+    },
+    updateOrderStatus: async (orderId: number, status: string) => {
+        return apiClient<any>('/order/status/update', {
+            method: 'PUT',
+            params: {
+                orderId,
+                status
+            },
+            next: { revalidate: 0 }
+        });
     }
 };
