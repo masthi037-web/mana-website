@@ -22,13 +22,18 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
                 next: { revalidate: 300, tags: ['categories'] } // Cache the category list
             });
 
-            if (!categories || categories.length === 0) return [];
+            if (!categories || categories.length === 0) {
+                console.log('[ProductService] No categories found from /category/public/get-all-by-company');
+                return [];
+            }
 
             // Fetch products ONLY for the first category initially
             const firstCategory = categories[0];
+            console.log('[ProductService] First category from list:', JSON.stringify(firstCategory, null, 2));
+
             let firstCategoryData: AppCategory | null = null;
 
-            if (firstCategory) {
+            if (firstCategory && firstCategory.categoryId) {
                 try {
                     const catData = await apiClient<ApiCategory>('/company/public/get-products-by-category/get', {
                         params: { categoryId: String(firstCategory.categoryId) },
