@@ -16,7 +16,7 @@ import { ProductCard } from '@/components/products/ProductCard';
 import { FeaturesCarousel } from '@/components/home/FeaturesCarousel';
 import { CouponCarousel } from '@/components/home/CouponCarousel';
 import { WhatsAppButton } from '@/components/common/WhatsAppButton';
-import { ArrowRight, Sparkles, Star, Settings, Loader2 } from 'lucide-react';
+import { ArrowRight, Sparkles, Star, Settings, Loader2, Search } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ShopNowButton } from '@/components/home/ShopNowButton';
@@ -446,19 +446,18 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                                 {/* Category Search Bar - Only if NOT fetchAllAtOnce */}
                                 {!fetchAllAtOnce && (
                                     <div className="flex justify-center -mt-4 mb-8 px-4 animate-in fade-in slide-in-from-top-2 duration-500">
-                                        <div className="relative w-full max-w-md" ref={searchRef}>
-                                            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                </svg>
+                                        <div className="relative w-full max-w-md group" ref={searchRef}>
+                                            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                                <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors duration-300" />
                                             </div>
+                                            <div className="absolute inset-0 bg-primary/20 rounded-full blur-md opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 -z-10" />
                                             <input
                                                 type="text"
                                                 placeholder="Search for latest trends..."
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                                 onFocus={() => searchQuery.trim() && setShowSearchDropdown(true)}
-                                                className="w-full pl-10 pr-4 py-3 bg-secondary/30 border border-transparent focus:border-primary/20 focus:bg-background rounded-full transition-all outline-none text-sm"
+                                                className="w-full pl-12 pr-4 py-4 bg-background/80 backdrop-blur-md border border-border/50 shadow-lg shadow-black/5 focus:shadow-primary/10 rounded-full transition-all duration-300 outline-none text-base placeholder:text-muted-foreground/60 focus:bg-background focus:border-primary/30"
                                             />
 
                                             {/* Search Dropdown */}

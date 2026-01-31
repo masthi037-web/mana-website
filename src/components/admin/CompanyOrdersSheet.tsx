@@ -286,7 +286,7 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                     ) : filteredOrders.length > 0 ? (
                         // List View
                         <ScrollArea className="h-full px-6 py-4">
-                            <div className="space-y-3 pb-20">
+                            <div className="space-y-3 pb-32">
                                 {filteredOrders.map((order, index) => (
                                     <div
                                         key={order.orderId}
