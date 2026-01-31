@@ -69,6 +69,7 @@ export default async function Home() {
       <HomeClient
         initialCategories={categories}
         companyDetails={company}
+        fetchAllAtOnce={tenantConfig.fetchAllAtOnce ?? true}
       />
     </div>
   );

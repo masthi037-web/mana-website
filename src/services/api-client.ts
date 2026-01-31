@@ -78,7 +78,8 @@ export async function apiClient<T>(
     }
     const duration = performance.now() - startTime;
     // 🚀 LOG RESPONSE
-    console.log(`[API RESPONSE] ${(fetchOptions.method || 'GET').toUpperCase()} ${endpoint} - ${res.status} (${duration.toFixed(0)}ms)`);
+    const source = duration < 30 ? '⚡ CACHE HIT (Likely)' : '🌍 NETWORK CALL';
+    console.log(`[API RESPONSE] ${(fetchOptions.method || 'GET').toUpperCase()} ${endpoint} - ${res.status} (${duration.toFixed(0)}ms) - ${source}`);
 
     // ✅ 401 Handling with Refresh Token
     if (res.status === 401 && !_retry) {

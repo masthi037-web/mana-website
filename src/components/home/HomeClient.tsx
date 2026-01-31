@@ -29,9 +29,10 @@ import { ProductInitializer } from '@/components/providers/ProductInitializer';
 interface HomeClientProps {
     initialCategories: Category[];
     companyDetails: CompanyDetails | null;
+    fetchAllAtOnce: boolean;
 }
 
-export default function HomeClient({ initialCategories, companyDetails }: HomeClientProps) {
+export default function HomeClient({ initialCategories, companyDetails, fetchAllAtOnce }: HomeClientProps) {
     const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -39,6 +40,7 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
     // Data State
     const [categories, setCategories] = useState<Category[]>(initialCategories);
     const [isLoadingCategory, setIsLoadingCategory] = useState<Record<string, boolean>>({});
+    const [searchQuery, setSearchQuery] = useState("");
 
     // Auth State
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -118,11 +120,12 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
     // Sync State -> URL when user interacts
     const updateCategory = async (categoryId: string) => {
         setSelectedCategory(categoryId);
+        setSearchQuery(""); // Clear search on category change
         const category = categories.find(c => c.id === categoryId);
 
         // Lazy Load Check: If category exists but has no catalogs (and isn't explicitly empty from backend which we assume implies not loaded in this logic)
         // We assume if catalogs is empty, it MIGHT need loading if we are in lazy load mode.
-        // However, a category could genuinely have no products. 
+        // However, a category could genuinely have no products.
         // To be safe, we can check if it was already attempted or just try fetch if empty.
         // Current logic in product service returns empty arrays for non-loaded categories.
 
@@ -220,6 +223,8 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
 
     const filteredProducts = baseProducts
         .filter(p => {
+            // Search Filter
+            if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
             // Price Filter
             if (p.price < filters.priceRange[0] || p.price > filters.priceRange[1]) return false;
             // Rating Filter
@@ -365,6 +370,26 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
                                         </button>
                                     ))}
                                 </div>
+
+                                {/* Category Search Bar - Only if NOT fetchAllAtOnce */}
+                                {!fetchAllAtOnce && (
+                                    <div className="flex justify-center -mt-4 mb-8 px-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                                        <div className="relative w-full max-w-md">
+                                            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                </svg>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                placeholder="Search for latest trends..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-3 bg-secondary/30 border border-transparent focus:border-primary/20 focus:bg-background rounded-full transition-all outline-none text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Exclusive Offers Block - Freshly Dropped Signature Selection Style */}
                                 {activeCategory && activeCategory.catalogs.flatMap(c => c.products).filter(p => p.productOffer).length > 0 && (
