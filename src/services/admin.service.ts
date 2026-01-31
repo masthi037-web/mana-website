@@ -106,7 +106,7 @@ export const adminService = {
     },
 
     getAllCategories: async (companyId: string) => {
-        return apiClient<any[]>('/category/get-all-by-company', {
+        return apiClient<any[]>('/category/public/get-all-by-company', {
             params: { companyId },
             next: { revalidate: 300 } // 5 minutes cache
         });
