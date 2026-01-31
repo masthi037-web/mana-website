@@ -50,7 +50,12 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
 
             return categories.map((cat, index) => {
                 if (index === 0 && firstCategoryData) {
-                    return firstCategoryData;
+                    return {
+                        ...firstCategoryData,
+                        id: String(cat.categoryId), // Ensure we use the ID from the list as anchor
+                        name: firstCategoryData.name || cat.categoryName,
+                        categoryImage: firstCategoryData.categoryImage || cat.categoryImage
+                    };
                 }
                 return {
                     id: String(cat.categoryId),
@@ -112,28 +117,53 @@ export async function fetchProductDetails(productId: string): Promise<AppProduct
 }
 
 
-function mapApiCategoriesToAppCategories(apiCategories: ApiCategory[], deliveryTime?: string): AppCategory[] {
-    return apiCategories.map(cat => {
-        const catId = String(cat.categoryId || (cat as any).id || (cat as any).category_id || '');
-        const catalogues = cat.catalogues || (cat as any).catalogueResponseList || (cat as any).catalogue_response_list || [];
+function mapApiCategoriesToAppCategories(apiCategories: any[], deliveryTime?: string): AppCategory[] {
+    const categoryMap = new Map<string, AppCategory>();
 
-        return {
-            id: catId,
-            name: cat.categoryName,
-            catalogs: catalogues.map(c => mapApiCatalogueToAppCatalog(c, deliveryTime)),
-            categoryImage: cat.categoryImage
-        };
+    apiCategories.forEach(item => {
+        const catId = String(item.categoryId || item.id || item.category_id || '');
+        if (!catId) return;
+
+        // Ensure we have an entry in the map for this category
+        if (!categoryMap.has(catId)) {
+            categoryMap.set(catId, {
+                id: catId,
+                name: item.categoryName || item.name || '',
+                catalogs: [],
+                categoryImage: item.categoryImage || item.image || ''
+            });
+        }
+
+        const appCat = categoryMap.get(catId)!;
+
+        // 1. Handle Nested Catalogues (Bulk Fetch Style)
+        const nestedCatalogues = item.catalogues || item.catalogueResponseList || item.catalogue_response_list || [];
+        if (nestedCatalogues.length > 0) {
+            const mappedCatalogs = nestedCatalogues.map((c: any) => mapApiCatalogueToAppCatalog(c, deliveryTime));
+            appCat.catalogs.push(...mappedCatalogs);
+
+            // Prefer picking up name/image from the parent category object
+            if (!appCat.name) appCat.name = item.categoryName || item.name || '';
+            if (!appCat.categoryImage) appCat.categoryImage = item.categoryImage || item.image || '';
+        }
+        // 2. Handle Flat Catalogue Object (Single Category Fetch Style)
+        else if (item.catalogueId || item.catalogue_id) {
+            appCat.catalogs.push(mapApiCatalogueToAppCatalog(item, deliveryTime));
+        }
     });
+
+    return Array.from(categoryMap.values());
 }
 
-function mapApiCatalogueToAppCatalog(apiCat: ApiCatalogue, deliveryTime?: string): AppCatalog {
-    const catalogId = String(apiCat.catalogueId || (apiCat as any).id || (apiCat as any).catalogue_id || '');
+function mapApiCatalogueToAppCatalog(apiCat: any, deliveryTime?: string): AppCatalog {
+    const catalogId = String(apiCat.catalogueId || apiCat.id || apiCat.catalogue_id || '');
+    const products = apiCat.products || apiCat.productList || apiCat.product_list || [];
 
     return {
         id: catalogId,
-        name: apiCat.catalogueName,
-        products: (apiCat.products || (apiCat as any).productList || (apiCat as any).product_list || []).map(p => mapApiProductToAppProduct(p, deliveryTime)),
-        catalogueImage: apiCat.catalogueImage
+        name: apiCat.catalogueName || apiCat.name || '',
+        products: products.map((p: any) => mapApiProductToAppProduct(p, deliveryTime)),
+        catalogueImage: apiCat.catalogueImage || apiCat.image || ''
     };
 }
 
