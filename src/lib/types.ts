@@ -8,7 +8,7 @@ export type ProductSizeColourOption = {
   name: string;
   price: number;
   productPics?: string;
-  quantity?: string;
+  productSizeColourQuantity: number;
   status?: string;
 };
 
@@ -16,7 +16,8 @@ export type ProductPriceOption = {
   id: string;
   price: number;
   priceAfterDiscount?: number;
-  quantity: string;
+  size: string;
+  sizeQuantity: number;
   sizeColours?: ProductSizeColourOption[];
   sizeStatus?: string;
 };
@@ -61,7 +62,7 @@ export type Product = {
   productOffer?: string;
   multipleSetDiscount?: string;
   multipleDiscountMoreThan?: string;
-  productQuantity?: string;
+  productQuantity?: number;
   colors?: ProductColor[];
   productStatus?: string;
   productType?: string;

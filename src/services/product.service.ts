@@ -203,14 +203,15 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
         priceAfterDiscount: (p.productSizePrice !== null && p.productSizePrice !== undefined && p.productSizePrice > 0)
             ? ((p as any).productSizePriceAfterDiscount) // Assuming this field exists on variant if price exists
             : ((apiProd as any).productPriceAfterDiscount), // Fallback to parent discount
-        quantity: p.size || (p as any).sizeProduct,
-        sizeQuantity: p.sizeQuantity,
+        size: p.size || (p as any).sizeProduct,
+        sizeQuantity: Number(p.sizeQuantity) || 0,
         sizeStatus: p.sizeStatus,
         sizeColours: p.productSizeColours?.map(a => ({
             id: String(a.productSizeColourId),
             name: a.colourName,
             price: a.colourPrice,
             productPics: a.productPics,
+            productSizeColourQuantity: Number(a.productSizeColourQuantity) || 0,
             status: a.sizeColourStatus
         }))
     })) || [];
@@ -240,6 +241,7 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
         productOffer: apiProd.productOffer,
         multipleSetDiscount: apiProd.multipleSetDiscount,
         multipleDiscountMoreThan: apiProd.multipleDiscountMoreThan,
+        productQuantity: Number(apiProd.productQuantity) || 0,
         colors: apiProd.productColour?.map(c => ({
             id: String(c.productColourId),
             name: c.colour,

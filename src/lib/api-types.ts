@@ -3,7 +3,7 @@ export interface ProductSizeColour {
     productSizeId: number;
     colourName: string;
     colourPrice: number;
-    productSizeColourQuantity: string;
+    productSizeColourQuantity: number;
     productPics?: string;
     sizeColourStatus: string;
 }
@@ -15,7 +15,7 @@ export interface ProductSize {
     productSizePrice: number;
     productSizePriceAfterDiscount: number;
     size: string;
-    sizeQuantity: string;
+    sizeQuantity: number;
     productSizeColours: ProductSizeColour[];
     sizeStatus: string;
 }
@@ -40,7 +40,7 @@ export interface Product {
     productPics: string;
     productStatus: string; // 'ACTIVE' | 'INACTIVE' etc.
     productDeliveryCost: number;
-    productQuantity: string;
+    productQuantity: number;
     createdAt: string;
     productPrice: number;
     productPriceAfterDiscount: number;
@@ -81,7 +81,7 @@ export interface UpdateProductRequest {
     productPics: string;
     productStatus: string;
     productDeliveryCost: number;
-    productQuantity: string;
+    productQuantity: number;
     famous: boolean;
     createdAt?: string;
     updatedAt?: string;
@@ -262,13 +262,12 @@ export interface CreateProductRequest {
     productStatus: string;
     famous: boolean;
     productDeliveryCost: number;
-    productQuantity: string;
+    productQuantity: number;
     productPrice: number;
     productPriceAfterDiscount: number;
     productImage?: string;
     productOffer?: string;
     multipleSetDiscount?: string;
-
     multipleDiscountMoreThan?: string;
     productType?: string;
 }
@@ -278,7 +277,7 @@ export interface CreateProductResponse {
     catalogueId: number;
     productName: string; // ... other fields same as Product
     productStatus: string;
-    productQuantity: string;
+    productQuantity: number;
     productPrice: number;
     productPriceAfterDiscount: number;
     productImage?: string;
@@ -294,7 +293,7 @@ export interface CreatePricingRequest {
     productSizePrice?: number | null;
     productSizePriceAfterDiscount?: number | null;
     size: string;
-    sizeQuantity: string;
+    sizeQuantity: number;
     sizeStatus: string;
 }
 
@@ -304,7 +303,7 @@ export interface CreatePricingResponse {
     productSizePrice: number;
     productSizePriceAfterDiscount: number;
     size: string;
-    sizeQuantity: string;
+    sizeQuantity: number;
     productSizeColours: ProductSizeColour[];
     sizeStatus: string;
 }
@@ -315,7 +314,7 @@ export interface UpdatePricingRequest {
     productSizePrice?: number | null;
     productSizePriceAfterDiscount?: number | null;
     size: string;
-    sizeQuantity: string;
+    sizeQuantity: number;
     sizeStatus: string;
 }
 
@@ -325,14 +324,14 @@ export interface UpdatePricingResponse {
     productSizePrice: number;
     productSizePriceAfterDiscount: number;
     size: string;
-    sizeQuantity: string;
+    sizeQuantity: number;
     productSizeColours: ProductSizeColour[];
 }
 export interface CreateSizeColourRequest {
     productSizeId: number;
     colourName: string;
     colourPrice: number;
-    productSizeColourQuantity: string;
+    productSizeColourQuantity: number;
     productPics?: string;
     sizeColourStatus: string;
 }
@@ -342,7 +341,27 @@ export interface CreateSizeColourResponse {
     productSizeId: number;
     colourName: string;
     colourPrice: number;
-    productSizeColourQuantity: string;
+    productSizeColourQuantity: number;
+    productPics?: string;
+    sizeColourStatus: string;
+}
+
+export interface UpdateSizeColourRequest {
+    productSizeColourId: number;
+    productSizeId: number;
+    colourName: string;
+    colourPrice: number;
+    productSizeColourQuantity: number;
+    productPics?: string;
+    sizeColourStatus: string;
+}
+
+export interface UpdateSizeColourResponse {
+    productSizeColourId: number;
+    productSizeId: number;
+    colourName: string;
+    colourPrice: number;
+    productSizeColourQuantity: number;
     productPics?: string;
     sizeColourStatus: string;
 }
@@ -399,18 +418,18 @@ export interface CheckoutCheckResponse {
     productPriceAfterDiscount: number;
     colourStatus: string | null;
     colour: string | null;
-    colourQuantityAvailable: string | null;
+    colourQuantityAvailable: number | null;
     sizeStatus: string | null;
     productSizePrice: number | null;
     productSizePriceAfterDiscount: number;
     productSize: string | null;
-    productQuantityAvailable: string;
-    sizeQuantity: string;
+    productQuantityAvailable: number;
+    sizeQuantity: number;
 
     // New fields requested
     sizeColourName: string | null;
     colourExtraPrice: number;
-    productSizeColourQuantity: string | null;
+    productSizeColourQuantity: number | null;
     sizeColourStatus: string | null;
     productSizeColourId: number | null;
 
@@ -493,7 +512,7 @@ export interface CreateColourRequest {
     productPics: string;
     colourStatus: string;
     colour: string;
-    productColourQuantity: string;
+    productColourQuantity: number;
 }
 
 export interface CreateColourResponse {
@@ -502,7 +521,7 @@ export interface CreateColourResponse {
     productPics: string;
     colourStatus: string;
     colour: string;
-    productColourQuantity: string;
+    productColourQuantity: number;
 }
 
 export interface UpdateColourRequest {
@@ -511,7 +530,7 @@ export interface UpdateColourRequest {
     productPics: string;
     colourStatus: string;
     colour: string;
-    productColourQuantity: string;
+    productColourQuantity: number;
 }
 
 export interface UpdateColourResponse {
@@ -520,7 +539,7 @@ export interface UpdateColourResponse {
     productPics: string;
     colourStatus: string;
     colour: string;
-    productColourQuantity: string;
+    productColourQuantity: number;
 }
 
 export interface SaveOrderItem {

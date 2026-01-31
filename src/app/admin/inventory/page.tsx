@@ -176,7 +176,7 @@ export default function AdminInventoryPage() {
                 id: String(p.productSizeId),
                 price: p.productSizePrice,
                 priceAfterDiscount: p.productSizePriceAfterDiscount,
-                quantity: p.size,
+                size: p.size,
                 sizeQuantity: p.sizeQuantity,
                 sizeStatus: p.sizeStatus || "ACTIVE"
             }));
@@ -389,7 +389,7 @@ export default function AdminInventoryPage() {
                             productId: Number(selectedProduct.id),
                             ...pricePayload,
                             size: qty,
-                            sizeQuantity: sizeQuantity,
+                            sizeQuantity: Number(sizeQuantity) || 0,
                             sizeStatus: sizeStatus
                         });
                     } else {
@@ -397,7 +397,7 @@ export default function AdminInventoryPage() {
                             productId: Number(selectedProduct.id),
                             ...pricePayload,
                             size: qty,
-                            sizeQuantity: sizeQuantity,
+                            sizeQuantity: Number(sizeQuantity) || 0,
                             sizeStatus: sizeStatus
                         });
                     }
@@ -408,7 +408,7 @@ export default function AdminInventoryPage() {
                             productSizeId: Number(expandedPricingId),
                             colourName: name,
                             colourPrice: Number(price),
-                            productSizeColourQuantity: sizeQuantity || "0",
+                            productSizeColourQuantity: Number(sizeQuantity) || 0,
                             productPics: colourImage || "",
                             sizeColourStatus: sizeStatus || "ACTIVE"
                         });
@@ -417,7 +417,7 @@ export default function AdminInventoryPage() {
                             productSizeId: Number(expandedPricingId),
                             colourName: name, // Reusing 'name' state
                             colourPrice: Number(price), // Reusing 'price' state
-                            productSizeColourQuantity: sizeQuantity || "0",
+                            productSizeColourQuantity: Number(sizeQuantity) || 0,
                             productPics: colourImage || "",
                             sizeColourStatus: sizeStatus || "ACTIVE"
                         });
@@ -430,7 +430,7 @@ export default function AdminInventoryPage() {
                             productPics: colourImage || "",
                             colourStatus: colourStatus,
                             colour: colourName,
-                            productColourQuantity: colourQuantity
+                            productColourQuantity: Number(colourQuantity) || 0
                         });
                     } else {
                         return adminService.createProductColour({
@@ -438,7 +438,7 @@ export default function AdminInventoryPage() {
                             productPics: colourImage || "",
                             colourStatus: colourStatus,
                             colour: colourName,
-                            productColourQuantity: colourQuantity
+                            productColourQuantity: Number(colourQuantity) || 0
                         });
                     }
                 }
@@ -548,7 +548,7 @@ export default function AdminInventoryPage() {
                         multipleDiscountMoreThan: (moreThanQty && moreThanDiscount)
                             ? `${moreThanQty}-${moreThanDiscount}`
                             : "",
-                        productQuantity: prodQuantity,
+                        productQuantity: Number(prodQuantity) || 0,
                         productType: prodType
                     });
                 } else {
@@ -571,7 +571,7 @@ export default function AdminInventoryPage() {
                         multipleSetDiscount: bulkDiscounts.length > 0
                             ? bulkDiscounts.map(bd => `${bd.qty}-${bd.discount}`).join('&&&')
                             : undefined,
-                        productQuantity: prodQuantity,
+                        productQuantity: Number(prodQuantity) || 0,
                         productType: prodType
                     });
                 }
@@ -590,7 +590,7 @@ export default function AdminInventoryPage() {
                     productId: Number(selectedProduct.id),
                     ...pricePayload,
                     size: qty,
-                    sizeQuantity: sizeQuantity,
+                    sizeQuantity: Number(sizeQuantity) || 0,
                     sizeStatus: sizeStatus // Default or from state? Using state.
                 });
             } else if (level === 'SIZE_COLOUR' && selectedPricing && !isManageSheetOpen) {
@@ -660,7 +660,7 @@ export default function AdminInventoryPage() {
         if (manageMode === 'ADD_PRICING' && editingItem) {
             // Compare as strings with null safety
             const currentQty = String(qty || "").trim();
-            const originalQty = String(editingItem.quantity || "").trim();
+            const originalQty = String(editingItem.size || "").trim();
 
             const currentSizeQty = String(sizeQuantity || "").trim();
             const originalSizeQty = String(editingItem.sizeQuantity || "").trim();
@@ -855,7 +855,7 @@ export default function AdminInventoryPage() {
                 <>
                     <ChevronRight className="w-4 h-4 mx-2" />
                     <span className="font-bold text-primary">
-                        {selectedPricing.quantity}
+                        {selectedPricing.size}
                     </span>
                 </>
             )}
@@ -1234,14 +1234,14 @@ export default function AdminInventoryPage() {
                                 {level === 'CATALOGUE' && (editingItem ? "Edit Catalogue" : `Add Catalogue to ${selectedCategory?.name}`)}
                                 {level === 'PRODUCT' && `Add Product to ${selectedCatalogue?.name}`}
                                 {level === 'PRICING' && `Add Variant to ${selectedProduct?.name}`}
-                                {level === 'SIZE_COLOUR' && `Add Size Colour to ${selectedPricing?.quantity}`}
+                                {level === 'SIZE_COLOUR' && `Add Size Colour to ${selectedPricing?.size}`}
                             </SheetTitle>
                             <SheetDescription>
                                 {level === 'CATEGORY' && (editingItem ? "Update category details." : "Create a new top-level category.")}
                                 {level === 'CATALOGUE' && (editingItem ? "Update catalogue details." : `Creating a new catalogue under ${selectedCategory?.name}.`)}
                                 {level === 'PRODUCT' && `Creating a new product under ${selectedCatalogue?.name}.`}
                                 {level === 'PRICING' && `Adding a pricing variant for ${selectedProduct?.name}.`}
-                                {level === 'SIZE_COLOUR' && `Adding a size colour for the ${selectedPricing?.quantity} variant.`}
+                                {level === 'SIZE_COLOUR' && `Adding a size colour for the ${selectedPricing?.size} variant.`}
                             </SheetDescription>
                         </SheetHeader>
                         {renderSheetForm()}
@@ -1717,7 +1717,7 @@ export default function AdminInventoryPage() {
                                                             {expandedPricingId === p.id ? <Layers className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
                                                         </div>
                                                         <div>
-                                                            <div className="font-bold text-sm">{p.quantity}</div>
+                                                            <div className="font-bold text-sm">{p.size}</div>
                                                             <div className="text-xs text-muted-foreground flex items-center gap-2">
                                                                 {p.priceAfterDiscount && p.priceAfterDiscount < p.price ? (
                                                                     <>
@@ -1739,7 +1739,7 @@ export default function AdminInventoryPage() {
                                                     <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full hover:bg-muted" onClick={(e) => {
                                                         e.stopPropagation();
                                                         setEditingItem(p);
-                                                        setQty(p.quantity);
+                                                        setQty(p.size);
                                                         setSizeQuantity(p.sizeQuantity || "");
                                                         setPrice(String(p.price));
                                                         setDiscountedPrice(String(p.priceAfterDiscount));
@@ -1981,7 +1981,7 @@ export default function AdminInventoryPage() {
                                 className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md group"
                                 onClick={() => { setSelectedPricing(p); setLevel('SIZE_COLOUR'); }}>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-base font-bold">{p.quantity}</CardTitle>
+                                    <CardTitle className="text-base font-bold">{p.size}</CardTitle>
                                     <Tag className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                 </CardHeader>
                                 <CardContent>

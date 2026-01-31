@@ -10,7 +10,8 @@ import {
     UpdateCategoryRequest, UpdateCategoryResponse,
     UpdateCatalogueRequest, UpdateCatalogueResponse,
     UpdateProductRequest,
-    CreateSizeColourRequest, CreateSizeColourResponse
+    CreateSizeColourRequest, CreateSizeColourResponse,
+    UpdateSizeColourRequest, UpdateSizeColourResponse
 } from '@/lib/api-types';
 
 export const adminService = {
@@ -91,8 +92,8 @@ export const adminService = {
         });
     },
 
-    updateSizeColour: async (data: any) => {
-        return apiClient<any>('/product/size-colour/update', {
+    updateSizeColour: async (data: UpdateSizeColourRequest) => {
+        return apiClient<UpdateSizeColourResponse>('/product/size-colour/update', {
             method: 'PUT',
             body: JSON.stringify(data),
         });

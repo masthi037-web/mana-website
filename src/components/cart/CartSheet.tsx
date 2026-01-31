@@ -732,13 +732,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         const quantityVariant = item.selectedVariants?.['Quantity'];
                         if (quantityVariant) {
                             sizeName = quantityVariant;
-                            const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
+                            const matchedPricing = item.pricing.find(p => p.size === quantityVariant);
                             if (matchedPricing) sizeId = parseInt(matchedPricing.id);
                         }
                         if (!sizeId && item.pricing.length > 0) {
                             // Fallback to first
                             sizeId = parseInt(item.pricing[0].id);
-                            sizeName = item.pricing[0].quantity;
+                            sizeName = item.pricing[0].size;
                         }
                     }
 
@@ -980,7 +980,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 if (item.pricing && item.pricing.length > 0) {
                     const quantityVariant = item.selectedVariants['Quantity'];
                     if (quantityVariant) {
-                        const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
+                        const matchedPricing = item.pricing.find(p => p.size === quantityVariant);
                         if (matchedPricing) sizeId = parseInt(matchedPricing.id);
                     }
                     if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
@@ -1049,7 +1049,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 } else if (item.pricing && item.pricing.length > 0) {
                     const quantityVariant = item.selectedVariants?.['Quantity'];
                     if (quantityVariant) {
-                        const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
+                        const matchedPricing = item.pricing.find(p => p.size === quantityVariant);
                         if (matchedPricing) sizeId = parseInt(matchedPricing.id);
                     }
                     if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
@@ -1060,7 +1060,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 let stockKey = "";
 
                 if (detail.productSizeColourId) {
-                    availableStock = parseInt(detail.productSizeColourQuantity || '0');
+                    availableStock = Number(detail.productSizeColourQuantity || 0);
                     stockKey = `${detail.productId}-sc-${detail.productSizeColourId}`;
                 }
                 else if (sizeId) {
@@ -1068,15 +1068,15 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     // But we haven't done Identity Check yet!
                     // Wait, we need to do Identity Check FIRST.
                     // Let's refine the order inside the loop.
-                    availableStock = parseInt(detail.sizeQuantity || '0');
+                    availableStock = Number(detail.sizeQuantity || 0);
                     stockKey = `${detail.productId}-size-${sizeId}`;
                 }
                 else if (detail.productColourId) {
-                    availableStock = parseInt(detail.colourQuantityAvailable || '0');
+                    availableStock = Number(detail.colourQuantityAvailable || 0);
                     stockKey = `${detail.productId}-col-${detail.productColourId}`;
                 }
                 else {
-                    availableStock = parseInt(detail.productQuantityAvailable || '0');
+                    availableStock = Number(detail.productQuantityAvailable || 0);
                     stockKey = `${detail.productId}-master`;
                 }
                 if (isNaN(availableStock)) availableStock = 0;
@@ -1094,7 +1094,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     // Same logic as above, just ensuring variable consistency
                     const quantityVariant = item.selectedVariants?.['Quantity'];
                     if (quantityVariant) {
-                        const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
+                        const matchedPricing = item.pricing.find(p => p.size === quantityVariant);
                         if (matchedPricing) checkSizeId = parseInt(matchedPricing.id);
                     }
                     if (!checkSizeId && item.pricing.length > 0) checkSizeId = parseInt(item.pricing[0].id);
@@ -1202,9 +1202,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         }
                     }
 
-                    // 3. Validate productSizeColourQuantity (Stock)
-                    if (detail.productSizeColourQuantity) {
-                        const scLimit = parseInt(detail.productSizeColourQuantity);
+                    if (detail.productSizeColourQuantity !== null && detail.productSizeColourQuantity !== undefined) {
+                        const scLimit = Number(detail.productSizeColourQuantity);
                         const scKey = `${detail.productId}-sc-${detail.productSizeColourId}`;
                         const scConsumed = stockUsageMap.get(scKey) || 0;
                         const remainingSc = scLimit - scConsumed;
@@ -1317,8 +1316,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
 
                     // 4. Validate sizeQuantity (Stock)
-                    if (detail.sizeQuantity) {
-                        const szLimit = parseInt(detail.sizeQuantity);
+                    if (detail.sizeQuantity !== null && detail.sizeQuantity !== undefined) {
+                        const szLimit = Number(detail.sizeQuantity);
                         const szKey = `${detail.productId}-sz-${detail.sizeId}`;
                         const szConsumed = stockUsageMap.get(szKey) || 0;
                         const remainingSz = szLimit - szConsumed;
@@ -1406,8 +1405,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     }
 
                     // 4. Validate colourQuantityAvailable
-                    if (detail.colourQuantityAvailable) {
-                        const colLimit = parseInt(detail.colourQuantityAvailable);
+                    if (detail.colourQuantityAvailable !== null && detail.colourQuantityAvailable !== undefined) {
+                        const colLimit = Number(detail.colourQuantityAvailable);
                         const colKey = `${detail.productId}-col-${detail.productColourId}`;
                         const colConsumed = stockUsageMap.get(colKey) || 0;
                         const remainingCol = colLimit - colConsumed;
@@ -1474,8 +1473,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     }
 
                     // 2. Validate productQuantityAvailable
-                    if (detail.productQuantityAvailable) {
-                        const prodLimit = parseInt(detail.productQuantityAvailable);
+                    if (detail.productQuantityAvailable !== null && detail.productQuantityAvailable !== undefined) {
+                        const prodLimit = Number(detail.productQuantityAvailable);
                         const prodKey = `${detail.productId}-master`; // Shared master stock
                         const prodConsumed = stockUsageMap.get(prodKey) || 0;
                         const remainingProd = prodLimit - prodConsumed;
