@@ -732,13 +732,12 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         const quantityVariant = item.selectedVariants?.['Quantity'];
                         if (quantityVariant) {
                             sizeName = quantityVariant;
-                            const matchedPricing = item.pricing.find(p => p.size === quantityVariant);
+                            const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
                             if (matchedPricing) sizeId = parseInt(matchedPricing.id);
                         }
                         if (!sizeId && item.pricing.length > 0) {
-                            // Fallback to first
                             sizeId = parseInt(item.pricing[0].id);
-                            sizeName = item.pricing[0].size;
+                            sizeName = item.pricing[0].quantity;
                         }
                     }
 
@@ -980,7 +979,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 if (item.pricing && item.pricing.length > 0) {
                     const quantityVariant = item.selectedVariants['Quantity'];
                     if (quantityVariant) {
-                        const matchedPricing = item.pricing.find(p => p.size === quantityVariant);
+                        const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
                         if (matchedPricing) sizeId = parseInt(matchedPricing.id);
                     }
                     if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
@@ -1049,7 +1048,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 } else if (item.pricing && item.pricing.length > 0) {
                     const quantityVariant = item.selectedVariants?.['Quantity'];
                     if (quantityVariant) {
-                        const matchedPricing = item.pricing.find(p => p.size === quantityVariant);
+                        const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
                         if (matchedPricing) sizeId = parseInt(matchedPricing.id);
                     }
                     if (!sizeId && item.pricing.length > 0) sizeId = parseInt(item.pricing[0].id);
@@ -1094,7 +1093,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     // Same logic as above, just ensuring variable consistency
                     const quantityVariant = item.selectedVariants?.['Quantity'];
                     if (quantityVariant) {
-                        const matchedPricing = item.pricing.find(p => p.size === quantityVariant);
+                        const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
                         if (matchedPricing) checkSizeId = parseInt(matchedPricing.id);
                     }
                     if (!checkSizeId && item.pricing.length > 0) checkSizeId = parseInt(item.pricing[0].id);

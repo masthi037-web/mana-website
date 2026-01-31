@@ -16,7 +16,7 @@ export type ProductPriceOption = {
   id: string;
   price: number;
   priceAfterDiscount?: number;
-  size: string;
+  quantity: string;
   sizeQuantity: number;
   sizeColours?: ProductSizeColourOption[];
   sizeStatus?: string;

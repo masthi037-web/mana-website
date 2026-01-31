@@ -176,7 +176,7 @@ export default function AdminInventoryPage() {
                 id: String(p.productSizeId),
                 price: p.productSizePrice,
                 priceAfterDiscount: p.productSizePriceAfterDiscount,
-                size: p.size,
+                quantity: p.size,
                 sizeQuantity: p.sizeQuantity,
                 sizeStatus: p.sizeStatus || "ACTIVE"
             }));
@@ -855,7 +855,7 @@ export default function AdminInventoryPage() {
                 <>
                     <ChevronRight className="w-4 h-4 mx-2" />
                     <span className="font-bold text-primary">
-                        {selectedPricing.size}
+                        {selectedPricing.quantity}
                     </span>
                 </>
             )}
@@ -1234,14 +1234,14 @@ export default function AdminInventoryPage() {
                                 {level === 'CATALOGUE' && (editingItem ? "Edit Catalogue" : `Add Catalogue to ${selectedCategory?.name}`)}
                                 {level === 'PRODUCT' && `Add Product to ${selectedCatalogue?.name}`}
                                 {level === 'PRICING' && `Add Variant to ${selectedProduct?.name}`}
-                                {level === 'SIZE_COLOUR' && `Add Size Colour to ${selectedPricing?.size}`}
+                                {level === 'SIZE_COLOUR' && `Add Size Colour to ${selectedPricing?.quantity}`}
                             </SheetTitle>
                             <SheetDescription>
                                 {level === 'CATEGORY' && (editingItem ? "Update category details." : "Create a new top-level category.")}
                                 {level === 'CATALOGUE' && (editingItem ? "Update catalogue details." : `Creating a new catalogue under ${selectedCategory?.name}.`)}
                                 {level === 'PRODUCT' && `Creating a new product under ${selectedCatalogue?.name}.`}
                                 {level === 'PRICING' && `Adding a pricing variant for ${selectedProduct?.name}.`}
-                                {level === 'SIZE_COLOUR' && `Adding a size colour for the ${selectedPricing?.size} variant.`}
+                                {level === 'SIZE_COLOUR' && `Adding a size colour for the ${selectedPricing?.quantity} variant.`}
                             </SheetDescription>
                         </SheetHeader>
                         {renderSheetForm()}
@@ -1717,7 +1717,7 @@ export default function AdminInventoryPage() {
                                                             {expandedPricingId === p.id ? <Layers className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
                                                         </div>
                                                         <div>
-                                                            <div className="font-bold text-sm">{p.size}</div>
+                                                            <div className="font-bold text-sm">{p.quantity}</div>
                                                             <div className="text-xs text-muted-foreground flex items-center gap-2">
                                                                 {p.priceAfterDiscount && p.priceAfterDiscount < p.price ? (
                                                                     <>
@@ -1739,7 +1739,7 @@ export default function AdminInventoryPage() {
                                                     <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full hover:bg-muted" onClick={(e) => {
                                                         e.stopPropagation();
                                                         setEditingItem(p);
-                                                        setQty(p.size);
+                                                        setQty(p.quantity);
                                                         setSizeQuantity(p.sizeQuantity || "");
                                                         setPrice(String(p.price));
                                                         setDiscountedPrice(String(p.priceAfterDiscount));

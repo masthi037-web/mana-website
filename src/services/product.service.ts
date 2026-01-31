@@ -203,7 +203,7 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
         priceAfterDiscount: (p.productSizePrice !== null && p.productSizePrice !== undefined && p.productSizePrice > 0)
             ? ((p as any).productSizePriceAfterDiscount) // Assuming this field exists on variant if price exists
             : ((apiProd as any).productPriceAfterDiscount), // Fallback to parent discount
-        size: p.size || (p as any).sizeProduct,
+        quantity: p.size || (p as any).sizeProduct,
         sizeQuantity: Number(p.sizeQuantity) || 0,
         sizeStatus: p.sizeStatus,
         sizeColours: p.productSizeColours?.map(a => ({
