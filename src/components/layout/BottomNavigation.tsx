@@ -3,20 +3,24 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Heart, ShoppingCart, History, Settings } from 'lucide-react';
+import { Home, Heart, ShoppingCart, History, Settings, ClipboardList, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
 import { useEffect, useState } from 'react';
 import { HistorySheet } from '@/components/history/HistorySheet';
+import { CompanyOrdersSheet } from '@/components/admin/CompanyOrdersSheet';
+import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { useAuth } from '@/hooks/use-auth';
 
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
   { href: '/wishlist', icon: Heart, label: 'Wishlist' },
   { href: '/cart', icon: ShoppingCart, label: 'Cart' },
-  { href: '/history', icon: History, label: 'History' },
+  { href: '/admin/orders', icon: ClipboardList, label: 'Company Orders' },
   { href: '/admin/inventory', icon: Settings, label: 'Admin' },
+  { href: '/profile', icon: User, label: 'Profile' },
+  { href: '/history', icon: History, label: 'History' },
 ];
 
 const BottomNavigation = () => {
@@ -35,8 +39,12 @@ const BottomNavigation = () => {
       <nav className="container mx-auto flex h-16 items-center justify-around px-4">
         {navItems.map(({ href, icon: Icon, label }) => {
           if (label === 'Admin' && (!isLoggedIn || !isOwner)) return null;
-          // History check remains same but uses shared props
           if (label === 'History' && (!isLoggedIn || !userRole?.includes('CUSTOMER'))) return null;
+          if (label === 'Company Orders' && (!isLoggedIn || !isOwner)) return null;
+          if (label === 'Profile' && !isLoggedIn) return null;
+
+          // Hide Cart, Wishlist, and Home for Owner
+          if ((label === 'Cart' || label === 'Wishlist' || label === 'Home') && isOwner) return null;
 
           const isActive = pathname === href;
           const isActionItem = label === 'Cart' || label === 'Wishlist';
@@ -56,6 +64,42 @@ const BottomNavigation = () => {
                   <span className="text-xs font-medium">{label}</span>
                 </button>
               </HistorySheet>
+            );
+          }
+
+          if (label === 'Company Orders') {
+            return (
+              <CompanyOrdersSheet key={label}>
+                <button
+                  className={cn(
+                    'flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-primary',
+                    isActive && 'text-primary'
+                  )}
+                >
+                  <div className="relative">
+                    <Icon className={cn("h-6 w-6", isActive ? "fill-current" : "")} strokeWidth={1.5} />
+                  </div>
+                  <span className="text-xs font-medium">{label}</span>
+                </button>
+              </CompanyOrdersSheet>
+            );
+          }
+
+          if (label === 'Profile') {
+            return (
+              <ProfileSheet key={label}>
+                <button
+                  className={cn(
+                    'flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-primary',
+                    isActive && 'text-primary'
+                  )}
+                >
+                  <div className="relative">
+                    <Icon className={cn("h-6 w-6", isActive ? "fill-current" : "")} strokeWidth={1.5} />
+                  </div>
+                  <span className="text-xs font-medium">{label}</span>
+                </button>
+              </ProfileSheet>
             );
           }
 

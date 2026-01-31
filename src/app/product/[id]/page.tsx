@@ -69,7 +69,7 @@ const ColourCard = ({
   <div
     onClick={active ? onClick : undefined}
     className={cn(
-      "relative flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all duration-300 ease-out h-[88px]",
+      "relative flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all duration-300 ease-out h-[80px]",
       active ? "cursor-pointer hover:border-primary/30 hover:bg-secondary/30" : "cursor-not-allowed opacity-50 bg-muted/50 border-input grayscale",
       isSelected && active
         ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
@@ -219,7 +219,13 @@ export default function ProductDetailPage() {
         // Initialize pricing selection
         if (foundProduct && foundProduct.pricing && foundProduct.pricing.length > 0) {
           // Default to first option
-          setSelectedPricingId(foundProduct.pricing[0].id);
+          const firstPricing = foundProduct.pricing[0];
+          setSelectedPricingId(firstPricing.id);
+
+          // Default to first style if available
+          if (firstPricing.sizeColours && firstPricing.sizeColours.length > 0) {
+            setSelectedSizeColourId(firstPricing.sizeColours[0].id);
+          }
         }
 
         // Initialize colour
@@ -391,7 +397,7 @@ export default function ProductDetailPage() {
       </div>
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
         {/* Product Image */}
-        <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden bg-secondary/10 border border-border/50 shadow-sm md:aspect-auto md:h-[550px]">
+        <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden bg-secondary/10 border border-border/50 shadow-sm md:aspect-auto md:h-[480px]">
           <Image
             src={(() => {
               // 1. Prioritize selected Size-Colour image
@@ -422,7 +428,7 @@ export default function ProductDetailPage() {
           <div>
             <div className="space-y-1">
               <span className="text-sm font-bold tracking-widest text-muted-foreground uppercase">{companyDetails?.companyName || 'Digi Turu'}</span>
-              <h1 className="font-headline text-3xl md:text-5xl font-bold text-foreground leading-tight">
+              <h1 className="font-headline text-3xl md:text-4xl font-bold text-foreground leading-tight">
                 {product.name}
               </h1>
             </div>
@@ -511,7 +517,7 @@ export default function ProductDetailPage() {
                           setSelectedSizeColourId(null);
                         }}
                         className={cn(
-                          "relative flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 transition-all duration-200 h-24",
+                          "relative flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 transition-all duration-200 h-20",
                           selectedPricingId === option.id
                             ? "border-primary bg-primary/5 shadow-sm"
                             : "border-border bg-background hover:border-primary/30"
@@ -579,7 +585,7 @@ export default function ProductDetailPage() {
                         key={sc.id}
                         onClick={() => setSelectedSizeColourId(sc.id)}
                         className={cn(
-                          "relative flex flex-col items-center p-2 rounded-xl border-2 transition-all duration-300 ease-out h-[110px] sm:h-[120px]",
+                          "relative flex flex-col items-center p-2 rounded-xl border-2 transition-all duration-300 ease-out h-[100px] sm:h-[110px]",
                           isSelected
                             ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
                             : "border-transparent bg-secondary/30 hover:border-primary/30 hover:bg-secondary/50"
