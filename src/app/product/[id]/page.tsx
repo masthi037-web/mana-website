@@ -514,7 +514,12 @@ export default function ProductDetailPage() {
                         key={option.id}
                         onClick={() => {
                           setSelectedPricingId(option.id);
-                          setSelectedSizeColourId(null);
+                          // Auto-select first style when size is changed
+                          if (option.sizeColours && option.sizeColours.length > 0) {
+                            setSelectedSizeColourId(option.sizeColours[0].id);
+                          } else {
+                            setSelectedSizeColourId(null);
+                          }
                         }}
                         className={cn(
                           "relative flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 transition-all duration-200 h-20",
