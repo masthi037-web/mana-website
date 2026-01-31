@@ -30,7 +30,7 @@ export default async function AppShell({ children, companyDomain }: AppShellProp
             {companyDetails && <StoreInitializer companyDetails={companyDetails} />}
             <QueryProvider>
                 <div className="relative flex min-h-full w-full flex-col">
-                    <Header companyName={companyDetails?.companyName} />
+                    <Header companyName={companyDetails?.companyName} fetchAllAtOnce={tenantConfig.fetchAllAtOnce ?? true} />
                     <main className="flex-1 pb-24">{children}</main>
                     <Footer companyName={companyDetails?.companyName} socialLinks={companyDetails?.socialMediaLink} />
                     <BottomNavigation />

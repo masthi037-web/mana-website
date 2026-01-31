@@ -31,7 +31,7 @@ const navItems = [
   { href: '/admin/inventory', label: 'Admin', icon: Settings },
 ];
 
-const Header = ({ companyName = "ManaBuy" }: { companyName?: string }) => {
+const Header = ({ companyName = "ManaBuy", fetchAllAtOnce = true }: { companyName?: string, fetchAllAtOnce?: boolean }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { wishlist } = useWishlist();
@@ -122,54 +122,55 @@ const Header = ({ companyName = "ManaBuy" }: { companyName?: string }) => {
             {companyName}
           </span>
         </Link>
-        <div className="relative flex-1 mx-2 md:mx-4 w-full max-w-md lg:max-w-lg" ref={searchRef}>
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={text.searchPlaceholder || "Search products, brands, and more..."}
-            className="pl-10 rounded-full bg-secondary/50 border-transparent focus:bg-background focus:border-input transition-all duration-300"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => searchQuery.trim() && setShowDropdown(true)}
-          />
+        {!(pathname === '/' && !fetchAllAtOnce) && (
+          <div className="relative flex-1 mx-2 md:mx-4 w-full max-w-md lg:max-w-lg" ref={searchRef}>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={text.searchPlaceholder || "Search products, brands, and more..."}
+              className="pl-10 rounded-full bg-secondary/50 border-transparent focus:bg-background focus:border-input transition-all duration-300"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => searchQuery.trim() && setShowDropdown(true)}
+            />
 
-          {/* Search Dropdown */}
-          {showDropdown && (
-            <div className="absolute top-full left-0 w-full mt-2 bg-card border rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-              {searchResults.length > 0 ? (
-                <div className="py-2">
-                  <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Products
+            {/* Search Dropdown */}
+            {showDropdown && (
+              <div className="absolute top-full left-0 w-full mt-2 bg-card border rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                {searchResults.length > 0 ? (
+                  <div className="py-2">
+                    <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Products
+                    </div>
+                    {searchResults.map(product => {
+                      const fallbackImage = PlaceHolderImages.find(i => i.id === product.imageId) || { imageUrl: `https://picsum.photos/seed/${product.id}/50` };
+                      const displayImage = product.productImage || (product.images && product.images.length > 0 ? product.images[0] : '') || fallbackImage.imageUrl || `https://picsum.photos/seed/${product.id}/50`;
+
+                      return (
+                        <div
+                          key={product.id}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 cursor-pointer transition-colors"
+                          onClick={() => handleProductClick(product.id)}
+                        >
+                          <div className="h-10 w-10 rounded-md overflow-hidden bg-secondary relative">
+                            <img src={displayImage} alt={product.name} className="object-cover w-full h-full" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-medium text-foreground line-clamp-1">{product.name}</h4>
+                            <p className="text-xs text-muted-foreground">₹{product.price}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  {searchResults.map(product => {
-                    // Resolve image similarly to other components or use mock/placeholder logic if needed
-                    // For simplify, using placeholder or first logic
-                    const image = PlaceHolderImages.find(i => i.id === product.imageId) || { imageUrl: `https://picsum.photos/seed/${product.id}/50` };
-
-                    return (
-                      <div
-                        key={product.id}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 cursor-pointer transition-colors"
-                        onClick={() => handleProductClick(product.id)}
-                      >
-                        <div className="h-10 w-10 rounded-md overflow-hidden bg-secondary relative">
-                          <img src={image.imageUrl || `https://picsum.photos/seed/${product.id}/50`} alt={product.name} className="object-cover w-full h-full" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-sm font-medium text-foreground line-clamp-1">{product.name}</h4>
-                          <p className="text-xs text-muted-foreground">₹{product.price}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="p-8 text-center text-muted-foreground">
-                  <p>No results found for "{searchQuery}"</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                ) : (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <p>No results found for "{searchQuery}"</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         <nav className="flex items-center gap-2 text-sm font-medium">
           <div className='hidden md:flex items-center gap-2'>
             {navItems.map(({ href, label, icon: Icon }) => {

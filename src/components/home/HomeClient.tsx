@@ -205,16 +205,33 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
     const selectedCatalog = catalogs.find(c => c.id === selectedCatalogId);
     const imageMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
 
-    const baseProducts: ProductWithImage[] = selectedCatalog
-        ? selectedCatalog.products.map(p => {
-            const image = imageMap.get(p.imageId);
-            return {
-                ...p,
-                imageHint: image?.imageHint || 'product image',
-                imageUrl: `https://picsum.photos/seed/${p.id}/300/300` // Using seed for consistent images
-            }
-        })
-        : [];
+    const baseProducts: ProductWithImage[] = (() => {
+        // If searching and NOT fetching all at once, search across ALL catalogs in the active category
+        if (searchQuery && activeCategory) {
+            return activeCategory.catalogs.flatMap(catalog =>
+                catalog.products.map(p => {
+                    const image = imageMap.get(p.imageId);
+                    return {
+                        ...p,
+                        imageHint: image?.imageHint || 'product image',
+                        imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || `https://picsum.photos/seed/${p.id}/300/300`
+                    };
+                })
+            );
+        }
+
+        // Standard behavior: show products for selected catalog
+        return selectedCatalog
+            ? selectedCatalog.products.map(p => {
+                const image = imageMap.get(p.imageId);
+                return {
+                    ...p,
+                    imageHint: image?.imageHint || 'product image',
+                    imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || `https://picsum.photos/seed/${p.id}/300/300` // Using seed for consistent images
+                }
+            })
+            : [];
+    })();
 
     // Calculate dynamic price range for the current view transparency
     const currentPrices = baseProducts.map(p => p.price);
@@ -524,34 +541,27 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                                             <span className="ml-2 text-muted-foreground">Loading products...</span>
                                         </div>
-                                    ) : (
+                                    ) : !searchQuery ? (
                                         <CatalogGrid
                                             catalogs={catalogs}
                                             selectedCatalogId={selectedCatalogId}
                                             onSelectCatalog={handleSelectCatalog}
                                         />
-                                    )}
+                                    ) : null}
 
-                                    {selectedCatalog && (
+                                    {(selectedCatalog || searchQuery) && (
                                         <div id="products-anchor" className="mt-16 animate-in fade-in zoom-in-95 duration-500">
                                             <div className="flex items-center justify-between mb-8">
                                                 <div>
-                                                    <h3 className="text-2xl font-bold font-headline">{selectedCatalog.name}</h3>
+                                                    <h3 className="text-2xl font-bold font-headline">
+                                                        {searchQuery ? `Search Results in ${activeCategory?.name}` : selectedCatalog?.name}
+                                                    </h3>
                                                     <p className="text-muted-foreground text-sm mt-1">
                                                         {filteredProducts.length} items {filteredProducts.length !== baseProducts.length ? '(filtered)' : 'available'}
                                                     </p>
                                                 </div>
-                                                {/* <FilterSortSheet
-                                            currentFilters={filters}
-                                            onApply={setFilters}
-                                            minPrice={minProductPrice}
-                                            maxPrice={maxProductPrice}
-                                        /> */}
                                             </div>
                                             <ProductGrid products={filteredProducts} />
-                                            {/* <div className="mt-12 text-center">
-                                            <Button size="lg" variant="secondary" className="rounded-full px-8">Load More Products</Button>
-                                        </div> */}
                                         </div>
                                     )}
                                 </div>
