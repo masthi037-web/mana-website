@@ -829,7 +829,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
         } catch (error) {
             console.error(error);
-            toast({ variant: "destructive", title: "Error", description: "Failed to place order." });
+            setView('cart');
+            setShowQrPopup(false);
+            toast({ variant: "destructive", title: "Order Failed", description: "Stock insufficient. Please re-try" });
         } finally {
             setIsInitializingPayment(false);
         }
