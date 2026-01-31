@@ -20,12 +20,14 @@ export default async function Home() {
   const company = await fetchCompanyDetails(companyDomain);
   const tenantConfig = resolveTenantConfig(companyDomain);
 
-  // Merge Config Features into Company Details (Frontend Override)
-  if (company && tenantConfig.featuresList) {
-    company.features = tenantConfig.featuresList;
-  }
+  console.log(`[InitialLoad] Domain: ${companyDomain}`);
+  console.log(`[InitialLoad] fetchAllAtOnce: ${tenantConfig.fetchAllAtOnce ?? true}`);
 
   // Use companyId if available, otherwise empty array (or handle error)
+  if (company?.companyId) {
+    console.log(`[InitialLoad] Calling fetchCategories for companyId: ${company.companyId}`);
+  }
+
   const categories = (company && company.companyId)
     ? await fetchCategories(company.companyId, company.deliveryBetween, tenantConfig.fetchAllAtOnce ?? true)
     : [];

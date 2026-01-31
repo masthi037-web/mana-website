@@ -14,26 +14,22 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
     if (!companyId) return [];
     try {
         if (!fetchAllAtOnce) {
-            // Optimized fetch: Get categories first, then fetch products parallelly
-            // User specified endpoint: /manaBuy-services/category/public/get-all-by-company?companyId=
-            // Base URL already includes /manaBuy-services
+            console.log(`[ProductService] Fetching category list from: /category/public/get-all-by-company`);
             const categories = await apiClient<CategoryPublicResponse[]>('/category/public/get-all-by-company', {
                 params: { companyId },
                 next: { revalidate: 300, tags: ['categories'] } // Cache the category list
             });
 
             if (!categories || categories.length === 0) {
-                console.log('[ProductService] No categories found from /category/public/get-all-by-company');
+                console.log('[ProductService] No categories found');
                 return [];
             }
 
-            // Fetch products ONLY for the first category initially
             const firstCategory = categories[0];
-            console.log('[ProductService] First category from list:', JSON.stringify(firstCategory, null, 2));
-
             let firstCategoryData: AppCategory | null = null;
 
             if (firstCategory && firstCategory.categoryId) {
+                console.log(`[ProductService] Fetching products for first category (${firstCategory.categoryId}) from: /company/public/get-products-by-category/get`);
                 try {
                     const catData = await apiClient<ApiCategory>('/company/public/get-products-by-category/get', {
                         params: { categoryId: String(firstCategory.categoryId) },
@@ -46,8 +42,6 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
                 }
             }
 
-            // Map the rest of the categories as empty place holders (structure only)
-            // They will be loaded on demand by the client
             return categories.map((cat, index) => {
                 if (index === 0 && firstCategoryData) {
                     return firstCategoryData;
@@ -61,13 +55,12 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
             });
 
         } else {
-            // Original "Fetch All" logic
+            console.log(`[ProductService] Fetching all categories and products from: /company/public/category/catalogue/product/get`);
             const data = await apiClient<CompanyInventory>('/company/public/category/catalogue/product/get', {
                 params: { companyId },
                 next: { revalidate: 300, tags: ['products'] } // 5 minutes cache
             });
 
-            // The API returns a robust structure, we need to map it to our App's simpler types
             return mapApiCategoriesToAppCategories(data.categories || [], deliveryTime);
         }
     } catch (error) {
