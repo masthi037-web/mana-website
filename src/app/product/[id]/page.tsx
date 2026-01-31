@@ -522,7 +522,7 @@ export default function ProductDetailPage() {
                           }
                         }}
                         className={cn(
-                          "relative flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 transition-all duration-200 h-20",
+                          "relative flex flex-col items-center justify-center py-2 px-2 rounded-lg border-2 transition-all duration-200 h-14",
                           selectedPricingId === option.id
                             ? "border-primary bg-primary/5 shadow-sm"
                             : "border-border bg-background hover:border-primary/30"
@@ -533,7 +533,7 @@ export default function ProductDetailPage() {
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                           </div>
                         )}
-                        <span className={cn("text-lg font-bold mb-1", selectedPricingId === option.id ? "text-primary" : "text-foreground")}>
+                        <span className={cn("text-base font-bold mb-0.5", selectedPricingId === option.id ? "text-primary" : "text-foreground")}>
                           <div className="font-medium text-center">
                             {option.quantity}
                             {option.price > 0 && !allPricesSame && <span className="ml-1 text-xs text-primary font-bold">+₹{option.price}</span>}
@@ -590,7 +590,7 @@ export default function ProductDetailPage() {
                         key={sc.id}
                         onClick={() => setSelectedSizeColourId(sc.id)}
                         className={cn(
-                          "relative flex flex-col items-center p-2 rounded-xl border-2 transition-all duration-300 ease-out h-[100px] sm:h-[110px]",
+                          "relative flex flex-col items-center p-1.5 rounded-lg border-2 transition-all duration-300 ease-out h-[84px] sm:h-[94px]",
                           isSelected
                             ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
                             : "border-transparent bg-secondary/30 hover:border-primary/30 hover:bg-secondary/50"
@@ -601,7 +601,7 @@ export default function ProductDetailPage() {
                             <Check className="w-3 h-3" strokeWidth={3} />
                           </div>
                         )}
-                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 mb-2 rounded-full overflow-hidden border border-border/50 bg-white">
+                        <div className="relative w-10 h-10 mb-1.5 rounded-full overflow-hidden border border-border/50 bg-white">
                           {sc.productPics ? (
                             <img src={sc.productPics} alt={sc.name} className="w-full h-full object-cover" />
                           ) : (

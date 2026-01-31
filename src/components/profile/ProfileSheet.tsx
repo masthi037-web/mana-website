@@ -218,7 +218,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const handleEditProfile = async () => {
         setIsLoading(true);
         try {
-            const data = await customerService.getCustomerDetails();
+            const data = await customerService.getCustomerDetails(true);
             setCustomerData(data);
             setName(data.customerName || '');
             setEmail(data.customerEmailId || '');
@@ -335,7 +335,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                                 <Avatar className="h-16 w-16 border-2 border-teal-100">
                                     <AvatarImage src="https://github.com/shadcn.png" alt="@user" />
                                     <AvatarFallback className="text-lg bg-teal-50 text-teal-600">
-                                        {phoneNumber.slice(-2)}
+                                        {customerData?.customerName ? customerData.customerName.charAt(0).toUpperCase() : phoneNumber.slice(-2)}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div>

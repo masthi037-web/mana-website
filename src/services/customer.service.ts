@@ -45,10 +45,21 @@ export const customerService = {
     },
 
     async updateCustomer(data: UpdateCustomerRequest) {
-        return apiClient<CustomerDetails>('/customer/update', {
+        const response = await apiClient<CustomerDetails>('/customer/update', {
             method: 'PUT',
             body: JSON.stringify(data),
         });
+
+        if (response && typeof window !== 'undefined') {
+            const customerId = localStorage.getItem('customerId') || '';
+            localStorage.setItem(CACHE_KEY, JSON.stringify({
+                timestamp: Date.now(),
+                data: response,
+                id: customerId
+            }));
+        }
+
+        return response;
     },
 
     async createAddress(data: Partial<CustomerAddress>) {

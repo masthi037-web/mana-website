@@ -1704,7 +1704,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     }, [isFreeDelivery, celebrated, isCartOpen]);
 
     return (
-        <Sheet open={isCartOpen} onOpenChange={setCartOpen}>
+        <Sheet open={isCartOpen} onOpenChange={(open) => {
+            setCartOpen(open);
+            // If closing, reset view to cart after animation
+            if (!open) {
+                setTimeout(() => setView('cart'), 300);
+            }
+        }}>
             <SheetTrigger asChild>
                 {children}
             </SheetTrigger>
