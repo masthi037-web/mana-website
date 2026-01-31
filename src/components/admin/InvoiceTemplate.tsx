@@ -215,7 +215,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
             </div>
 
             <div className="mt-auto pt-8 pb-12 px-12 text-center border-t border-slate-100">
-                <h3 className="text-xl font-bold text-slate-900 mb-2 font-serif tracking-tight">Thank you for your business</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-2 font-serif tracking-tight">Thank you for your Order</h3>
                 <p className="text-slate-500 text-sm max-w-md mx-auto mb-6 leading-relaxed">
                     We appreciate your trust in {companyDetails.companyName}. Please check your order details carefully.
                 </p>

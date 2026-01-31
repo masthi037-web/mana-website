@@ -27,7 +27,8 @@ import {
     Package,
     ChevronRight,
     MapPin,
-    ArrowLeft
+    ArrowLeft,
+    Search
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { orderService } from '@/services/order.service';
@@ -46,6 +47,7 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
     const [loading, setLoading] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<SaveOrderResponse | null>(null);
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
+    const [searchTerm, setSearchTerm] = useState<string>('');
     const { companyDetails } = useCart();
     const { toast } = useToast();
 
@@ -81,9 +83,11 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
     };
 
     // Filter Orders
-    const filteredOrders = orders.filter(order =>
-        statusFilter === 'ALL' || order.orderStatus === statusFilter
-    );
+    const filteredOrders = orders.filter(order => {
+        const matchesStatus = statusFilter === 'ALL' || order.orderStatus === statusFilter;
+        const matchesSearch = !searchTerm || (order.customerPhone && order.customerPhone.includes(searchTerm));
+        return matchesStatus && matchesSearch;
+    });
 
     // Calculate Stats
     const totalRevenue = orders.reduce((sum, order) => sum + order.finalTotalAmount, 0);
@@ -190,8 +194,19 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                                         />
                                     </div>
                                 </div>
-
                             )}
+
+                            {/* Search Bar */}
+                            <div className="relative">
+                                <span className="absolute left-3 top-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wider z-10">Search Customer Phone</span>
+                                <Input
+                                    placeholder="Enter phone number..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pt-5 h-12 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all"
+                                />
+                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                            </div>
 
                             {/* Status Filter */}
                             <div className="relative">
@@ -336,8 +351,7 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                         </div>
                     )}
                 </div>
-
             </SheetContent>
-        </Sheet >
+        </Sheet>
     );
 };
