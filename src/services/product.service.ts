@@ -12,6 +12,7 @@ import { Product } from '@/lib/api-types';
 export async function fetchCategories(companyId: string, deliveryTime?: string, fetchAllAtOnce: boolean = true): Promise<AppCategory[]> {
     console.log(`[ProductService] fetchCategories called for company: ${companyId}, fetchAllAtOnce: ${fetchAllAtOnce}`);
     if (!companyId) return [];
+
     try {
         if (!fetchAllAtOnce) {
             console.log(`[ProductService] Fetching category list from: /category/public/get-all-by-company`);
@@ -35,8 +36,13 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
                         params: { categoryId: String(firstCategory.categoryId) },
                         next: { revalidate: 300, tags: [`category-${firstCategory.categoryId}`] }
                     });
+
+                    console.log(`[ProductService] Raw catData for ID ${firstCategory.categoryId}:`, JSON.stringify(catData, null, 2));
+
                     const mappedCats = mapApiCategoriesToAppCategories([catData], deliveryTime);
                     firstCategoryData = mappedCats[0];
+
+                    console.log(`[ProductService] Mapped firstCategoryData:`, JSON.stringify(firstCategoryData, null, 2));
                 } catch (e) {
                     console.error(`Failed to fetch initial category ${firstCategory.categoryId}`, e);
                 }
