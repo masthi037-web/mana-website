@@ -110,17 +110,17 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
             });
 
             // Small delay to ensure images/fonts load (reduced since we use base64)
-            await new Promise(r => setTimeout(r, 100));
+            await new Promise(r => setTimeout(r, 50));
 
             const element = container.querySelector('#invoice-template') as HTMLElement;
             if (element) {
-                const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-                const imgData = canvas.toDataURL('image/png');
+                const canvas = await html2canvas(element, { scale: 1.5, useCORS: true });
+                const imgData = canvas.toDataURL('image/jpeg', 0.8);
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
                 pdf.save(`Invoice_${order.orderNumber}.pdf`);
             }
 
