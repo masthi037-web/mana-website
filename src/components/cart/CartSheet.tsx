@@ -745,7 +745,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     const baseItem: SaveOrderItem = {
                         productId: parseInt(item.id),
                         productName: item.name,
-                        productImage: item.imageUrl,
+                        productImage: (item.images && item.images.length > 0) ? item.images[0] : item.imageUrl,
                         productPriceAfterDiscount: item.priceAfterDiscount || item.price,
                         quantity: item.quantity,
                         totalCost: 0 // Will calculate below
