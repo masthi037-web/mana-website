@@ -115,7 +115,7 @@ export async function fetchProductDetails(productId: string): Promise<AppProduct
 function mapApiCategoriesToAppCategories(apiCategories: ApiCategory[], deliveryTime?: string): AppCategory[] {
     return apiCategories.map(cat => {
         const catId = String(cat.categoryId || (cat as any).id || (cat as any).category_id || '');
-        const catalogues = cat.catalogues || (cat as any).catalogueResponseList || [];
+        const catalogues = cat.catalogues || (cat as any).catalogueResponseList || (cat as any).catalogue_response_list || [];
 
         return {
             id: catId,
@@ -132,7 +132,7 @@ function mapApiCatalogueToAppCatalog(apiCat: ApiCatalogue, deliveryTime?: string
     return {
         id: catalogId,
         name: apiCat.catalogueName,
-        products: (apiCat.products || []).map(p => mapApiProductToAppProduct(p, deliveryTime)),
+        products: (apiCat.products || (apiCat as any).productList || (apiCat as any).product_list || []).map(p => mapApiProductToAppProduct(p, deliveryTime)),
         catalogueImage: apiCat.catalogueImage
     };
 }
