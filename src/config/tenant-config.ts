@@ -169,7 +169,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     "skfashions": {
         id: "sk-fashions",
         name: "SK Fashions",
-        fetchAllAtOnce: true,
+        fetchAllAtOnce: false,
         theme: {
             colors: {
                 primary: "346 84% 61%", // Pinkish Red (Fashionable)
