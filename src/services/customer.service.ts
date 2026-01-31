@@ -2,7 +2,7 @@ import { apiClient } from './api-client';
 import { CustomerDetails, UpdateCustomerRequest, CustomerAddress } from '@/lib/api-types';
 
 const CACHE_KEY = 'customer_details_cache';
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes
 
 export const customerService = {
     async getCustomerDetails(forceRefresh = false) {
