@@ -30,7 +30,7 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
 
             if (firstCategory) {
                 try {
-                    const catData = await apiClient<ApiCategory>('/public/get-products-by-category/get', {
+                    const catData = await apiClient<ApiCategory>('/company/public/get-products-by-category/get', {
                         params: { categoryId: String(firstCategory.categoryId) },
                         next: { revalidate: 300, tags: [`category-${firstCategory.categoryId}`] }
                     });
@@ -73,7 +73,7 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
 
 export async function fetchProductsByCategory(categoryId: string, deliveryTime?: string): Promise<AppCategory | null> {
     try {
-        const catData = await apiClient<ApiCategory>('/public/get-products-by-category/get', {
+        const catData = await apiClient<ApiCategory>('/company/public/get-products-by-category/get', {
             params: { categoryId },
             next: { revalidate: 300, tags: [`category-${categoryId}`] }
         });
