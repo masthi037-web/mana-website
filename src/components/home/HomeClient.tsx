@@ -20,6 +20,7 @@ import { ArrowRight, Sparkles, Star, Settings, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ShopNowButton } from '@/components/home/ShopNowButton';
+import { fetchProductsByCategory } from '@/services/product.service';
 
 // API Services removed from Client component - passed as props
 import { CompanyDetails } from '@/lib/api-types';
@@ -37,6 +38,7 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
 
     // Data State
     const [categories, setCategories] = useState<Category[]>(initialCategories);
+    const [isLoadingCategory, setIsLoadingCategory] = useState<Record<string, boolean>>({});
 
     // Auth State
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -114,10 +116,37 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
     }, [selectedCategory, categories]);
 
     // Sync State -> URL when user interacts
-    const updateCategory = (categoryId: string) => {
+    const updateCategory = async (categoryId: string) => {
         setSelectedCategory(categoryId);
         const category = categories.find(c => c.id === categoryId);
-        const newCatalogId = category?.catalogs[0]?.id || null;
+
+        // Lazy Load Check: If category exists but has no catalogs (and isn't explicitly empty from backend which we assume implies not loaded in this logic)
+        // We assume if catalogs is empty, it MIGHT need loading if we are in lazy load mode.
+        // However, a category could genuinely have no products. 
+        // To be safe, we can check if it was already attempted or just try fetch if empty.
+        // Current logic in product service returns empty arrays for non-loaded categories.
+
+        let targetCategory = category;
+
+        if (category && category.catalogs.length === 0 && !isLoadingCategory[categoryId]) {
+            setIsLoadingCategory(prev => ({ ...prev, [categoryId]: true }));
+            try {
+                // Fetch Data
+                const fetchedCategory = await fetchProductsByCategory(categoryId, companyDetails?.deliveryBetween);
+
+                if (fetchedCategory) {
+                    setCategories(prev => prev.map(c => c.id === categoryId ? fetchedCategory : c));
+                    targetCategory = fetchedCategory;
+                }
+            } catch (error) {
+                console.error("Failed to lazy load category", error);
+                toast({ title: "Error loading category", description: "Please try again.", variant: "destructive" });
+            } finally {
+                setIsLoadingCategory(prev => ({ ...prev, [categoryId]: false }));
+            }
+        }
+
+        const newCatalogId = targetCategory?.catalogs[0]?.id || null;
         setSelectedCatalogId(newCatalogId);
 
         // Update URL manually to prevent Next.js from hijacking scroll
@@ -465,11 +494,18 @@ export default function HomeClient({ initialCategories, companyDetails }: HomeCl
 
                                     </div>
 
-                                    <CatalogGrid
-                                        catalogs={catalogs}
-                                        selectedCatalogId={selectedCatalogId}
-                                        onSelectCatalog={handleSelectCatalog}
-                                    />
+                                    {isLoadingCategory[selectedCategory] ? (
+                                        <div className="flex justify-center items-center py-20">
+                                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                            <span className="ml-2 text-muted-foreground">Loading products...</span>
+                                        </div>
+                                    ) : (
+                                        <CatalogGrid
+                                            catalogs={catalogs}
+                                            selectedCatalogId={selectedCatalogId}
+                                            onSelectCatalog={handleSelectCatalog}
+                                        />
+                                    )}
 
                                     {selectedCatalog && (
                                         <div id="products-anchor" className="mt-16 animate-in fade-in zoom-in-95 duration-500">

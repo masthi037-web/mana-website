@@ -1,5 +1,5 @@
 import { Category as AppCategory, Catalog as AppCatalog, Product as AppProduct, ProductVariant } from '@/lib/types';
-import { CompanyInventory, Category as ApiCategory, Catalogue as ApiCatalogue, Product as ApiProduct, CheckoutValidationRequest, CheckoutValidationResponse, CheckoutCheckResponse } from '@/lib/api-types';
+import { CompanyInventory, Category as ApiCategory, Catalogue as ApiCatalogue, Product as ApiProduct, CheckoutValidationRequest, CheckoutValidationResponse, CheckoutCheckResponse, CategoryPublicResponse } from '@/lib/api-types';
 
 import { apiClient } from './api-client';
 
@@ -9,21 +9,78 @@ const PLACEHOLDER_BASE = 'https://picsum.photos/seed';
 // ... existing imports
 import { Product } from '@/lib/api-types';
 
-export async function fetchCategories(companyId: string, deliveryTime?: string): Promise<AppCategory[]> {
+export async function fetchCategories(companyId: string, deliveryTime?: string, fetchAllAtOnce: boolean = true): Promise<AppCategory[]> {
     if (!companyId) return [];
     try {
-        const data = await apiClient<CompanyInventory>('/company/public/category/catalogue/product/get', {
-            params: { companyId },
-            next: { revalidate: 300, tags: ['products'] } // 5 minutes cache
-        });
+        if (!fetchAllAtOnce) {
+            // Optimized fetch: Get categories first, then fetch products parallelly
+            // User specified endpoint: /manaBuy-services/category/public/get-all-by-company?companyId=
+            // Base URL already includes /manaBuy-services
+            const categories = await apiClient<CategoryPublicResponse[]>('/category/public/get-all-by-company', {
+                params: { companyId },
+                next: { revalidate: 300, tags: ['categories'] } // Cache the category list
+            });
 
-        // The API returns a robust structure, we need to map it to our App's simpler types
-        console.log("Products :", data.categories.at(0)?.catalogues.at(0)?.products);
-        console.log("All Data :", data);
-        return mapApiCategoriesToAppCategories(data.categories || [], deliveryTime);
+            if (!categories || categories.length === 0) return [];
+
+            // Fetch products ONLY for the first category initially
+            const firstCategory = categories[0];
+            let firstCategoryData: AppCategory | null = null;
+
+            if (firstCategory) {
+                try {
+                    const catData = await apiClient<ApiCategory>('/public/get-products-by-category/get', {
+                        params: { categoryId: String(firstCategory.categoryId) },
+                        next: { revalidate: 300, tags: [`category-${firstCategory.categoryId}`] }
+                    });
+                    const mappedCats = mapApiCategoriesToAppCategories([catData], deliveryTime);
+                    firstCategoryData = mappedCats[0];
+                } catch (e) {
+                    console.error(`Failed to fetch initial category ${firstCategory.categoryId}`, e);
+                }
+            }
+
+            // Map the rest of the categories as empty place holders (structure only)
+            // They will be loaded on demand by the client
+            return categories.map((cat, index) => {
+                if (index === 0 && firstCategoryData) {
+                    return firstCategoryData;
+                }
+                return {
+                    id: String(cat.categoryId),
+                    name: cat.categoryName,
+                    categoryImage: cat.categoryImage,
+                    catalogs: [] // Empty catalogs implies not loaded
+                };
+            });
+
+        } else {
+            // Original "Fetch All" logic
+            const data = await apiClient<CompanyInventory>('/company/public/category/catalogue/product/get', {
+                params: { companyId },
+                next: { revalidate: 300, tags: ['products'] } // 5 minutes cache
+            });
+
+            // The API returns a robust structure, we need to map it to our App's simpler types
+            return mapApiCategoriesToAppCategories(data.categories || [], deliveryTime);
+        }
     } catch (error) {
         console.error('Error fetching categories:', error);
         return [];
+    }
+}
+
+export async function fetchProductsByCategory(categoryId: string, deliveryTime?: string): Promise<AppCategory | null> {
+    try {
+        const catData = await apiClient<ApiCategory>('/public/get-products-by-category/get', {
+            params: { categoryId },
+            next: { revalidate: 300, tags: [`category-${categoryId}`] }
+        });
+        const mappedCats = mapApiCategoriesToAppCategories([catData], deliveryTime);
+        return mappedCats[0] || null;
+    } catch (error) {
+        console.error(`Error fetching products for category ${categoryId}:`, error);
+        return null;
     }
 }
 

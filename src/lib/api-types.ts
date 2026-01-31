@@ -160,6 +160,16 @@ export interface Category {
     categoryImage?: string;
 }
 
+export interface CategoryPublicResponse {
+    companyId: string;
+    categoryId: number;
+    categoryName: string;
+    categoryImage?: string;
+    categoryDescription?: string;
+    categoryStatus?: string;
+    createdAt?: string;
+}
+
 // ... existing interfaces ...
 
 // --- Create Request Interfaces ---

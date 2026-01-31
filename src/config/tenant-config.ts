@@ -93,7 +93,7 @@ export interface TenantConfig {
         heroTitleHighlight?: string;
         heroDescription?: string;
     };
-
+    fetchAllAtOnce?: boolean;
 }
 
 export const DEFAULT_CONFIG: TenantConfig = {
@@ -161,6 +161,7 @@ export const DEFAULT_CONFIG: TenantConfig = {
         heroTitleHighlight: "Tradition",
         heroDescription: "Handcrafted with passion, delivering authentic flavors straight to your doorstep.",
     },
+    fetchAllAtOnce: true,
 };
 
 const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
@@ -168,6 +169,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     "skfashions": {
         id: "sk-fashions",
         name: "SK Fashions",
+        fetchAllAtOnce: true,
         theme: {
             colors: {
                 primary: "346 84% 61%", // Pinkish Red (Fashionable)
@@ -227,6 +229,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     "midnighttech.store": {
         id: "midnight-tech",
         name: "Midnight Tech",
+        fetchAllAtOnce: true,
         theme: {
             colors: {
                 primary: "262 80% 50%",
@@ -269,6 +272,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     "intihomefoods": {
         id: "sweet-treats",
         name: "Sweet Treats",
+        fetchAllAtOnce: true,
         theme: {
             colors: {
                 primary: "330 85% 60%",
@@ -308,6 +312,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     "urbansneakers.com": {
         id: "urban-sneakers",
         name: "Urban Sneakers",
+        fetchAllAtOnce: true,
         theme: {
             colors: {
                 primary: "0 0% 0%",
@@ -338,6 +343,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     "royalgold.jewelry": {
         id: "royal-gold",
         name: "Royal Gold",
+        fetchAllAtOnce: true,
         theme: {
             colors: {
                 primary: "45 90% 45%",
@@ -369,6 +375,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     "spicybites.food": {
         id: "spicy-bites",
         name: "Spicy Bites",
+        fetchAllAtOnce: true,
         theme: {
             colors: {
                 primary: "10 80% 50%",
@@ -397,6 +404,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     "oceanblue.water": {
         id: "ocean-blue",
         name: "Ocean Blue",
+        fetchAllAtOnce: true,
         theme: {
             colors: {
                 primary: "200 90% 40%",
@@ -425,6 +433,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     "minimalhome.decor": {
         id: "minimal-home",
         name: "Minimal Home",
+        fetchAllAtOnce: true,
         theme: {
             colors: {
                 primary: "0 0% 40%",
@@ -454,6 +463,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     "kidzone.toys": {
         id: "kid-zone",
         name: "Kid Zone",
+        fetchAllAtOnce: true,
         theme: {
             colors: {
                 primary: "270 90% 60%",
@@ -489,6 +499,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     "classicbooks.read": {
         id: "classic-books",
         name: "Classic Books",
+        fetchAllAtOnce: true,
         theme: {
             colors: {
                 primary: "25 30% 30%",
@@ -524,6 +535,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     "sandhyacollections": {
         id: "sandhyacollections",
         name: "Sandhya Collections",
+        fetchAllAtOnce: true,
         theme: {
             colors: {
                 primary: "180 80% 35%",
@@ -550,6 +562,7 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     },
     // 12. Localhost
     "localhost:3000": {
+        fetchAllAtOnce: true,
     },
 };
 
