@@ -39,7 +39,7 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
 
                     console.log(`[ProductService] Raw catData for ID ${firstCategory.categoryId}:`, JSON.stringify(catData, null, 2));
 
-                    const mappedCats = mapApiCategoriesToAppCategories([catData], deliveryTime);
+                    const mappedCats = mapApiCategoriesToAppCategories(Array.isArray(catData) ? catData : [catData], deliveryTime);
                     firstCategoryData = mappedCats[0];
 
                     console.log(`[ProductService] Mapped firstCategoryData:`, JSON.stringify(firstCategoryData, null, 2));
@@ -81,7 +81,7 @@ export async function fetchProductsByCategory(categoryId: string, deliveryTime?:
             params: { categoryId },
             next: { revalidate: 300, tags: [`category-${categoryId}`] }
         });
-        const mappedCats = mapApiCategoriesToAppCategories([catData], deliveryTime);
+        const mappedCats = mapApiCategoriesToAppCategories(Array.isArray(catData) ? catData : [catData], deliveryTime);
         return mappedCats[0] || null;
     } catch (error) {
         console.error(`Error fetching products for category ${categoryId}:`, error);
@@ -113,17 +113,24 @@ export async function fetchProductDetails(productId: string): Promise<AppProduct
 
 
 function mapApiCategoriesToAppCategories(apiCategories: ApiCategory[], deliveryTime?: string): AppCategory[] {
-    return apiCategories.map(cat => ({
-        id: String(cat.categoryId),
-        name: cat.categoryName,
-        catalogs: (cat.catalogues || []).map(c => mapApiCatalogueToAppCatalog(c, deliveryTime)),
-        categoryImage: cat.categoryImage
-    }));
+    return apiCategories.map(cat => {
+        const catId = String(cat.categoryId || (cat as any).id || (cat as any).category_id || '');
+        const catalogues = cat.catalogues || (cat as any).catalogueResponseList || [];
+
+        return {
+            id: catId,
+            name: cat.categoryName,
+            catalogs: catalogues.map(c => mapApiCatalogueToAppCatalog(c, deliveryTime)),
+            categoryImage: cat.categoryImage
+        };
+    });
 }
 
 function mapApiCatalogueToAppCatalog(apiCat: ApiCatalogue, deliveryTime?: string): AppCatalog {
+    const catalogId = String(apiCat.catalogueId || (apiCat as any).id || (apiCat as any).catalogue_id || '');
+
     return {
-        id: String(apiCat.catalogueId),
+        id: catalogId,
         name: apiCat.catalogueName,
         products: (apiCat.products || []).map(p => mapApiProductToAppProduct(p, deliveryTime)),
         catalogueImage: apiCat.catalogueImage
