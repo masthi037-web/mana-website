@@ -31,29 +31,7 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
     const { toast } = useToast();
     const [downloading, setDownloading] = useState(false);
 
-    const convertImageToBase64 = async (url: string): Promise<string> => {
-        try {
-            const response = await fetch(`/api/proxy-image?url=${encodeURIComponent(url)}`);
-            if (!response.ok) throw new Error('Failed to fetch image');
-            const blob = await response.blob();
 
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    if (typeof reader.result === 'string') {
-                        resolve(reader.result);
-                    } else {
-                        reject(new Error('Failed to convert blob to base64'));
-                    }
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        } catch (error) {
-            console.error('Error converting image to base64:', error);
-            throw error;
-        }
-    };
 
     const handleDownloadInvoice = async () => {
         if (!companyDetails) return;

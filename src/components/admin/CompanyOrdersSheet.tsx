@@ -107,7 +107,7 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
 
                 {/* Header (Shared) */}
                 <div className="flex flex-col border-b border-border/40 bg-background/50 sticky top-0 z-20">
-                    <SheetHeader className="px-6 py-4">
+                    <SheetHeader className="px-4 py-3">
                         <div className="flex items-center justify-between">
                             {selectedOrder ? (
                                 <div className="flex items-center gap-2">
@@ -132,7 +132,7 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
 
                     {/* Date Controls & Stats (Only in List View) */}
                     {!selectedOrder && (
-                        <div className="px-6 pb-4 space-y-4">
+                        <div className="px-4 pb-3 space-y-3">
                             {/* Mode Switcher */}
                             <div className="flex p-1 bg-secondary/30 rounded-xl border border-secondary/50 relative">
                                 <button
@@ -162,84 +162,83 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                             {/* Inputs based on Mode */}
                             {mode === 'single' ? (
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wider z-10">Select Date</span>
+                                    <span className="absolute left-3 top-1 text-[9px] text-muted-foreground font-bold uppercase tracking-wider z-10">Select Date</span>
                                     <Input
                                         type="date"
                                         value={date}
                                         onChange={(e) => setDate(e.target.value)}
-                                        className="pt-5 h-12 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all"
+                                        className="pt-4 h-10 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all"
                                     />
-                                    <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                    <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
                                     <div className="relative flex-1 group">
-                                        <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-focus-within:scale-x-100 transition-transform duration-300 z-20" />
-                                        <span className="absolute left-3 top-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wider z-10">From</span>
+                                        <span className="absolute left-3 top-1 text-[9px] text-muted-foreground font-bold uppercase tracking-wider z-10">From</span>
                                         <Input
                                             type="date"
                                             value={fromDate}
                                             onChange={(e) => setFromDate(e.target.value)}
-                                            className="pt-5 h-12 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all"
+                                            className="pt-4 h-10 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all"
                                         />
                                     </div>
                                     <div className="relative flex-1 group">
-                                        <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-focus-within:scale-x-100 transition-transform duration-300 z-20" />
-                                        <span className="absolute left-3 top-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wider z-10">To</span>
+                                        <span className="absolute left-3 top-1 text-[9px] text-muted-foreground font-bold uppercase tracking-wider z-10">To</span>
                                         <Input
                                             type="date"
                                             value={toDate}
                                             onChange={(e) => setToDate(e.target.value)}
-                                            className="pt-5 h-12 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all"
+                                            className="pt-4 h-10 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all"
                                         />
                                     </div>
                                 </div>
                             )}
 
-                            {/* Search Bar */}
-                            <div className="relative">
-                                <span className="absolute left-3 top-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wider z-10">Search Customer Phone</span>
-                                <Input
-                                    placeholder="Enter phone number..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pt-5 h-12 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all"
-                                />
-                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                            </div>
+                            {/* Search & Status Row */}
+                            <div className="flex gap-2">
+                                <div className="relative flex-[1.5] group">
+                                    <span className="absolute left-3 top-1 text-[9px] text-muted-foreground font-bold uppercase tracking-wider z-10">Customer Phone</span>
+                                    <Input
+                                        placeholder="Phone..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pt-4 h-10 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all"
+                                    />
+                                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                                </div>
 
-                            {/* Status Filter */}
-                            <div className="relative">
-                                <span className="absolute left-3 top-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wider z-10">Filter Status</span>
-                                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                    <SelectTrigger className="pt-5 h-12 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all">
-                                        <SelectValue placeholder="All Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="ALL">All Orders</SelectItem>
-                                        {['CREATED', 'PAYMENT_PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'].map((status) => (
-                                            <SelectItem key={status} value={status}>
-                                                {status}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <div className="relative flex-1">
+                                    <span className="absolute left-3 top-1 text-[9px] text-muted-foreground font-bold uppercase tracking-wider z-10">Status</span>
+                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                        <SelectTrigger className="pt-4 h-10 pl-3 font-semibold bg-secondary/50 border-transparent focus:bg-background transition-all">
+                                            <SelectValue placeholder="All" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="ALL">All</SelectItem>
+                                            {['CREATED', 'PAYMENT_PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'].map((status) => (
+                                                <SelectItem key={status} value={status}>
+                                                    {status === 'PAYMENT_PENDING' ? 'Pay Pending' : status}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
 
                             {/* Dashboard Cards (Premium Look) */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10 rounded-2xl p-4 flex flex-col justify-center items-center text-center relative overflow-hidden group">
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10 rounded-xl p-3 flex flex-col justify-center items-center text-center relative overflow-hidden group">
                                     <div className="absolute inset-0 bg-primary/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-                                    <span className="text-[10px] font-black text-primary/60 uppercase tracking-widest mb-1 relative z-10">Revenue</span>
-                                    <span className="text-xl font-headline font-black text-primary flex items-center gap-1 relative z-10">
+                                    <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest mb-0.5 relative z-10">Revenue</span>
+                                    <span className="text-lg font-headline font-black text-primary flex items-center gap-1 relative z-10">
                                         ₹{totalRevenue.toLocaleString()}
                                     </span>
                                 </div>
-                                <div className="bg-secondary/30 border border-border/50 rounded-2xl p-4 flex flex-col justify-center items-center text-center relative overflow-hidden group">
+                                <div className="bg-secondary/30 border border-border/50 rounded-xl p-3 flex flex-col justify-center items-center text-center relative overflow-hidden group">
                                     <div className="absolute inset-0 bg-secondary/50 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-                                    <span className="text-[10px] font-black text-muted-foreground/70 uppercase tracking-widest mb-1 relative z-10">Total Orders</span>
-                                    <span className="text-xl font-headline font-black text-foreground flex items-center gap-1 relative z-10">
-                                        <Package className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-[9px] font-black text-muted-foreground/70 uppercase tracking-widest mb-0.5 relative z-10">Total Orders</span>
+                                    <span className="text-lg font-headline font-black text-foreground flex items-center gap-1 relative z-10">
+                                        <Package className="h-3 w-3 text-muted-foreground" />
                                         {totalOrders}
                                     </span>
                                 </div>
@@ -249,7 +248,7 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                 </div>
 
                 {/* Content Area */}
-                <div className="h-[calc(100vh-180px)] overflow-hidden relative">
+                <div className="h-[calc(100vh-140px)] overflow-hidden relative">
                     {loading ? (
                         <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -292,12 +291,12 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                                         key={order.orderId}
                                         onClick={() => setSelectedOrder(order)}
                                         className={cn(
-                                            "group relative bg-card hover:bg-secondary/40 border border-border/40 hover:border-primary/20 rounded-2xl p-4 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md",
+                                            "group relative bg-card hover:bg-secondary/40 border border-border/40 hover:border-primary/20 rounded-xl p-3 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md",
                                             "animate-in slide-in-from-bottom-2 fade-in fill-mode-backwards"
                                         )}
                                         style={{ animationDelay: `${index * 50}ms` }}
                                     >
-                                        <div className="flex justify-between items-start mb-3">
+                                        <div className="flex justify-between items-start mb-2">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <span className="font-mono text-xs font-bold text-muted-foreground">
@@ -312,14 +311,14 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                                                         {order.orderStatus}
                                                     </span>
                                                 </div>
-                                                <h3 className="font-bold text-foreground">{order.customerName}</h3>
+                                                <h3 className="font-bold text-sm text-foreground">{order.customerName}</h3>
                                             </div>
-                                            <span className="text-lg font-bold text-primary">
+                                            <span className="text-base font-bold text-primary">
                                                 ₹{order.finalTotalAmount}
                                             </span>
                                         </div>
 
-                                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
                                             <div className="flex items-center gap-1">
                                                 <Package className="h-3.5 w-3.5" />
                                                 <span>{order.items.length} Items</span>
