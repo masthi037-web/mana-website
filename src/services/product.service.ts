@@ -60,7 +60,7 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
                 return {
                     id: String(cat.categoryId),
                     name: cat.categoryName,
-                    categoryImage: cat.categoryImage,
+                    categoryImage: cat.categoryImage || (cat as any).image || (cat as any).category_image || '',
                     catalogs: [] // Empty catalogs implies not loaded
                 };
             });

@@ -137,6 +137,8 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                         c.id === categoryId ? {
                             ...c,
                             ...fetchedCategory,
+                            name: fetchedCategory.name || c.name,
+                            categoryImage: fetchedCategory.categoryImage || c.categoryImage,
                             catalogs: fetchedCategory.catalogs
                         } : c
                     ));
