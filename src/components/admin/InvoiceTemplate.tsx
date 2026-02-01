@@ -136,7 +136,30 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                             <span className="font-semibold text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-100 text-xs">x{item.quantity}</span>
                                         </td>
                                         <td className="py-4 px-6 text-right text-slate-600 text-sm align-top">
-                                            {formatCurrency(item.productSizePriceAfterDiscount || item.productPriceAfterDiscount || 0)}
+                                            {(() => {
+                                                const finalPrice = item.productSizePriceAfterDiscount || item.productPriceAfterDiscount || 0;
+                                                const originalPrice = (item as any).productSizePrice || (item as any).productPrice || finalPrice;
+                                                const hasDiscount = originalPrice > finalPrice + 0.1;
+                                                const discountPercent = hasDiscount ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100) : 0;
+
+                                                return (
+                                                    <div className="flex flex-col items-end">
+                                                        {hasDiscount && (
+                                                            <div className="flex items-center gap-1 mb-0.5">
+                                                                <span className="text-[10px] text-slate-400 line-through">
+                                                                    {formatCurrency(originalPrice)}
+                                                                </span>
+                                                                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded-sm border border-emerald-100">
+                                                                    {discountPercent}% OFF
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        <span className="font-bold text-slate-900">
+                                                            {formatCurrency(finalPrice)}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="py-4 px-6 text-right font-bold text-slate-900 text-sm align-top">
                                             {formatCurrency((item.productSizePriceAfterDiscount || item.productPriceAfterDiscount || 0) * item.quantity)}

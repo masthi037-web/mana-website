@@ -546,6 +546,7 @@ export interface SaveOrderItem {
     productId: number;
     productName: string;
     productImage?: string | null;
+    productPrice?: number | null;
     productPriceAfterDiscount?: number | null;
     quantity: number;
     totalCost: number;
@@ -555,6 +556,7 @@ export interface SaveOrderItem {
     productColourImage?: string;
     productSizeId?: number | null;
     productSizeName?: string;
+    productSizePrice?: number | null;
     productSizePriceAfterDiscount?: number | null;
     productSizeColourId?: number | null;
     productSizeColourName?: string;
@@ -611,12 +613,14 @@ export interface OrderResponseItem {
     productId: number;
     productName: string;
     productImage?: string | null;
+    productPrice?: number | null;
     productPriceAfterDiscount?: number | null;
     productColourId?: number | null;
     productColour?: string | null;
     productColourImage?: string | null;
     productSizeId?: number | null;
     productSizeName?: string | null;
+    productSizePrice?: number | null;
     productSizePriceAfterDiscount?: number | null;
     productSizeColourId?: number | null;
     productSizeColourName?: string | null;

@@ -391,7 +391,7 @@ export default function AdminInventoryPage() {
                             size: qty,
                             sizeQuantity: Number(sizeQuantity) || 0,
                             sizeStatus: sizeStatus
-                        });
+                        } as any);
                     } else {
                         return adminService.createPricing({
                             productId: Number(selectedProduct.id),

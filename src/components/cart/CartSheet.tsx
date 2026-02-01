@@ -728,16 +728,21 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     let sizePriceAfterDiscount: number = item.priceAfterDiscount || item.price;
 
                     // Try to match Size Pricing ID
+                    let productSizePrice: number | null = null;
                     if (item.pricing && item.pricing.length > 0) {
                         const quantityVariant = item.selectedVariants?.['Quantity'];
                         if (quantityVariant) {
                             sizeName = quantityVariant;
                             const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
-                            if (matchedPricing) sizeId = parseInt(matchedPricing.id);
+                            if (matchedPricing) {
+                                sizeId = parseInt(matchedPricing.id);
+                                productSizePrice = matchedPricing.price;
+                            }
                         }
                         if (!sizeId && item.pricing.length > 0) {
                             sizeId = parseInt(item.pricing[0].id);
                             sizeName = item.pricing[0].quantity;
+                            productSizePrice = item.pricing[0].price;
                         }
                     }
 
@@ -745,6 +750,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         productId: parseInt(item.id),
                         productName: item.name,
                         productImage: (item.images && item.images.length > 0) ? item.images[0] : item.imageUrl,
+                        productPrice: item.price,
                         productPriceAfterDiscount: item.priceAfterDiscount || item.price,
                         quantity: item.quantity,
                         totalCost: 0 // Will calculate below
@@ -771,6 +777,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         // Size Info (Context for Colour)
                         baseItem.productSizeId = sizeId;
                         baseItem.productSizeName = sizeName;
+                        baseItem.productSizePrice = productSizePrice;
                         baseItem.productSizePriceAfterDiscount = sizePriceAfterDiscount;
 
                         // For Complex Variants (Size + Colour), these base fields should be null as per requirement
@@ -787,6 +794,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     else if (sizeId) {
                         baseItem.productSizeId = sizeId;
                         baseItem.productSizeName = sizeName;
+                        baseItem.productSizePrice = productSizePrice;
                         baseItem.productSizePriceAfterDiscount = sizePriceAfterDiscount;
                         baseItem.totalCost = sizePriceAfterDiscount * item.quantity;
                     }
@@ -3132,7 +3140,40 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                                                                     <div className="flex justify-between items-start">
                                                                         <h4 className="font-bold text-sm text-slate-700 line-clamp-1">{item.name}</h4>
-                                                                        <span className="font-bold text-sm text-slate-900">₹{((item.price + (item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0)) * item.quantity).toFixed(0)}</span>
+                                                                        <div className="text-right flex flex-col items-end shrink-0">
+                                                                            {(() => {
+                                                                                const sizeColoursCost = item.selectedSizeColours?.reduce((acc, sc) => acc + sc.price, 0) || 0;
+                                                                                const basePrice = item.priceAfterDiscount || item.price;
+                                                                                const unitOriginal = item.price + sizeColoursCost;
+
+                                                                                // Calculate total using itemDiscountMap
+                                                                                const unitDiscounts = itemDiscountMap[item.cartItemId] || new Array(item.quantity).fill(0);
+                                                                                let finalItemTotal = 0;
+                                                                                unitDiscounts.forEach(d => {
+                                                                                    finalItemTotal += (basePrice + sizeColoursCost) * (1 - d / 100);
+                                                                                });
+
+                                                                                const hasDiscount = finalItemTotal < (unitOriginal * item.quantity) - 0.1; // Small epsilon for float comparison
+
+                                                                                return (
+                                                                                    <>
+                                                                                        {hasDiscount && (
+                                                                                            <div className="flex items-center gap-1.5 mb-0.5">
+                                                                                                <span className="text-[10px] text-slate-400 line-through leading-none">
+                                                                                                    ₹{(unitOriginal * item.quantity).toFixed(0)}
+                                                                                                </span>
+                                                                                                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded-sm leading-tight border border-emerald-100">
+                                                                                                    {Math.round(((unitOriginal * item.quantity - finalItemTotal) / (unitOriginal * item.quantity)) * 100)}% OFF
+                                                                                                </span>
+                                                                                            </div>
+                                                                                        )}
+                                                                                        <span className="font-bold text-sm text-slate-900 leading-none">
+                                                                                            ₹{finalItemTotal.toFixed(0)}
+                                                                                        </span>
+                                                                                    </>
+                                                                                );
+                                                                            })()}
+                                                                        </div>
                                                                     </div>
                                                                     <p className="text-xs text-slate-400 mt-0.5">Qty: {item.quantity} {
                                                                         Object.values(item.selectedVariants || {}).length > 0 && `• ${Object.values(item.selectedVariants || {}).join(', ')}`

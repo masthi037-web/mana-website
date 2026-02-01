@@ -700,12 +700,7 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      <div className="mt-24 mb-12">
-        <h2 className="font-headline text-3xl md:text-3xl font-bold mb-8 text-foreground/80">
-          You Might Also Like
-        </h2>
-        <Recommendations />
-      </div>
+
 
     </div>
   );
