@@ -739,7 +739,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     productPriceAfterDiscount: item.priceAfterDiscount || item.price,
                     quantity: item.quantity,
                     totalCost: (finalUnitPrice * item.quantity) - itemBulkDiscount,
-                    extraDiscount: itemBulkDiscount
+                    extraDiscount: itemBulkDiscount / item.quantity // Store per-unit discount
                 };
 
                 // --- Variant Specifics ---

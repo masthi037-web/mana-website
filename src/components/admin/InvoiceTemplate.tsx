@@ -104,70 +104,70 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
 
             {/* Items Table */}
             <div className="px-12 flex-grow">
-                <div className="rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm">
                     <table className="w-full text-left">
-                        <thead className="bg-slate-50 border-b border-slate-200">
+                        <thead className="bg-[#f8fafc] border-b border-slate-100">
                             <tr>
-                                <th className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[10%]">#</th>
-                                <th className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[45%]">Item Details</th>
-                                <th className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center w-[15%]">Qty</th>
-                                <th className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right w-[15%]">Price</th>
-                                <th className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right w-[15%]">Amount</th>
+                                <th className="py-6 px-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] w-[8%]">#</th>
+                                <th className="py-6 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] w-[42%]">Item Details</th>
+                                <th className="py-6 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center w-[15%]">Qty</th>
+                                <th className="py-6 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right w-[15%]">Price</th>
+                                <th className="py-6 px-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right w-[20%]">Amount</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 bg-white">
+                        <tbody className="divide-y divide-slate-50 bg-white">
                             {order.items.map((item, idx) => {
+                                const finalUnitPrice = item.productSizePriceAfterDiscount || item.productPriceAfterDiscount || 0;
+                                const originalUnitPrice = (item as any).productSizePrice || (item as any).productPrice || finalUnitPrice;
+                                const hasDiscount = originalUnitPrice > finalUnitPrice + 0.1;
+                                const discountPercent = hasDiscount ? Math.round(((originalUnitPrice - finalUnitPrice) / originalUnitPrice) * 100) : 0;
+
                                 return (
-                                    <tr key={idx} className="group">
-                                        <td className="py-4 px-6 align-top">
-                                            <span className="text-slate-400 text-xs font-medium">{(idx + 1).toString().padStart(2, '0')}</span>
+                                    <tr key={idx} className="group hover:bg-slate-50/50 transition-colors">
+                                        <td className="py-8 px-10 align-middle">
+                                            <span className="text-slate-300 text-sm font-bold">{(idx + 1).toString().padStart(2, '0')}</span>
                                         </td>
-                                        <td className="py-4 px-6 align-top">
-                                            <p className="font-bold text-slate-800 text-sm mb-1">{item.productName}</p>
-                                            <div className="flex flex-wrap gap-2">
+                                        <td className="py-8 px-4 align-middle">
+                                            <p className="font-extrabold text-slate-900 text-base mb-2 tracking-tight">{item.productName}</p>
+                                            <div className="flex flex-wrap gap-2 items-center">
                                                 {[item.productSizeName, item.productColour, item.productSizeColourName].filter(Boolean).map((tag, i) => (
-                                                    <span key={i} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                                    <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
                                                         {tag}
                                                     </span>
                                                 ))}
                                                 {item.extraDiscount && item.extraDiscount > 0 ? (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">
-                                                        Extra Discount: -{formatCurrency(item.extraDiscount)}
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-500 border border-rose-100">
+                                                        Extra Discount: -{formatCurrency(item.extraDiscount * item.quantity)}
                                                     </span>
                                                 ) : null}
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6 text-center align-top">
-                                            <span className="font-semibold text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-100 text-xs">x{item.quantity}</span>
+                                        <td className="py-8 px-4 text-center align-middle">
+                                            <div className="flex justify-center">
+                                                <span className="inline-flex items-center justify-center min-w-[3rem] font-black text-slate-800 bg-[#f8fafc] px-3 py-2 rounded-xl text-sm border border-slate-100">x{item.quantity}</span>
+                                            </div>
                                         </td>
-                                        <td className="py-4 px-6 text-right text-slate-600 text-sm align-top">
-                                            {(() => {
-                                                const finalPrice = item.productSizePriceAfterDiscount || item.productPriceAfterDiscount || 0;
-                                                const originalPrice = (item as any).productSizePrice || (item as any).productPrice || finalPrice;
-                                                const hasDiscount = originalPrice > finalPrice + 0.1;
-                                                const discountPercent = hasDiscount ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100) : 0;
-
-                                                return (
-                                                    <div className="flex flex-col items-end">
-                                                        {hasDiscount && (
-                                                            <div className="flex items-center gap-1 mb-0.5">
-                                                                <span className="text-[10px] text-slate-400 line-through">
-                                                                    {formatCurrency(originalPrice)}
-                                                                </span>
-                                                                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded-sm border border-emerald-100">
-                                                                    {discountPercent}% OFF
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                        <span className="font-bold text-slate-900">
-                                                            {formatCurrency(finalPrice)}
+                                        <td className="py-8 px-4 text-right align-middle">
+                                            <div className="flex flex-col items-end gap-1">
+                                                {hasDiscount && (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-slate-300 line-through font-medium">
+                                                            {formatCurrency(originalUnitPrice)}
+                                                        </span>
+                                                        <span className="text-[9px] font-black text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100 uppercase tracking-wider">
+                                                            {discountPercent}% OFF
                                                         </span>
                                                     </div>
-                                                );
-                                            })()}
+                                                )}
+                                                <span className="font-black text-slate-900 text-base tracking-tight">
+                                                    {formatCurrency(finalUnitPrice)}
+                                                </span>
+                                            </div>
                                         </td>
-                                        <td className="py-4 px-6 text-right font-bold text-slate-900 text-sm align-top">
-                                            {formatCurrency((item.productSizePriceAfterDiscount || item.productPriceAfterDiscount || 0) * item.quantity)}
+                                        <td className="py-8 px-10 text-right align-middle">
+                                            <span className="font-black text-slate-900 text-lg tracking-tight">
+                                                {formatCurrency(finalUnitPrice * item.quantity)}
+                                            </span>
                                         </td>
                                     </tr>
                                 );
@@ -178,36 +178,40 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
             </div>
 
             {/* Footer Calculator */}
-            <div className="px-12 py-8">
-                <div className="flex justify-end">
-                    <div className="w-[350px]">
-                        <div className="space-y-3 pb-6 border-b border-slate-200">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-500 font-medium">Subtotal</span>
-                                <span className="text-slate-900 font-semibold">{formatCurrency(order.subTotal)}</span>
+            <div className="px-12 py-12">
+                <div className="flex justify-end pr-10">
+                    <div className="w-[380px] space-y-6">
+                        <div className="space-y-4 pb-8 border-b border-dashed border-slate-200">
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Subtotal</span>
+                                <span className="text-slate-900 font-extrabold text-base tracking-tight">{formatCurrency(order.subTotal)}</span>
                             </div>
-                            {order.subTotal > order.finalTotalAmount && (
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-emerald-600 font-medium">Applied Offers</span>
-                                    <span className="text-emerald-700 font-bold">- {formatCurrency(Math.max(0, order.subTotal - order.finalTotalAmount - (order.extraDiscount || 0)))}</span>
+
+                            {order.subTotal > (order.finalTotalAmount + (order.extraDiscount || 0)) && (
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-emerald-500 font-black uppercase tracking-widest text-[10px]">Applied Offers</span>
+                                    <span className="text-emerald-500 font-black text-base tracking-tight">- {formatCurrency(Math.max(0, order.subTotal - order.finalTotalAmount - (order.extraDiscount || 0)))}</span>
                                 </div>
                             )}
+
                             {order.extraDiscount && order.extraDiscount > 0 ? (
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-rose-600 font-medium">Extra Discount</span>
-                                    <span className="text-rose-700 font-bold">- {formatCurrency(order.extraDiscount)}</span>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-rose-500 font-black uppercase tracking-widest text-[10px]">Extra Discount</span>
+                                    <span className="text-rose-500 font-black text-base tracking-tight">- {formatCurrency(order.extraDiscount)}</span>
                                 </div>
                             ) : null}
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-500 font-medium">Shipping</span>
-                                <span className="text-slate-900 font-bold">Free</span>
+
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Shipping</span>
+                                <span className="text-slate-900 font-black text-base tracking-tight">Free</span>
                             </div>
                         </div>
-                        <div className="pt-4 flex justify-between items-end">
-                            <div className="text-xs text-slate-400">Total Amount</div>
-                            <div className="text-3xl font-black text-primary tracking-tight">
+
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400 font-bold uppercase tracking-widest text-[11px]">Total Amount</span>
+                            <span className="text-5xl font-black text-[#f43f5e] tracking-tighter">
                                 {formatCurrency(order.finalTotalAmount)}
-                            </div>
+                            </span>
                         </div>
                     </div>
                 </div>

@@ -120,48 +120,55 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         }
     }, [selectedCategory, categories]);
 
-    // Sync State -> URL when user interacts
-    const updateCategory = async (categoryId: string) => {
-        setSelectedCategory(categoryId);
-        setSearchQuery(""); // Clear search on category change
+    // Unified function to load products for a category if not already loaded
+    const loadCategoryData = useCallback(async (categoryId: string) => {
+        if (!categoryId || categories.length === 0) return;
+
         const category = categories.find(c => c.id === categoryId);
+        if (!category) return;
 
-        // Lazy Load Check: If category exists but has no catalogs (and isn't explicitly empty from backend which we assume implies not loaded in this logic)
-        // We assume if catalogs is empty, it MIGHT need loading if we are in lazy load mode.
-        // However, a category could genuinely have no products.
-        // To be safe, we can check if it was already attempted or just try fetch if empty.
-        // Current logic in product service returns empty arrays for non-loaded categories.
-
-        let targetCategory = category;
-
-        if (category && category.catalogs.length === 0 && !isLoadingCategory[categoryId]) {
+        // If category has no catalogs (implying not loaded) and is not already loading
+        if (category.catalogs.length === 0 && !isLoadingCategory[categoryId]) {
             setIsLoadingCategory(prev => ({ ...prev, [categoryId]: true }));
             try {
-                // Fetch Data
                 const fetchedCategory = await fetchProductsByCategory(categoryId, companyDetails?.deliveryBetween);
-
                 if (fetchedCategory) {
                     setCategories(prev => prev.map(c =>
                         c.id === categoryId ? {
                             ...c,
                             ...fetchedCategory,
-                            categoryImage: fetchedCategory.categoryImage || c.categoryImage,
-                            name: fetchedCategory.name || c.name,
                             catalogs: fetchedCategory.catalogs
                         } : c
                     ));
-                    targetCategory = fetchedCategory;
+                    return fetchedCategory;
                 }
             } catch (error) {
-                console.error("Failed to lazy load category", error);
-                toast({ title: "Error loading category", description: "Please try again.", variant: "destructive" });
+                console.error("Failed to load category", error);
             } finally {
                 setIsLoadingCategory(prev => ({ ...prev, [categoryId]: false }));
             }
         }
+        return category;
+    }, [categories, companyDetails?.deliveryBetween, isLoadingCategory]);
 
-        const newCatalogId = targetCategory?.catalogs[0]?.id || null;
-        setSelectedCatalogId(newCatalogId);
+    // Initial Load & Load on selectCategory change
+    useEffect(() => {
+        if (selectedCategory) {
+            loadCategoryData(selectedCategory);
+        }
+    }, [selectedCategory, categories.length > 0]); // Trigger when selectedCategory is set or categories become available
+
+    // Sync State -> URL when user interacts
+    const updateCategory = async (categoryId: string) => {
+        setSearchQuery(""); // Clear search on category change
+        setSelectedCategory(categoryId);
+
+        const targetCategory = await loadCategoryData(categoryId);
+
+        if (targetCategory && targetCategory.catalogs.length > 0) {
+            const newCatalogId = targetCategory.catalogs[0].id;
+            setSelectedCatalogId(newCatalogId);
+        }
 
         // Update URL manually to prevent Next.js from hijacking scroll
         const params = new URLSearchParams(searchParams.toString());

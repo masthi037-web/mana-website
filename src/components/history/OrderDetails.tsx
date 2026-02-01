@@ -279,7 +279,7 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
                                                 </p>
                                                 {item.extraDiscount && item.extraDiscount > 0 && (
                                                     <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 flex items-center gap-0.5">
-                                                        Discount: -{formatCurrency(item.extraDiscount)}
+                                                        Discount: -{formatCurrency(item.extraDiscount * item.quantity)}
                                                     </span>
                                                 )}
                                             </div>
