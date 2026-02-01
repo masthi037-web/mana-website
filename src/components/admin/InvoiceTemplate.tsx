@@ -184,7 +184,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                             {order.subTotal > order.finalTotalAmount && (
                                 <div className="flex justify-between text-sm">
                                     <span className="text-emerald-600 font-medium">Applied Offers</span>
-                                    <span className="text-emerald-700 font-bold">- {formatCurrency(Math.max(0, order.subTotal - order.finalTotalAmount + (order.extraDiscount || 0)))}</span>
+                                    <span className="text-emerald-700 font-bold">- {formatCurrency(Math.max(0, order.subTotal - order.finalTotalAmount - (order.extraDiscount || 0)))}</span>
                                 </div>
                             )}
                             {order.extraDiscount && order.extraDiscount > 0 ? (

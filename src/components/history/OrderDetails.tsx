@@ -334,8 +334,14 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
                             </div>
                             {order.subTotal > order.finalTotalAmount && (
                                 <div className="flex justify-between text-xs text-emerald-600 font-medium">
-                                    <span>Discount</span>
-                                    <span>- {formatCurrency(order.subTotal - order.finalTotalAmount)}</span>
+                                    <span>Applied Offers</span>
+                                    <span>- {formatCurrency(Math.max(0, order.subTotal - order.finalTotalAmount - (order.extraDiscount || 0)))}</span>
+                                </div>
+                            )}
+                            {order.extraDiscount && order.extraDiscount > 0 && (
+                                <div className="flex justify-between text-xs text-rose-600 font-medium">
+                                    <span>Extra Discount</span>
+                                    <span>- {formatCurrency(order.extraDiscount)}</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-xs text-slate-500 font-medium">

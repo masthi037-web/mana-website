@@ -683,27 +683,119 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         if (!customer) return;
         setIsInitializingPayment(true);
         try {
-            const subtotal = getCartTotal();
             const minOrder = parseFloat(companyDetails?.minimumOrderCost || '0');
             const freeDeliveryThreshold = parseFloat(companyDetails?.freeDeliveryCost || '0');
-            const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
+
+            // 1. Calculate Raw Subtotal and Total Bulk Discount
+            let totalBulkDiscount = 0;
+            let rawSubtotal = 0;
+
+            const processedItems = cart.map((item): SaveOrderItem => {
+                // 1. Identify Product Type & Variant IDs
+                let sizeId: number | null = null;
+                let sizeName: string = "";
+                let sizePriceAfterDiscount: number = item.priceAfterDiscount || item.price;
+
+                // Try to match Size Pricing ID
+                let productSizePrice: number | null = null;
+                if (item.pricing && item.pricing.length > 0) {
+                    const quantityVariant = item.selectedVariants?.['Quantity'];
+                    if (quantityVariant) {
+                        sizeName = quantityVariant;
+                        const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
+                        if (matchedPricing) {
+                            sizeId = parseInt(matchedPricing.id);
+                            productSizePrice = matchedPricing.price;
+                        }
+                    }
+                    if (!sizeId && item.pricing.length > 0) {
+                        sizeId = parseInt(item.pricing[0].id);
+                        sizeName = item.pricing[0].quantity;
+                        productSizePrice = item.pricing[0].price;
+                    }
+                }
+
+                // Calculate Item Price (Base + SizeColours)
+                const sizeColoursCost = (item.selectedSizeColours || []).reduce((acc, a) => acc + a.price, 0);
+                const baseUnitPrice = (item.priceAfterDiscount && item.priceAfterDiscount > 0) ? item.priceAfterDiscount : item.price;
+                const finalUnitPrice = baseUnitPrice + sizeColoursCost;
+
+                rawSubtotal += finalUnitPrice * item.quantity;
+
+                // Calculate Bulk Discount for this specific item using pre-calculated distribution map
+                let itemBulkDiscount = 0;
+                const discounts = itemDiscountMap[item.cartItemId] || [];
+                for (let q = 0; q < item.quantity; q++) {
+                    const discountPercent = discounts[q] || 0;
+                    itemBulkDiscount += finalUnitPrice * (discountPercent / 100);
+                }
+                totalBulkDiscount += itemBulkDiscount;
+
+                const baseItem: SaveOrderItem = {
+                    productId: parseInt(item.id),
+                    productName: item.name,
+                    productImage: (item.images && item.images.length > 0) ? item.images[0] : item.imageUrl,
+                    productPrice: item.price,
+                    productPriceAfterDiscount: item.priceAfterDiscount || item.price,
+                    quantity: item.quantity,
+                    totalCost: (finalUnitPrice * item.quantity) - itemBulkDiscount,
+                    extraDiscount: itemBulkDiscount
+                };
+
+                // --- Variant Specifics ---
+                const productSizeColourId = (item.selectedSizeColours && item.selectedSizeColours.length > 0) ? parseInt(item.selectedSizeColours[0].id) : null;
+                const productColourId = item.selectedColour ? parseInt(item.selectedColour.id) : null;
+
+                if (productSizeColourId) {
+                    const sc = item.selectedSizeColours![0];
+                    baseItem.productSizeColourId = productSizeColourId;
+                    baseItem.productSizeColourName = sc.name;
+                    baseItem.productSizeColourImage = sc.productPics;
+                    baseItem.productSizeColourExtraPrice = sc.price;
+                    baseItem.productSizeId = sizeId;
+                    baseItem.productSizeName = sizeName;
+                    baseItem.productSizePrice = productSizePrice;
+                    baseItem.productSizePriceAfterDiscount = sizePriceAfterDiscount;
+                    baseItem.productImage = undefined;
+                    baseItem.productPriceAfterDiscount = undefined;
+                    if (sc.productPics) baseItem.productSizeColourImage = sc.productPics;
+                }
+                else if (sizeId) {
+                    baseItem.productSizeId = sizeId;
+                    baseItem.productSizeName = sizeName;
+                    baseItem.productSizePrice = productSizePrice;
+                    baseItem.productSizePriceAfterDiscount = sizePriceAfterDiscount;
+                }
+                else if (productColourId) {
+                    baseItem.productColourId = productColourId;
+                    baseItem.productColour = item.selectedColour!.name;
+                    baseItem.productColourImage = item.selectedColour!.image;
+                    if (item.selectedColour!.image) baseItem.productImage = item.selectedColour!.image;
+                }
+
+                return baseItem;
+            });
+
+            // Calculate Shipping
+            const currentSubtotalWithBulk = rawSubtotal - totalBulkDiscount;
+            const isFreeDelivery = freeDeliveryThreshold > 0 && currentSubtotalWithBulk >= freeDeliveryThreshold;
             const shipping = isFreeDelivery ? 0 : (companyDetails?.deliveryBetween ? parseFloat(companyDetails.deliveryBetween) : 40);
 
-            // Calculate Discount (replicate logic)
-            let discountAmount = 0;
+            // Calculate Coupon Discount
+            let couponDiscountAmount = 0;
             if (couponCode && companyDetails?.companyCoupon && typeof companyDetails.companyCoupon === 'string') {
                 const couponData = String(companyDetails.companyCoupon).split(',').find(c => c.startsWith(couponCode + '&&&'));
                 if (couponData) {
                     const [, discountStr, minOrderStr] = String(couponData).split('&&&');
                     const discountPercent = parseFloat(discountStr || '0');
                     const minCouponOrder = parseFloat(minOrderStr || '0');
-                    if (subtotal >= minCouponOrder) {
-                        discountAmount = (subtotal * discountPercent) / 100;
+                    if (currentSubtotalWithBulk >= minCouponOrder) {
+                        couponDiscountAmount = (currentSubtotalWithBulk * discountPercent) / 100;
                     }
                 }
             }
 
-            const totalCost = subtotal + shipping - discountAmount;
+            const finalTotalAmount = rawSubtotal - totalBulkDiscount - couponDiscountAmount + shipping;
 
             const selectedAddress = addresses.find(a => a.customerAddressId === selectedAddressId);
             if (!selectedAddress) throw new Error("Address not found");
@@ -715,112 +807,20 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 customerName: contactInfo.name,
                 customerPhone: contactInfo.mobile,
                 deliveryRoad: [selectedAddress.customerDrNum, selectedAddress.customerRoad].filter(Boolean).join(', '),
-                deliveryPin: selectedAddress.customerPin || '', // Ensure api-types has this or fallback
+                deliveryPin: selectedAddress.customerPin || '',
                 deliveryCity: selectedAddress.customerCity,
                 deliveryState: selectedAddress.customerState,
                 orderStatus: "CREATED",
-                subTotal: subtotal,
-                allDiscount: (couponCode && discountAmount > 0) ? `applied ${couponCode} changed ${subtotal} to ${subtotal - discountAmount}` : "",
-                extraDiscount: extraDiscount,
-                finalTotalAmount: totalCost - extraDiscount,
+                subTotal: rawSubtotal,
+                allDiscount: (couponCode && couponDiscountAmount > 0) ? `applied ${couponCode} changed ${currentSubtotalWithBulk} to ${currentSubtotalWithBulk - couponDiscountAmount}` : "",
+                extraDiscount: totalBulkDiscount,
+                finalTotalAmount: finalTotalAmount,
                 paymentPic: manualProof || null,
-                items: cart.map((item): SaveOrderItem => {
-                    // 1. Identify Product Type & Variant IDs
-                    let sizeId: number | null = null;
-                    let sizeName: string = "";
-                    let sizePriceAfterDiscount: number = item.priceAfterDiscount || item.price;
-
-                    // Try to match Size Pricing ID
-                    let productSizePrice: number | null = null;
-                    if (item.pricing && item.pricing.length > 0) {
-                        const quantityVariant = item.selectedVariants?.['Quantity'];
-                        if (quantityVariant) {
-                            sizeName = quantityVariant;
-                            const matchedPricing = item.pricing.find(p => p.quantity === quantityVariant);
-                            if (matchedPricing) {
-                                sizeId = parseInt(matchedPricing.id);
-                                productSizePrice = matchedPricing.price;
-                            }
-                        }
-                        if (!sizeId && item.pricing.length > 0) {
-                            sizeId = parseInt(item.pricing[0].id);
-                            sizeName = item.pricing[0].quantity;
-                            productSizePrice = item.pricing[0].price;
-                        }
-                    }
-
-                    const baseItem: SaveOrderItem = {
-                        productId: parseInt(item.id),
-                        productName: item.name,
-                        productImage: (item.images && item.images.length > 0) ? item.images[0] : item.imageUrl,
-                        productPrice: item.price,
-                        productPriceAfterDiscount: item.priceAfterDiscount || item.price,
-                        quantity: item.quantity,
-                        totalCost: 0, // Will calculate below
-                        extraDiscount: 0
-                    };
-
-                    // --- Variant Specifics ---
-
-                    // 1. Prepare potential IDs
-                    const productSizeColourId = (item.selectedSizeColours && item.selectedSizeColours.length > 0) ? parseInt(item.selectedSizeColours[0].id) : null;
-                    const productColourId = item.selectedColour ? parseInt(item.selectedColour.id) : null;
-
-                    // 2. Logic Chain
-
-                    // A. Complex (Size + Colour) [productSizeColourId exists]
-                    if (productSizeColourId) {
-                        const sc = item.selectedSizeColours![0];
-                        baseItem.productSizeColourId = productSizeColourId;
-                        baseItem.productSizeColourName = sc.name;
-                        baseItem.productSizeColourImage = sc.productPics;
-                        baseItem.productSizeColourExtraPrice = sc.price;
-
-                        baseItem.productSizeColourExtraPrice = sc.price;
-
-                        // Size Info (Context for Colour)
-                        baseItem.productSizeId = sizeId;
-                        baseItem.productSizeName = sizeName;
-                        baseItem.productSizePrice = productSizePrice;
-                        baseItem.productSizePriceAfterDiscount = sizePriceAfterDiscount;
-
-                        // For Complex Variants (Size + Colour), these base fields should be null as per requirement
-                        // The image is handled by productSizeColourImage
-                        baseItem.productImage = undefined;
-                        baseItem.productPriceAfterDiscount = undefined;
-
-                        if (sc.productPics) baseItem.productSizeColourImage = sc.productPics;
-
-                        // Total Cost = (BaseSizePrice + ExtraPrice) * Qty
-                        baseItem.totalCost = (sizePriceAfterDiscount + sc.price) * item.quantity;
-                    }
-                    // B. Size Variant [!productSizeColourId && sizeId exists]
-                    else if (sizeId) {
-                        baseItem.productSizeId = sizeId;
-                        baseItem.productSizeName = sizeName;
-                        baseItem.productSizePrice = productSizePrice;
-                        baseItem.productSizePriceAfterDiscount = sizePriceAfterDiscount;
-                        baseItem.totalCost = sizePriceAfterDiscount * item.quantity;
-                    }
-                    // C. Colour Variant [!productSizeColourId && !sizeId && productColourId exists]
-                    else if (productColourId) {
-                        baseItem.productColourId = productColourId;
-                        baseItem.productColour = item.selectedColour!.name;
-                        baseItem.productColourImage = item.selectedColour!.image;
-
-                        if (item.selectedColour!.image) baseItem.productImage = item.selectedColour!.image;
-                        baseItem.totalCost = (item.priceAfterDiscount || item.price) * item.quantity;
-                    }
-                    // D. Simple [Everything else]
-                    else {
-                        baseItem.totalCost = (item.priceAfterDiscount || item.price) * item.quantity;
-                    }
-
-                    return baseItem;
-                })
+                items: processedItems
             };
 
             const response = await orderService.saveOrder(payload);
+
 
             // Set success data (use response if available, or just a flag)
             setSuccessOrderData(response || { success: true });
