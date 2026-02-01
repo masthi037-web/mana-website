@@ -60,29 +60,9 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
         setDownloading(true);
 
         try {
-            // Parallelize image fetching
+            // Image fetching removed for <1s download speed as per user request
             const itemImagesOverride: Record<string, string> = {};
             let logoBase64: string | undefined = undefined;
-
-            const logoPromise = companyDetails.logo
-                ? convertImageToBase64(companyDetails.logo)
-                    .then(res => { logoBase64 = res; })
-                    .catch(e => console.warn("Failed to convert logo", e))
-                : Promise.resolve();
-
-            const itemPromises = order.items.map(async (item) => {
-                const imageUrl = item.productSizeColourImage || item.productColourImage || item.productImage;
-                if (imageUrl) {
-                    try {
-                        const base64 = await convertImageToBase64(imageUrl);
-                        itemImagesOverride[item.orderItemId] = base64;
-                    } catch (e: any) {
-                        console.warn(`Failed to convert image for item ${item.productName}`, e);
-                    }
-                }
-            });
-
-            await Promise.all([logoPromise, ...itemPromises]);
 
 
             // Create a temporary container for the invoice

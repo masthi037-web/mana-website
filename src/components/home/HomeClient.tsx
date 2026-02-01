@@ -141,7 +141,15 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                 const fetchedCategory = await fetchProductsByCategory(categoryId, companyDetails?.deliveryBetween);
 
                 if (fetchedCategory) {
-                    setCategories(prev => prev.map(c => c.id === categoryId ? fetchedCategory : c));
+                    setCategories(prev => prev.map(c =>
+                        c.id === categoryId ? {
+                            ...c,
+                            ...fetchedCategory,
+                            categoryImage: fetchedCategory.categoryImage || c.categoryImage,
+                            name: fetchedCategory.name || c.name,
+                            catalogs: fetchedCategory.catalogs
+                        } : c
+                    ));
                     targetCategory = fetchedCategory;
                 }
             } catch (error) {

@@ -12,7 +12,7 @@ interface InvoiceTemplateProps {
 export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(({ order, companyDetails, logoOverride, itemImagesOverride }, ref) => {
     if (!order || !companyDetails) return null;
 
-    const logoSrc = logoOverride || companyDetails.logo;
+    // Image variables removed for speed optimization
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return '';
@@ -31,10 +31,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
         }).format(amount);
     };
 
-    const getItemImage = (item: any) => {
-        // Prioritize specific variant images
-        return item.productSizeColourImage || item.productColourImage || item.productImage;
-    };
+    // getItemImage removed for speed optimization
 
     return (
         <div ref={ref} className="bg-white w-[210mm] min-h-[297mm] mx-auto text-slate-800 flex flex-col font-sans" id="invoice-template">
@@ -44,17 +41,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
             <div className="p-12 pb-8 flex justify-between items-start">
                 <div className="flex flex-col">
                     <div className="flex items-center gap-4 mb-6">
-                        {logoSrc && (
-                            <div className="h-20 w-20 relative rounded-xl overflow-hidden bg-slate-50 border border-slate-100 p-2 shadow-sm">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                    src={logoSrc}
-                                    alt="Logo"
-                                    className="h-full w-full object-contain"
-                                    crossOrigin="anonymous"
-                                />
-                            </div>
-                        )}
+                        {/* Logo removed for speed */}
                         <div>
                             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{companyDetails.companyName}</h1>
                             {companyDetails.gstNumber && <p className="text-xs text-slate-400 font-medium">GSTIN: {companyDetails.gstNumber}</p>}
@@ -130,7 +117,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 border-b border-slate-200">
                             <tr>
-                                <th className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[10%]">Image</th>
+                                <th className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[10%]">#</th>
                                 <th className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[45%]">Item Details</th>
                                 <th className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center w-[15%]">Qty</th>
                                 <th className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right w-[15%]">Price</th>
@@ -139,23 +126,10 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
                             {order.items.map((item, idx) => {
-                                const imageSrc = (itemImagesOverride && itemImagesOverride[item.orderItemId]) || getItemImage(item);
                                 return (
                                     <tr key={idx} className="group">
                                         <td className="py-4 px-6 align-top">
-                                            <div className="h-12 w-12 rounded-lg border border-slate-100 overflow-hidden bg-slate-50 relative group-hover:shadow-md transition-shadow">
-                                                {imageSrc ? (
-                                                    // eslint-disable-next-line @next/next/no-img-element
-                                                    <img
-                                                        src={imageSrc}
-                                                        alt=""
-                                                        className="w-full h-full object-cover"
-                                                        crossOrigin="anonymous"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-slate-300 text-[10px]">Img</div>
-                                                )}
-                                            </div>
+                                            <span className="text-slate-400 text-xs font-medium">{(idx + 1).toString().padStart(2, '0')}</span>
                                         </td>
                                         <td className="py-4 px-6 align-top">
                                             <p className="font-bold text-slate-800 text-sm mb-1">{item.productName}</p>
