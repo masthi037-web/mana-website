@@ -1662,8 +1662,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
             const finalCart = newCart.filter(item => item.cartItemId !== 'REMOVE_ME');
 
-            // Always update cart to reflect latest server data (silent updates included)
-            useCart.setState({ cart: finalCart });
+            // Always update cart and company details to reflect latest server data (silent updates included)
+            useCart.setState({
+                cart: finalCart,
+                companyDetails: freshCompanyDetails
+            });
 
             if (blockingChanges && changes.length > 0) {
                 setValidationErrors(changes);
