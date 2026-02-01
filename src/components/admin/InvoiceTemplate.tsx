@@ -130,6 +130,11 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                                         {tag}
                                                     </span>
                                                 ))}
+                                                {item.extraDiscount && item.extraDiscount > 0 ? (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">
+                                                        Extra Discount: -{formatCurrency(item.extraDiscount)}
+                                                    </span>
+                                                ) : null}
                                             </div>
                                         </td>
                                         <td className="py-4 px-6 text-center align-top">

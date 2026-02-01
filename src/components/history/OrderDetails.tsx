@@ -273,9 +273,16 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
                                                     </Badge>
                                                 ))}
                                             </div>
-                                            <p className="text-xs font-medium text-slate-400 mt-1.5">
-                                                Qty: <span className="text-slate-900">{item.quantity}</span>
-                                            </p>
+                                            <div className="flex items-center gap-3 mt-1.5">
+                                                <p className="text-xs font-medium text-slate-400">
+                                                    Qty: <span className="text-slate-900">{item.quantity}</span>
+                                                </p>
+                                                {item.extraDiscount && item.extraDiscount > 0 && (
+                                                    <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 flex items-center gap-0.5">
+                                                        Discount: -{formatCurrency(item.extraDiscount)}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="text-right pt-0.5">
                                             <p className="font-bold text-slate-900 text-sm">
