@@ -64,20 +64,38 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
                 );
             });
 
+            // Ensure layout is stable
+            await new Promise(r => setTimeout(r, 200));
+
             const element = container.querySelector('#invoice-template') as HTMLElement;
             if (element) {
+                // Detect mobile to use conservative scale
+                const isMobile = window.innerWidth <= 768;
                 const canvas = await html2canvas(element, {
-                    scale: 1.2, // Reduced for speed on mobile
-                    useCORS: false, // No more external images
+                    scale: isMobile ? 1 : 1.2,
+                    useCORS: true,
                     logging: false,
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
+                    width: 800, // Force specific width capture
+                    onclone: (doc) => {
+                        // Ensure cloned document elements are visible
+                        const el = doc.getElementById('invoice-template');
+                        if (el) el.style.visibility = 'visible';
+                    }
                 });
+
                 const imgData = canvas.toDataURL('image/jpeg', 0.8);
-                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdf = new jsPDF({
+                    orientation: 'p',
+                    unit: 'mm',
+                    format: 'a4',
+                    compress: true
+                });
+
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
                 pdf.save(`Invoice_${order.orderNumber}.pdf`);
             }
 

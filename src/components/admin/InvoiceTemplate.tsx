@@ -9,6 +9,7 @@ interface InvoiceTemplateProps {
 
 export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(({ order, companyDetails }, ref) => {
     if (!order || !companyDetails) return null;
+    const details = companyDetails;
 
     // Image variables removed for speed optimization
 
@@ -32,7 +33,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
     // getItemImage removed for speed optimization
 
     return (
-        <div ref={ref} className="bg-white w-[800px] min-h-fit mx-auto text-slate-800 flex flex-col font-sans" id="invoice-template">
+        <div ref={ref} className="bg-white text-slate-800 flex flex-col font-sans" id="invoice-template">
             {/* Top Decorative Bar Removed for Speed */}
 
             {/* Header Section */}
@@ -41,25 +42,25 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                     <div className="flex items-center gap-4 mb-6">
                         {/* Logo removed for speed */}
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{companyDetails.companyName}</h1>
-                            {companyDetails.gstNumber && <p className="text-xs text-slate-400 font-medium">GSTIN: {companyDetails.gstNumber}</p>}
+                            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{details.companyName}</h1>
+                            {details.gstNumber && <p className="text-xs text-slate-400 font-medium">GSTIN: {details.gstNumber}</p>}
                         </div>
                     </div>
 
                     <div className="text-sm text-slate-500 leading-relaxed">
-                        <p>{companyDetails.companyAddress}</p>
-                        <p>{companyDetails.companyCity}, {companyDetails.companyState} - {companyDetails.companyPinCode}</p>
+                        <p>{details.companyAddress}</p>
+                        <p>{details.companyCity}, {details.companyState} - {details.companyPinCode}</p>
                         <p className="mt-2 text-slate-600 font-medium">
-                            <span className="text-slate-400 font-normal mr-2">E:</span> {companyDetails.companyEmail}
+                            <span className="text-slate-400 font-normal mr-2">E:</span> {details.companyEmail}
                         </p>
                         <p className="text-slate-600 font-medium">
-                            <span className="text-slate-400 font-normal mr-2">P:</span> {companyDetails.companyPhone}
+                            <span className="text-slate-400 font-normal mr-2">P:</span> {details.companyPhone}
                         </p>
                     </div>
                 </div>
 
                 <div className="text-right">
-                    <div className="inline-block bg-slate-900 text-white px-6 py-2 rounded-full text-sm font-bold tracking-wider uppercase mb-6 shadow-lg shadow-slate-200">
+                    <div className="inline-block bg-slate-900 text-white px-6 py-2 rounded-full text-sm font-bold tracking-wider uppercase mb-6">
                         Invoice
                     </div>
                     <div className="space-y-1">
@@ -83,10 +84,6 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
             {/* Client Info Grid */}
             <div className="p-12 py-8 grid grid-cols-2 gap-12">
                 <div className="flex flex-col h-full">
-                    <h3 className="text-xs font-bold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <span className="w-1 h-4 bg-primary rounded-full"></span>
-                        Billed To
-                    </h3>
                     <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex-grow">
                         <p className="font-bold text-slate-900 text-lg mb-1">{order.customerName}</p>
                         <p className="text-sm text-slate-500 font-medium mb-3">{order.customerPhone}</p>
@@ -94,10 +91,6 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                     </div>
                 </div>
                 <div className="flex flex-col h-full">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <span className="w-1 h-4 bg-slate-300 rounded-full"></span>
-                        Shipped To
-                    </h3>
                     <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex-grow">
                         <p className="text-sm text-slate-600 leading-relaxed h-full">
                             <span className="font-bold text-slate-900 block mb-2 text-base">Delivery Address</span>
@@ -111,7 +104,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
 
             {/* Items Table */}
             <div className="px-12 flex-grow">
-                <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <div className="rounded-2xl border border-slate-200 overflow-hidden">
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 border-b border-slate-200">
                             <tr>
@@ -189,12 +182,12 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
             <div className="mt-auto pt-8 pb-12 px-12 text-center border-t border-slate-100">
                 <h3 className="text-xl font-bold text-slate-900 mb-2 font-serif tracking-tight">Thank you for your Order</h3>
                 <p className="text-slate-500 text-sm max-w-md mx-auto mb-6 leading-relaxed">
-                    We appreciate your trust in {companyDetails.companyName}. Please check your order details carefully.
+                    We appreciate your trust in {details.companyName}. Please check your order details carefully.
                 </p>
                 <div className="inline-flex items-center gap-6 text-sm font-medium text-slate-600 justify-center">
-                    <span>{companyDetails.companyDomain}</span>
+                    <span>{details.companyDomain}</span>
                     <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                    <span>{companyDetails.companyEmail}</span>
+                    <span>{details.companyEmail}</span>
                 </div>
             </div>
         </div>
