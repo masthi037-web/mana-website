@@ -61,8 +61,6 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
 
         try {
             // Image fetching removed for <1s download speed as per user request
-            const itemImagesOverride: Record<string, string> = {};
-            let logoBase64: string | undefined = undefined;
 
 
             // Create a temporary container for the invoice
@@ -70,6 +68,7 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
             container.style.position = 'absolute';
             container.style.top = '-9999px';
             container.style.left = '-9999px';
+            container.style.width = '800px'; // Set fixed width for consistent rendering
             document.body.appendChild(container);
 
             const root = createRoot(container);
@@ -80,8 +79,6 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
                     <InvoiceTemplate
                         order={order}
                         companyDetails={companyDetails}
-                        logoOverride={logoBase64}
-                        itemImagesOverride={itemImagesOverride}
                         ref={(el) => {
                             if (el) resolve();
                         }}
@@ -89,12 +86,14 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
                 );
             });
 
-            // Small delay to ensure images/fonts load (reduced since we use base64)
-            await new Promise(r => setTimeout(r, 50));
-
             const element = container.querySelector('#invoice-template') as HTMLElement;
             if (element) {
-                const canvas = await html2canvas(element, { scale: 1.5, useCORS: true });
+                const canvas = await html2canvas(element, {
+                    scale: 1.2, // Reduced for speed on mobile
+                    useCORS: false, // No more external images
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
                 const imgData = canvas.toDataURL('image/jpeg', 0.8);
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const pdfWidth = pdf.internal.pageSize.getWidth();

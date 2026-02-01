@@ -5,11 +5,9 @@ import { format } from 'date-fns';
 interface InvoiceTemplateProps {
     order: SaveOrderResponse;
     companyDetails: CompanyDetails | null;
-    logoOverride?: string;
-    itemImagesOverride?: Record<string, string>;
 }
 
-export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(({ order, companyDetails, logoOverride, itemImagesOverride }, ref) => {
+export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(({ order, companyDetails }, ref) => {
     if (!order || !companyDetails) return null;
 
     // Image variables removed for speed optimization
@@ -34,7 +32,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
     // getItemImage removed for speed optimization
 
     return (
-        <div ref={ref} className="bg-white w-[210mm] min-h-[297mm] mx-auto text-slate-800 flex flex-col font-sans" id="invoice-template">
+        <div ref={ref} className="bg-white w-[800px] min-h-fit mx-auto text-slate-800 flex flex-col font-sans" id="invoice-template">
             {/* Top Decorative Bar Removed for Speed */}
 
             {/* Header Section */}
