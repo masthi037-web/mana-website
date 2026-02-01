@@ -1648,6 +1648,18 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 }
             }
 
+            // --- PHASE 1.5: COUPON VALIDATION ---
+            if (couponCode) {
+                const couponsList = freshCompanyDetails.companyCoupon ? String(freshCompanyDetails.companyCoupon).split(',') : [];
+                const isStillValid = couponsList.some(c => c.startsWith(couponCode + '&&&'));
+                if (!isStillValid) {
+                    blockingChanges = true;
+                    pushChange(`The coupon "${couponCode}" is no longer available and has been removed from your order.`);
+                    setCouponCode('');
+                    if (typeof setExtraDiscount === 'function') setExtraDiscount(0);
+                }
+            }
+
             const finalCart = newCart.filter(item => item.cartItemId !== 'REMOVE_ME');
 
             // Always update cart to reflect latest server data (silent updates included)
@@ -2571,7 +2583,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         {/* Coupon Section */}
                                         <div className="mb-6 space-y-3">
                                             {/* Available Coupons List (Simple Version) */}
-                                            {companyDetails?.companyCoupon && (
+                                            {companyDetails?.companyCoupon ? (
                                                 <div className="grid grid-cols-2 gap-2 mt-2">
                                                     {(() => {
                                                         const coupons = String(companyDetails.companyCoupon).split(',').map((cStr, idx) => {
@@ -2640,6 +2652,12 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                             );
                                                         });
                                                     })()}
+                                                </div>
+                                            ) : (
+                                                <div className="p-3 bg-secondary/20 border border-border/40 rounded-xl text-center">
+                                                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">
+                                                        No coupons available at this moment
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
