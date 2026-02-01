@@ -562,6 +562,7 @@ export interface SaveOrderItem {
     productSizeColourName?: string;
     productSizeColourImage?: string;
     productSizeColourExtraPrice?: number | null;
+    extraDiscount?: number | null;
 }
 
 export interface SaveOrderRequest {
@@ -579,6 +580,7 @@ export interface SaveOrderRequest {
     orderStatus: string; // 'CREATED'
     subTotal: number;
     allDiscount: string;
+    extraDiscount?: number | null;
     finalTotalAmount: number;
     paymentPic?: string | null;
     createdAt?: string; // Optional
@@ -601,6 +603,7 @@ export interface SaveOrderResponse {
     orderStatus: string;
     subTotal: number;
     allDiscount: string;
+    extraDiscount?: number | null;
     finalTotalAmount: number;
     paymentPic: string | null;
     createdAt: string;
@@ -629,4 +632,5 @@ export interface OrderResponseItem {
     quantity: number;
     eachCost?: number | null;
     totalCost: number;
+    extraDiscount?: number | null;
 }

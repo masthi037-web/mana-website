@@ -105,6 +105,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         return () => clearInterval(timer);
     }, [showQrPopup, timeLeft]);
 
+    const [extraDiscount, setExtraDiscount] = useState(0);
+
     const formatTime = (seconds: number) => {
         const totalSeconds = Math.max(0, seconds);
         const mins = Math.floor(totalSeconds / 60);
@@ -719,7 +721,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 orderStatus: "CREATED",
                 subTotal: subtotal,
                 allDiscount: (couponCode && discountAmount > 0) ? `applied ${couponCode} changed ${subtotal} to ${subtotal - discountAmount}` : "",
-                finalTotalAmount: totalCost,
+                extraDiscount: extraDiscount,
+                finalTotalAmount: totalCost - extraDiscount,
                 paymentPic: manualProof || null,
                 items: cart.map((item): SaveOrderItem => {
                     // 1. Identify Product Type & Variant IDs
@@ -753,7 +756,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         productPrice: item.price,
                         productPriceAfterDiscount: item.priceAfterDiscount || item.price,
                         quantity: item.quantity,
-                        totalCost: 0 // Will calculate below
+                        totalCost: 0, // Will calculate below
+                        extraDiscount: 0
                     };
 
                     // --- Variant Specifics ---
@@ -3198,6 +3202,12 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                 <span>-₹{discountAmount.toFixed(2)}</span>
                                                             </div>
                                                         )}
+                                                        {extraDiscount > 0 && (
+                                                            <div className="flex justify-between text-sm text-rose-600 font-bold">
+                                                                <span>Extra Discount</span>
+                                                                <span>-₹{extraDiscount.toFixed(2)}</span>
+                                                            </div>
+                                                        )}
                                                         <div className="flex justify-between text-sm text-slate-500">
                                                             <span>Delivery</span>
                                                             <span className={isFreeDelivery ? "text-emerald-600 font-bold" : "text-slate-900"}>
@@ -3207,7 +3217,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                         <div className="h-px bg-slate-200/60 my-2" />
                                                         <div className="flex justify-between items-end">
                                                             <span className="font-bold text-base text-slate-900">To Pay</span>
-                                                            <span className="font-black text-xl text-primary font-headline">₹{finalTotal.toFixed(2)}</span>
+                                                            <span className="font-black text-xl text-primary font-headline">₹{(finalTotal - extraDiscount).toFixed(2)}</span>
                                                         </div>
                                                     </div>
                                                 </div>

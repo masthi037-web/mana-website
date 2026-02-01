@@ -294,7 +294,7 @@ const AddToCartContent = ({
     } : undefined;
 
     addToCart(
-      { ...product, price: effectiveBasePrice, productSizeId: selectedPricingId },
+      { ...product, price: variantPrice, priceAfterDiscount: effectiveBasePrice, productSizeId: selectedPricingId },
       variantsToAdd,
       selectedSizeColoursList,
       colourToAdd
@@ -607,7 +607,7 @@ export function AddToCartSheet({ product, children, onAddToCart }: AddToCartShee
       }
     }
 
-    addToCart({ ...product, price: effectivePrice }, {});
+    addToCart({ ...product, price: product.price, priceAfterDiscount: effectivePrice }, {});
 
     // Trigger success confetti
     const count = 200;
