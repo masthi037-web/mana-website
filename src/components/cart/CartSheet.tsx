@@ -1660,6 +1660,22 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 }
             }
 
+            // --- PHASE 1.6: SHIPPING VALIDATION ---
+            const oldThreshold = companyDetails?.freeDeliveryCost ? parseFloat(companyDetails.freeDeliveryCost) : 0;
+            const newThreshold = freshCompanyDetails?.freeDeliveryCost ? parseFloat(freshCompanyDetails.freeDeliveryCost) : 0;
+            const wasEligible = oldThreshold > 0 && subtotal >= oldThreshold;
+            const isNowEligible = newThreshold > 0 && subtotal >= newThreshold;
+
+            if (wasEligible && !isNowEligible) {
+                blockingChanges = true;
+                const shippingCost = freshCompanyDetails?.deliveryBetween ? parseFloat(freshCompanyDetails.deliveryBetween) : 40;
+                if (newThreshold <= 0) {
+                    pushChange(`Free delivery is no longer available. A shipping charge of ₹${shippingCost} has been added to your order.`);
+                } else {
+                    pushChange(`The free delivery threshold has increased to ₹${newThreshold}. A shipping charge of ₹${shippingCost} has been added to your order.`);
+                }
+            }
+
             const finalCart = newCart.filter(item => item.cartItemId !== 'REMOVE_ME');
 
             // Always update cart and company details to reflect latest server data (silent updates included)
