@@ -10,6 +10,7 @@ export type ProductSizeColourOption = {
   productPics?: string;
   productSizeColourQuantity: number;
   status?: string;
+  sizeColourStatus?: string;
 };
 
 export type ProductPriceOption = {
@@ -27,6 +28,7 @@ export type ProductColor = {
   name: string;
   image: string;
   status: string;
+  colourStatus?: string;
 };
 
 export type Review = {

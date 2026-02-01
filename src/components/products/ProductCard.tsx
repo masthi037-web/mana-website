@@ -104,12 +104,16 @@ export const ProductCard = ({ product, hideDescription = false }: ProductCardPro
 
           {/* Status Overlay */}
           {isDisabled && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
-              <div className={cn(
-                "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg transform -rotate-12",
-                isOutOfStock ? "bg-rose-500 text-white" : "bg-gray-500 text-white"
-              )}>
-                {isOutOfStock ? "Sold Out" : "Unavailable"}
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/5 backdrop-blur-[2px]">
+              <div className="relative overflow-hidden px-6 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.1)] transform rotate-[-5deg]">
+                {/* Shimmer Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                <span className={cn(
+                  "relative z-10 text-xs font-black uppercase tracking-[0.2em] drop-shadow-sm",
+                  isOutOfStock ? "text-rose-500" : "text-slate-400"
+                )}>
+                  {isOutOfStock ? "Sold Out" : "Unavailable"}
+                </span>
               </div>
             </div>
           )}

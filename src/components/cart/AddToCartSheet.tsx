@@ -53,13 +53,23 @@ const OptionCard = ({
     onClick={active ? onClick : undefined}
     className={cn(
       "relative flex flex-col items-center justify-center py-2.5 px-3 rounded-xl border-2 transition-all duration-300 ease-out",
-      active ? "cursor-pointer hover:border-primary/30 hover:bg-secondary/30" : "cursor-not-allowed opacity-50 bg-muted/50 border-input",
+      active ? "cursor-pointer hover:border-primary/30 hover:bg-secondary/30" : "cursor-not-allowed bg-muted/30 border-input grayscale-[0.5]",
       isSelected && active
         ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
-        : !active ? "border-transparent text-muted-foreground/60" : "border-transparent bg-secondary/30 text-muted-foreground"
+        : !active ? "border-transparent opacity-80" : "border-transparent bg-secondary/30 text-muted-foreground"
     )}
   >
-    {isSelected && (
+    {!active && (
+      <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/5 rounded-xl overflow-hidden">
+        <div className="relative overflow-hidden px-2 py-0.5 rounded-md bg-white/20 backdrop-blur-md border border-white/20 shadow-sm rotate-[-4deg]">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+          <span className="relative z-10 text-[8px] font-black uppercase tracking-wider text-rose-500 drop-shadow-sm">
+            {statusLabel || "Sold Out"}
+          </span>
+        </div>
+      </div>
+    )}
+    {isSelected && active && (
       <div className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm">
         <Check className="w-2.5 h-2.5" strokeWidth={3} />
       </div>
@@ -67,7 +77,7 @@ const OptionCard = ({
     <span className={cn(
       "text-sm font-bold tracking-tight",
       isSelected ? "text-primary" : "text-foreground",
-      !active && "line-through decoration-destructive/50 decoration-2"
+      !active && "line-through decoration-destructive/30 decoration-1"
     )}>
       {label}
     </span>
@@ -77,7 +87,6 @@ const OptionCard = ({
       </div>
     )}
   </div>
-
 );
 
 const ColourCard = ({
@@ -87,7 +96,7 @@ const ColourCard = ({
   active,
   statusLabel,
   onClick,
-  extraPrice = 0, // Default to 0
+  extraPrice = 0,
 }: {
   name: string;
   image?: string;
@@ -95,19 +104,29 @@ const ColourCard = ({
   active: boolean;
   statusLabel?: string;
   onClick: () => void;
-  extraPrice?: number; // Optional prop
+  extraPrice?: number;
 }) => (
   <div
     onClick={active ? onClick : undefined}
     className={cn(
       "relative flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all duration-300 ease-out h-[88px]",
-      active ? "cursor-pointer hover:border-primary/30 hover:bg-secondary/30" : "cursor-not-allowed opacity-50 bg-muted/50 border-input grayscale",
+      active ? "cursor-pointer hover:border-primary/30 hover:bg-secondary/30" : "cursor-not-allowed bg-muted/30 border-input grayscale-[0.8]",
       isSelected && active
         ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
-        : !active ? "border-transparent text-muted-foreground/60" : "border-transparent bg-secondary/30 text-muted-foreground"
+        : !active ? "border-transparent opacity-80" : "border-transparent bg-secondary/30 text-muted-foreground"
     )}
   >
-    {isSelected && (
+    {!active && (
+      <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/5 rounded-xl overflow-hidden">
+        <div className="relative overflow-hidden px-2 py-0.5 rounded-md bg-white/20 backdrop-blur-md border border-white/20 shadow-sm rotate-[-4deg]">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+          <span className="relative z-10 text-[8px] font-black uppercase tracking-wider text-rose-500 drop-shadow-sm">
+            {statusLabel || "Sold Out"}
+          </span>
+        </div>
+      </div>
+    )}
+    {isSelected && active && (
       <div className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm z-10">
         <Check className="w-2.5 h-2.5" strokeWidth={3} />
       </div>
@@ -124,7 +143,7 @@ const ColourCard = ({
     <span className={cn(
       "text-xs font-bold tracking-tight line-clamp-1 max-w-full text-center px-1 group-disabled:text-muted-foreground/50",
       isSelected ? "text-primary" : "text-foreground",
-      !active && "line-through decoration-destructive/50 decoration-2"
+      !active && "line-through decoration-destructive/30 decoration-1"
     )}>
       {name}
       {extraPrice > 0 && <span className="ml-0.5 text-[10px] text-emerald-600 font-extrabold">(+₹{extraPrice})</span>}
@@ -432,18 +451,22 @@ const AddToCartContent = ({
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider bg-secondary/50 px-2 py-1 rounded">Required</span>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                {availableSizeColours.map(sc => (
-                  <ColourCard
-                    key={sc.id}
-                    name={sc.name}
-                    // @ts-ignore - Check for multiple possible image fields
-                    image={sc.productPics || sc.image}
-                    active={true} // Always active
-                    isSelected={selectedSizeColourIds.has(sc.id)}
-                    onClick={() => handleSizeColourToggle(sc.id)}
-                    extraPrice={sc.price}
-                  />
-                ))}
+                {availableSizeColours.map(sc => {
+                  const isActive = sc.sizeColourStatus !== 'INACTIVE' && sc.sizeColourStatus !== 'OUTOFSTOCK';
+                  return (
+                    <ColourCard
+                      key={sc.id}
+                      name={sc.name}
+                      // @ts-ignore - Check for multiple possible image fields
+                      image={sc.productPics || sc.image}
+                      active={isActive}
+                      statusLabel={sc.sizeColourStatus === 'OUTOFSTOCK' ? 'Sold Out' : undefined}
+                      isSelected={selectedSizeColourIds.has(sc.id)}
+                      onClick={() => handleSizeColourToggle(sc.id)}
+                      extraPrice={sc.price}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
@@ -457,9 +480,8 @@ const AddToCartContent = ({
               </div>
               <div className="grid grid-cols-4 gap-2">
                 {product.colors.map((colour) => {
-                  const isActive = colour.status !== 'INACTIVE' && colour.status !== 'OUTOFSTOCK'; // Assuming mapped status, check api types
-                  // fallback if api types differ: ProductColour in types.ts has status: string.
-                  const statusLabel = colour.status === 'OUTOFSTOCK' ? 'Sold Out' : (colour.status === 'INACTIVE' ? 'Unavailable' : undefined);
+                  const isActive = colour.colourStatus !== 'INACTIVE' && colour.colourStatus !== 'OUTOFSTOCK';
+                  const statusLabel = colour.colourStatus === 'OUTOFSTOCK' ? 'Sold Out' : (colour.colourStatus === 'INACTIVE' ? 'Unavailable' : undefined);
 
                   return (
                     <ColourCard
@@ -508,7 +530,6 @@ const AddToCartContent = ({
         </div>
       </div>
 
-      {/* Sticky Bottom Bar */}
       <div className="absolute bottom-0 left-0 right-0 p-3 bg-background/80 backdrop-blur-lg border-t z-10 transition-all">
         <div className="flex items-center gap-3 w-full">
           <div className="flex flex-col min-w-[30%]">
@@ -548,14 +569,29 @@ const AddToCartContent = ({
               );
             })()}
           </div>
-          <Button
-            onClick={handleAddToCart}
-            size="default"
-            className="flex-1 rounded-lg shadow-md shadow-primary/20 text-sm font-semibold h-10 transition-all duration-300"
-          >
-            <ShoppingBag className="w-4 h-4 mr-2" />
-            Add to Cart
-          </Button>
+          {(() => {
+            const isOutOfStock = product.productStatus === 'OUTOFSTOCK' ||
+              (selectedPricingOption?.sizeStatus === 'OUTOFSTOCK');
+
+            return (
+              <Button
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+                size="default"
+                className={cn(
+                  "flex-1 rounded-lg shadow-md text-sm font-semibold h-10 transition-all duration-300",
+                  isOutOfStock ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none" : "shadow-primary/20"
+                )}
+              >
+                {isOutOfStock ? "Out of Stock" : (
+                  <>
+                    <ShoppingBag className="w-4 h-4 mr-2" />
+                    Add to Cart
+                  </>
+                )}
+              </Button>
+            );
+          })()}
         </div>
       </div>
 
@@ -605,6 +641,15 @@ export function AddToCartSheet({ product, children, onAddToCart }: AddToCartShee
         const discountAmount = (product.price * offerPercent) / 100;
         effectivePrice = Math.round(product.price - discountAmount);
       }
+    }
+
+    if (product.productStatus === 'OUTOFSTOCK') {
+      toast({
+        title: "Out of Stock",
+        description: "This product is currently unavailable.",
+        variant: "destructive",
+      });
+      return;
     }
 
     addToCart({ ...product, price: product.price, priceAfterDiscount: effectivePrice }, {});

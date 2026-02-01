@@ -70,12 +70,22 @@ const ColourCard = ({
     onClick={active ? onClick : undefined}
     className={cn(
       "relative flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all duration-300 ease-out h-[80px]",
-      active ? "cursor-pointer hover:border-primary/30 hover:bg-secondary/30" : "cursor-not-allowed opacity-50 bg-muted/50 border-input grayscale",
+      active ? "cursor-pointer hover:border-primary/30 hover:bg-secondary/30" : "cursor-not-allowed bg-muted/30 border-input grayscale-[0.8]",
       isSelected && active
         ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
-        : !active ? "border-transparent text-muted-foreground/60" : "border-transparent bg-secondary/30 text-muted-foreground"
+        : !active ? "border-transparent opacity-80" : "border-transparent bg-secondary/30 text-muted-foreground"
     )}
   >
+    {!active && (
+      <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/5 rounded-xl overflow-hidden">
+        <div className="relative overflow-hidden px-2 py-0.5 rounded-md bg-white/20 backdrop-blur-md border border-white/20 shadow-sm rotate-[-4deg]">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+          <span className="relative z-10 text-[8px] font-black uppercase tracking-wider text-rose-500 drop-shadow-sm">
+            {statusLabel || "Sold Out"}
+          </span>
+        </div>
+      </div>
+    )}
     {isSelected && active && (
       <div className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm z-10">
         <Check className="w-2.5 h-2.5" strokeWidth={3} />
@@ -90,12 +100,13 @@ const ColourCard = ({
         </div>
       )}
     </div>
-    <span className={cn("text-xs font-bold tracking-tight line-clamp-1 max-w-full text-center px-1", isSelected ? "text-primary" : "text-foreground")}>
+    <span className={cn(
+      "text-xs font-bold tracking-tight line-clamp-1 max-w-full text-center px-1",
+      isSelected ? "text-primary" : "text-foreground",
+      !active && "line-through decoration-destructive/30 decoration-1"
+    )}>
       {name}
     </span>
-    {!active && (
-      <span className="text-[8px] font-bold text-rose-500 uppercase tracking-wider leading-none mt-0.5">{statusLabel || "N/A"}</span>
-    )}
   </div>
 );
 
@@ -354,13 +365,6 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     // Construct the product to add to cart
-    // We override the price with the basePrice of the selected variant
-    // SizeColours are passed separately to be handled by useCart logic (which sums them up for total display)
-
-    // Logic: 
-    // 1. `product.price` in cart item should reflect the base variant price.
-    // 2. `selectedVariants` should include the "Quantity" if using pricing options.
-
     const variantInfo = { ...selectedVariants };
     if (currentPricingOption) {
       variantInfo['Quantity'] = currentPricingOption.quantity;
@@ -375,6 +379,21 @@ export default function ProductDetailPage() {
       name: selectedColour.name,
       image: selectedColour.image || ''
     } : undefined;
+
+    // Safety check for out of stock selection
+    const isOutOfStock = product.productStatus === 'OUTOFSTOCK' ||
+      (currentPricingOption?.sizeStatus === 'OUTOFSTOCK') ||
+      (sizeColourObjects.some(sc => sc.sizeColourStatus === 'OUTOFSTOCK')) ||
+      (selectedColour?.colourStatus === 'OUTOFSTOCK');
+
+    if (isOutOfStock) {
+      toast({
+        title: "Out of Stock",
+        description: "One of the selected options is currently unavailable.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     addToCart(
       { ...product, price: effectiveBasePrice, productSizeId: selectedPricingId || undefined },
@@ -416,11 +435,22 @@ export default function ProductDetailPage() {
             })()}
             alt={product.name}
             fill
-            className="object-cover hover:scale-105 transition-transform duration-700"
-            data-ai-hint={product.imageHint}
-            sizes="(max-width: 768px) 100vw, 50vw"
             priority
           />
+          {(product.productStatus === 'OUTOFSTOCK' || product.productStatus === 'INACTIVE') && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/5 backdrop-blur-[2px]">
+              <div className="relative overflow-hidden px-8 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.1)] transform rotate-[-5deg] animate-in zoom-in duration-500">
+                {/* Shimmer Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                <span className={cn(
+                  "relative z-10 text-xl font-black uppercase tracking-[0.2em] drop-shadow-sm",
+                  product.productStatus === 'OUTOFSTOCK' ? "text-rose-500" : "text-slate-400"
+                )}>
+                  {product.productStatus === 'OUTOFSTOCK' ? "Sold Out" : "Unavailable"}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Product Details */}
@@ -509,39 +539,60 @@ export default function ProductDetailPage() {
                     const prices = product.pricing.map(p => p.price);
                     const allPricesSame = prices.every(p => p === prices[0]);
 
-                    return product.pricing.map((option) => (
-                      <button
-                        key={option.id}
-                        onClick={() => {
-                          setSelectedPricingId(option.id);
-                          // Auto-select first style when size is changed
-                          if (option.sizeColours && option.sizeColours.length > 0) {
-                            setSelectedSizeColourId(option.sizeColours[0].id);
-                          } else {
-                            setSelectedSizeColourId(null);
-                          }
-                        }}
-                        className={cn(
-                          "relative flex flex-col items-center justify-center py-2 px-2 rounded-lg border-2 transition-all duration-200 h-14",
-                          selectedPricingId === option.id
-                            ? "border-primary bg-primary/5 shadow-sm"
-                            : "border-border bg-background hover:border-primary/30"
-                        )}
-                      >
-                        {selectedPricingId === option.id && (
-                          <div className="absolute top-2 right-2 text-primary">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                          </div>
-                        )}
-                        <span className={cn("text-base font-bold mb-0.5", selectedPricingId === option.id ? "text-primary" : "text-foreground")}>
-                          <div className="font-medium text-center">
-                            {option.quantity}
-                            {option.price > 0 && !allPricesSame && <span className="ml-1 text-xs text-primary font-bold">+₹{option.price}</span>}
-                          </div>
-                        </span>
-                        {/* The original price display below quantity is now integrated into the span above */}
-                      </button>
-                    ));
+                    return product.pricing.map((option) => {
+                      const isActive = option.sizeStatus !== 'INACTIVE' && option.sizeStatus !== 'OUTOFSTOCK';
+                      const isSelected = selectedPricingId === option.id;
+
+                      return (
+                        <button
+                          key={option.id}
+                          onClick={() => {
+                            if (!isActive) return;
+                            setSelectedPricingId(option.id);
+                            // Auto-select first style when size is changed
+                            if (option.sizeColours && option.sizeColours.length > 0) {
+                              setSelectedSizeColourId(option.sizeColours[0].id);
+                            } else {
+                              setSelectedSizeColourId(null);
+                            }
+                          }}
+                          className={cn(
+                            "relative flex flex-col items-center justify-center py-2 px-2 rounded-lg border-2 transition-all duration-200 h-14",
+                            isSelected && isActive
+                              ? "border-primary bg-primary/5 shadow-sm scale-[1.02]"
+                              : isActive
+                                ? "border-border bg-background hover:border-primary/30"
+                                : "cursor-not-allowed bg-muted/30 border-input opacity-80"
+                          )}
+                        >
+                          {!isActive && (
+                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/5 rounded-lg overflow-hidden">
+                              <div className="relative overflow-hidden px-1.5 py-0.5 rounded-md bg-white/20 backdrop-blur-md border border-white/20 shadow-sm rotate-[-4deg]">
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                                <span className="relative z-10 text-[8px] font-black uppercase tracking-wider text-rose-500 drop-shadow-sm">
+                                  Sold Out
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          {isSelected && isActive && (
+                            <div className="absolute top-2 right-2 text-primary">
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                            </div>
+                          )}
+                          <span className={cn(
+                            "text-base font-bold mb-0.5 transition-colors",
+                            isSelected && isActive ? "text-primary" : "text-foreground",
+                            !isActive && "line-through decoration-destructive/30 decoration-1"
+                          )}>
+                            <div className="font-medium text-center">
+                              {option.quantity}
+                              {option.price > 0 && !allPricesSame && isActive && <span className="ml-1 text-xs text-primary font-bold">+₹{option.price}</span>}
+                            </div>
+                          </span>
+                        </button>
+                      );
+                    });
                   })()}
                 </div>
               </div>
@@ -556,8 +607,8 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {product.colors.map((colour) => {
-                    const isActive = colour.status !== 'INACTIVE' && colour.status !== 'OUTOFSTOCK';
-                    const statusLabel = colour.status === 'OUTOFSTOCK' ? 'Sold Out' : (colour.status === 'INACTIVE' ? 'Unavailable' : undefined);
+                    const isActive = colour.colourStatus !== 'INACTIVE' && colour.colourStatus !== 'OUTOFSTOCK';
+                    const statusLabel = colour.colourStatus === 'OUTOFSTOCK' ? 'Sold Out' : (colour.colourStatus === 'INACTIVE' ? 'Unavailable' : undefined);
 
                     return (
                       <ColourCard
@@ -585,18 +636,32 @@ export default function ProductDetailPage() {
                 <div className="grid grid-cols-4 gap-3">
                   {availableSizeColours.map(sc => {
                     const isSelected = selectedSizeColourId === sc.id;
+                    const isActive = sc.sizeColourStatus !== 'INACTIVE' && sc.sizeColourStatus !== 'OUTOFSTOCK';
+
                     return (
                       <button
                         key={sc.id}
-                        onClick={() => setSelectedSizeColourId(sc.id)}
+                        onClick={() => isActive && setSelectedSizeColourId(sc.id)}
                         className={cn(
                           "relative flex flex-col items-center p-1.5 rounded-lg border-2 transition-all duration-300 ease-out h-[84px] sm:h-[94px]",
-                          isSelected
+                          isSelected && isActive
                             ? "border-primary bg-primary/5 shadow-md ring-0 scale-[1.02]"
-                            : "border-transparent bg-secondary/30 hover:border-primary/30 hover:bg-secondary/50"
+                            : isActive
+                              ? "border-transparent bg-secondary/30 hover:border-primary/30 hover:bg-secondary/50"
+                              : "cursor-not-allowed bg-muted/30 border-input opacity-80"
                         )}
                       >
-                        {isSelected && (
+                        {!isActive && (
+                          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/5 rounded-lg overflow-hidden">
+                            <div className="relative overflow-hidden px-1.5 py-0.5 rounded-md bg-white/20 backdrop-blur-md border border-white/20 shadow-sm rotate-[-4deg]">
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                              <span className="relative z-10 text-[8px] font-black uppercase tracking-wider text-rose-500 drop-shadow-sm">
+                                Sold Out
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        {isSelected && isActive && (
                           <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1 shadow-sm z-10">
                             <Check className="w-3 h-3" strokeWidth={3} />
                           </div>
@@ -610,12 +675,18 @@ export default function ProductDetailPage() {
                             </div>
                           )}
                         </div>
-                        <span className={cn("text-xs font-bold tracking-tight line-clamp-1 w-full text-center px-1 mb-0.5", isSelected ? "text-primary" : "text-foreground")}>
+                        <span className={cn(
+                          "text-xs font-bold tracking-tight line-clamp-1 w-full text-center px-1 mb-0.5 transition-colors",
+                          isSelected && isActive ? "text-primary" : "text-foreground",
+                          !isActive && "line-through decoration-destructive/30 decoration-1"
+                        )}>
                           {sc.name}
                         </span>
-                        <span className={cn("text-[10px] font-bold uppercase tracking-wider leading-none", isSelected ? "text-primary/80" : "text-muted-foreground")}>
-                          {sc.price > 0 ? `+₹${sc.price}` : "Standard"}
-                        </span>
+                        {isActive && (
+                          <span className={cn("text-[10px] font-bold uppercase tracking-wider leading-none", isSelected ? "text-primary/80" : "text-muted-foreground")}>
+                            {sc.price > 0 ? `+₹${sc.price}` : "Standard"}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -634,13 +705,34 @@ export default function ProductDetailPage() {
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Total</p>
                   <h2 className="text-3xl font-bold font-headline text-primary">₹{(finalPrice * quantity).toFixed(2)}</h2>
                 </div>
-                <Button onClick={handleAddToCart} size="lg" className="flex-1 max-w-sm h-14 text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-lg hover:shadow-primary/25 transition-all">
-                  Add to Cart
-                  <span className="ml-2 bg-white/20 px-2 py-0.5 rounded text-sm">
-                    <span className="sr-only">items</span>
-                    <svg className="w-5 h-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                  </span>
-                </Button>
+                {(() => {
+                  const isOutOfStock = product.productStatus === 'OUTOFSTOCK' ||
+                    (currentPricingOption?.sizeStatus === 'OUTOFSTOCK');
+
+                  return (
+                    <Button
+                      onClick={handleAddToCart}
+                      disabled={isOutOfStock}
+                      size="lg"
+                      className={cn(
+                        "flex-1 max-w-sm h-14 text-lg font-bold rounded-xl shadow-lg transition-all",
+                        isOutOfStock
+                          ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none"
+                          : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-primary/25"
+                      )}
+                    >
+                      {isOutOfStock ? "Out of Stock" : (
+                        <>
+                          Add to Cart
+                          <span className="ml-2 bg-white/20 px-2 py-0.5 rounded text-sm">
+                            <span className="sr-only">items</span>
+                            <svg className="w-5 h-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                          </span>
+                        </>
+                      )}
+                    </Button>
+                  );
+                })()}
               </div>
             </div>
           </div>
