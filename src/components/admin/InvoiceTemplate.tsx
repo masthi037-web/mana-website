@@ -137,7 +137,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                                 ))}
                                                 {item.extraDiscount && item.extraDiscount > 0 ? (
                                                     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black bg-rose-50 text-rose-500 uppercase tracking-wider border border-rose-100">
-                                                        OFF: -{formatCurrency(item.extraDiscount * item.quantity)}
+                                                        OFF: -{formatCurrency(item.extraDiscount)}
                                                     </span>
                                                 ) : null}
                                             </div>
