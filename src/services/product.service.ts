@@ -138,6 +138,8 @@ function mapApiCategoriesToAppCategories(apiCategories: any[], deliveryTime?: st
 
         // 1. Handle Nested Catalogues (Bulk Fetch Style)
         const nestedCatalogues = item.catalogues || item.catalogueResponseList || item.catalogue_response_list || [];
+        const productsAtCategoryLevel = item.products || item.productList || item.product_list || [];
+
         if (nestedCatalogues.length > 0) {
             const mappedCatalogs = nestedCatalogues.map((c: any) => mapApiCatalogueToAppCatalog(c, deliveryTime));
             appCat.catalogs.push(...mappedCatalogs);
@@ -149,6 +151,15 @@ function mapApiCategoriesToAppCategories(apiCategories: any[], deliveryTime?: st
         // 2. Handle Flat Catalogue Object (Single Category Fetch Style)
         else if (item.catalogueId || item.catalogue_id) {
             appCat.catalogs.push(mapApiCatalogueToAppCatalog(item, deliveryTime));
+        }
+        // 3. Handle Products Directly under Category
+        else if (productsAtCategoryLevel.length > 0) {
+            appCat.catalogs.push({
+                id: `default-${catId}`,
+                name: 'All Products',
+                catalogueImage: item.categoryImage || item.image || '',
+                products: productsAtCategoryLevel.map((p: any) => mapApiProductToAppProduct(p, deliveryTime))
+            });
         }
     });
 

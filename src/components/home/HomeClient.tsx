@@ -269,7 +269,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
     };
 
     const baseProducts: ProductWithImage[] = (() => {
-        // If searching and NOT fetching all at once, search across ALL catalogs in the active category
+        // 1. If searching, show products across all catalogs in the active category
         if (searchQuery && activeCategory) {
             return activeCategory.catalogs.flatMap(catalog =>
                 catalog.products.map(p => {
@@ -283,17 +283,33 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
             );
         }
 
-        // Standard behavior: show products for selected catalog
-        return selectedCatalog
-            ? selectedCatalog.products.map(p => {
+        // 2. If a specific catalog is selected, show its products
+        if (selectedCatalog) {
+            return selectedCatalog.products.map(p => {
                 const image = imageMap.get(p.imageId);
                 return {
                     ...p,
                     imageHint: image?.imageHint || 'product image',
-                    imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || `https://picsum.photos/seed/${p.id}/300/300` // Using seed for consistent images
-                }
-            })
-            : [];
+                    imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || `https://picsum.photos/seed/${p.id}/300/300`
+                };
+            });
+        }
+
+        // 3. Fallback: Show ALL products in the active category (e.g. when first selecting a category)
+        if (activeCategory) {
+            return activeCategory.catalogs.flatMap(catalog =>
+                catalog.products.map(p => {
+                    const image = imageMap.get(p.imageId);
+                    return {
+                        ...p,
+                        imageHint: image?.imageHint || 'product image',
+                        imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || `https://picsum.photos/seed/${p.id}/300/300`
+                    };
+                })
+            );
+        }
+
+        return [];
     })();
 
     // Calculate dynamic price range for the current view transparency
@@ -648,12 +664,15 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                                         />
                                     ) : null}
 
-                                    {(selectedCatalog || searchQuery) && (
+                                    {(selectedCatalog || searchQuery || activeCategory) && (
                                         <div id="products-anchor" className="mt-16 animate-in fade-in zoom-in-95 duration-500">
                                             <div className="flex items-center justify-between mb-8">
                                                 <div>
                                                     <h3 className="text-2xl font-bold font-headline">
-                                                        {searchQuery ? `Search Results in ${activeCategory?.name}` : selectedCatalog?.name}
+                                                        {searchQuery
+                                                            ? `Search Results in ${activeCategory?.name}`
+                                                            : (selectedCatalog?.name || `All Products in ${activeCategory?.name}`)
+                                                        }
                                                     </h3>
                                                     <p className="text-muted-foreground text-sm mt-1">
                                                         {filteredProducts.length} items {filteredProducts.length !== baseProducts.length ? '(filtered)' : 'available'}
