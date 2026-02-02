@@ -20,7 +20,7 @@ import { ArrowRight, Sparkles, Star, Settings, Loader2, Search } from 'lucide-re
 import Link from 'next/link';
 import Image from 'next/image';
 import { ShopNowButton } from '@/components/home/ShopNowButton';
-import { fetchProductsByCategory } from '@/services/product.service';
+import { fetchProductsByCategoryAction } from '@/actions/product.actions';
 
 import { CompanyDetails } from '@/lib/api-types';
 import { ProductInitializer } from '@/components/providers/ProductInitializer';
@@ -137,7 +137,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         if (category.catalogs.length === 0 && !isLoadingCategory[categoryId] && !isPreLoaded) {
             setIsLoadingCategory(prev => ({ ...prev, [categoryId]: true }));
             try {
-                const fetchedCategory = await fetchProductsByCategory(categoryId, companyDetails?.deliveryBetween);
+                const fetchedCategory = await fetchProductsByCategoryAction(categoryId, companyDetails?.deliveryBetween);
                 if (fetchedCategory) {
                     setCategories(prev => prev.map(c =>
                         c.id === categoryId ? {
