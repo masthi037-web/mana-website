@@ -44,6 +44,9 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
     const [searchDropdownResults, setSearchDropdownResults] = useState<ProductWithImage[]>([]);
     const searchRef = useRef<HTMLDivElement>(null);
 
+    console.log('[HomeClient] initialCategories:', initialCategories.map(c => ({ id: c.id, name: c.name, catalogs: c.catalogs.length })));
+
+
     // Auth State
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userRole, setUserRole] = useState<string | null>(null);
@@ -149,7 +152,10 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         const isPreLoaded = initialCategories.some(ic => ic.id === categoryId && ic.catalogs.length > 0);
 
         // If category has no catalogs (implying not loaded) and is not already loading, AND not pre-loaded
+        console.log(`[HomeClient] Checking Category ${categoryId}: catalogs=${category.catalogs.length}, loading=${isLoadingCategory[categoryId]}, preLoaded=${isPreLoaded}`);
+
         if (category.catalogs.length === 0 && !isLoadingCategory[categoryId] && !isPreLoaded) {
+            console.log(`[HomeClient] Triggering Fetch for ${categoryId}`);
             setIsLoadingCategory(prev => ({ ...prev, [categoryId]: true }));
             try {
                 const fetchedCategory = await fetchProductsByCategoryAction(categoryId, companyDetails?.deliveryBetween);
