@@ -1231,8 +1231,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (!isNaN(scLimit)) {
                             if (item.quantity > remainingSc) {
                                 blockingChanges = true;
-                                changedProductIds.add(item.id);
                                 if (remainingSc <= 0) {
+                                    changedProductIds.add(item.id);
                                     pushChange(`"${item.name}" (${detail.productSize ? detail.productSize + ' - ' : ''}${detail.sizeColourName}) is out of stock and has been removed.`);
                                     item.cartItemId = 'REMOVE_ME';
                                 } else {
@@ -1350,8 +1350,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (!isNaN(szLimit)) {
                             if (item.quantity > remainingSz) {
                                 blockingChanges = true;
-                                changedProductIds.add(item.id);
                                 if (remainingSz <= 0) {
+                                    changedProductIds.add(item.id);
                                     pushChange(`"${item.name}" (${detail.productSize}) is out of stock and has been removed.`);
                                     item.cartItemId = 'REMOVE_ME';
                                 } else {
@@ -1443,8 +1443,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (!isNaN(colLimit)) {
                             if (item.quantity > remainingCol) {
                                 blockingChanges = true;
-                                changedProductIds.add(item.id);
                                 if (remainingCol <= 0) {
+                                    changedProductIds.add(item.id);
                                     pushChange(`"${item.name}" (${detail.colour}) is out of stock and has been removed.`);
                                     item.cartItemId = 'REMOVE_ME';
                                 } else {
@@ -1513,8 +1513,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (!isNaN(prodLimit)) {
                             if (item.quantity > remainingProd) {
                                 blockingChanges = true;
-                                changedProductIds.add(item.id);
                                 if (remainingProd <= 0) {
+                                    changedProductIds.add(item.id);
                                     pushChange(`"${item.name}" is out of stock and has been removed.`);
                                     item.cartItemId = 'REMOVE_ME';
                                 } else {
