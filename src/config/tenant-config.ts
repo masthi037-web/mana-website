@@ -165,8 +165,8 @@ export const DEFAULT_CONFIG: TenantConfig = {
 };
 
 const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
-    // 1. Organic Greens (Fresh, Friendly)
-    "skfashions": {
+
+    "use1": {
         id: "sk-fashions",
         name: "SK Fashions",
         fetchAllAtOnce: false,
@@ -222,6 +222,66 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
                 color: "text-teal-600",
                 bgColor: "bg-teal-50",
                 iconColor: "text-teal-600"
+            }
+        ]
+    },
+    // Yellow Fashions (Signature Yellow, Premium)
+    "skfashions": {
+        id: "yellow-fashions",
+        name: "Yellow Fashions",
+        fetchAllAtOnce: false,
+        theme: {
+            colors: {
+                primary: "45 92% 55%", // Premium Golden Yellow
+                primaryForeground: "0 0% 0%", // Black text on yellow for readability
+                secondary: "45 20% 96%",
+                background: "45 10% 99%",
+            },
+            radius: "1rem",
+            fontFamily: "var(--font-outfit)",
+            productCard: {
+                backgroundColor: "white",
+                radius: "1rem",
+                shadow: "0 10px 30px -10px rgb(234 179 8 / 0.15)", // Subtle yellow shadow
+                border: "1px solid rgb(234 179 8 / 0.1)",
+            }
+        },
+        brandTone: { mood: "premium", cornerStyle: "soft", animationSpeed: "slow" },
+        surface: { header: "glass", footer: "branded", productCardStyle: "elevated" },
+        text: {
+            checkoutButton: "Place Order",
+            emptyCartParams: "Brighten up your wardrobe!",
+            quickAddButton: "Add to Bag",
+            searchPlaceholder: "Search the collection...",
+            startsFrom: "Starts at",
+            heroTitle: "Exquisite",
+            heroTitleHighlight: "Collection",
+            heroDescription: "Elevate your everyday look with our signature yellow-inspired luxury fashion pieces.",
+        },
+        featuresList: [
+            {
+                title: "Signature Design",
+                description: "Unique pieces that stand out",
+                icon: "Sparkles",
+                color: "text-yellow-600",
+                bgColor: "bg-yellow-50",
+                iconColor: "text-yellow-600"
+            },
+            {
+                title: "Exceptional Quality",
+                description: "Craftsmanship in every stitch",
+                icon: "Gem",
+                color: "text-amber-600",
+                bgColor: "bg-amber-50",
+                iconColor: "text-amber-600"
+            },
+            {
+                title: "Global Delivery",
+                description: "Fashion delivered anywhere",
+                icon: "Globe",
+                color: "text-slate-600",
+                bgColor: "bg-slate-50",
+                iconColor: "text-slate-600"
             }
         ]
     },
