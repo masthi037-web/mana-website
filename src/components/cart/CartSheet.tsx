@@ -1021,6 +1021,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
             // 5. Compare and Validate
             let blockingChanges = false;
+            const changedProductIds = new Set<string>();
             interface ValidationMessage {
                 message: string;
                 cartItemId?: string;
@@ -1135,6 +1136,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 if (isIdMismatch) {
                     blockingChanges = true;
+                    changedProductIds.add(item.id);
                     pushChange(`Critical: Data mismatch for "${item.name}". Please refresh cart.`);
                     return; // Abort further checks for this item
                 }
@@ -1151,6 +1153,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         const matchingSc = item.selectedSizeColours.find(sc => sc.id === (detail.productSizeColourId?.toString() || item.productSizeColourId));
                         if (matchingSc && matchingSc.name !== detail.sizeColourName) {
                             blockingChanges = true;
+                            changedProductIds.add(item.id);
                             pushChange(`Variant name for "${item.name}" changed (Server: ${detail.sizeColourName}, Cart: ${matchingSc.name}).`);
                         }
                     }
@@ -1162,6 +1165,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 if (sc.id === (detail.productSizeColourId?.toString() || item.productSizeColourId)) {
                                     if (sc.price !== detail.colourExtraPrice) {
                                         blockingChanges = true;
+                                        changedProductIds.add(item.id);
                                         pushChange(`Extra price for "${sc.name}" updated from ₹${sc.price} to ₹${detail.colourExtraPrice}.`, item.cartItemId);
                                         sc.price = detail.colourExtraPrice;
                                     }
@@ -1211,6 +1215,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (item.priceAfterDiscount !== resolvedPrice) {
                             if (previousEffective !== resolvedPrice) {
                                 blockingChanges = true;
+                                changedProductIds.add(item.id);
                                 pushChange(`Price for "${item.name}" (${detail.productSize ? detail.productSize + ' - ' : ''}${detail.sizeColourName}) updated from ₹${previousEffective} to ₹${resolvedPrice}.`, item.cartItemId);
                             }
                             item.priceAfterDiscount = resolvedPrice;
@@ -1226,6 +1231,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (!isNaN(scLimit)) {
                             if (item.quantity > remainingSc) {
                                 blockingChanges = true;
+                                changedProductIds.add(item.id);
                                 if (remainingSc <= 0) {
                                     pushChange(`"${item.name}" (${detail.productSize ? detail.productSize + ' - ' : ''}${detail.sizeColourName}) is out of stock and has been removed.`);
                                     item.cartItemId = 'REMOVE_ME';
@@ -1243,6 +1249,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     // 4. Validate sizeColourStatus
                     if (detail.sizeColourStatus && detail.sizeColourStatus !== 'ACTIVE') {
                         blockingChanges = true;
+                        changedProductIds.add(item.id);
                         pushChange(`"${item.name}" (${detail.productSize ? detail.productSize + ' - ' : ''}${detail.sizeColourName}) is currently unavailable and has been removed.`);
                         item.cartItemId = 'REMOVE_ME';
                         return;
@@ -1256,6 +1263,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     // 1. Validate sizeStatus
                     if (detail.sizeStatus && detail.sizeStatus !== 'ACTIVE') {
                         blockingChanges = true;
+                        changedProductIds.add(item.id);
                         pushChange(`"${item.name}" (${detail.productSize}) is currently unavailable and has been removed.`);
                         item.cartItemId = 'REMOVE_ME';
                         return;
@@ -1267,6 +1275,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         const cartSize = item.selectedVariants['Quantity'].trim().toLowerCase();
                         if (serverSize !== cartSize && serverSize !== "" && cartSize !== "") {
                             blockingChanges = true;
+                            changedProductIds.add(item.id);
                             pushChange(`Size label mismatch for "${item.name}" (Server: ${detail.productSize}, Cart: ${item.selectedVariants['Quantity']}). Removed.`);
                             item.cartItemId = 'REMOVE_ME';
                             return;
@@ -1320,6 +1329,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             // Only block/notify if the EFFECTIVE price changes for the user
                             if (previousEffective !== resolvedPrice) {
                                 blockingChanges = true;
+                                changedProductIds.add(item.id);
                                 pushChange(`Price for "${item.name}" (${detail.productSize}) updated from ₹${previousEffective} to ₹${resolvedPrice}.`, item.cartItemId);
                             } else {
                                 console.log(`CartSheet: Silent Sync of AfterDiscount for ${item.name} (Effective price unchanged)`);
@@ -1340,6 +1350,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (!isNaN(szLimit)) {
                             if (item.quantity > remainingSz) {
                                 blockingChanges = true;
+                                changedProductIds.add(item.id);
                                 if (remainingSz <= 0) {
                                     pushChange(`"${item.name}" (${detail.productSize}) is out of stock and has been removed.`);
                                     item.cartItemId = 'REMOVE_ME';
@@ -1361,6 +1372,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     // 1. Validate colourStatus
                     if (detail.colourStatus && detail.colourStatus !== 'ACTIVE') {
                         blockingChanges = true;
+                        changedProductIds.add(item.id);
                         pushChange(`"${item.name}" (${detail.colour}) is currently unavailable and has been removed.`);
                         item.cartItemId = 'REMOVE_ME';
                         return;
@@ -1372,6 +1384,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         const cartColor = item.selectedColour.name.trim().toLowerCase();
                         if (serverColor !== cartColor) {
                             blockingChanges = true;
+                            changedProductIds.add(item.id);
                             pushChange(`Colour mismatch for "${item.name}" (Server: ${detail.colour}, Cart: ${item.selectedColour.name}). Removed.`);
                             item.cartItemId = 'REMOVE_ME';
                             return;
@@ -1411,6 +1424,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (item.priceAfterDiscount !== resolvedProdPrice) {
                             if (previousEffective !== resolvedProdPrice) {
                                 blockingChanges = true;
+                                changedProductIds.add(item.id);
                                 pushChange(`Price for "${item.name}" (${detail.colour}) updated from ₹${previousEffective} to ₹${resolvedProdPrice}.`, item.cartItemId);
                             } else {
                                 console.log(`CartSheet: Silent Sync of AfterDiscount for ${item.name} (Effective price unchanged)`);
@@ -1429,6 +1443,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (!isNaN(colLimit)) {
                             if (item.quantity > remainingCol) {
                                 blockingChanges = true;
+                                changedProductIds.add(item.id);
                                 if (remainingCol <= 0) {
                                     pushChange(`"${item.name}" (${detail.colour}) is out of stock and has been removed.`);
                                     item.cartItemId = 'REMOVE_ME';
@@ -1479,6 +1494,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (item.priceAfterDiscount !== resolvedProdPrice) {
                             if (previousEffective !== resolvedProdPrice) {
                                 blockingChanges = true;
+                                changedProductIds.add(item.id);
                                 pushChange(`Price for "${item.name}" updated from ₹${previousEffective} to ₹${resolvedProdPrice}.`, item.cartItemId);
                             } else {
                                 console.log(`CartSheet: Silent Sync of AfterDiscount for ${item.name} (Effective price unchanged)`);
@@ -1497,6 +1513,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         if (!isNaN(prodLimit)) {
                             if (item.quantity > remainingProd) {
                                 blockingChanges = true;
+                                changedProductIds.add(item.id);
                                 if (remainingProd <= 0) {
                                     pushChange(`"${item.name}" is out of stock and has been removed.`);
                                     item.cartItemId = 'REMOVE_ME';
@@ -1521,6 +1538,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 // 1. Validate productStatus
                 if (detail.productStatus !== 'ACTIVE') {
                     blockingChanges = true;
+                    changedProductIds.add(item.id);
                     pushChange(`"${item.name}" is currently unavailable (Product Inactive) and has been removed.`);
                     item.cartItemId = 'REMOVE_ME';
                     return;
@@ -1532,6 +1550,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     item.productOffer = detail.productOffer;
                     if (oldOffer !== detail.productOffer) {
                         blockingChanges = true;
+                        changedProductIds.add(item.id);
                         if (!detail.productOffer) {
                             pushChange(`Sorry, the offer for "${item.name}" has expired.`, item.cartItemId);
                         } else {
@@ -1578,6 +1597,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             // Do nothing
                         } else {
                             blockingChanges = true;
+                            changedProductIds.add(item.id);
                             pushChange(`Selected discount (${activeRuleDesc}) is removed/updated.`, item.cartItemId);
                         }
                     }
@@ -1601,6 +1621,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                     if (wasUsing) {
                         blockingChanges = true;
+                        changedProductIds.add(item.id);
                         if (!serverMoreThan) {
                             pushChange(`Special bulk offer for "${item.name}" has been removed.`, item.cartItemId);
                         } else {
@@ -1681,11 +1702,11 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             const finalCart = newCart.filter(item => item.cartItemId !== 'REMOVE_ME');
 
             // --- SYNC PRODUCTS GLOBALLY ---
-            // If any product had mismatches/updates, re-fetch full details to sync homepage/etc
-            const productsToSync = Array.from(new Set(newCart.map(i => i.id)));
-            if (blockingChanges || productsToSync.length > 0) {
-                console.log('CartSheet: Syncing products globally...', productsToSync);
-                Promise.all(productsToSync.map(async (pid) => {
+            // ONLY sync products that actually had changes detected during validation
+            const productsToSyncCount = changedProductIds.size;
+            if (productsToSyncCount > 0) {
+                console.log(`CartSheet: Syncing ${productsToSyncCount} products globally...`, Array.from(changedProductIds));
+                Promise.all(Array.from(changedProductIds).map(async (pid) => {
                     const freshProd = await fetchProductDetails(pid);
                     if (freshProd) {
                         useProduct.getState().syncProductGlobally(freshProd);
