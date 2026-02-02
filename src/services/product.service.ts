@@ -223,7 +223,8 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
             price: a.colourPrice,
             productPics: a.productPics,
             productSizeColourQuantity: Number(a.productSizeColourQuantity) || 0,
-            status: a.sizeColourStatus
+            status: a.sizeColourStatus,
+            sizeColourStatus: a.sizeColourStatus
         }))
     })) || [];
 
@@ -257,7 +258,8 @@ function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: string): 
             id: String(c.productColourId),
             name: c.colour,
             image: c.productPics,
-            status: c.colourStatus
+            status: c.colourStatus,
+            colourStatus: c.colourStatus
         })),
         reviews: apiProd.productRatings?.map(r => ({
             id: String(r.productRatingId),
