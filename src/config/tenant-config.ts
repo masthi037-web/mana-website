@@ -227,8 +227,8 @@ const TENANT_MAP: Record<string, Partial<TenantConfig>> = {
     },
     // Yellow Fashions (Signature Yellow, Premium)
     "skfashions": {
-        id: "yellow-fashions",
-        name: "Yellow Fashions",
+        id: "sk-fashions",
+        name: "SK Fashions",
         fetchAllAtOnce: false,
         theme: {
             colors: {
