@@ -9,6 +9,28 @@ const PLACEHOLDER_BASE = 'https://picsum.photos/seed';
 // ... existing imports
 import { Product } from '@/lib/api-types';
 
+// Helper to centralize products-by-category logic
+async function fetchCategoryProductsAPI(categoryId: string | number): Promise<ApiCategory | null> {
+    const catIdStr = String(categoryId);
+    // Defensive check
+    if (!catIdStr || catIdStr === 'undefined' || catIdStr === 'null') return null;
+
+    console.log(`[ProductService] Helper Fetching products for category (${catIdStr}) from: /company/public/get-products-by-category/get`);
+    try {
+        const catData = await apiClient<ApiCategory>('/company/public/get-products-by-category/get', {
+            params: { categoryId: catIdStr },
+            next: { revalidate: 3600, tags: [`category-${catIdStr}`] }, // 1 Hour Cache
+            cache: 'force-cache' // Aggressive caching
+        });
+        // Log brief summary instead of full dump
+        console.log(`[ProductService] Valid data received for ${catIdStr}`);
+        return catData;
+    } catch (e) {
+        console.error(`Failed to fetch category ${catIdStr}`, e);
+        return null; // Return null so callers handle it
+    }
+}
+
 export async function fetchCategories(companyId: string, deliveryTime?: string, fetchAllAtOnce: boolean = true): Promise<AppCategory[]> {
     console.log(`[ProductService] fetchCategories called for company: ${companyId}, fetchAllAtOnce: ${fetchAllAtOnce}`);
     if (!companyId) return [];
@@ -30,23 +52,11 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
             let firstCategoryData: AppCategory | null = null;
 
             if (firstCategory && firstCategory.categoryId) {
-                const catIdStr = String(firstCategory.categoryId);
-                console.log(`[ProductService] Fetching products for first category (${catIdStr}) from: /company/public/get-products-by-category/get`);
-                try {
-                    const catData = await apiClient<ApiCategory>('/company/public/get-products-by-category/get', {
-                        params: { categoryId: catIdStr },
-                        next: { revalidate: 300, tags: [`category-${catIdStr}`] },
-                        cache: 'force-cache' // Hint for standard fetch to prefer cache if available
-                    });
-
-                    console.log(`[ProductService] Raw catData for ID ${catIdStr}:`, JSON.stringify(catData, null, 2));
-
+                const catData = await fetchCategoryProductsAPI(firstCategory.categoryId);
+                if (catData) {
                     const mappedCats = mapApiCategoriesToAppCategories(Array.isArray(catData) ? catData : [catData], deliveryTime);
                     firstCategoryData = mappedCats[0];
-
-                    console.log(`[ProductService] Mapped firstCategoryData:`, JSON.stringify(firstCategoryData, null, 2));
-                } catch (e) {
-                    console.error(`Failed to fetch initial category ${catIdStr}`, e);
+                    console.log(`[ProductService] Mapped firstCategoryData: found ${firstCategoryData?.catalogs?.reduce((acc, c) => acc + c.products.length, 0) || 0} products`);
                 }
             }
 
@@ -83,17 +93,11 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
 }
 
 export async function fetchProductsByCategory(categoryId: string, deliveryTime?: string): Promise<AppCategory | null> {
-    try {
-        const catData = await apiClient<ApiCategory>('/company/public/get-products-by-category/get', {
-            params: { categoryId },
-            next: { revalidate: 300, tags: [`category-${categoryId}`] }
-        });
-        const mappedCats = mapApiCategoriesToAppCategories(Array.isArray(catData) ? catData : [catData], deliveryTime);
-        return mappedCats[0] || null;
-    } catch (error) {
-        console.error(`Error fetching products for category ${categoryId}:`, error);
-        return null;
-    }
+    const catData = await fetchCategoryProductsAPI(categoryId);
+    if (!catData) return null;
+
+    const mappedCats = mapApiCategoriesToAppCategories(Array.isArray(catData) ? catData : [catData], deliveryTime);
+    return mappedCats[0] || null;
 }
 
 export async function fetchProductDetails(productId: string): Promise<AppProduct | null> {

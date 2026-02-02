@@ -29,7 +29,10 @@ export async function apiClient<T>(
     // We rely on URL object, but we can verify param appending logic.
 
     if (params) {
-        Object.entries(params).forEach(([key, value]) => {
+        // Sort keys to ensure consistent URL for caching
+        const sortedKeys = Object.keys(params).sort();
+        sortedKeys.forEach((key) => {
+            const value = params[key];
             if (value !== undefined && value !== null) {
                 url.searchParams.append(key, String(value));
             }
