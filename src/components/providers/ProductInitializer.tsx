@@ -18,6 +18,9 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
         // 1. Manually Hydrate from LocalStorage (to restore lazily fetched categories)
         useProduct.persist.rehydrate();
 
+        // 1b. Check Expiration
+        useProduct.getState().checkExpiration();
+
         const state = useProduct.getState();
         const existingCategories = state.categories || [];
         const existingProducts = state.products || [];

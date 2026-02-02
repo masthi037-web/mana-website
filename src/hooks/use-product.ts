@@ -10,7 +10,11 @@ interface ProductState {
     setCategories: (categories: Category[] | ((prev: Category[]) => Category[])) => void;
     setSelectedProduct: (product: Product | null) => void;
     syncProductGlobally: (product: Product) => void;
+    timestamp: number;
+    checkExpiration: () => void;
 }
+
+const EXPIRATION_TIME = 7 * 60 * 1000; // 7 minutes
 
 export const useProduct = create<ProductState>()(
     persist(
@@ -18,11 +22,14 @@ export const useProduct = create<ProductState>()(
             products: [],
             categories: [],
             selectedProduct: null,
+            timestamp: Date.now(),
             setProducts: (products) => set((state) => ({
-                products: typeof products === 'function' ? products(state.products) : products
+                products: typeof products === 'function' ? products(state.products) : products,
+                timestamp: Date.now()
             })),
             setCategories: (categories) => set((state) => ({
-                categories: typeof categories === 'function' ? categories(state.categories) : categories
+                categories: typeof categories === 'function' ? categories(state.categories) : categories,
+                timestamp: Date.now()
             })),
             setSelectedProduct: (selectedProduct: Product | null) => set({ selectedProduct }),
             syncProductGlobally: (freshProd: Product) => {
@@ -40,7 +47,15 @@ export const useProduct = create<ProductState>()(
                     }))
                 }));
 
-                set({ products: updatedProducts, categories: updatedCategories });
+                set({ products: updatedProducts, categories: updatedCategories, timestamp: Date.now() });
+            },
+            checkExpiration: () => {
+                const { timestamp } = get();
+                const now = Date.now();
+                if (now - timestamp > EXPIRATION_TIME) {
+                    console.log('Product Store Expired. Clearing cache.');
+                    set({ products: [], categories: [], timestamp: now });
+                }
             }
         }),
         {

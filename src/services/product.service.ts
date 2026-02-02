@@ -20,7 +20,7 @@ async function fetchCategoryProductsAPI(categoryId: string | number): Promise<Ap
     try {
         const catData = await apiClient<ApiCategory>('/company/public/get-products-by-category/get', {
             params: { categoryId: catIdStr },
-            next: { revalidate: 420, tags: [`category-${catIdStr}`] }, // 1 Hour Cache
+            next: { revalidate: 420, tags: [`category-${catIdStr}`] }, // 7 Minutes Cache
             cache: 'force-cache' // Aggressive caching
         });
         // Log brief summary instead of full dump
