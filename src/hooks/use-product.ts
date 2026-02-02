@@ -10,8 +10,9 @@ interface ProductState {
     setCategories: (categories: Category[] | ((prev: Category[]) => Category[])) => void;
     setSelectedProduct: (product: Product | null) => void;
     syncProductGlobally: (product: Product) => void;
-    timestamp: number;
-    checkExpiration: () => void;
+    categoryTimestamps: Record<string, number>;
+    markCategoryAsFetched: (categoryId: string) => void;
+    isCategoryExpired: (categoryId: string) => boolean;
 }
 
 const EXPIRATION_TIME = 7 * 60 * 1000; // 7 minutes
@@ -22,14 +23,12 @@ export const useProduct = create<ProductState>()(
             products: [],
             categories: [],
             selectedProduct: null,
-            timestamp: Date.now(),
+            categoryTimestamps: {},
             setProducts: (products) => set((state) => ({
                 products: typeof products === 'function' ? products(state.products) : products,
-                timestamp: Date.now()
             })),
             setCategories: (categories) => set((state) => ({
                 categories: typeof categories === 'function' ? categories(state.categories) : categories,
-                timestamp: Date.now()
             })),
             setSelectedProduct: (selectedProduct: Product | null) => set({ selectedProduct }),
             syncProductGlobally: (freshProd: Product) => {
@@ -47,15 +46,19 @@ export const useProduct = create<ProductState>()(
                     }))
                 }));
 
-                set({ products: updatedProducts, categories: updatedCategories, timestamp: Date.now() });
+                set({ products: updatedProducts, categories: updatedCategories });
+            },
+            markCategoryAsFetched: (categoryId: string) => set((state) => ({
+                categoryTimestamps: { ...state.categoryTimestamps, [categoryId]: Date.now() }
+            })),
+            isCategoryExpired: (categoryId: string) => {
+                const { categoryTimestamps } = get();
+                const timestamp = categoryTimestamps[categoryId];
+                if (!timestamp) return true; // Never fetched = Expired
+                return (Date.now() - timestamp > EXPIRATION_TIME);
             },
             checkExpiration: () => {
-                const { timestamp } = get();
-                const now = Date.now();
-                if (now - timestamp > EXPIRATION_TIME) {
-                    console.log('Product Store Expired. Clearing cache.');
-                    set({ products: [], categories: [], timestamp: now });
-                }
+                // Deprecated or can be used to clean up map, but for now logic moves to usage sites
             }
         }),
         {

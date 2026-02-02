@@ -18,8 +18,7 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
         // 1. Manually Hydrate from LocalStorage (to restore lazily fetched categories)
         useProduct.persist.rehydrate();
 
-        // 1b. Check Expiration
-        useProduct.getState().checkExpiration();
+        // 1b. Check Expiration is handled per-category below
 
         const state = useProduct.getState();
         const existingCategories = state.categories || [];
@@ -31,24 +30,32 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
 
         categories.forEach(serverCat => {
             const index = mergedCategories.findIndex(c => c.id === serverCat.id);
+            const isExpired = state.isCategoryExpired ? state.isCategoryExpired(serverCat.id) : false;
+
             if (index !== -1) {
                 const existing = mergedCategories[index];
 
                 // Case 1: Server has Data (Catalogs > 0) -> ALWAYS Update (server authority)
                 if (serverCat.catalogs && serverCat.catalogs.length > 0) {
                     mergedCategories[index] = serverCat;
+                    if (state.markCategoryAsFetched) state.markCategoryAsFetched(serverCat.id);
                 }
                 // Case 2: Server is Skeleton (Lazy Load placeholder)
                 else {
-                    // Case 2a: Existing has Data -> Keep Existing (prevent overwrite)
-                    if (existing.catalogs && existing.catalogs.length > 0) {
+                    // Case 2a: Expired? -> Treat as empty, so we accept skeleton to trigger fetch later
+                    if (isExpired) {
+                        mergedCategories[index] = serverCat; // Reset to skeleton (clears stale data)
+                        // console.log(`[ProductInitializer] Cleared expired category: ${serverCat.id}`);
+                    }
+                    // Case 2b: Existing has Data -> Keep Existing (prevent overwrite)
+                    else if (existing.catalogs && existing.catalogs.length > 0) {
                         // Update metadata (name/image) but keep catalogs
                         mergedCategories[index] = {
                             ...serverCat,
                             catalogs: existing.catalogs
                         };
                     }
-                    // Case 2b: Existing is also empty -> Update with Server (accept skeleton)
+                    // Case 2c: Existing is also empty -> Update with Server (accept skeleton)
                     else {
                         mergedCategories[index] = serverCat;
                     }

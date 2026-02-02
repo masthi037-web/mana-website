@@ -37,7 +37,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const { categories, setCategories } = useProduct();
+    const { categories, setCategories, isCategoryExpired, markCategoryAsFetched } = useProduct();
     const [isLoadingCategory, setIsLoadingCategory] = useState<Record<string, boolean>>({});
     const [searchQuery, setSearchQuery] = useState("");
     const [showSearchDropdown, setShowSearchDropdown] = useState(false);
@@ -147,14 +147,17 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         const category = categories.find(c => c.id === categoryId);
         if (!category) return;
 
+        // Check if expried
+        const expired = isCategoryExpired(categoryId);
+
         // Check if the category is available in the initialCategories prop (Server Data)
         // If it is, we don't need to fetch it because ProductInitializer will sync it to the store shortly.
         const isPreLoaded = initialCategories.some(ic => ic.id === categoryId && ic.catalogs.length > 0);
 
         // If category has no catalogs (implying not loaded) and is not already loading, AND not pre-loaded
-        console.log(`[HomeClient] Checking Category ${categoryId}: catalogs=${category.catalogs.length}, loading=${isLoadingCategory[categoryId]}, preLoaded=${isPreLoaded}`);
+        console.log(`[HomeClient] Checking Category ${categoryId}: catalogs=${category.catalogs.length}, loading=${isLoadingCategory[categoryId]}, expired=${expired}, preLoaded=${isPreLoaded}`);
 
-        if (category.catalogs.length === 0 && !isLoadingCategory[categoryId] && !isPreLoaded) {
+        if ((category.catalogs.length === 0 || expired) && !isLoadingCategory[categoryId] && !isPreLoaded) {
             console.log(`[HomeClient] Triggering Fetch for ${categoryId}`);
             setIsLoadingCategory(prev => ({ ...prev, [categoryId]: true }));
             try {
@@ -169,6 +172,10 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                             catalogs: fetchedCategory.catalogs
                         } : c
                     ));
+
+                    // Mark as fetched
+                    markCategoryAsFetched(categoryId);
+
                     return fetchedCategory;
                 }
             } catch (error) {
@@ -178,7 +185,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
             }
         }
         return category;
-    }, [categories, companyDetails?.deliveryBetween, isLoadingCategory]);
+    }, [categories, companyDetails?.deliveryBetween, isLoadingCategory, isCategoryExpired, markCategoryAsFetched]);
 
     // Initial Load & Load on selectCategory change
     useEffect(() => {
