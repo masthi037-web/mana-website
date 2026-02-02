@@ -23,6 +23,11 @@ export async function apiClient<T>(
 
     const url = new URL(`${API_BASE_URL}${endpoint}`);
 
+    // Defensive: Clean up potential double '?' if endpoint had one and params are added, 
+    // or if the URL construction created something weird like '.../get??categoryId=' (User report)
+    // Although URL object handles standard cases, manual string concatenation or specific backend behaviors might vary.
+    // We rely on URL object, but we can verify param appending logic.
+
     if (params) {
         Object.entries(params).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {

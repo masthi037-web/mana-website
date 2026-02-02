@@ -30,21 +30,23 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
             let firstCategoryData: AppCategory | null = null;
 
             if (firstCategory && firstCategory.categoryId) {
-                console.log(`[ProductService] Fetching products for first category (${firstCategory.categoryId}) from: /company/public/get-products-by-category/get`);
+                const catIdStr = String(firstCategory.categoryId);
+                console.log(`[ProductService] Fetching products for first category (${catIdStr}) from: /company/public/get-products-by-category/get`);
                 try {
                     const catData = await apiClient<ApiCategory>('/company/public/get-products-by-category/get', {
-                        params: { categoryId: String(firstCategory.categoryId) },
-                        next: { revalidate: 300, tags: [`category-${firstCategory.categoryId}`] }
+                        params: { categoryId: catIdStr },
+                        next: { revalidate: 300, tags: [`category-${catIdStr}`] },
+                        cache: 'force-cache' // Hint for standard fetch to prefer cache if available
                     });
 
-                    console.log(`[ProductService] Raw catData for ID ${firstCategory.categoryId}:`, JSON.stringify(catData, null, 2));
+                    console.log(`[ProductService] Raw catData for ID ${catIdStr}:`, JSON.stringify(catData, null, 2));
 
                     const mappedCats = mapApiCategoriesToAppCategories(Array.isArray(catData) ? catData : [catData], deliveryTime);
                     firstCategoryData = mappedCats[0];
 
                     console.log(`[ProductService] Mapped firstCategoryData:`, JSON.stringify(firstCategoryData, null, 2));
                 } catch (e) {
-                    console.error(`Failed to fetch initial category ${firstCategory.categoryId}`, e);
+                    console.error(`Failed to fetch initial category ${catIdStr}`, e);
                 }
             }
 
