@@ -570,8 +570,17 @@ const AddToCartContent = ({
             })()}
           </div>
           {(() => {
+            // Check Selected Variant Statuses
+            const selectedColour = product.colors?.find(c => c.id === selectedColourId);
+            const isSelectedColourOOS = selectedColour && (selectedColour.colourStatus === 'OUTOFSTOCK' || selectedColour.colourStatus === 'INACTIVE');
+
+            const selectedSizeColoursList = availableSizeColours.filter(a => selectedSizeColourIds.has(a.id));
+            const isSelectedSizeColourOOS = selectedSizeColoursList.some(sc => sc.sizeColourStatus === 'OUTOFSTOCK' || sc.sizeColourStatus === 'INACTIVE');
+
             const isOutOfStock = product.productStatus === 'OUTOFSTOCK' ||
-              (selectedPricingOption?.sizeStatus === 'OUTOFSTOCK');
+              (selectedPricingOption?.sizeStatus === 'OUTOFSTOCK' || selectedPricingOption?.sizeStatus === 'INACTIVE') ||
+              isSelectedColourOOS ||
+              isSelectedSizeColourOOS;
 
             return (
               <Button
