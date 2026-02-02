@@ -49,10 +49,13 @@ export const useProduct = create<ProductState>()(
                 set({ products: updatedProducts, categories: updatedCategories });
             },
             markCategoryAsFetched: (categoryId: string) => set((state) => ({
-                categoryTimestamps: { ...state.categoryTimestamps, [categoryId]: Date.now() }
+                categoryTimestamps: { ...(state.categoryTimestamps || {}), [categoryId]: Date.now() }
             })),
             isCategoryExpired: (categoryId: string) => {
                 const { categoryTimestamps } = get();
+                // Handle missing map (migration from old state)
+                if (!categoryTimestamps) return true;
+
                 const timestamp = categoryTimestamps[categoryId];
                 if (!timestamp) return true; // Never fetched = Expired
                 return (Date.now() - timestamp > EXPIRATION_TIME);
@@ -63,6 +66,7 @@ export const useProduct = create<ProductState>()(
         }),
         {
             name: 'product-storage', // name of the item in the storage (must be unique)
+            version: 2, // Bump version to force reset
             storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
             skipHydration: true, // We will manually hydrate or let it happen, but avoiding mismatch issues during SSR
         }

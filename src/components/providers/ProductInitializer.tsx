@@ -25,8 +25,8 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
         const existingProducts = state.products || [];
 
         // 2. Merge Initial Categories (Server Data) with Existing (Cache)
-        // We prioritize Server Data for the categories passed in props
         const mergedCategories = [...existingCategories];
+        const newTimestamps = { ...state.categoryTimestamps };
 
         categories.forEach(serverCat => {
             const index = mergedCategories.findIndex(c => c.id === serverCat.id);
@@ -38,7 +38,8 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
                 // Case 1: Server has Data (Catalogs > 0) -> ALWAYS Update (server authority)
                 if (serverCat.catalogs && serverCat.catalogs.length > 0) {
                     mergedCategories[index] = serverCat;
-                    if (state.markCategoryAsFetched) state.markCategoryAsFetched(serverCat.id);
+                    // Mark as fresh since it came from Server
+                    newTimestamps[serverCat.id] = Date.now();
                 }
                 // Case 2: Server is Skeleton (Lazy Load placeholder)
                 else {
@@ -62,6 +63,9 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
                 }
             } else {
                 mergedCategories.push(serverCat); // Add new
+                if (serverCat.catalogs && serverCat.catalogs.length > 0) {
+                    newTimestamps[serverCat.id] = Date.now();
+                }
             }
         });
 
@@ -72,7 +76,11 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
             imageUrl: p.productImage || ""
         }));
 
-        useProduct.setState({ products: allProducts, categories: mergedCategories });
+        useProduct.setState({
+            products: allProducts,
+            categories: mergedCategories,
+            categoryTimestamps: newTimestamps
+        });
         if (companyDetails) {
             useCart.setState({ companyDetails });
         }
