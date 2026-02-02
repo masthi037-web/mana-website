@@ -74,11 +74,26 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
     const [selectedCategory, setSelectedCategory] = useState<string>(getInitialCategory());
 
     // Sync when initialCategories update (if re-fetched or prop change)
+    // Sync when initialCategories update (if re-fetched or prop change)
     useEffect(() => {
         if (initialCategories.length > 0) {
-            setCategories(initialCategories);
+            setCategories(prev => {
+                // Smart Merge: Don't overwrite loaded categories with empty ones
+                // Map over initialCategories (source of truth for order/structure)
+                return initialCategories.map(initCat => {
+                    const existing = prev.find(p => p.id === initCat.id);
+                    // If we have existing data with catalogs/products, and the new one is empty (lazy placeholder), keep existing
+                    if (existing && existing.catalogs.length > 0 && initCat.catalogs.length === 0) {
+                        return {
+                            ...initCat, // Keep new metadata (name, image) if changed
+                            catalogs: existing.catalogs // Keep loaded catalogs
+                        };
+                    }
+                    return initCat;
+                });
+            });
         }
-    }, [initialCategories]);
+    }, [initialCategories, setCategories]);
 
     // Update selected category if needed when categories change
     useEffect(() => {
@@ -167,16 +182,12 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
     }, [selectedCategory, categories.length > 0]); // Trigger when selectedCategory is set or categories become available
 
     // Sync State -> URL when user interacts
-    const updateCategory = async (categoryId: string) => {
+    const updateCategory = (categoryId: string) => {
         setSearchQuery(""); // Clear search on category change
         setSelectedCategory(categoryId);
 
-        const targetCategory = await loadCategoryData(categoryId);
-
-        if (targetCategory && targetCategory.catalogs.length > 0) {
-            const newCatalogId = targetCategory.catalogs[0].id;
-            setSelectedCatalogId(newCatalogId);
-        }
+        // Remove manual data loading and catalog setting here. 
+        // rely on useEffect hooks to react to selectedCategory change.
 
         // Update URL manually to prevent Next.js from hijacking scroll
         const params = new URLSearchParams(searchParams.toString());
