@@ -145,6 +145,7 @@ export interface CompanyDetails {
     razorpayKeySecret: string;
     razorpay?: boolean;
     upiQrCode?: string;
+    upiId?: string;
 }
 
 export interface CompanyInventory {

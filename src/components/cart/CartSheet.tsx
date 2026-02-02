@@ -43,7 +43,8 @@ import {
     Briefcase,
     Download,
     DownloadCloud,
-    UploadCloud
+    UploadCloud,
+    ExternalLink
 } from 'lucide-react';
 import {
     AlertDialog,
@@ -1920,6 +1921,29 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 </div>
 
                                 {/* Pay Button */}
+                                {companyDetails?.upiId && (
+                                    <div className="w-full mb-3">
+                                        <a
+                                            href={`upi://pay?pa=${companyDetails.upiId}&pn=${encodeURIComponent(companyDetails.companyName)}&am=${(finalTotal - extraDiscount).toFixed(2)}&tr=${Date.now()}&tn=${encodeURIComponent(`Order from ${companyDetails.companyName}`)}&cu=INR`}
+                                            className="block w-full"
+                                        >
+                                            <Button
+                                                variant="outline"
+                                                className="w-full rounded-xl bg-white hover:bg-slate-50 text-slate-900 border-slate-200 h-12 text-base font-bold shadow-sm"
+                                                onClick={() => setShowQrPopup(false)} // Close popup? Or maybe keep open for manual check? Let's keep open but maybe start timer? Actually better to keep open so they can manually confirm/upload proof if needed.
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <span>Pay via UPI App</span>
+                                                    <ExternalLink className="w-4 h-4 text-slate-400" />
+                                                </div>
+                                            </Button>
+                                        </a>
+                                        <p className="text-[10px] text-center text-slate-400 mt-2 font-medium">
+                                            Tap to open GPay, PhonePe, Paytm, etc.
+                                        </p>
+                                    </div>
+                                )}
+
                                 <Button
                                     onClick={() => {
                                         setShowQrPopup(false);
@@ -1928,7 +1952,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-lg shadow-indigo-200 h-12 text-base font-semibold tracking-wide"
                                     style={{ backgroundColor: `hsl(${theme.colors.primary})` }}
                                 >
-                                    Place Order & Pay
+                                    I Have Paid
                                     <ArrowRight className="w-4 h-4 ml-2 opacity-80" />
                                 </Button>
 
