@@ -64,8 +64,11 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
     // Helper to get category from URL or default
     const getInitialCategory = () => {
         const paramCat = searchParams.get('category');
-        if (paramCat && categories.some(c => c.id === paramCat)) return paramCat;
-        return categories.length > 0 ? categories[0].id : "";
+        // Prioritize initialCategories prop to avoid wait-for-store-sync delay
+        const sourceCats = initialCategories.length > 0 ? initialCategories : categories;
+
+        if (paramCat && sourceCats.some(c => c.id === paramCat)) return paramCat;
+        return sourceCats.length > 0 ? sourceCats[0].id : "";
     };
 
     const [selectedCategory, setSelectedCategory] = useState<string>(getInitialCategory());
@@ -411,8 +414,8 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
 
             <div className="space-y-12 pb-20">
                 {/* Initialize Global Store Once Data is Ready */}
-                {categories.length > 0 && (
-                    <ProductInitializer categories={categories} companyDetails={companyDetails} />
+                {initialCategories.length > 0 && (
+                    <ProductInitializer categories={initialCategories} companyDetails={companyDetails} />
                 )}
 
                 {isLoggedIn && userRole?.includes('CUSTOMER') && companyDetails?.companyPhone && (
