@@ -24,7 +24,7 @@ export async function fetchProductsByCategoryAction(categoryId: string, delivery
                 'Accept': 'application/json',
             },
             next: {
-                revalidate: 3600,
+                revalidate: 420,
                 tags: [`category-${catIdStr}`]
             },
             cache: 'force-cache'
