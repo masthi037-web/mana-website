@@ -15,12 +15,34 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
     const initialized = useRef(false);
 
     if (!initialized.current) {
-        const allProducts = categories.flatMap(cat => cat.catalogs.flatMap(c => c.products)).map(p => ({
+        // 1. Manually Hydrate from LocalStorage (to restore lazily fetched categories)
+        useProduct.persist.rehydrate();
+
+        const state = useProduct.getState();
+        const existingCategories = state.categories || [];
+        const existingProducts = state.products || [];
+
+        // 2. Merge Initial Categories (Server Data) with Existing (Cache)
+        // We prioritize Server Data for the categories passed in props
+        const mergedCategories = [...existingCategories];
+
+        categories.forEach(serverCat => {
+            const index = mergedCategories.findIndex(c => c.id === serverCat.id);
+            if (index !== -1) {
+                mergedCategories[index] = serverCat; // Update existing
+            } else {
+                mergedCategories.push(serverCat); // Add new
+            }
+        });
+
+        // 3. Re-derive Flat Product List
+        const allProducts = mergedCategories.flatMap(cat => cat.catalogs.flatMap(c => c.products)).map(p => ({
             ...p,
-            imageHint: "", // Default value as API doesn't provide it yet
-            imageUrl: p.productImage || "" // Map API field
+            imageHint: "",
+            imageUrl: p.productImage || ""
         }));
-        useProduct.setState({ products: allProducts, categories: categories });
+
+        useProduct.setState({ products: allProducts, categories: mergedCategories });
         if (companyDetails) {
             useCart.setState({ companyDetails });
         }

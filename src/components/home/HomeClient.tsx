@@ -129,8 +129,12 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         const category = categories.find(c => c.id === categoryId);
         if (!category) return;
 
-        // If category has no catalogs (implying not loaded) and is not already loading
-        if (category.catalogs.length === 0 && !isLoadingCategory[categoryId]) {
+        // Check if the category is available in the initialCategories prop (Server Data)
+        // If it is, we don't need to fetch it because ProductInitializer will sync it to the store shortly.
+        const isPreLoaded = initialCategories.some(ic => ic.id === categoryId && ic.catalogs.length > 0);
+
+        // If category has no catalogs (implying not loaded) and is not already loading, AND not pre-loaded
+        if (category.catalogs.length === 0 && !isLoadingCategory[categoryId] && !isPreLoaded) {
             setIsLoadingCategory(prev => ({ ...prev, [categoryId]: true }));
             try {
                 const fetchedCategory = await fetchProductsByCategory(categoryId, companyDetails?.deliveryBetween);
