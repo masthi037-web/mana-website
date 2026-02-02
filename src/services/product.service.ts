@@ -105,7 +105,8 @@ export async function fetchProductDetails(productId: string): Promise<AppProduct
         // If not, we might need to rely on the user providing the endpoint or use a standard one.
         // I will use `params` structure similar to others.
 
-        const data = await apiClient<ApiProduct>(`/company/public/product/get/${productId}`, {
+        const data = await apiClient<ApiProduct>(`/product/details/get`, {
+            params: { productId },
             next: { revalidate: 0 } // No cache for checkout validation
         });
 

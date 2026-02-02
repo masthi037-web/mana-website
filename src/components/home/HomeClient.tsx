@@ -22,9 +22,9 @@ import Image from 'next/image';
 import { ShopNowButton } from '@/components/home/ShopNowButton';
 import { fetchProductsByCategory } from '@/services/product.service';
 
-// API Services removed from Client component - passed as props
 import { CompanyDetails } from '@/lib/api-types';
 import { ProductInitializer } from '@/components/providers/ProductInitializer';
+import { useProduct } from '@/hooks/use-product';
 
 interface HomeClientProps {
     initialCategories: Category[];
@@ -37,8 +37,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Data State
-    const [categories, setCategories] = useState<Category[]>(initialCategories);
+    const { categories, setCategories } = useProduct();
     const [isLoadingCategory, setIsLoadingCategory] = useState<Record<string, boolean>>({});
     const [searchQuery, setSearchQuery] = useState("");
     const [showSearchDropdown, setShowSearchDropdown] = useState(false);

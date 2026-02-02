@@ -55,6 +55,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useProduct } from '@/hooks/use-product';
+import { fetchProductDetails } from '@/services/product.service';
 import { useCart, CartItem } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -1677,6 +1679,19 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             }
 
             const finalCart = newCart.filter(item => item.cartItemId !== 'REMOVE_ME');
+
+            // --- SYNC PRODUCTS GLOBALLY ---
+            // If any product had mismatches/updates, re-fetch full details to sync homepage/etc
+            const productsToSync = Array.from(new Set(newCart.map(i => i.id)));
+            if (blockingChanges || productsToSync.length > 0) {
+                console.log('CartSheet: Syncing products globally...', productsToSync);
+                Promise.all(productsToSync.map(async (pid) => {
+                    const freshProd = await fetchProductDetails(pid);
+                    if (freshProd) {
+                        useProduct.getState().syncProductGlobally(freshProd);
+                    }
+                })).catch(err => console.error("Global sync failed", err));
+            }
 
             // Always update cart and company details to reflect latest server data (silent updates included)
             useCart.setState({

@@ -20,7 +20,7 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
             imageHint: "", // Default value as API doesn't provide it yet
             imageUrl: p.productImage || "" // Map API field
         }));
-        useProduct.setState({ products: allProducts });
+        useProduct.setState({ products: allProducts, categories: categories });
         if (companyDetails) {
             useCart.setState({ companyDetails });
         }
