@@ -32,19 +32,26 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
         categories.forEach(serverCat => {
             const index = mergedCategories.findIndex(c => c.id === serverCat.id);
             if (index !== -1) {
-                // Smart Merge: Only overwrite if serverCat has data OR existing is empty.
-                // If existing has catalogs but serverCat is empty (lazy load placeholder), keep existing.
                 const existing = mergedCategories[index];
-                if (existing.catalogs.length > 0 && serverCat.catalogs.length === 0) {
-                    // Keep existing data, maybe update non-data fields if needed? 
-                    // For now, assume existing is better.
-                    // We can update name/image if we want, but usually existing is fine.
-                    mergedCategories[index] = {
-                        ...serverCat,
-                        catalogs: existing.catalogs
-                    };
-                } else {
+
+                // Case 1: Server has Data (Catalogs > 0) -> ALWAYS Update (server authority)
+                if (serverCat.catalogs && serverCat.catalogs.length > 0) {
                     mergedCategories[index] = serverCat;
+                }
+                // Case 2: Server is Skeleton (Lazy Load placeholder)
+                else {
+                    // Case 2a: Existing has Data -> Keep Existing (prevent overwrite)
+                    if (existing.catalogs && existing.catalogs.length > 0) {
+                        // Update metadata (name/image) but keep catalogs
+                        mergedCategories[index] = {
+                            ...serverCat,
+                            catalogs: existing.catalogs
+                        };
+                    }
+                    // Case 2b: Existing is also empty -> Update with Server (accept skeleton)
+                    else {
+                        mergedCategories[index] = serverCat;
+                    }
                 }
             } else {
                 mergedCategories.push(serverCat); // Add new
