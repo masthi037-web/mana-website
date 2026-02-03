@@ -17,7 +17,7 @@ export default function Loading() {
                     ManaBuy
                 </h1>
                 <p className="text-sm font-medium text-muted-foreground animate-pulse">
-                    Curating your experience...
+                    Curating your experience....
                 </p>
             </div>
 
