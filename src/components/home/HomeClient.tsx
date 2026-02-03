@@ -290,6 +290,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
 
     // Search Dropdown Logic
     useEffect(() => {
+        // console.log('[HomeClient] Search Effect Triggered', { query: searchQuery, hasActiveCat: !!activeCategory });
         if (searchQuery.trim() && activeCategory) {
             const allCategoryProducts = activeCategory.catalogs.flatMap(catalog =>
                 catalog.products.map(p => {
@@ -308,8 +309,9 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
             setSearchDropdownResults(results.slice(0, 5));
             setShowSearchDropdown(true);
         } else {
-            setSearchDropdownResults([]);
-            setShowSearchDropdown(false);
+            // Only update if not already empty to prevent loops if activeCategory ref is unstable
+            setSearchDropdownResults(prev => prev.length === 0 ? prev : []);
+            setShowSearchDropdown(prev => prev === false ? prev : false);
         }
     }, [searchQuery, activeCategory]);
 
