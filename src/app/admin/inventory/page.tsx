@@ -273,6 +273,19 @@ export default function AdminInventoryPage() {
         }
     }, [price, selectedProduct, level, editingItem]);
 
+    // Sync Form with Editing Item for Manage Sheet
+    useEffect(() => {
+        if (isManageSheetOpen && editingItem && manageMode === 'ADD_COLOUR') {
+            setColourName(editingItem.colour);
+            setColourStatus(editingItem.colourStatus || "ACTIVE");
+            // Map productColourQuantity to colourQuantity
+            setColourQuantity(editingItem.productColourQuantity !== undefined && editingItem.productColourQuantity !== null
+                ? String(editingItem.productColourQuantity)
+                : "");
+            setColourImage(editingItem.productPics);
+        }
+    }, [editingItem, manageMode, isManageSheetOpen]);
+
 
 
 
@@ -990,7 +1003,14 @@ export default function AdminInventoryPage() {
                             {(prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE' || (prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE_COLOUR' ? (
                                 <Input value="Managed by Variants" disabled className="bg-muted" />
                             ) : (
-                                <Input placeholder="100" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} min={0} />
+                                <Input
+                                    type="number"
+                                    placeholder="100"
+                                    value={price}
+                                    onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }}
+                                    onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                                    min={0}
+                                />
                             )}
                         </div>
 
@@ -1165,7 +1185,11 @@ export default function AdminInventoryPage() {
                                 <>
                                     <div className="space-y-2">
                                         <Label>Price</Label>
-                                        <Input placeholder="100" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} />
+                                        <Input
+                                            placeholder="100"
+                                            value={price}
+                                            onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }}
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Discounted Price (Calculated)</Label>
@@ -1191,7 +1215,11 @@ export default function AdminInventoryPage() {
                         <>
                             <div className="space-y-2">
                                 <Label>Price</Label>
-                                <Input placeholder="10" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} />
+                                <Input
+                                    placeholder="10"
+                                    value={price}
+                                    onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }}
+                                />
                             </div>
                         </>
                     )
@@ -1427,6 +1455,7 @@ export default function AdminInventoryPage() {
                                                         setColourStatus("OUTOFSTOCK");
                                                     }
                                                 }}
+                                                value={colourQuantity}
                                                 className="h-8 bg-background"
                                                 placeholder={hasColourWithNoQuantity && !editingItem ? "Managed by Sizes" : "0"}
                                                 disabled={hasColourWithNoQuantity && !editingItem}
