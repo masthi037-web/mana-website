@@ -76,27 +76,9 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
 
     const [selectedCategory, setSelectedCategory] = useState<string>(getInitialCategory());
 
-    // Sync when initialCategories update (if re-fetched or prop change)
-    // Sync when initialCategories update (if re-fetched or prop change)
-    useEffect(() => {
-        if (initialCategories.length > 0) {
-            setCategories(prev => {
-                // Smart Merge: Don't overwrite loaded categories with empty ones
-                // Map over initialCategories (source of truth for order/structure)
-                return initialCategories.map(initCat => {
-                    const existing = prev.find(p => p.id === initCat.id);
-                    // If we have existing data with catalogs/products, and the new one is empty (lazy placeholder), keep existing
-                    if (existing && existing.catalogs.length > 0 && initCat.catalogs.length === 0) {
-                        return {
-                            ...initCat, // Keep new metadata (name, image) if changed
-                            catalogs: existing.catalogs // Keep loaded catalogs
-                        };
-                    }
-                    return initCat;
-                });
-            });
-        }
-    }, [initialCategories, setCategories]);
+    // Sync state when initialCategories update (if re-fetched or prop change)
+    // Removed redundant useEffect: ProductInitializer handles this with timestamps.
+    // relying on ProductInitializer allows strictly controlled updates.
 
     // Update selected category if needed when categories change
     useEffect(() => {
@@ -161,16 +143,6 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         const timestampExists = state.categoryTimestamps && !!state.categoryTimestamps[categoryId];
         // Only skip if it's preloaded AND we have never initialized a timestamp for it (Fresh SSR load)
         const shouldSkipAsPreloaded = isPreLoaded && !timestampExists;
-
-        console.log(`[HomeClient] Checking Category ${categoryId}:
-        - catalogs=${category.catalogs.length}
-        - expired=${expired}
-        - loading=${isLoadingCategory[categoryId]}
-        - preLoaded=${isPreLoaded}
-        - timestampExists=${timestampExists} (Vals: ${JSON.stringify(state.categoryTimestamps)})
-        - SHOULD_SKIP=${shouldSkipAsPreloaded}
-        - RESULT=${((category.catalogs.length === 0 || expired) && !isLoadingCategory[categoryId] && !shouldSkipAsPreloaded) ? 'FETCHING' : 'SKIPPING'}
-        `);
 
         if ((category.catalogs.length === 0 || expired) && !isLoadingCategory[categoryId] && !shouldSkipAsPreloaded) {
             console.log(`[HomeClient] Triggering Fetch for ${categoryId}`);
