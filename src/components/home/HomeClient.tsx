@@ -45,7 +45,11 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
     const searchRef = useRef<HTMLDivElement>(null);
     const mountTime = useRef(Date.now());
 
-    console.log('[HomeClient] initialCategories:', initialCategories.map(c => ({ id: c.id, name: c.name, catalogs: c.catalogs.length })));
+    console.log('[HomeClient] initialCategories:', {
+        cats: initialCategories.map(c => ({ id: c.id, name: c.name, catalogs: c.catalogs.length })),
+        mountTime: mountTime.current,
+        now: Date.now()
+    });
 
 
     // Auth State
