@@ -124,19 +124,23 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
 
     // Unified function to load products for a category if not already loaded
     const loadCategoryData = useCallback(async (categoryId: string) => {
-        if (!categoryId || categories.length === 0) return;
+        if (!categoryId) return;
 
-        const category = categories.find(c => c.id === categoryId);
+        // Use getState() to avoid dependency on potentially stale 'categories' prop/state closure
+        const state = useProduct.getState();
+        const currentCategories = state.categories;
+
+        if (!currentCategories || currentCategories.length === 0) return;
+
+        const category = currentCategories.find(c => c.id === categoryId);
         if (!category) return;
 
-        // Check if expried
+        // Check if expired
         const expired = isCategoryExpired(categoryId);
 
         // Check if the category is available in the initialCategories prop (Server Data)
-        // If it is, we don't need to fetch it because ProductInitializer will sync it to the store shortly.
         const isPreLoaded = initialCategories.some(ic => ic.id === categoryId && ic.catalogs.length > 0);
 
-        const state = useProduct.getState();
         const timestampExists = state.categoryTimestamps && !!state.categoryTimestamps[categoryId];
         // Only skip if it's preloaded AND we have never initialized a timestamp for it (Fresh SSR load)
         const shouldSkipAsPreloaded = isPreLoaded && !timestampExists;
@@ -169,7 +173,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
             }
         }
         return category;
-    }, [categories, companyDetails?.deliveryBetween, isLoadingCategory, isCategoryExpired, markCategoryAsFetched]);
+    }, [initialCategories, companyDetails?.deliveryBetween, isLoadingCategory, isCategoryExpired, markCategoryAsFetched, setCategories]);
 
     // Initial Load & Load on selectCategory change
     useEffect(() => {
