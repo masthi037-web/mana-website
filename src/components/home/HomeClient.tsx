@@ -157,7 +157,11 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         // If category has no catalogs (implying not loaded) and is not already loading, AND not pre-loaded
         console.log(`[HomeClient] Checking Category ${categoryId}: catalogs=${category.catalogs.length}, loading=${isLoadingCategory[categoryId]}, expired=${expired}, preLoaded=${isPreLoaded}`);
 
-        if ((category.catalogs.length === 0 || expired) && !isLoadingCategory[categoryId] && !isPreLoaded) {
+        const state = useProduct.getState();
+        const timestampExists = state.categoryTimestamps && !!state.categoryTimestamps[categoryId];
+        const shouldSkipAsPreloaded = isPreLoaded && !timestampExists;
+
+        if ((category.catalogs.length === 0 || expired) && !isLoadingCategory[categoryId] && !shouldSkipAsPreloaded) {
             console.log(`[HomeClient] Triggering Fetch for ${categoryId}`);
             setIsLoadingCategory(prev => ({ ...prev, [categoryId]: true }));
             try {
