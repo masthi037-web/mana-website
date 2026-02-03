@@ -172,6 +172,9 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         - ServerCatalogs: ${serverCat?.catalogs?.length}
         - isPreLoaded: ${isPreLoaded}
         - timestampExists: ${timestampExists}
+        - timestampValue: ${state.categoryTimestamps ? state.categoryTimestamps[categoryId] : 'undefined'}
+        - Now: ${Date.now()}
+        - Diff: ${state.categoryTimestamps && state.categoryTimestamps[categoryId] ? (Date.now() - state.categoryTimestamps[categoryId]) / 1000 + 's' : 'N/A'}
         - expired: ${expired}
         - isFreshMount: ${isFreshMount} (${timeSinceMount}ms)
         - shouldSkipAsPreloaded: ${shouldSkipAsPreloaded}

@@ -20,7 +20,7 @@ async function fetchCategoryProductsAPI(categoryId: string | number): Promise<Ap
     try {
         const catData = await apiClient<ApiCategory>('/company/public/get-products-by-category/get', {
             params: { categoryId: catIdStr },
-            next: { revalidate: 420 }, // Sync with Client Cache (7 mins)
+            next: { revalidate: 300 }, // Server Cache (5 mins) - Shorter than Client (7 mins) to ensure freshness logic works
             // cache: 'no-store' // Removed no-store to allow revalidation
         });
         // Log brief summary instead of full dump
@@ -41,7 +41,7 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
             console.log(`[ProductService] Fetching category list from: /category/public/get-all-by-company`);
             const categories = await apiClient<CategoryPublicResponse[]>('/category/public/get-all-by-company', {
                 params: { companyId },
-                next: { revalidate: 420, tags: ['categories'] } // Cache the category list (7 mins)
+                next: { revalidate: 300, tags: ['categories'] } // Cache the category list (5 mins)
             });
 
             if (!categories || categories.length === 0) {
@@ -82,7 +82,7 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
             console.log(`[ProductService] Fetching all categories and products from: /company/public/category/catalogue/product/get`);
             const data = await apiClient<CompanyInventory>('/company/public/category/catalogue/product/get', {
                 params: { companyId },
-                next: { revalidate: 420, tags: ['products'] } // 7 minutes cache
+                next: { revalidate: 300, tags: ['products'] } // 5 minutes cache
             });
 
             return mapApiCategoriesToAppCategories(data.categories || [], deliveryTime);
