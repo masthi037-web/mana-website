@@ -71,8 +71,14 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         // Prioritize initialCategories prop to avoid wait-for-store-sync delay
         const sourceCats = initialCategories.length > 0 ? initialCategories : categories;
 
-        if (paramCat && sourceCats.some(c => c.id === paramCat)) return paramCat;
-        return sourceCats.length > 0 ? sourceCats[0].id : "";
+        // Valid ID Check: Must exist, not be "undefined" or "null" string
+        const isValidId = (id: string | null) => id && id !== 'undefined' && id !== 'null';
+
+        if (isValidId(paramCat) && sourceCats.some(c => c.id === paramCat)) return paramCat!;
+
+        // Fallback to first valid category
+        const firstValid = sourceCats.find(c => isValidId(c.id));
+        return firstValid ? firstValid.id : "";
     };
 
     const [selectedCategory, setSelectedCategory] = useState<string>(getInitialCategory());
@@ -125,7 +131,11 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
 
     // Unified function to load products for a category if not already loaded
     const loadCategoryData = useCallback(async (categoryId: string) => {
-        if (!categoryId) return;
+        // Defensive: Reject invalid IDs specifically "undefined" string
+        if (!categoryId || categoryId === 'undefined' || categoryId === 'null') {
+            console.warn(`[HomeClient] Blocked invalid category fetch: ${categoryId}`);
+            return;
+        }
 
         // Use getState() to avoid dependency on potentially stale 'categories' prop/state closure
         const state = useProduct.getState();
