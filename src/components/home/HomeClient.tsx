@@ -43,6 +43,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
     const [showSearchDropdown, setShowSearchDropdown] = useState(false);
     const [searchDropdownResults, setSearchDropdownResults] = useState<ProductWithImage[]>([]);
     const searchRef = useRef<HTMLDivElement>(null);
+    const mountTime = useRef(Date.now());
 
     console.log('[HomeClient] initialCategories:', initialCategories.map(c => ({ id: c.id, name: c.name, catalogs: c.catalogs.length })));
 
@@ -145,7 +146,21 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         // Only skip if it's preloaded AND we have never initialized a timestamp for it (Fresh SSR load)
         const shouldSkipAsPreloaded = isPreLoaded && !timestampExists;
 
+        // Race Condition Fix:
+        // On Reload, we have "Fresh Server Data" (isPreLoaded=true) but "Old Store Data" (timestamp=Expired).
+        // Standard logic sees "Expired" and fetches.
+        // We use 'mountTime' to give ProductInitializer 10s to overwrite the Old Store Data.
+        const timeSinceMount = Date.now() - mountTime.current;
+        const isFreshMount = timeSinceMount < 10000; // 10 seconds window
+
         if ((category.catalogs.length === 0 || expired) && !isLoadingCategory[categoryId] && !shouldSkipAsPreloaded) {
+
+            // If we have Preloaded data and it's a fresh mount, TRUST the Preloaded data (don't fetch yet)
+            if (isPreLoaded && isFreshMount) {
+                console.log(`[HomeClient] Skipping fetch for ${categoryId} (Fresh Mount & Preloaded)`);
+                return;
+            }
+
             console.log(`[HomeClient] Triggering Fetch for ${categoryId}`);
             setIsLoadingCategory(prev => ({ ...prev, [categoryId]: true }));
             try {
