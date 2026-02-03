@@ -11,16 +11,16 @@ import { Product } from '@/lib/api-types';
 import { mapApiCategoriesToAppCategories, mapApiProductToAppProduct } from './mappers';
 
 // Helper to centralize products-by-category logic
-async function fetchCategoryProductsAPI(categoryId: string | number): Promise<ApiCategory | null> {
+async function fetchCategoryProductsAPI(categoryId: string | number, forceFresh: boolean = false): Promise<ApiCategory | null> {
     const catIdStr = String(categoryId);
     // Defensive check
     if (!catIdStr || catIdStr === 'undefined' || catIdStr === 'null') return null;
 
-    console.log(`[ProductService] Helper Fetching products for category (${catIdStr}) from: /company/public/get-products-by-category/get`);
+    console.log(`[ProductService] Helper Fetching products for category (${catIdStr}) from: /company/public/get-products-by-category/get (ForceFresh: ${forceFresh})`);
     try {
         const catData = await apiClient<ApiCategory>('/company/public/get-products-by-category/get', {
             params: { categoryId: catIdStr },
-            next: { revalidate: 300 }, // Server Cache (5 mins) - Shorter than Client (7 mins) to ensure freshness logic works
+            next: { revalidate: forceFresh ? 0 : 420 }, // If forced, 0. Else Sync with Client Cache (7 mins)
             // cache: 'no-store' // Removed no-store to allow revalidation
         });
         // Log brief summary instead of full dump
@@ -41,7 +41,7 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
             console.log(`[ProductService] Fetching category list from: /category/public/get-all-by-company`);
             const categories = await apiClient<CategoryPublicResponse[]>('/category/public/get-all-by-company', {
                 params: { companyId },
-                next: { revalidate: 300, tags: ['categories'] } // Cache the category list (5 mins)
+                next: { revalidate: 420, tags: ['categories'] } // Cache the category list (7 mins)
             });
 
             if (!categories || categories.length === 0) {
@@ -53,7 +53,8 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
             let firstCategoryData: AppCategory | null = null;
 
             if (firstCategory && firstCategory.categoryId) {
-                const catData = await fetchCategoryProductsAPI(firstCategory.categoryId);
+                // Initial Load always uses Cache (forceFresh=false)
+                const catData = await fetchCategoryProductsAPI(firstCategory.categoryId, false);
                 if (catData) {
                     const mappedCats = mapApiCategoriesToAppCategories(Array.isArray(catData) ? catData : [catData], deliveryTime);
                     firstCategoryData = mappedCats[0];
@@ -82,7 +83,7 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
             console.log(`[ProductService] Fetching all categories and products from: /company/public/category/catalogue/product/get`);
             const data = await apiClient<CompanyInventory>('/company/public/category/catalogue/product/get', {
                 params: { companyId },
-                next: { revalidate: 300, tags: ['products'] } // 5 minutes cache
+                next: { revalidate: 420, tags: ['products'] } // 7 minutes cache
             });
 
             return mapApiCategoriesToAppCategories(data.categories || [], deliveryTime);
@@ -93,8 +94,8 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
     }
 }
 
-export async function fetchProductsByCategory(categoryId: string, deliveryTime?: string): Promise<AppCategory | null> {
-    const catData = await fetchCategoryProductsAPI(categoryId);
+export async function fetchProductsByCategory(categoryId: string, deliveryTime?: string, forceFresh: boolean = false): Promise<AppCategory | null> {
+    const catData = await fetchCategoryProductsAPI(categoryId, forceFresh);
     if (!catData) return null;
 
     const mappedCats = mapApiCategoriesToAppCategories(Array.isArray(catData) ? catData : [catData], deliveryTime);

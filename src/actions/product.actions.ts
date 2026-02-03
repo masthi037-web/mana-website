@@ -11,7 +11,7 @@ export async function fetchProductsByCategoryAction(categoryId: string, delivery
     console.log(`[ProductAction] Server Action Delegating to ProductService for category (${catIdStr})`);
 
     try {
-        return await fetchProductsByCategory(catIdStr, deliveryTime);
+        return await fetchProductsByCategory(catIdStr, deliveryTime, true);
     } catch (e) {
         console.error(`[ProductAction] Failed to fetch category ${catIdStr}`, e);
         return null;
