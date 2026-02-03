@@ -159,7 +159,18 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
 
         const state = useProduct.getState();
         const timestampExists = state.categoryTimestamps && !!state.categoryTimestamps[categoryId];
+        // Only skip if it's preloaded AND we have never initialized a timestamp for it (Fresh SSR load)
         const shouldSkipAsPreloaded = isPreLoaded && !timestampExists;
+
+        console.log(`[HomeClient] Checking Category ${categoryId}:
+        - catalogs=${category.catalogs.length}
+        - expired=${expired}
+        - loading=${isLoadingCategory[categoryId]}
+        - preLoaded=${isPreLoaded}
+        - timestampExists=${timestampExists} (Vals: ${JSON.stringify(state.categoryTimestamps)})
+        - SHOULD_SKIP=${shouldSkipAsPreloaded}
+        - RESULT=${((category.catalogs.length === 0 || expired) && !isLoadingCategory[categoryId] && !shouldSkipAsPreloaded) ? 'FETCHING' : 'SKIPPING'}
+        `);
 
         if ((category.catalogs.length === 0 || expired) && !isLoadingCategory[categoryId] && !shouldSkipAsPreloaded) {
             console.log(`[HomeClient] Triggering Fetch for ${categoryId}`);

@@ -40,6 +40,7 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
                     mergedCategories[index] = serverCat;
                     // Mark as fresh since it came from Server
                     newTimestamps[serverCat.id] = Date.now();
+                    console.log(`[ProductInitializer] Updated Cat ${serverCat.id} from Server. Timestamp set to NOW.`);
                 }
                 // Case 2: Server is Skeleton (Lazy Load placeholder)
                 else {
@@ -65,6 +66,7 @@ export function ProductInitializer({ categories, companyDetails }: ProductInitia
                 mergedCategories.push(serverCat); // Add new
                 if (serverCat.catalogs && serverCat.catalogs.length > 0) {
                     newTimestamps[serverCat.id] = Date.now();
+                    console.log(`[ProductInitializer] Added New Cat ${serverCat.id} from Server. Timestamp set to NOW.`);
                 }
             }
         });
