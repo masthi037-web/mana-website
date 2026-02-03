@@ -181,6 +181,12 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
     // Sync State -> URL when user interacts
     const updateCategory = (categoryId: string) => {
         setSearchQuery(""); // Clear search on category change
+
+        // If clicking the ALREADY selected category, force a re-check of data (in case it expired)
+        if (categoryId === selectedCategory) {
+            loadCategoryData(categoryId);
+        }
+
         setSelectedCategory(categoryId);
 
         // Remove manual data loading and catalog setting here. 
