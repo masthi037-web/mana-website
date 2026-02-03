@@ -140,28 +140,38 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         const expired = isCategoryExpired(categoryId);
 
         // Check if the category is available in the initialCategories prop (Server Data)
-        const isPreLoaded = initialCategories.some(ic => ic.id === categoryId && ic.catalogs.length > 0);
+        // DEBUG LOGGING FOR RELOAD ISSUE
+        const serverCat = initialCategories.find(ic => ic.id === categoryId);
+        const hasServerCatalogs = serverCat && serverCat.catalogs.length > 0;
+        const isPreLoaded = !!hasServerCatalogs;
 
         const timestampExists = state.categoryTimestamps && !!state.categoryTimestamps[categoryId];
-        // Only skip if it's preloaded AND we have never initialized a timestamp for it (Fresh SSR load)
         const shouldSkipAsPreloaded = isPreLoaded && !timestampExists;
 
         // Race Condition Fix:
-        // On Reload, we have "Fresh Server Data" (isPreLoaded=true) but "Old Store Data" (timestamp=Expired).
-        // Standard logic sees "Expired" and fetches.
-        // We use 'mountTime' to give ProductInitializer 10s to overwrite the Old Store Data.
         const timeSinceMount = Date.now() - mountTime.current;
         const isFreshMount = timeSinceMount < 10000; // 10 seconds window
+
+        console.log(`[HomeClient] DECISION for ${categoryId}:
+        - initialCategories Count: ${initialCategories.length}
+        - Found ServerCat? ${!!serverCat}
+        - ServerCatalogs: ${serverCat?.catalogs?.length}
+        - isPreLoaded: ${isPreLoaded}
+        - timestampExists: ${timestampExists}
+        - expired: ${expired}
+        - isFreshMount: ${isFreshMount} (${timeSinceMount}ms)
+        - shouldSkipAsPreloaded: ${shouldSkipAsPreloaded}
+        `);
 
         if ((category.catalogs.length === 0 || expired) && !isLoadingCategory[categoryId] && !shouldSkipAsPreloaded) {
 
             // If we have Preloaded data and it's a fresh mount, TRUST the Preloaded data (don't fetch yet)
             if (isPreLoaded && isFreshMount) {
-                console.log(`[HomeClient] Skipping fetch for ${categoryId} (Fresh Mount & Preloaded)`);
+                console.log(`[HomeClient] SKIPPED Fetch for ${categoryId} (Fresh Mount & Preloaded)`);
                 return;
             }
 
-            console.log(`[HomeClient] Triggering Fetch for ${categoryId}`);
+            console.log(`[HomeClient] Triggering Fetch for ${categoryId} (Reason: CatalogsEmpty=${category.catalogs.length === 0}, Expired=${expired}, NotSkipped=${!shouldSkipAsPreloaded})`);
             setIsLoadingCategory(prev => ({ ...prev, [categoryId]: true }));
             try {
                 const fetchedCategory = await fetchProductsByCategoryAction(categoryId, companyDetails?.deliveryBetween);
