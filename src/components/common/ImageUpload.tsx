@@ -36,6 +36,16 @@ export function ImageUpload({
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Parse initial value
+    useEffect(() => {
+        if (value) {
+            const paths = value.split("&&&").filter(Boolean);
+            setFilePaths(paths);
+            setPreviews(paths);
+        } else {
+            setFilePaths([]);
+            setPreviews([]);
+        }
+    }, [value]);
 
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

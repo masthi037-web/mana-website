@@ -990,7 +990,7 @@ export default function AdminInventoryPage() {
                             {(prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE' || (prodType || selectedProduct?.productType || editingItem?.productType) === 'SIZE_COLOUR' ? (
                                 <Input value="Managed by Variants" disabled className="bg-muted" />
                             ) : (
-                                <Input type="number" placeholder="100" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} min={0} />
+                                <Input placeholder="100" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} min={0} />
                             )}
                         </div>
 
@@ -1003,7 +1003,6 @@ export default function AdminInventoryPage() {
 
                                 <>
                                     <Input
-                                        type="number"
                                         placeholder="50"
                                         value={prodOffer}
                                         onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (Number(val) < 99) setProdOffer(val); }}
@@ -1019,7 +1018,6 @@ export default function AdminInventoryPage() {
                         <div className="space-y-2">
                             <Label>Offer Price</Label>
                             <Input
-                                type="number"
                                 placeholder="80"
                                 value={discountedPrice}
                                 onChange={e => setDiscountedPrice(e.target.value)}
@@ -1077,7 +1075,6 @@ export default function AdminInventoryPage() {
                                 <div className="space-y-1 flex-1">
                                     <Label className="text-xs">Qty (e.g. 3)</Label>
                                     <Input
-                                        type="number"
                                         placeholder="3"
                                         value={tempBulkQty}
                                         onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (val.length <= 4) setTempBulkQty(val); }}
@@ -1087,7 +1084,6 @@ export default function AdminInventoryPage() {
                                 <div className="space-y-1 flex-1">
                                     <Label className="text-xs">Discount % (e.g. 10)</Label>
                                     <Input
-                                        type="number"
                                         placeholder="10"
                                         value={tempBulkDiscount}
                                         onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (Number(val) < 99) setTempBulkDiscount(val); }}
@@ -1119,7 +1115,6 @@ export default function AdminInventoryPage() {
                                 <div className="space-y-1 flex-1">
                                     <Label className="text-xs">More than Qty (e.g. 5)</Label>
                                     <Input
-                                        type="number"
                                         placeholder="5"
                                         value={moreThanQty}
                                         onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (val.length <= 4) setMoreThanQty(val); }}
@@ -1129,7 +1124,6 @@ export default function AdminInventoryPage() {
                                 <div className="space-y-1 flex-1">
                                     <Label className="text-xs">Discount % (e.g. 20)</Label>
                                     <Input
-                                        type="number"
                                         placeholder="20"
                                         value={moreThanDiscount}
                                         onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (Number(val) < 99) setMoreThanDiscount(val); }}
@@ -1171,12 +1165,11 @@ export default function AdminInventoryPage() {
                                 <>
                                     <div className="space-y-2">
                                         <Label>Price</Label>
-                                        <Input type="number" placeholder="100" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} />
+                                        <Input placeholder="100" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} />
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Discounted Price (Calculated)</Label>
                                         <Input
-                                            type="number"
                                             placeholder="80"
                                             value={discountedPrice}
                                             onChange={e => setDiscountedPrice(e.target.value.replace(/[^0-9.]/g, ''))}
@@ -1198,7 +1191,7 @@ export default function AdminInventoryPage() {
                         <>
                             <div className="space-y-2">
                                 <Label>Price</Label>
-                                <Input type="number" placeholder="10" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} />
+                                <Input placeholder="10" value={price} onChange={e => { const val = e.target.value.replace(/[^0-9.]/g, ''); if (val.length <= 6) setPrice(val); }} />
                             </div>
                         </>
                     )
@@ -1414,7 +1407,7 @@ export default function AdminInventoryPage() {
                             {/* ADD COLOUR FORM */}
                             {manageMode === 'ADD_COLOUR' && (
                                 <div className="bg-muted/30 p-4 rounded-xl border border-dashed border-primary/30 animate-in fade-in zoom-in-95 duration-300">
-                                    <h4 className="font-semibold text-sm mb-3 text-primary">New Colour Variant</h4>
+                                    <h4 className="font-semibold text-sm mb-3 text-primary">{editingItem ? "Edit Colour Variant" : "New Colour Variant"}</h4>
                                     <div className="space-y-3">
                                         <div className="space-y-2">
                                             <Label className="text-xs">Colour Name <span className="text-destructive">*</span></Label>
@@ -1423,8 +1416,17 @@ export default function AdminInventoryPage() {
                                         <div className="space-y-2">
                                             <Label className="text-xs">Quantity {(prodType || selectedProduct?.productType || editingItem?.productType) === 'COLOUR' && <span className="text-destructive">*</span>}</Label>
                                             <Input
-                                                value={colourQuantity}
-                                                onChange={e => setColourQuantity(e.target.value)}
+                                                onChange={e => {
+                                                    const val = e.target.value.replace(/[^0-9]/g, '');
+                                                    setColourQuantity(val);
+                                                    // Auto-Status Logic
+                                                    const num = parseInt(val);
+                                                    if (!isNaN(num) && num > 0) {
+                                                        setColourStatus("ACTIVE");
+                                                    } else if (val === "0" || val === "") {
+                                                        setColourStatus("OUTOFSTOCK");
+                                                    }
+                                                }}
                                                 className="h-8 bg-background"
                                                 placeholder={hasColourWithNoQuantity && !editingItem ? "Managed by Sizes" : "0"}
                                                 disabled={hasColourWithNoQuantity && !editingItem}
@@ -1464,7 +1466,7 @@ export default function AdminInventoryPage() {
                             {/* COLOUR LIST */}
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {/* COLOUR LIST */}
-                                {fetchedColours.length > 0 ? (
+                                {fetchedColours.length > 0 && manageMode !== 'ADD_COLOUR' ? (
                                     fetchedColours.map((c: any) => (
                                         <div key={c.productColourId} className="border rounded-lg p-2 bg-card relative group overflow-hidden">
                                             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
