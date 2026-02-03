@@ -15,7 +15,7 @@ interface ProductState {
     isCategoryExpired: (categoryId: string) => boolean;
 }
 
-const EXPIRATION_TIME = 1 * 60 * 1000; // 1 minute for debugging (was 7)
+const EXPIRATION_TIME = 7 * 60 * 1000; // 7 minutes
 
 export const useProduct = create<ProductState>()(
     persist(
@@ -58,11 +58,7 @@ export const useProduct = create<ProductState>()(
 
                 const timestamp = categoryTimestamps[categoryId];
                 if (!timestamp) return true; // Never fetched = Expired
-
-                const elapsed = Date.now() - timestamp;
-                const isExpired = elapsed > EXPIRATION_TIME;
-                console.log(`[useProduct] Checking Expired Cat ${categoryId}: Now=${Date.now()}, Ts=${timestamp}, Elapsed=${elapsed}, LIMIT=${EXPIRATION_TIME}, Result=${isExpired}`);
-                return isExpired;
+                return (Date.now() - timestamp > EXPIRATION_TIME);
             },
             checkExpiration: () => {
                 // Deprecated or can be used to clean up map, but for now logic moves to usage sites

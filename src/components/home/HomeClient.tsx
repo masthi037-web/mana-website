@@ -136,9 +136,6 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         // If it is, we don't need to fetch it because ProductInitializer will sync it to the store shortly.
         const isPreLoaded = initialCategories.some(ic => ic.id === categoryId && ic.catalogs.length > 0);
 
-        // If category has no catalogs (implying not loaded) and is not already loading, AND not pre-loaded
-        console.log(`[HomeClient] Checking Category ${categoryId}: catalogs=${category.catalogs.length}, loading=${isLoadingCategory[categoryId]}, expired=${expired}, preLoaded=${isPreLoaded}`);
-
         const state = useProduct.getState();
         const timestampExists = state.categoryTimestamps && !!state.categoryTimestamps[categoryId];
         // Only skip if it's preloaded AND we have never initialized a timestamp for it (Fresh SSR load)
