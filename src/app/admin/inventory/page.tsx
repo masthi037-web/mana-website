@@ -1655,6 +1655,7 @@ export default function AdminInventoryPage() {
                                                 <Input
                                                     value={sizeQuantity}
                                                     onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ''); if (val.length <= 5) setSizeQuantity(val); }}
+                                                    onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
                                                     className="h-8 bg-background"
                                                     placeholder={(selectedProduct?.productQuantity || (selectedProduct?.productType || prodType) === 'SIZE_COLOUR') ? "Managed by Product Size/Colours" : "Unit Qty"}
                                                     disabled={!!selectedProduct?.productQuantity || (selectedProduct?.productType || prodType || editingItem?.productType) === 'SIZE_COLOUR'}
@@ -1664,7 +1665,6 @@ export default function AdminInventoryPage() {
                                             <div className="space-y-1">
                                                 <Label className="text-xs">Price <span className="text-destructive">*</span></Label>
                                                 <Input
-                                                    type="number"
                                                     value={price}
                                                     onChange={e => {
                                                         const newVal = e.target.value.replace(/[^0-9.]/g, '');
@@ -1688,6 +1688,7 @@ export default function AdminInventoryPage() {
                                                             setDiscountedPrice(newVal);
                                                         }
                                                     }}
+                                                    onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
                                                     className="h-8 bg-background"
                                                     placeholder="0"
                                                     disabled={!!(selectedProduct?.price && selectedProduct.price > 0)}
@@ -1700,7 +1701,6 @@ export default function AdminInventoryPage() {
                                                 {(prodOffer || selectedProduct?.productOffer) && <span className="text-emerald-600 font-medium ml-1">({prodOffer || selectedProduct?.productOffer}% OFF)</span>}
                                             </Label>
                                             <Input
-                                                type="number"
                                                 value={discountedPrice}
                                                 onChange={e => setDiscountedPrice(e.target.value.replace(/[^0-9.]/g, ''))}
                                                 className="h-8 bg-background border-dashed"
@@ -1826,7 +1826,13 @@ export default function AdminInventoryPage() {
                                                                 <div className="flex gap-3">
                                                                     <div className="space-y-1 flex-1">
                                                                         <Label className="text-xs">Extra Price</Label>
-                                                                        <Input type="number" value={price} onChange={e => setPrice(e.target.value)} className="h-7" placeholder="10" />
+                                                                        <Input
+                                                                            value={price}
+                                                                            onChange={e => setPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                                                                            className="h-7"
+                                                                            placeholder="10"
+                                                                            onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                                                                        />
                                                                     </div>
                                                                     <div className="pt-6 flex items-center space-x-2">
                                                                         {/* Mandatory field removed */}
@@ -1835,7 +1841,13 @@ export default function AdminInventoryPage() {
                                                                 <div className="grid grid-cols-2 gap-3">
                                                                     <div className="space-y-1">
                                                                         <Label className="text-xs">Quantity <span className="text-destructive">*</span></Label>
-                                                                        <Input value={sizeQuantity} onChange={e => setSizeQuantity(e.target.value)} className="h-7" placeholder="0" />
+                                                                        <Input
+                                                                            value={sizeQuantity}
+                                                                            onChange={e => setSizeQuantity(e.target.value.replace(/[^0-9]/g, ''))}
+                                                                            className="h-7"
+                                                                            placeholder="0"
+                                                                            onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                                                                        />
                                                                     </div>
                                                                     <div className="space-y-1">
                                                                         <Label className="text-xs">Status</Label>
