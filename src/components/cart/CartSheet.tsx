@@ -1867,27 +1867,29 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     </div>
                                 </div>
 
-                                {/* QR Code Container */}
-                                <div className="relative bg-white p-4 rounded-[40px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] mb-8 border border-white group transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] w-full max-w-[260px]">
-                                    <div className="relative aspect-square w-full overflow-hidden rounded-[32px] bg-slate-50 border border-slate-100 flex items-center justify-center">
-                                        <Image
-                                            src={companyDetails?.upiQrCode || "https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"}
-                                            alt="UPI QR Code"
-                                            width={200}
-                                            height={200}
-                                            className="w-full h-full object-contain p-4"
-                                        />
+                                {/* QR Code Container - Only show if NO UPI ID */}
+                                {!companyDetails?.upiId && (
+                                    <div className="relative bg-white p-4 rounded-[40px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] mb-8 border border-white group transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] w-full max-w-[260px]">
+                                        <div className="relative aspect-square w-full overflow-hidden rounded-[32px] bg-slate-50 border border-slate-100 flex items-center justify-center">
+                                            <Image
+                                                src={companyDetails?.upiQrCode || "https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"}
+                                                alt="UPI QR Code"
+                                                width={200}
+                                                height={200}
+                                                className="w-full h-full object-contain p-4"
+                                            />
 
-                                        {/* Animated Scan Line */}
-                                        <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500 to-transparent animate-[scan_2s_ease-in-out_infinite] opacity-40 shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
-                                    </div>
-                                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white px-5 py-2 rounded-full border border-slate-100 shadow-xl flex items-center gap-2 whitespace-nowrap z-10">
-                                        <div className="bg-emerald-100 p-1 rounded-full">
-                                            <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                                            {/* Animated Scan Line */}
+                                            <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500 to-transparent animate-[scan_2s_ease-in-out_infinite] opacity-40 shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
                                         </div>
-                                        <span className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Secure UPI</span>
+                                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white px-5 py-2 rounded-full border border-slate-100 shadow-xl flex items-center gap-2 whitespace-nowrap z-10">
+                                            <div className="bg-emerald-100 p-1 rounded-full">
+                                                <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                                            </div>
+                                            <span className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Secure UPI</span>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Timer & Upload Section */}
                                 <div className="w-full bg-slate-50/80 backdrop-blur-md rounded-[32px] p-5 border border-slate-200/50 mb-6 space-y-5 shadow-inner">
