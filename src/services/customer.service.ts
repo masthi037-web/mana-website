@@ -52,11 +52,32 @@ export const customerService = {
 
         if (response && typeof window !== 'undefined') {
             const customerId = localStorage.getItem('customerId') || '';
+
+            // PRESERVE ADDRESSES: If response is missing addresses, try to salvage from cache
+            let finalData = response;
+            try {
+                const cachedRaw = localStorage.getItem(CACHE_KEY);
+                if (cachedRaw) {
+                    const cached = JSON.parse(cachedRaw);
+                    // If we have cached addresses but response dropped them (len=0 or null)
+                    if (cached.data?.customerAddress?.length > 0) {
+                        if (!response.customerAddress || response.customerAddress.length === 0) {
+                            console.log('[updateCustomer] Restoring addresses from cache to prevent UI disappearance');
+                            finalData = { ...response, customerAddress: cached.data.customerAddress };
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to merge address cache during update', e);
+            }
+
             localStorage.setItem(CACHE_KEY, JSON.stringify({
                 timestamp: Date.now(),
-                data: response,
+                data: finalData,
                 id: customerId
             }));
+
+            return finalData;
         }
 
         return response;
