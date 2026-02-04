@@ -135,9 +135,9 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                                         {tag}
                                                     </span>
                                                 ))}
-                                                {item.extraDiscount && item.extraDiscount > 0 ? (
+                                                {Number(item.extraDiscount || 0) > 0 ? (
                                                     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black bg-rose-50 text-rose-500 uppercase tracking-wider border border-rose-100">
-                                                        OFF: -{formatCurrency(item.extraDiscount)}
+                                                        OFF: -{formatCurrency(item.extraDiscount || 0)}
                                                     </span>
                                                 ) : null}
                                             </div>
@@ -196,10 +196,10 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                 </div>
                             )}
 
-                            {order.extraDiscount && order.extraDiscount > 0 ? (
+                            {Number(order.extraDiscount || 0) > 0 ? (
                                 <div className="flex justify-between items-center">
                                     <span className="text-rose-500 font-bold uppercase tracking-[0.15em] text-[9px]">Bundle Saving</span>
-                                    <span className="text-rose-600 font-black text-sm">- {formatCurrency(order.extraDiscount)}</span>
+                                    <span className="text-rose-600 font-black text-sm">- {formatCurrency(order.extraDiscount || 0)}</span>
                                 </div>
                             ) : null}
 

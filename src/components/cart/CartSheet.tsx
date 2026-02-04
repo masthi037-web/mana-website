@@ -2410,35 +2410,64 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                 // --- Upsell Calculation (Compact) ---
                                                 let upsellNode: React.ReactNode = null;
 
-                                                // 1. Gather Tiers
-                                                const allTiers: { threshold: number, percent: number }[] = [];
+                                                const cyclicTiers: { threshold: number, percent: number }[] = [];
+                                                const flatTiers: { threshold: number, percent: number }[] = [];
+
+                                                // 1. Parse Rule (Cyclic)
                                                 if (ruleKey) {
                                                     String(ruleKey).split('&&&').forEach(seg => {
                                                         const [t, p] = String(seg).split('-');
-                                                        if (t && p) allTiers.push({ threshold: parseFloat(t), percent: parseFloat(p) });
+                                                        if (t && p) cyclicTiers.push({ threshold: parseFloat(t), percent: parseFloat(p) });
                                                     });
                                                 }
+                                                // 2. Parse MoreThan (Flat)
                                                 if (moreThanRule) {
                                                     const [t, p] = String(moreThanRule).split('-');
                                                     if (t && p) {
-                                                        // "More than 6" -> Needs 7.
-                                                        allTiers.push({ threshold: parseFloat(t) + 1, percent: parseFloat(p) });
+                                                        flatTiers.push({ threshold: parseFloat(t) + 1, percent: parseFloat(p) });
                                                     }
                                                 }
 
-                                                // 2. Find Next Best Option
-                                                const potentialUpsell = allTiers
-                                                    .filter(t => t.threshold > totalQty)
-                                                    .sort((a, b) => a.threshold - b.threshold)[0];
+                                                // 3. Determine 'Remainder' for Cyclic Logic
+                                                let remainder = totalQty;
+                                                const sortedCyclic = [...cyclicTiers].sort((a, b) => b.threshold - a.threshold);
 
-                                                if (potentialUpsell) {
-                                                    const needed = potentialUpsell.threshold - totalQty;
+                                                if (sortedCyclic.length > 0) {
+                                                    // Simulate greedy consumption
+                                                    while (remainder > 0) {
+                                                        const best = sortedCyclic.find(t => t.threshold <= remainder);
+                                                        if (best) {
+                                                            remainder -= best.threshold;
+                                                        } else {
+                                                            break; // No tier fits, remainder is pending
+                                                        }
+                                                    }
+                                                }
+
+                                                // 4. Find Best Next Goal
+                                                // Option A: Cyclic (Base on Remainder) - Only if we have a partial set started (>0)
+                                                const cyclicGoals = (remainder > 0)
+                                                    ? cyclicTiers
+                                                        .filter(t => t.threshold > remainder)
+                                                        .map(t => ({ needed: t.threshold - remainder, percent: t.percent }))
+                                                    : [];
+
+                                                // Option B: Flat (Base on Total)
+                                                const flatGoals = flatTiers
+                                                    .filter(t => t.threshold > totalQty)
+                                                    .map(t => ({ needed: t.threshold - totalQty, percent: t.percent }));
+
+                                                // Combine and Pick Best (Shortest Path to Discount)
+                                                const allGoals = [...cyclicGoals, ...flatGoals].sort((a, b) => a.needed - b.needed);
+                                                const bestGoal = allGoals[0];
+
+                                                if (bestGoal) {
                                                     upsellNode = (
                                                         <div className="mt-2 animate-in slide-in-from-bottom-2 duration-500">
                                                             <div className="group flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 cursor-default mx-auto w-fit">
                                                                 <Tag className="w-4 h-4 text-white fill-white/20" />
                                                                 <span className="text-xs font-bold text-white uppercase tracking-wide">
-                                                                    Add {needed} more to get {potentialUpsell.percent}% Off
+                                                                    Add {bestGoal.needed} more to get {bestGoal.percent}% Off
                                                                 </span>
                                                             </div>
                                                         </div>

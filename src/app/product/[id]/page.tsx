@@ -200,7 +200,7 @@ export default function ProductDetailPage() {
             foundProduct = {
               ...apiProduct,
               id: String(apiProduct.id),
-              imageUrl: image?.imageUrl || '',
+              imageUrl: apiProduct.imageUrl || image?.imageUrl || '',
               imageHint: image?.imageHint || 'product image',
             };
           }
