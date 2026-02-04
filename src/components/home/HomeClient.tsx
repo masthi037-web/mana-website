@@ -44,6 +44,8 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
     const [searchDropdownResults, setSearchDropdownResults] = useState<ProductWithImage[]>([]);
     const searchRef = useRef<HTMLDivElement>(null);
     const mountTime = useRef(Date.now());
+    // Ref to track in-flight requests synchronously to prevent double-firing
+    const fetchingRef = useRef<Record<string, boolean>>({});
 
     console.log('[HomeClient] initialCategories:', {
         cats: initialCategories.map(c => ({ id: c.id, name: c.name, catalogs: c.catalogs.length })),
@@ -180,7 +182,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
         - shouldSkipAsPreloaded: ${shouldSkipAsPreloaded}
         `);
 
-        if ((category.catalogs.length === 0 || expired) && !isLoadingCategory[categoryId] && !shouldSkipAsPreloaded) {
+        if ((category.catalogs.length === 0 || expired) && !isLoadingCategory[categoryId] && !fetchingRef.current[categoryId] && !shouldSkipAsPreloaded) {
 
             // If we have Preloaded data and it's a fresh mount, TRUST the Preloaded data (don't fetch yet)
             if (isPreLoaded && isFreshMount) {
@@ -189,6 +191,9 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
             }
 
             console.log(`[HomeClient] Triggering Fetch for ${categoryId} (Reason: CatalogsEmpty=${category.catalogs.length === 0}, Expired=${expired}, NotSkipped=${!shouldSkipAsPreloaded})`);
+
+            // Set guards
+            fetchingRef.current[categoryId] = true;
             setIsLoadingCategory(prev => ({ ...prev, [categoryId]: true }));
             try {
                 const fetchedCategory = await fetchProductsByCategoryAction(categoryId, companyDetails?.deliveryBetween);
@@ -211,6 +216,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
             } catch (error) {
                 console.error("Failed to load category", error);
             } finally {
+                fetchingRef.current[categoryId] = false;
                 setIsLoadingCategory(prev => ({ ...prev, [categoryId]: false }));
             }
         }
