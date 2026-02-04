@@ -2782,7 +2782,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             <div className="flex justify-between text-sm text-muted-foreground">
                                                 <span>Shipping</span>
                                                 <span className={cn(isFreeDelivery ? "text-green-600 font-medium" : "")}>
-                                                    {isFreeDelivery ? "FREE" : "Calculated at checkout"}
+                                                    {isFreeDelivery ? "FREE" : "₹" + shipping.toFixed(2)}
                                                 </span>
                                             </div>
                                             {discountAmount > 0 && (
