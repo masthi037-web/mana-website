@@ -821,6 +821,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 subTotal: rawSubtotal,
                 allDiscount: (couponCode && couponDiscountAmount > 0) ? `applied ${couponCode} changed ${currentSubtotalWithBulk} to ${currentSubtotalWithBulk - couponDiscountAmount}` : "",
                 extraDiscount: totalBulkDiscount,
+                deliveryCost: String(shipping),
                 finalTotalAmount: finalTotalAmount,
                 paymentPic: manualProof || null,
                 items: processedItems

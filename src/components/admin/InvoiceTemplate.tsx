@@ -205,7 +205,9 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
 
                             <div className="flex justify-between items-center">
                                 <span className="text-slate-400 font-bold uppercase tracking-[0.15em] text-[9px]">Delivery</span>
-                                <span className="text-emerald-600 font-black text-[10px] uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">Complementary</span>
+                                <span className="text-emerald-600 font-black text-[10px] uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                                    {(order.deliveryCost && parseFloat(order.deliveryCost) > 0) ? formatCurrency(parseFloat(order.deliveryCost)) : "Complementary"}
+                                </span>
                             </div>
                         </div>
 

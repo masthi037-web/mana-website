@@ -583,6 +583,7 @@ export interface SaveOrderRequest {
     subTotal: number;
     allDiscount: string;
     extraDiscount?: number | null;
+    deliveryCost?: string;
     finalTotalAmount: number;
     paymentPic?: string | null;
     createdAt?: string; // Optional
@@ -604,8 +605,9 @@ export interface SaveOrderResponse {
     deliveryState: string;
     orderStatus: string;
     subTotal: number;
-    allDiscount: string;
+    allDiscount: string; // e.g. "applied NEWYEAR25 changed 1000 to 750"
     extraDiscount?: number | null;
+    deliveryCost?: string;
     finalTotalAmount: number;
     paymentPic: string | null;
     createdAt: string;

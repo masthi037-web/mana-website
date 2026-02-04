@@ -353,7 +353,7 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
                             )}
                             <div className="flex justify-between text-xs text-slate-500 font-medium">
                                 <span>Delivery</span>
-                                <span>Free</span>
+                                <span>{(order.deliveryCost && parseFloat(order.deliveryCost) > 0) ? formatCurrency(parseFloat(order.deliveryCost)) : "Free"}</span>
                             </div>
                             <div className="h-px bg-slate-200 w-full my-2" />
                             <div className="flex justify-between items-end">
