@@ -277,9 +277,9 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
                                                 <p className="text-xs font-medium text-slate-400">
                                                     Qty: <span className="text-slate-900">{item.quantity}</span>
                                                 </p>
-                                                {item.extraDiscount && item.extraDiscount > 0 && (
+                                                {(item.extraDiscount || 0) > 0 && (
                                                     <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 flex items-center gap-0.5">
-                                                        Discount: -{formatCurrency(item.extraDiscount)}
+                                                        Discount: -{formatCurrency(item.extraDiscount!)}
                                                     </span>
                                                 )}
                                             </div>
@@ -345,10 +345,10 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
                                     <span>- {formatCurrency(Math.max(0, order.subTotal - order.finalTotalAmount - (order.extraDiscount || 0)))}</span>
                                 </div>
                             )}
-                            {order.extraDiscount && order.extraDiscount > 0 && (
+                            {(order.extraDiscount || 0) > 0 && (
                                 <div className="flex justify-between text-xs text-rose-600 font-medium">
                                     <span>Extra Discount</span>
-                                    <span>- {formatCurrency(order.extraDiscount)}</span>
+                                    <span>- {formatCurrency(order.extraDiscount!)}</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-xs text-slate-500 font-medium">

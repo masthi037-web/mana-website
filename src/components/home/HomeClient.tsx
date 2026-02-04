@@ -301,7 +301,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                     return {
                         ...p,
                         imageHint: image?.imageHint || 'product image',
-                        imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || `https://picsum.photos/seed/${p.id}/300/300`
+                        imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || ''
                     };
                 })
             );
@@ -354,7 +354,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                     return {
                         ...p,
                         imageHint: image?.imageHint || 'product image',
-                        imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || `https://picsum.photos/seed/${p.id}/300/300`
+                        imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || ''
                     };
                 })
             );
@@ -367,7 +367,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                 return {
                     ...p,
                     imageHint: image?.imageHint || 'product image',
-                    imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || `https://picsum.photos/seed/${p.id}/300/300`
+                    imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || ''
                 };
             });
         }
@@ -380,7 +380,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                     return {
                         ...p,
                         imageHint: image?.imageHint || 'product image',
-                        imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || `https://picsum.photos/seed/${p.id}/300/300`
+                        imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || ''
                     };
                 })
             );
@@ -429,7 +429,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                 return {
                     ...p,
                     imageHint: image?.imageHint || 'product image',
-                    imageUrl: `https://picsum.photos/seed/${p.id}/300/300`
+                    imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || ''
                 }
             })
             .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -446,7 +446,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                 return {
                     ...p,
                     imageHint: image?.imageHint || 'product image',
-                    imageUrl: `https://picsum.photos/seed/${p.id}/300/300`
+                    imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || ''
                 }
             })
             .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -640,7 +640,7 @@ export default function HomeClient({ initialCategories, companyDetails, fetchAll
                                                         return {
                                                             ...p,
                                                             imageHint: image?.imageHint || 'product image',
-                                                            imageUrl: `https://picsum.photos/seed/${p.id}/300/300`
+                                                            imageUrl: p.productImage || (p.images && p.images.length > 0 ? p.images[0] : '') || ''
                                                         };
                                                     }) : [];
 

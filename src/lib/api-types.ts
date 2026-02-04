@@ -139,6 +139,7 @@ export interface CompanyDetails {
     updatedAt: string;
     minimumOrderCost: string;
     freeDeliveryCost: string;
+    deliveryCost: string;
     socialMediaLink: string | null;
     about: string;
     razorpayKeyId: string;

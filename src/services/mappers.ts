@@ -81,9 +81,9 @@ export function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: st
     if (rawImageField) {
         images = String(rawImageField).split('&&&').filter((s: string) => s.trim().length > 0 && s !== "https://cdn.example.com/products/default.jpg");
     }
-    const seed = String(apiProd.productId || '');
 
-    // Default main image
+    // Default main image (Take 1st ONE only, NO PICSUM FALLBACK)
+    // If empty, it stays empty.
     const mainImage = images.length > 0 ? images[0] : '';
 
     // Calculate rating

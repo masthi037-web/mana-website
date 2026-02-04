@@ -142,8 +142,8 @@ const Header = ({ companyName = "ManaBuy", fetchAllAtOnce = true }: { companyNam
                       Products
                     </div>
                     {searchResults.map(product => {
-                      const fallbackImage = PlaceHolderImages.find(i => i.id === product.imageId) || { imageUrl: `https://picsum.photos/seed/${product.id}/50` };
-                      const displayImage = product.productImage || (product.images && product.images.length > 0 ? product.images[0] : '') || fallbackImage.imageUrl || `https://picsum.photos/seed/${product.id}/50`;
+                      const fallbackImage = PlaceHolderImages.find(i => i.id === product.imageId) || { imageUrl: '' };
+                      const displayImage = product.productImage || (product.images && product.images.length > 0 ? product.images[0] : '') || fallbackImage.imageUrl || '';
 
                       return (
                         <div

@@ -539,7 +539,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
     // Status Logic
     const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
-    const shipping = isFreeDelivery ? 0 : 0; // Calculated at checkout
+
+    const shipping = isFreeDelivery ? 0 :
+        ((freeDeliveryThreshold <= 0 && companyDetails?.deliveryCost) ? parseFloat(companyDetails.deliveryCost) : (companyDetails?.deliveryBetween ? parseFloat(companyDetails.deliveryBetween) : 40)); // Calculated at checkout
     const total = subtotal + shipping;
     const canCheckout = subtotal >= minOrder;
     const amountForFreeDelivery = Math.max(0, freeDeliveryThreshold - subtotal);
@@ -782,7 +784,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             // Calculate Shipping
             const currentSubtotalWithBulk = rawSubtotal - totalBulkDiscount;
             const isFreeDelivery = freeDeliveryThreshold > 0 && currentSubtotalWithBulk >= freeDeliveryThreshold;
-            const shipping = isFreeDelivery ? 0 : (companyDetails?.deliveryBetween ? parseFloat(companyDetails.deliveryBetween) : 40);
+
+            const shipping = isFreeDelivery ? 0 :
+                ((freeDeliveryThreshold <= 0 && companyDetails?.deliveryCost) ? parseFloat(companyDetails.deliveryCost) : (companyDetails?.deliveryBetween ? parseFloat(companyDetails.deliveryBetween) : 40));
 
             // Calculate Coupon Discount
             let couponDiscountAmount = 0;
@@ -1692,7 +1696,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
             if (wasEligible && !isNowEligible) {
                 blockingChanges = true;
-                const shippingCost = freshCompanyDetails?.deliveryBetween ? parseFloat(freshCompanyDetails.deliveryBetween) : 40;
+                const shippingCost = (newThreshold <= 0 && freshCompanyDetails?.deliveryCost) ? parseFloat(freshCompanyDetails.deliveryCost) : (freshCompanyDetails?.deliveryBetween ? parseFloat(freshCompanyDetails.deliveryBetween) : 40);
                 if (newThreshold <= 0) {
                     pushChange(`Free delivery is no longer available. A shipping charge of ₹${shippingCost} has been added to your order.`);
                 } else {
