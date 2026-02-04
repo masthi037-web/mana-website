@@ -229,13 +229,14 @@ export default function ProductDetailPage() {
 
         // Initialize pricing selection
         if (foundProduct && foundProduct.pricing && foundProduct.pricing.length > 0) {
-          // Default to first option
-          const firstPricing = foundProduct.pricing[0];
+          // Default to first ACTIVE option if available, else first
+          const firstPricing = foundProduct.pricing.find(p => p.sizeStatus !== 'OUTOFSTOCK' && p.sizeStatus !== 'INACTIVE') || foundProduct.pricing[0];
           setSelectedPricingId(firstPricing.id);
 
-          // Default to first style if available
+          // Default to first ACTIVE style if available
           if (firstPricing.sizeColours && firstPricing.sizeColours.length > 0) {
-            setSelectedSizeColourId(firstPricing.sizeColours[0].id);
+            const firstActiveColour = firstPricing.sizeColours.find(sc => sc.sizeColourStatus !== 'OUTOFSTOCK' && sc.sizeColourStatus !== 'INACTIVE') || firstPricing.sizeColours[0];
+            setSelectedSizeColourId(firstActiveColour.id);
           }
         }
 
@@ -409,7 +410,7 @@ export default function ProductDetailPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <Button variant="ghost" onClick={() => router.back()} className="text-muted-foreground group">
+        <Button variant="ghost" onClick={() => router.push('/')} className="text-muted-foreground group">
           <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" />
           Back
         </Button>
@@ -549,9 +550,10 @@ export default function ProductDetailPage() {
                           onClick={() => {
                             if (!isActive) return;
                             setSelectedPricingId(option.id);
-                            // Auto-select first style when size is changed
+                            // Auto-select first ACTIVE style (not OOS) when size is changed
                             if (option.sizeColours && option.sizeColours.length > 0) {
-                              setSelectedSizeColourId(option.sizeColours[0].id);
+                              const firstActiveColour = option.sizeColours.find(sc => sc.sizeColourStatus !== 'OUTOFSTOCK' && sc.sizeColourStatus !== 'INACTIVE') || option.sizeColours[0];
+                              setSelectedSizeColourId(firstActiveColour.id);
                             } else {
                               setSelectedSizeColourId(null);
                             }
@@ -706,8 +708,10 @@ export default function ProductDetailPage() {
                   <h2 className="text-3xl font-bold font-headline text-primary">₹{(finalPrice * quantity).toFixed(2)}</h2>
                 </div>
                 {(() => {
+                  const selectedSizeColour = currentPricingOption?.sizeColours?.find(sc => sc.id === selectedSizeColourId);
                   const isOutOfStock = product.productStatus === 'OUTOFSTOCK' ||
-                    (currentPricingOption?.sizeStatus === 'OUTOFSTOCK');
+                    (currentPricingOption?.sizeStatus === 'OUTOFSTOCK') ||
+                    (selectedSizeColour?.sizeColourStatus === 'OUTOFSTOCK');
 
                   return (
                     <Button

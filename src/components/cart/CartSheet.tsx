@@ -1903,49 +1903,65 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         </span>
                                     </div>
 
-                                    {/* Upload */}
-                                    <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <div className="flex items-center gap-2">
-                                                <div className="p-1.5 bg-indigo-50 rounded-lg">
-                                                    <UploadCloud className="w-3.5 h-3.5 text-indigo-600" />
+                                    {/* Upload - Only show if NO UPI ID (Manual QR case) */}
+                                    {!companyDetails?.upiId && (
+                                        <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="p-1.5 bg-indigo-50 rounded-lg">
+                                                        <UploadCloud className="w-3.5 h-3.5 text-indigo-600" />
+                                                    </div>
+                                                    <span className="text-xs font-bold text-slate-700">Upload Screenshot</span>
                                                 </div>
-                                                <span className="text-xs font-bold text-slate-700">Upload Screenshot</span>
+                                                <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100/50 uppercase tracking-wider">Optional</span>
                                             </div>
-                                            <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100/50 uppercase tracking-wider">Optional</span>
+                                            <div className="min-h-[100px]">
+                                                <ImageUpload
+                                                    value={manualProof || undefined}
+                                                    onChange={setManualProof}
+                                                    maxFiles={1}
+                                                    companyDomain={companyDetails?.companyDomain || ""}
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="min-h-[100px]">
-                                            <ImageUpload
-                                                value={manualProof || undefined}
-                                                onChange={setManualProof}
-                                                maxFiles={1}
-                                                companyDomain={companyDetails?.companyDomain || ""}
-                                            />
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
 
                                 {/* Pay Button */}
                                 {companyDetails?.upiId && (
-                                    <div className="w-full mb-3">
+                                    <div className="w-full mb-3 space-y-3">
+                                        {/* PhonePe */}
                                         <a
-                                            href={`upi://pay?pa=${companyDetails.upiId}&pn=${encodeURIComponent(companyDetails.companyName)}&am=${(finalTotal - extraDiscount).toFixed(2)}&tr=${Date.now()}&tn=${encodeURIComponent(`Order from ${companyDetails.companyName}`)}&cu=INR`}
+                                            href={`phonepe://pay?pa=${companyDetails.upiId}&pn=${encodeURIComponent(companyDetails.companyName)}&am=${(finalTotal - extraDiscount).toFixed(2)}&tr=${Date.now()}&tn=${encodeURIComponent(contactInfo.name)}&cu=INR`}
+                                            className="block w-full"
+                                        >
+                                            <Button
+                                                variant="outline"
+                                                className="w-full rounded-xl bg-[#5f259f] hover:bg-[#5f259f]/90 text-white border-transparent h-12 text-base font-bold shadow-md shadow-purple-200"
+                                                onClick={() => setShowQrPopup(false)}
+                                            >
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <span>Pay using PhonePe</span>
+                                                </div>
+                                            </Button>
+                                        </a>
+
+                                        {/* Google Pay */}
+                                        <a
+                                            href={`tez://upi/pay?pa=${companyDetails.upiId}&pn=${encodeURIComponent(companyDetails.companyName)}&am=${(finalTotal - extraDiscount).toFixed(2)}&tr=${Date.now()}&tn=${encodeURIComponent(contactInfo.name)}&cu=INR`}
                                             className="block w-full"
                                         >
                                             <Button
                                                 variant="outline"
                                                 className="w-full rounded-xl bg-white hover:bg-slate-50 text-slate-900 border-slate-200 h-12 text-base font-bold shadow-sm"
-                                                onClick={() => setShowQrPopup(false)} // Close popup? Or maybe keep open for manual check? Let's keep open but maybe start timer? Actually better to keep open so they can manually confirm/upload proof if needed.
+                                                onClick={() => setShowQrPopup(false)}
                                             >
-                                                <div className="flex items-center gap-2">
-                                                    <span>Pay via UPI App</span>
-                                                    <ExternalLink className="w-4 h-4 text-slate-400" />
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <span className="text-blue-500 font-black tracking-tighter text-lg">G</span>
+                                                    <span className="text-green-500 font-black tracking-tighter text-lg">Pay</span>
                                                 </div>
                                             </Button>
                                         </a>
-                                        <p className="text-[10px] text-center text-slate-400 mt-2 font-medium">
-                                            Tap to open GPay, PhonePe, Paytm, etc.
-                                        </p>
                                     </div>
                                 )}
 
