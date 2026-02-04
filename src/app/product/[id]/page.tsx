@@ -709,9 +709,12 @@ export default function ProductDetailPage() {
                 </div>
                 {(() => {
                   const selectedSizeColour = currentPricingOption?.sizeColours?.find(sc => sc.id === selectedSizeColourId);
+                  const selectedColour = product.colors?.find(c => c.id === selectedColourId);
                   const isOutOfStock = product.productStatus === 'OUTOFSTOCK' ||
                     (currentPricingOption?.sizeStatus === 'OUTOFSTOCK') ||
-                    (selectedSizeColour?.sizeColourStatus === 'OUTOFSTOCK');
+                    (selectedSizeColour?.sizeColourStatus === 'OUTOFSTOCK') ||
+                    (selectedColour?.colourStatus === 'OUTOFSTOCK') ||
+                    (selectedColour?.colourStatus === 'INACTIVE');
 
                   return (
                     <Button
