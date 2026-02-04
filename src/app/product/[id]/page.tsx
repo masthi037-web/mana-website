@@ -7,7 +7,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { ProductWithImage, ProductVariant, Category } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Star, Heart, Minus, Plus, ArrowLeft, Loader2, Search, Check } from 'lucide-react';
+import { Star, Heart, Minus, Plus, ArrowLeft, Loader2, Search, Check, Package } from 'lucide-react';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
@@ -417,26 +417,42 @@ export default function ProductDetailPage() {
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
         {/* Product Image */}
         <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden bg-secondary/10 border border-border/50 shadow-sm md:aspect-auto md:h-[480px]">
-          <Image
-            src={(() => {
+          {(() => {
+            const imgSrc = (() => {
               // 1. Prioritize selected Size-Colour image
               if (selectedSizeColourId) {
                 const sc = availableSizeColours.find(sc => sc.id === selectedSizeColourId);
                 if (sc && sc.productPics) return sc.productPics;
               }
               // 2. If colours exist, prioritize selected colour image.
-              // We avoid falling back to product.productImage here because it might mismatch the selected variant.
               if (product.colors && product.colors.length > 0) {
                 const selected = product.colors.find(c => c.id === selectedColourId);
                 return selected?.image || product.imageUrl || '';
               }
               // 3. If NO colours, use productImage (new field) or imageUrl (legacy).
               return product.productImage || product.imageUrl || '';
-            })()}
-            alt={product.name}
-            fill
-            priority
-          />
+            })();
+
+            if (!imgSrc) {
+              return (
+                <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/30 bg-secondary/5">
+                  <Package className="w-20 h-20 mb-4 opacity-50" />
+                  <span className="text-sm font-medium uppercase tracking-widest opacity-70">No Image</span>
+                </div>
+              );
+            }
+
+            return (
+              <Image
+                src={imgSrc}
+                alt={product.name}
+                fill
+                priority
+                className="object-cover"
+              />
+            );
+          })()}
+
           {(product.productStatus === 'OUTOFSTOCK' || product.productStatus === 'INACTIVE') && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/5 backdrop-blur-[2px]">
               <div className="relative overflow-hidden px-8 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.1)] transform rotate-[-5deg] animate-in zoom-in duration-500">

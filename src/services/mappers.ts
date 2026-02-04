@@ -76,17 +76,15 @@ export function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: st
     const variants: ProductVariant[] = [];
 
     // Image handling: parse &&& separated URLs
-    const rawImageField = apiProd.productImage || (apiProd as any).product_image;
+    const rawImageField = apiProd.productImage || (apiProd as any).product_image || apiProd.productPics;
     let images: string[] = [];
     if (rawImageField) {
-        images = String(rawImageField).split('&&&').filter((s: string) => s.trim().length > 0);
+        images = String(rawImageField).split('&&&').filter((s: string) => s.trim().length > 0 && s !== "https://cdn.example.com/products/default.jpg");
     }
     const seed = String(apiProd.productId || '');
-    // Fallback to placeholder if no images
-    if (images.length === 0) {
-        images = [`https://picsum.photos/seed/${seed}/300/300`];
-    }
-    const mainImage = images[0];
+
+    // Default main image
+    const mainImage = images.length > 0 ? images[0] : '';
 
     // Calculate rating
     const rating = apiProd.productRatings && apiProd.productRatings.length > 0
