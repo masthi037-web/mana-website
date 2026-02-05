@@ -23,6 +23,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
+import { useAuth } from '@/hooks/use-auth';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -65,13 +66,8 @@ export default function AdminInventoryPage() {
     const [isManageSheetOpen, setIsManageSheetOpen] = useState(false);
 
     // --- OWNER & DELETE STATE ---
-    const [isOwner, setIsOwner] = useState(false);
+    const { isOwner } = useAuth();
     const [itemToDelete, setItemToDelete] = useState<any | null>(null);
-
-    useEffect(() => {
-        const role = localStorage.getItem('userRole');
-        setIsOwner(role === 'OWNER');
-    }, []);
 
     const confirmDelete = (product: any, e: React.MouseEvent) => {
         e.stopPropagation();
