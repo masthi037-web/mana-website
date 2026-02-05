@@ -10,7 +10,7 @@ import { adminService } from "@/services/admin.service";
 import { Category, Catalog, Product, ProductPriceOption } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-    Loader2, Plus, Folder, Package, Tag, Layers, ChevronRight, Home, Star, Sparkles, Pencil, AlertCircle, Trash2
+    Loader2, Plus, Folder, Package, Tag, Layers, ChevronRight, Home, Star, Sparkles, Pencil, AlertCircle
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTenant } from "@/components/providers/TenantContext";
@@ -23,17 +23,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import { useAuth } from '@/hooks/use-auth';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+
 
 
 
@@ -910,24 +900,6 @@ export default function AdminInventoryPage() {
                     </span>
                 </>
             )}
-            {/* Delete Confirmation Dialog */}
-            {/* <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Do you want to delete <span className="font-semibold text-foreground">"{itemToDelete?.name}"</span>?
-                            <br />This action cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleActualDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Delete
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog> */}
         </div>
     );
 
@@ -2045,16 +2017,7 @@ export default function AdminInventoryPage() {
                                         <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditProduct(prod, e)}>
                                             <Pencil className="h-3 w-3 text-muted-foreground" />
                                         </Button>
-                                        {/* <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className={`h-6 w-6 hover:bg-red-100 dark:hover:bg-red-900/20 ${!isOwner ? 'hidden' : ''}`}
-                                            onClick={(e) => {
-                                                if (isOwner) confirmDelete(prod, e);
-                                            }}
-                                        >
-                                            <Trash2 className="h-3 w-3 text-destructive" />
-                                        </Button> */}
+
                                         <Package className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                     </div>
                                 </CardHeader>
