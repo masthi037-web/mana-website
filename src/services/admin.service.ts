@@ -131,7 +131,7 @@ export const adminService = {
     getAllCategories: async (companyId: string) => {
         return apiClient<any[]>('/category/public/get-all-by-company', {
             params: { companyId },
-            next: { revalidate: 300 } // 5 minutes cache
+            next: { revalidate: 3600 } // 1 hour cache
         });
     },
 
@@ -166,6 +166,13 @@ export const adminService = {
         return apiClient<any[]>('/product/size-colour/get', {
             params: { productSizeId: String(productSizeId) },
             next: { revalidate: 300 }
+        });
+    },
+
+    deleteProduct: async (productId: string | number) => {
+        return apiClient<any>('/product/delete', {
+            method: 'DELETE',
+            params: { productId: String(productId) }
         });
     },
 

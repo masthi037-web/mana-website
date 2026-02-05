@@ -10,8 +10,38 @@ import { adminService } from "@/services/admin.service";
 import { Category, Catalog, Product, ProductPriceOption } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-    Loader2, Plus, Folder, Package, Tag, Layers, ChevronRight, Home, Star, Sparkles, Pencil, AlertCircle
+    Loader2, Plus, Folder, Package, Tag, Layers, ChevronRight, Home, Star, Sparkles, Pencil, AlertCircle, Trash2
 } from 'lucide-react';
+
+// ... existing imports ...
+
+// --- MANAGE SHEET STATE ---
+const [manageMode, setManageMode] = useState<'VIEW' | 'ADD_PRICING' | 'ADD_SIZE_COLOUR' | 'ADD_COLOUR'>('VIEW');
+const [expandedPricingId, setExpandedPricingId] = useState<string | null>(null);
+const [editingItem, setEditingItem] = useState<any | null>(null);
+const [isOwner, setIsOwner] = useState(false); // Track owner role
+
+useEffect(() => {
+    const role = localStorage.getItem('userRole');
+    setIsOwner(role === 'OWNER');
+}, []);
+
+const handleDeleteProduct = async (product: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) return;
+
+    try {
+        await adminService.deleteProduct(product.id);
+        toast({ title: "Success", description: "Product deleted successfully" });
+        queryClient.invalidateQueries({ queryKey: ['products', selectedCatalogue?.id] });
+    } catch (error) {
+        console.error("Delete Failed", error);
+        toast({ title: "Error", description: "Failed to delete product", variant: "destructive" });
+    }
+};
+
+// ... existing queries ...
+
 import {
     Sheet,
     SheetContent,
