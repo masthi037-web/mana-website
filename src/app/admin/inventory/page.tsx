@@ -2048,11 +2048,16 @@ export default function AdminInventoryPage() {
                                         <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditProduct(prod, e)}>
                                             <Pencil className="h-3 w-3 text-muted-foreground" />
                                         </Button>
-                                        {isOwner && (
-                                            <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-red-100 dark:hover:bg-red-900/20" onClick={(e) => confirmDelete(prod, e)}>
-                                                <Trash2 className="h-3 w-3 text-destructive" />
-                                            </Button>
-                                        )}
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className={`h-6 w-6 hover:bg-red-100 dark:hover:bg-red-900/20 ${!isOwner ? 'hidden' : ''}`}
+                                            onClick={(e) => {
+                                                if (isOwner) confirmDelete(prod, e);
+                                            }}
+                                        >
+                                            <Trash2 className="h-3 w-3 text-destructive" />
+                                        </Button>
                                         <Package className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                     </div>
                                 </CardHeader>
