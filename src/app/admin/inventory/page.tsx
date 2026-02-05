@@ -911,7 +911,7 @@ export default function AdminInventoryPage() {
                 </>
             )}
             {/* Delete Confirmation Dialog */}
-            <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+            {/* <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -927,7 +927,7 @@ export default function AdminInventoryPage() {
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
-            </AlertDialog>
+            </AlertDialog> */}
         </div>
     );
 
@@ -2045,7 +2045,7 @@ export default function AdminInventoryPage() {
                                         <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditProduct(prod, e)}>
                                             <Pencil className="h-3 w-3 text-muted-foreground" />
                                         </Button>
-                                        <Button
+                                        {/* <Button
                                             size="icon"
                                             variant="ghost"
                                             className={`h-6 w-6 hover:bg-red-100 dark:hover:bg-red-900/20 ${!isOwner ? 'hidden' : ''}`}
@@ -2054,7 +2054,7 @@ export default function AdminInventoryPage() {
                                             }}
                                         >
                                             <Trash2 className="h-3 w-3 text-destructive" />
-                                        </Button>
+                                        </Button> */}
                                         <Package className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                     </div>
                                 </CardHeader>
