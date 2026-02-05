@@ -12,6 +12,8 @@ import { adminService } from '@/services/admin.service';
 import { UpdateCompanyRequest, CompanyDetails } from '@/lib/api-types';
 import { ImageUpload } from '@/components/common/ImageUpload';
 import { Loader2, ArrowLeft, Building2, Save } from 'lucide-react';
+import { Switch } from "@/components/ui/switch";
+import { Separator } from '@/components/ui/separator';
 
 export default function EditCompanyPage() {
     const router = useRouter();
@@ -53,9 +55,9 @@ export default function EditCompanyPage() {
         deliveryCost: '',
         minimumOrderCost: '',
         socialMediaLink: '',
-        razorpay: null,
+        razorpay: false,
         upiQrCode: null,
-        upiId: null,
+        upiId: '',
         about: ''
     });
 
@@ -110,7 +112,7 @@ export default function EditCompanyPage() {
                         deliveryCost: company.deliveryCost || '',
                         minimumOrderCost: company.minimumOrderCost || '',
                         socialMediaLink: company.socialMediaLink || '',
-                        razorpay: company.razorpay,
+                        razorpay: company.razorpay || false,
                         upiQrCode: company.upiQrCode || '',
                         upiId: company.upiId || '',
                         about: company.about || '',
@@ -133,6 +135,10 @@ export default function EditCompanyPage() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSwitchChange = (checked: boolean) => {
+        setFormData(prev => ({ ...prev, razorpay: checked }));
     };
 
     const handleImageChange = (field: 'logo' | 'banner' | 'upiQrCode', value: string | null) => {
@@ -203,6 +209,10 @@ export default function EditCompanyPage() {
                         <div className="space-y-2">
                             <Label htmlFor="companyPhone">Company Phone</Label>
                             <Input id="companyPhone" name="companyPhone" value={formData.companyPhone} onChange={handleChange} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="companyEstDate">Establishment Date</Label>
+                            <Input id="companyEstDate" name="companyEstDate" type="date" value={formData.companyEstDate || ''} onChange={handleChange} />
                         </div>
                         <div className="col-span-2 space-y-2">
                             <Label htmlFor="companyMessage">Welcome Message</Label>
@@ -300,11 +310,52 @@ export default function EditCompanyPage() {
                     </CardContent>
                 </Card>
 
-                {/* 5. Images & Branding */}
+                {/* 5. Payments & Branding */}
                 <Card>
-                    <CardHeader><CardTitle>Branding & Media</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>Payments & Branding</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                         <div className="grid md:grid-cols-2 gap-8">
+                            {/* Razorpay Toggle */}
+                            <div className="col-span-2 flex items-center space-x-2 border p-4 rounded-lg bg-slate-50">
+                                <Switch
+                                    id="razorpay"
+                                    checked={formData.razorpay || false}
+                                    onCheckedChange={handleSwitchChange}
+                                />
+                                <Label htmlFor="razorpay" className="flex-1 cursor-pointer">Enable Razorpay Payment Gateway</Label>
+                            </div>
+
+                            {formData.razorpay && (
+                                <>
+                                    <div className="space-y-2 animate-in slide-in-from-top-2">
+                                        <Label htmlFor="razorpayKeyId">Razorpay Key ID</Label>
+                                        <Input id="razorpayKeyId" name="razorpayKeyId" value={formData.razorpayKeyId || ''} onChange={handleChange} required={formData.razorpay} />
+                                    </div>
+                                    <div className="space-y-2 animate-in slide-in-from-top-2">
+                                        <Label htmlFor="razorpayKeySecret">Razorpay Key Secret</Label>
+                                        <Input id="razorpayKeySecret" name="razorpayKeySecret" type="password" value={formData.razorpayKeySecret || ''} onChange={handleChange} required={formData.razorpay} />
+                                    </div>
+                                </>
+                            )}
+
+                            <div className="space-y-2">
+                                <Label htmlFor="upiId">UPI ID</Label>
+                                <Input id="upiId" name="upiId" value={formData.upiId || ''} onChange={handleChange} placeholder="username@upi" />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>UPI QR Code</Label>
+                                <ImageUpload
+                                    value={formData.upiQrCode || ''}
+                                    onChange={(val) => handleImageChange('upiQrCode', val)}
+                                    companyDomain={formData.companyDomain}
+                                    maxFiles={1}
+                                    label="Upload QR Code"
+                                />
+                            </div>
+
+                            <Separator className="col-span-2 my-2" />
+
                             <div className="space-y-2">
                                 <Label>Company Logo</Label>
                                 <ImageUpload
@@ -323,16 +374,6 @@ export default function EditCompanyPage() {
                                     companyDomain={formData.companyDomain}
                                     maxFiles={1}
                                     label="Upload Banner"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>UPI QR Code</Label>
-                                <ImageUpload
-                                    value={formData.upiQrCode || ''}
-                                    onChange={(val) => handleImageChange('upiQrCode', val)}
-                                    companyDomain={formData.companyDomain}
-                                    maxFiles={1}
-                                    label="Upload QR Code"
                                 />
                             </div>
                         </div>

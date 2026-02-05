@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea'; // Assuming Textarea exists, if not will fallback to Input
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { adminService } from '@/services/admin.service';
 import { CompanyRegistrationRequest } from '@/lib/api-types';
 import { ImageUpload } from '@/components/common/ImageUpload';
 import { Loader2, ArrowLeft, Building2 } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Switch } from "@/components/ui/switch";
 
 export default function CreateCompanyPage() {
     const router = useRouter();
@@ -20,21 +20,21 @@ export default function CreateCompanyPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
 
-    // Initial Form State matching CompanyRegistrationRequest
+    // Initial Form State - Empty defaults as requested
     const [formData, setFormData] = useState<CompanyRegistrationRequest>({
         companyName: '',
         companyDomain: '',
         companyPhone: '',
-        companyMessage: 'Welcome!! to our trusted store',
+        companyMessage: '',
         companyEmail: '',
         ownerName: '',
-        companyStatus: null, // As requested
+        companyStatus: 'ACTIVE',
         gstNumber: '',
         logo: '',
         banner: '',
-        razorpayKeyId: null,
-        razorpayKeySecret: null,
-        companyCoupon: 'HELLO&&&15&&&3000,WELCOME&&&5&&&1000',
+        razorpayKeyId: '',
+        razorpayKeySecret: '',
+        companyCoupon: 'WELCOME&&&5&&&1000',
         ownerEmail: '',
         ownerPhone: '',
         companyAddress: '',
@@ -42,20 +42,20 @@ export default function CreateCompanyPage() {
         companyState: '',
         companyPinCode: '',
         companyFssAi: '',
-        companyProductCategory: 'Latest Collection Fashions',
-        deliveryBetween: '3 - 4 days',
-        companyEstDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        companyProductCategory: '',
+        deliveryBetween: '',
+        companyEstDate: new Date().toISOString().split('T')[0], // Default to today
         averageRating: 0.0,
         totalRating: 0,
         noOfRatings: 0,
-        freeDeliveryCost: '700',
-        deliveryCost: null,
-        minimumOrderCost: '180',
-        socialMediaLink: 'https://instagram.com/digitalpalleturu',
-        razorpay: null,
+        freeDeliveryCost: '',
+        deliveryCost: '',
+        minimumOrderCost: '',
+        socialMediaLink: '',
+        razorpay: false,
         upiQrCode: null,
-        upiId: null,
-        about: 'Latest design fashions'
+        upiId: '',
+        about: ''
     });
 
     useEffect(() => {
@@ -72,6 +72,10 @@ export default function CreateCompanyPage() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSwitchChange = (checked: boolean) => {
+        setFormData(prev => ({ ...prev, razorpay: checked }));
     };
 
     const handleImageChange = (field: 'logo' | 'banner' | 'upiQrCode', value: string | null) => {
@@ -92,8 +96,7 @@ export default function CreateCompanyPage() {
             const response = await adminService.registerCompany(formData);
             if (response) {
                 toast({ title: "Success", description: "Company registered successfully!" });
-                // Optional: Redirect to company list or dashboard
-                // router.push('/admin/dashboard'); 
+                router.push('/admin/companies');
             }
         } catch (error) {
             console.error("Registration Failed", error);
@@ -141,8 +144,16 @@ export default function CreateCompanyPage() {
                             <Input id="companyEmail" name="companyEmail" type="email" value={formData.companyEmail} onChange={handleChange} required />
                         </div>
                         <div className="space-y-2">
+                            <Label htmlFor="companyStatus">Status</Label>
+                            <Input id="companyStatus" name="companyStatus" value={formData.companyStatus || ''} onChange={handleChange} placeholder="ACTIVE" />
+                        </div>
+                        <div className="space-y-2">
                             <Label htmlFor="companyPhone">Company Phone *</Label>
                             <Input id="companyPhone" name="companyPhone" value={formData.companyPhone} onChange={handleChange} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="companyEstDate">Establishment Date</Label>
+                            <Input id="companyEstDate" name="companyEstDate" type="date" value={formData.companyEstDate} onChange={handleChange} />
                         </div>
                         <div className="col-span-2 space-y-2">
                             <Label htmlFor="companyMessage">Welcome Message</Label>
@@ -225,10 +236,13 @@ export default function CreateCompanyPage() {
                             <Label htmlFor="freeDeliveryCost">Free Delivery Above</Label>
                             <Input id="freeDeliveryCost" name="freeDeliveryCost" value={formData.freeDeliveryCost} onChange={handleChange} />
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="deliveryCost">Delivery Cost (Fixed)</Label>
+                            <Input id="deliveryCost" name="deliveryCost" value={formData.deliveryCost || ''} onChange={handleChange} />
+                        </div>
                         <div className="col-span-2 space-y-2">
                             <Label htmlFor="companyCoupon">Default Coupons</Label>
                             <Input id="companyCoupon" name="companyCoupon" value={formData.companyCoupon} onChange={handleChange} placeholder="CODE&&&PERCENT&&&MIN_ORDER" />
-                            <p className="text-xs text-muted-foreground">Format: CODE&&&PERCENT&&&MIN_ORDER (comma separated)</p>
                         </div>
                         <div className="col-span-2 space-y-2">
                             <Label htmlFor="socialMediaLink">Social Media Link</Label>
@@ -237,11 +251,52 @@ export default function CreateCompanyPage() {
                     </CardContent>
                 </Card>
 
-                {/* 5. Images & Branding */}
+                {/* 5. Payments & Branding */}
                 <Card>
-                    <CardHeader><CardTitle>Branding & Media</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>Payments & Branding</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                         <div className="grid md:grid-cols-2 gap-8">
+                            {/* Razorpay Toggle */}
+                            <div className="col-span-2 flex items-center space-x-2 border p-4 rounded-lg bg-slate-50">
+                                <Switch
+                                    id="razorpay"
+                                    checked={formData.razorpay || false}
+                                    onCheckedChange={handleSwitchChange}
+                                />
+                                <Label htmlFor="razorpay" className="flex-1 cursor-pointer">Enable Razorpay Payment Gateway</Label>
+                            </div>
+
+                            {formData.razorpay && (
+                                <>
+                                    <div className="space-y-2 animate-in slide-in-from-top-2">
+                                        <Label htmlFor="razorpayKeyId">Razorpay Key ID</Label>
+                                        <Input id="razorpayKeyId" name="razorpayKeyId" value={formData.razorpayKeyId || ''} onChange={handleChange} required={formData.razorpay} />
+                                    </div>
+                                    <div className="space-y-2 animate-in slide-in-from-top-2">
+                                        <Label htmlFor="razorpayKeySecret">Razorpay Key Secret</Label>
+                                        <Input id="razorpayKeySecret" name="razorpayKeySecret" type="password" value={formData.razorpayKeySecret || ''} onChange={handleChange} required={formData.razorpay} />
+                                    </div>
+                                </>
+                            )}
+
+                            <div className="space-y-2">
+                                <Label htmlFor="upiId">UPI ID</Label>
+                                <Input id="upiId" name="upiId" value={formData.upiId || ''} onChange={handleChange} placeholder="username@upi" />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>UPI QR Code</Label>
+                                <ImageUpload
+                                    value={formData.upiQrCode || ''}
+                                    onChange={(val) => handleImageChange('upiQrCode', val)}
+                                    companyDomain={formData.companyDomain || 'temp'}
+                                    maxFiles={1}
+                                    label="Upload QR Code"
+                                />
+                            </div>
+
+                            <Separator className="col-span-2 my-2" />
+
                             <div className="space-y-2">
                                 <Label>Company Logo</Label>
                                 <ImageUpload
@@ -260,16 +315,6 @@ export default function CreateCompanyPage() {
                                     companyDomain={formData.companyDomain || 'temp'}
                                     maxFiles={1}
                                     label="Upload Banner"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>UPI QR Code</Label>
-                                <ImageUpload
-                                    value={formData.upiQrCode || ''}
-                                    onChange={(val) => handleImageChange('upiQrCode', val)}
-                                    companyDomain={formData.companyDomain || 'temp'}
-                                    maxFiles={1}
-                                    label="Upload QR Code"
                                 />
                             </div>
                         </div>
