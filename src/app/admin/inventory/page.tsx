@@ -13,63 +13,7 @@ import {
     Loader2, Plus, Folder, Package, Tag, Layers, ChevronRight, Home, Star, Sparkles, Pencil, AlertCircle, Trash2
 } from 'lucide-react';
 
-// ... existing imports ...
 
-// --- MANAGE SHEET STATE ---
-const [manageMode, setManageMode] = useState<'VIEW' | 'ADD_PRICING' | 'ADD_SIZE_COLOUR' | 'ADD_COLOUR'>('VIEW');
-const [expandedPricingId, setExpandedPricingId] = useState<string | null>(null);
-const [editingItem, setEditingItem] = useState<any | null>(null);
-const [isOwner, setIsOwner] = useState(false); // Track owner role
-const [itemToDelete, setItemToDelete] = useState<any | null>(null);
-
-useEffect(() => {
-    const role = localStorage.getItem('userRole');
-    setIsOwner(role === 'OWNER');
-}, []);
-
-const confirmDelete = (product: any, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setItemToDelete(product);
-};
-
-const handleActualDelete = async () => {
-    if (!itemToDelete) return;
-
-    try {
-        await adminService.deleteProduct(itemToDelete.id);
-        toast({ title: "Success", description: "Product deleted successfully" });
-        queryClient.invalidateQueries({ queryKey: ['products', selectedCatalogue?.id] });
-    } catch (error) {
-        console.error("Delete Failed", error);
-        toast({ title: "Error", description: "Failed to delete product", variant: "destructive" });
-    } finally {
-        setItemToDelete(null);
-    }
-};
-
-// ... existing queries ...
-
-import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTenant } from "@/components/providers/TenantContext";
-import { ImageUpload } from "@/components/common/ImageUpload";
 
 // Remove hardcoded COMPANY_ID
 // const COMPANY_ID = "74f0d689-0ca7-4feb-a123-8e98c151b514";
@@ -98,6 +42,35 @@ export default function AdminInventoryPage() {
     // --- SHEET STATE ---
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [isManageSheetOpen, setIsManageSheetOpen] = useState(false);
+
+    // --- OWNER & DELETE STATE ---
+    const [isOwner, setIsOwner] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<any | null>(null);
+
+    useEffect(() => {
+        const role = localStorage.getItem('userRole');
+        setIsOwner(role === 'OWNER');
+    }, []);
+
+    const confirmDelete = (product: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setItemToDelete(product);
+    };
+
+    const handleActualDelete = async () => {
+        if (!itemToDelete) return;
+
+        try {
+            await adminService.deleteProduct(itemToDelete.id);
+            toast({ title: "Success", description: "Product deleted successfully" });
+            queryClient.invalidateQueries({ queryKey: ['products', selectedCatalogue?.id] });
+        } catch (error) {
+            console.error("Delete Failed", error);
+            toast({ title: "Error", description: "Failed to delete product", variant: "destructive" });
+        } finally {
+            setItemToDelete(null);
+        }
+    };
 
     // --- FORM STATES ---
     const [name, setName] = useState("");
@@ -2054,6 +2027,11 @@ export default function AdminInventoryPage() {
                                         <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted" onClick={(e) => handleEditProduct(prod, e)}>
                                             <Pencil className="h-3 w-3 text-muted-foreground" />
                                         </Button>
+                                        {isOwner && (
+                                            <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-red-100 dark:hover:bg-red-900/20" onClick={(e) => confirmDelete(prod, e)}>
+                                                <Trash2 className="h-3 w-3 text-destructive" />
+                                            </Button>
+                                        )}
                                         <Package className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                     </div>
                                 </CardHeader>
