@@ -1,18 +1,28 @@
 import { useState, useEffect } from 'react';
 
 export function useAuth() {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userRole, setUserRole] = useState<string | null>(null);
+    const [auth, setAuth] = useState<{
+        isLoggedIn: boolean;
+        userRole: string | null;
+    }>({
+        isLoggedIn: false,
+        userRole: null
+    });
 
     const checkAuth = () => {
         if (typeof window !== 'undefined') {
-            setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
-            setUserRole(localStorage.getItem('userRole'));
+            const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const role = localStorage.getItem('userRole');
+
+            setAuth(prev => {
+                if (prev.isLoggedIn === loggedIn && prev.userRole === role) return prev;
+                return { isLoggedIn: loggedIn, userRole: role };
+            });
         }
     };
 
     useEffect(() => {
-        checkAuth();
+        checkAuth(); // Initial check
         window.addEventListener('storage', checkAuth);
         window.addEventListener('auth-change', checkAuth);
 
@@ -22,12 +32,12 @@ export function useAuth() {
         };
     }, []);
 
-    const isOwner = userRole?.includes('OWNER') || false;
-    const isCustomer = userRole?.includes('CUSTOMER') || false;
+    const isOwner = auth.userRole?.includes('OWNER') || false;
+    const isCustomer = auth.userRole?.includes('CUSTOMER') || false;
 
     return {
-        isLoggedIn,
-        userRole,
+        isLoggedIn: auth.isLoggedIn,
+        userRole: auth.userRole,
         isOwner,
         isCustomer
     };
