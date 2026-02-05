@@ -20,23 +20,30 @@ const [manageMode, setManageMode] = useState<'VIEW' | 'ADD_PRICING' | 'ADD_SIZE_
 const [expandedPricingId, setExpandedPricingId] = useState<string | null>(null);
 const [editingItem, setEditingItem] = useState<any | null>(null);
 const [isOwner, setIsOwner] = useState(false); // Track owner role
+const [itemToDelete, setItemToDelete] = useState<any | null>(null);
 
 useEffect(() => {
     const role = localStorage.getItem('userRole');
     setIsOwner(role === 'OWNER');
 }, []);
 
-const handleDeleteProduct = async (product: any, e: React.MouseEvent) => {
+const confirmDelete = (product: any, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) return;
+    setItemToDelete(product);
+};
+
+const handleActualDelete = async () => {
+    if (!itemToDelete) return;
 
     try {
-        await adminService.deleteProduct(product.id);
+        await adminService.deleteProduct(itemToDelete.id);
         toast({ title: "Success", description: "Product deleted successfully" });
         queryClient.invalidateQueries({ queryKey: ['products', selectedCatalogue?.id] });
     } catch (error) {
         console.error("Delete Failed", error);
         toast({ title: "Error", description: "Failed to delete product", variant: "destructive" });
+    } finally {
+        setItemToDelete(null);
     }
 };
 
@@ -50,6 +57,16 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTenant } from "@/components/providers/TenantContext";
 import { ImageUpload } from "@/components/common/ImageUpload";
@@ -902,6 +919,24 @@ export default function AdminInventoryPage() {
                     </span>
                 </>
             )}
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Do you want to delete <span className="font-semibold text-foreground">"{itemToDelete?.name}"</span>?
+                            <br />This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleActualDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 
