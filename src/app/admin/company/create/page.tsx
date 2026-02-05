@@ -13,6 +13,7 @@ import { CompanyRegistrationRequest } from '@/lib/api-types';
 import { ImageUpload } from '@/components/common/ImageUpload';
 import { Loader2, ArrowLeft, Building2 } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
+import { Separator } from '@/components/ui/separator';
 
 export default function CreateCompanyPage() {
     const router = useRouter();
