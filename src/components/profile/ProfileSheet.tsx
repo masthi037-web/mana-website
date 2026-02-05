@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Package, MapPin, LogOut, User, Settings, CreditCard, Heart, Loader2, ArrowLeft } from 'lucide-react';
+import { Package, MapPin, LogOut, User, Settings, CreditCard, Heart, Loader2, ArrowLeft, Building2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/services/auth.service';
@@ -167,7 +167,8 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
 
             // Determine redirect priority
             const isOwner = response.role?.includes('OWNER');
-            const delayTime = isOwner ? 500 : 2000; // Fast track for owners
+            const isAdmin = response.role?.includes('ADMIN');
+            const delayTime = (isOwner || isAdmin) ? 500 : 2000; // Fast track for admin/owners
 
             // Delay transition and Redirect
             setTimeout(() => {
@@ -188,9 +189,12 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                         setCartOpen(true);
                     }, 300);
                 } else {
-                    // Check for OWNER role and redirect
+                    // Role based redirects
                     if (isOwner) {
                         router.push('/admin/inventory');
+                    } else if (isAdmin) {
+                        // Admin doesn't auto-redirect on login per se, but we can if needed.
+                        // User request didn't specify auto-redirect, just menu customization.
                     } else {
                         // Default: Open Address flow for customers
                         // If CUSTOMER, fetch details to warm cache
@@ -264,6 +268,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const handleLogout = () => {
         // Optimistic Logout: Clear state immediately without waiting for server
         const wasOwner = userRole?.includes('OWNER');
+        const wasAdmin = userRole?.includes('ADMIN');
 
         // 1. Trigger background server logout (Fire & Forget)
         authService.logout().catch(err => console.error("Background logout info:", err));
@@ -282,8 +287,8 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
         setOtp('');
         setFeedback({ type: 'success', message: "Successfully logged out" });
 
-        // 3. Immediate Redirect if Owner
-        if (wasOwner) {
+        // 3. Immediate Redirect if Owner/Admin
+        if (wasOwner || wasAdmin) {
             router.push('/');
         }
     };
@@ -294,6 +299,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
         { label: 'Addresses', icon: MapPin, href: '/addresses' },
         { label: 'Payments', icon: CreditCard, href: '/payments' },
         { label: 'Settings', icon: Settings, href: '/settings' },
+        { label: 'Manage Companies', icon: Building2, href: '/admin/companies' },
     ];
 
     return (
@@ -356,14 +362,20 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                             <Separator className="mb-6" />
                             <div className="space-y-1">
                                 {menuItems.map((item) => {
-                                    // CUSTOMIZATION: OWNER only sees Settings
                                     const isOwner = userRole?.includes('OWNER');
+                                    const isAdmin = userRole?.includes('ADMIN');
 
-                                    if (isOwner) {
+                                    // ADMIN only sees Manage Companies
+                                    if (isAdmin) {
+                                        if (item.label !== 'Manage Companies') return null;
+                                    }
+                                    // OWNER only sees Settings
+                                    else if (isOwner) {
                                         if (item.label !== 'Settings') return null;
-                                    } else {
-                                        // Customer/Guest doesn't see Settings
-                                        if (item.label === 'Settings') return null;
+                                    }
+                                    // Customer/Guest doesn't see Admin/Owner items
+                                    else {
+                                        if (item.label === 'Settings' || item.label === 'Manage Companies') return null;
                                     }
 
                                     if (item.label === 'My Orders') {
@@ -399,6 +411,9 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
                                                 } else if (item.label === 'Settings' && isOwner) {
                                                     setIsOpen(false);
                                                     router.push('/admin/inventory');
+                                                } else if (item.label === 'Manage Companies' && isAdmin) {
+                                                    setIsOpen(false);
+                                                    router.push('/admin/companies');
                                                 } else {
                                                     router.push(item.href);
                                                 }

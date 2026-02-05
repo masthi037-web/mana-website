@@ -675,3 +675,7 @@ export interface CompanyRegistrationRequest {
     upiId?: string | null;
     about: string;
 }
+
+export interface UpdateCompanyRequest extends CompanyRegistrationRequest {
+    companyId: string;
+}

@@ -12,13 +12,27 @@ import {
     UpdateProductRequest,
     CreateSizeColourRequest, CreateSizeColourResponse,
     UpdateSizeColourRequest, UpdateSizeColourResponse,
-    CompanyRegistrationRequest, CompanyDetails
+    CompanyRegistrationRequest, CompanyDetails, UpdateCompanyRequest
 } from '@/lib/api-types';
 
 export const adminService = {
     registerCompany: async (data: CompanyRegistrationRequest) => {
         return apiClient<CompanyDetails>('/company/register', {
             method: 'POST',
+            body: JSON.stringify(data),
+        });
+    },
+
+    getAllCompanies: async () => {
+        return apiClient<CompanyDetails[]>('/company/get-all-companies', {
+            method: 'GET',
+            next: { revalidate: 300 }
+        });
+    },
+
+    updateCompany: async (data: UpdateCompanyRequest) => {
+        return apiClient<CompanyDetails>('/company/details/update', {
+            method: 'PUT',
             body: JSON.stringify(data),
         });
     },
