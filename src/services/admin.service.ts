@@ -11,10 +11,18 @@ import {
     UpdateCatalogueRequest, UpdateCatalogueResponse,
     UpdateProductRequest,
     CreateSizeColourRequest, CreateSizeColourResponse,
-    UpdateSizeColourRequest, UpdateSizeColourResponse
+    UpdateSizeColourRequest, UpdateSizeColourResponse,
+    CompanyRegistrationRequest, CompanyDetails
 } from '@/lib/api-types';
 
 export const adminService = {
+    registerCompany: async (data: CompanyRegistrationRequest) => {
+        return apiClient<CompanyDetails>('/company/register', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    },
+
     createCategory: async (data: CreateCategoryRequest) => {
         return apiClient<CreateCategoryResponse>('/category/create', {
             method: 'POST',

@@ -638,3 +638,40 @@ export interface OrderResponseItem {
     totalCost: number;
     extraDiscount?: number | null;
 }
+
+export interface CompanyRegistrationRequest {
+    companyName: string;
+    companyDomain: string;
+    companyPhone: string;
+    companyMessage?: string | null;
+    companyEmail: string;
+    ownerName: string;
+    companyStatus?: string | null;
+    gstNumber: string;
+    logo: string;
+    banner: string;
+    razorpayKeyId?: string | null;
+    razorpayKeySecret?: string | null;
+    companyCoupon: string;
+    ownerEmail: string;
+    ownerPhone: string;
+    companyAddress: string;
+    companyCity: string;
+    companyState: string;
+    companyPinCode: string;
+    companyFssAi: string;
+    companyProductCategory: string;
+    deliveryBetween: string;
+    companyEstDate: string;
+    averageRating: number;
+    totalRating: number;
+    noOfRatings: number;
+    freeDeliveryCost: string;
+    deliveryCost?: string | null;
+    minimumOrderCost: string;
+    socialMediaLink: string | null;
+    razorpay?: boolean | null;
+    upiQrCode?: string | null;
+    upiId?: string | null;
+    about: string;
+}
