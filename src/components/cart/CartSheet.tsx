@@ -1973,18 +1973,18 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         <span className="font-mono font-bold text-primary text-sm">{formatTime(timeLeft)}</span>
                                     </div>
 
-                                    {/* Upload Manual Screenshot - SHOW ALWAYS FOR NOW or Check Logic */}
+                                    {/* UTR Input - Replaces Manual Upload */}
                                     <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                                         <div className="flex justify-between items-center mb-2">
-                                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Upload Screenshot</span>
-                                            {companyDetails?.upiId && <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded text-xs">Optional</span>}
+                                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">UTR / Reference No</span>
+                                            <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded text-xs">Optional</span>
                                         </div>
-                                        <div className="min-h-[80px]">
-                                            <ImageUpload
-                                                value={manualProof || undefined}
-                                                onChange={setManualProof}
-                                                maxFiles={1}
-                                                companyDomain={companyDetails?.companyDomain || ""}
+                                        <div>
+                                            <Input
+                                                placeholder="Paste UTR or Reference Number here"
+                                                value={manualProof || ''}
+                                                onChange={(e) => setManualProof(e.target.value)}
+                                                className="border-slate-200 focus-visible:ring-indigo-500 bg-slate-50"
                                             />
                                         </div>
                                     </div>
@@ -3456,6 +3456,14 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                             <span className="text-sm text-slate-500 font-medium">Status</span>
                                             <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full uppercase tracking-wider">CONFIRMED</span>
                                         </div>
+                                        {successOrderData?.finalTotalAmount && (
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-sm text-slate-500 font-medium">Total Amount</span>
+                                                <span className="text-lg font-black text-slate-900 font-headline">
+                                                    {formatCurrency(successOrderData.finalTotalAmount)}
+                                                </span>
+                                            </div>
+                                        )}
                                         <div className="h-px bg-slate-200/60 my-2" />
                                         <p className="text-xs text-slate-400 mt-2">
                                             We'll send you delivery updates via WhatsApp/SMS.
