@@ -12,4 +12,5 @@ export default function AdminInventoryPage() {
             <InventoryContent />
         </Suspense>
     );
+
 }
