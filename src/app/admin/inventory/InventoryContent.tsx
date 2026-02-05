@@ -247,7 +247,8 @@ export default function InventoryContent() {
     // 6. Colours (Fetch colours when managing product or selected)
     const { data: fetchedColours = [], isLoading: coloursLoading } = useQuery({
         queryKey: ['colours', selectedProduct?.id],
-        enabled: !!selectedProduct?.id && (level === 'PRICING' || isManageSheetOpen), // Fetch when diving into product
+        enabled: !!selectedCatalogue?.id && level === 'PRODUCT',
+        placeholderData: (prev: any) => prev,
         queryFn: async () => {
             const res = await adminService.getProductColours(selectedProduct!.id);
             return (Array.isArray(res) ? res : []).map((c: any) => ({
