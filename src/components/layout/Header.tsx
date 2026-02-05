@@ -263,6 +263,26 @@ const Header = ({ companyName = "ManaBuy", fetchAllAtOnce = true }: { companyNam
                 );
               }
 
+              // Special handling for Admin to debug crash
+              if (label === 'Admin') {
+                return (
+                  <Button
+                    key={label}
+                    variant={isActive ? "default" : "ghost"}
+                    size="icon"
+                    className={cn(
+                      "rounded-full relative transition-all duration-300 w-10 h-10 md:w-12 md:h-12",
+                      !isActive && "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    )}
+                    onClick={() => {
+                      window.location.href = href;
+                    }}
+                  >
+                    {Icon && <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />}
+                  </Button>
+                );
+              }
+
               // Default Link Button
               return (
                 <Button
