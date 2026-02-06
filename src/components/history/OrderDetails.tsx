@@ -70,14 +70,22 @@ export function OrderDetails({ order, onBack, onStatusUpdate, isAdmin = false }:
 
             const element = container.querySelector('#invoice-template') as HTMLElement;
             if (element) {
-                // Detect mobile to use conservative scale
+                // Detect mobile to use conservative scale for performance
                 const isMobile = window.innerWidth <= 768;
+
+                // OPTIMIZATION: Reduce scale and ensure proper window context for speed
                 const canvas = await html2canvas(element, {
-                    scale: isMobile ? 1 : 1.2,
+                    scale: isMobile ? 0.75 : 1.1, // Reduced from 1.2 for better perf
                     useCORS: true,
                     logging: false,
                     backgroundColor: '#ffffff',
-                    width: 800, // Force specific width capture
+                    width: 800, // Content width
+                    windowWidth: 800, // Virtual window width to prevent responsive squashing
+                    height: element.offsetHeight, // Explicit height
+                    x: 0,
+                    y: 0,
+                    scrollX: 0,
+                    scrollY: 0,
                     onclone: (doc) => {
                         // Ensure cloned document elements are visible
                         const el = doc.getElementById('invoice-template');
