@@ -98,15 +98,18 @@ export function OrderDetails({ order, onBack, onStatusUpdate, isAdmin = false }:
                 });
 
                 const imgData = canvas.toDataURL('image/jpeg', 0.8);
+
+                // Calculate PDF dimensions to fit the rendered content exactly
+                // A4 width is 210mm. We keep width constant and adjust height.
+                const pdfWidth = 210;
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
                 const pdf = new jsPDF({
                     orientation: 'p',
                     unit: 'mm',
-                    format: 'a4',
+                    format: [pdfWidth, pdfHeight], // Dynamic height to prevent cutoff
                     compress: true
                 });
-
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
                 pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
                 pdf.save(`Invoice_${order.orderNumber}.pdf`);
