@@ -436,6 +436,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     }, [view, companyDetails?.razorpay, timeLeft]);
 
 
+    // Payment UI State
+    const [paymentTab, setPaymentTab] = useState<'upi' | 'qr'>('qr');
+
 
 
     // Address Form State
@@ -1800,7 +1803,14 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             <SheetTrigger asChild>
                 {children}
             </SheetTrigger>
-            <SheetContent className="w-full sm:max-w-md h-[100dvh] flex flex-col p-0 gap-0 border-l border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-2xl">
+            <SheetContent
+                onInteractOutside={(e) => {
+                    // Prevent closing if we are in the payment screen
+                    if (view === 'payment') {
+                        e.preventDefault();
+                    }
+                }}
+                className="w-full sm:max-w-md h-[100dvh] flex flex-col p-0 gap-0 border-l border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-2xl">
 
                 {/* Coupon Unlocked Popup Overlay */}
                 {showCouponPopup && (
@@ -1879,58 +1889,68 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     </span>
                                 </div>
 
-                                {/* -------- PAYMENT METHODS -------- */}
-                                {companyDetails?.upiId ? (
-                                    <div className="w-full space-y-3 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                {/* -------- PAYMENT OPTIONS UI -------- */}
+                                <div className="space-y-4">
 
-                                        {/* 1. PhonePe */}
-                                        <a
-                                            href={`phonepe://pay?pa=${companyDetails.upiId}&pn=${encodeURIComponent(companyDetails.companyName)}&am=${(finalTotal - extraDiscount).toFixed(2)}&tr=${Date.now()}&tn=Order-${Date.now()}&cu=INR`}
-                                            className="block w-full group transition-transform active:scale-95"
+                                    {/* Timer & Total Badge */}
+                                    <div className="flex items-center justify-between px-1">
+                                        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                                            <span className="relative flex h-2 w-2">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                                            </span>
+                                            Expires in:
+                                            <span className="font-mono text-orange-600 tabular-nums">{formatTime(timeLeft)}</span>
+                                        </div>
+                                        <div className="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-md border border-slate-200">
+                                            Total: {formatCurrency(finalTotal)}
+                                        </div>
+                                    </div>
+
+                                    {/* SELECTION TABS (Radio Style) */}
+                                    <div className="grid grid-cols-2 p-1 bg-slate-100/80 rounded-2xl border border-slate-200">
+                                        <button
+                                            onClick={() => setPaymentTab('qr')}
+                                            className={cn(
+                                                "relative z-10 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2",
+                                                paymentTab === 'qr'
+                                                    ? "bg-white text-slate-800 shadow-sm ring-1 ring-black/5"
+                                                    : "text-slate-500 hover:text-slate-700"
+                                            )}
                                         >
-                                            <div className="w-full bg-[#5f259f] hover:bg-[#5f259f]/90 text-white rounded-xl p-3 flex items-center justify-between shadow-lg shadow-purple-200 border border-white/10 relative overflow-hidden">
-                                                <div className="flex items-center gap-3 relative z-10">
-                                                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shrink-0">
-                                                        {/* PhonePe Icon Placeholder - using text/color for now if no asset */}
-                                                        <span className="text-[#5f259f] font-bold text-xs">Pe</span>
-                                                    </div>
-                                                    <div className="text-left">
-                                                        <span className="block text-sm font-bold leading-tight">PhonePe</span>
-                                                        <span className="text-[10px] opacity-80 font-medium">Pay via App</span>
-                                                    </div>
-                                                </div>
-                                                <ChevronRight className="w-5 h-5 opacity-60 group-hover:translate-x-1 transition-transform" />
+                                            <div className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center">
+                                                {paymentTab === 'qr' && <div className="w-2 h-2 rounded-full bg-current" />}
                                             </div>
-                                        </a>
-
-                                        {/* 2. Google Pay */}
-                                        <a
-                                            href={`tez://upi/pay?pa=${companyDetails.upiId}&pn=${encodeURIComponent(companyDetails.companyName)}&am=${(finalTotal - extraDiscount).toFixed(2)}&tr=${Date.now()}&tn=Order-${Date.now()}&cu=INR`}
-                                            className="block w-full group transition-transform active:scale-95"
+                                            Scanner
+                                        </button>
+                                        <button
+                                            onClick={() => setPaymentTab('upi')}
+                                            className={cn(
+                                                "relative z-10 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2",
+                                                paymentTab === 'upi'
+                                                    ? "bg-white text-slate-800 shadow-sm ring-1 ring-black/5"
+                                                    : "text-slate-500 hover:text-slate-700"
+                                            )}
                                         >
-                                            <div className="w-full bg-[#3c4043] hover:bg-[#3c4043]/90 text-white rounded-xl p-3 flex items-center justify-between shadow-lg shadow-slate-200 border border-white/10 relative overflow-hidden">
-                                                {/* GPay Blue Accent */}
-                                                <div className="absolute top-0 right-0 w-20 h-20 bg-[#4285f4] blur-2xl opacity-20 -mr-10 -mt-10 pointer-events-none" />
-
-                                                <div className="flex items-center gap-3 relative z-10">
-                                                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shrink-0">
-                                                        {/* GPay Icon Placeholder */}
-                                                        <span className="text-[#3c4043] font-bold text-xs">GPay</span>
-                                                    </div>
-                                                    <div className="text-left">
-                                                        <span className="block text-sm font-bold leading-tight">Google Pay</span>
-                                                        <span className="text-[10px] opacity-80 font-medium">Pay via App</span>
-                                                    </div>
-                                                </div>
-                                                <ChevronRight className="w-5 h-5 opacity-60 group-hover:translate-x-1 transition-transform" />
+                                            <div className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center">
+                                                {paymentTab === 'upi' && <div className="w-2 h-2 rounded-full bg-current" />}
                                             </div>
-                                        </a>
+                                            UPI Apps
+                                        </button>
+                                    </div>
 
-                                        {/* 3. SHOW QR CODE TOGGLE */}
-                                        <div className="pt-2">
-                                            <div className="bg-white p-4 rounded-3xl shadow-[0_10px_40px_-5px_rgba(0,0,0,0.1)] border border-slate-100 flex flex-col items-center">
-                                                <span className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider">Scan QR Code</span>
-                                                <div className="relative aspect-square w-48 overflow-hidden rounded-2xl bg-white border-2 border-slate-100 p-2">
+
+                                    {/* CONTENT AREA */}
+                                    <div className="bg-white rounded-3xl p-4 border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden min-h-[300px] flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-300">
+                                        {/* Background Decor */}
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none" />
+
+
+                                        {/* MODE: SCANNER */}
+                                        {paymentTab === 'qr' && (
+                                            <div className="relative z-10 w-full flex flex-col items-center animate-in fade-in slide-in-from-left-4 duration-300">
+                                                <div className="relative aspect-square w-48 overflow-hidden rounded-2xl bg-white border-4 border-slate-50 shadow-inner p-2 mb-4 group">
                                                     <Image
                                                         src={companyDetails?.upiQrCode || "https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"}
                                                         alt="UPI QR Code"
@@ -1938,58 +1958,90 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                         className="object-contain"
                                                     />
                                                     {/* Scan Line Animation */}
-                                                    <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent animate-[scan_2s_ease-in-out_infinite] opacity-50" />
+                                                    <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent animate-[scan_2s_ease-in-out_infinite] opacity-60" />
                                                 </div>
-                                                <div className="flex items-center gap-2 mt-3 bg-slate-50 px-3 py-1.5 rounded-full">
-                                                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                                                    <span className="text-[10px] font-bold text-slate-600">UPI ID: {companyDetails?.upiId}</span>
+                                                <div className="flex items-center gap-2 bg-slate-50/80 backdrop-blur px-4 py-2 rounded-full border border-slate-100 mb-2">
+                                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                                    <span className="text-[10px] font-bold text-slate-600 tracking-wide select-all">
+                                                        {companyDetails?.upiId || "No UPI ID"}
+                                                    </span>
                                                 </div>
+                                                <p className="text-[10px] text-slate-400 font-medium">Scan with any UPI App</p>
                                             </div>
-                                        </div>
+                                        )}
 
+
+                                        {/* MODE: UPI APPS */}
+                                        {paymentTab === 'upi' && (
+                                            <div className="relative z-10 w-full space-y-3 animate-in fade-in slide-in-from-right-4 duration-300">
+                                                <div className="text-center mb-4">
+                                                    <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-2 text-indigo-600">
+                                                        <CreditCard className="w-6 h-6" />
+                                                    </div>
+                                                    <h4 className="text-sm font-bold text-slate-700">Pay via App</h4>
+                                                    <p className="text-[10px] text-slate-400">Select your preferred app</p>
+                                                </div>
+
+                                                <a
+                                                    href={`phonepe://pay?pa=${companyDetails?.upiId}&pn=${encodeURIComponent(companyDetails?.companyName || '')}&am=${(finalTotal - extraDiscount).toFixed(2)}&tr=${Date.now()}&tn=Order-${Date.now()}&cu=INR`}
+                                                    className="flex items-center gap-3 w-full bg-[#5f259f] hover:bg-[#5f259f]/90 text-white p-3 rounded-2xl shadow-lg shadow-purple-200 transition-transform active:scale-95 relative overflow-hidden group"
+                                                >
+                                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+                                                        <span className="text-[#5f259f] font-bold text-xs">Pe</span>
+                                                    </div>
+                                                    <div className="flex-1 text-left">
+                                                        <span className="block text-sm font-bold">PhonePe</span>
+                                                        <span className="text-[10px] opacity-80">Tap to pay</span>
+                                                    </div>
+                                                    <ArrowRight className="w-4 h-4 opacity-60" />
+                                                </a>
+
+                                                <a
+                                                    href={`tez://upi/pay?pa=${companyDetails?.upiId}&pn=${encodeURIComponent(companyDetails?.companyName || '')}&am=${(finalTotal - extraDiscount).toFixed(2)}&tr=${Date.now()}&tn=Order-${Date.now()}&cu=INR`}
+                                                    className="flex items-center gap-3 w-full bg-white hover:bg-slate-50 text-slate-800 p-3 rounded-2xl shadow-lg shadow-slate-100 border border-slate-100 transition-transform active:scale-95 group relative overflow-hidden"
+                                                >
+                                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-100 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                                                    <div className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+                                                        <span className="text-slate-700 font-bold text-xs">GPay</span>
+                                                    </div>
+                                                    <div className="flex-1 text-left">
+                                                        <span className="block text-sm font-bold text-slate-700">Google Pay</span>
+                                                        <span className="text-[10px] text-slate-400">Tap to pay</span>
+                                                    </div>
+                                                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500" />
+                                                </a>
+                                            </div>
+                                        )}
                                     </div>
-                                ) : (
-                                    /* FALLBACK IF NO UPI ID (Just Manual Upload Instructions) */
-                                    <div className="text-center p-4 bg-amber-50 rounded-xl border border-amber-100 text-amber-800 text-xs font-medium mb-6">
-                                        No UPI details found. Please contact support or use Manual Payment upload below.
-                                    </div>
-                                )}
 
-
-                                {/* -------- TIMER & MANUAL UPLOAD -------- */}
-                                <div className="w-full bg-slate-50/50 rounded-2xl p-4 border border-slate-200/50 mb-0 space-y-4">
-                                    {/* Timer */}
-                                    <div className="flex items-center justify-between text-xs font-medium text-slate-500 px-1">
-                                        <span>Complete payment within:</span>
-                                        <span className="font-mono font-bold text-primary text-sm">{formatTime(timeLeft)}</span>
-                                    </div>
-
-                                    {/* UTR Input - Replaces Manual Upload */}
-                                    <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+                                    {/* UTR / Reference Input - Always Visible */}
+                                    <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/60 backdrop-blur-sm">
                                         <div className="flex justify-between items-center mb-2">
-                                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">UTR / Reference No</span>
-                                            <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded text-xs">Optional</span>
+                                            <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                                                <Tag className="w-3 h-3" /> UTR / Reference No
+                                            </Label>
+                                            <span className="text-[9px] font-medium text-slate-400 bg-white border border-slate-100 px-2 py-0.5 rounded-md shadow-sm">Optional</span>
                                         </div>
-                                        <div>
-                                            <Input
-                                                placeholder="Paste UTR or Reference Number here"
-                                                value={manualProof || ''}
-                                                onChange={(e) => setManualProof(e.target.value)}
-                                                className="border-slate-200 focus-visible:ring-indigo-500 bg-slate-50"
-                                            />
-                                        </div>
+                                        <Input
+                                            placeholder="Paste your UTR number after payment"
+                                            value={manualProof || ''}
+                                            onChange={(e) => setManualProof(e.target.value)}
+                                            className="bg-white border-slate-200 focus-visible:ring-indigo-500/50 rounded-xl h-11 text-sm shadow-sm transition-all focus:shadow-md"
+                                        />
                                     </div>
 
+                                    {/* Confirm Button */}
                                     <Button
                                         onClick={() => {
                                             setShowQrPopup(false);
                                             executeSaveOrder();
                                         }}
-                                        className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-lg shadow-indigo-200 h-12 text-base font-semibold tracking-wide"
+                                        className="w-full rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-200 h-14 text-base font-bold tracking-wide transition-all active:scale-[0.98]"
                                         style={{ backgroundColor: `hsl(${theme.colors.primary})` }}
                                     >
-                                        I Have Paid
-                                        <ArrowRight className="w-4 h-4 ml-2 opacity-80" />
+                                        <span className="drop-shadow-sm">Confirm Payment</span>
+                                        <ArrowRight className="w-5 h-5 ml-2 animate-pulse" />
                                     </Button>
 
                                 </div>
