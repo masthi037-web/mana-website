@@ -58,6 +58,7 @@ export function OrderDetails({ order, onBack, onStatusUpdate, isAdmin = false }:
                     <InvoiceTemplate
                         order={order}
                         companyDetails={companyDetails}
+                        simpleMode={true} // Use simplified flat design for faster rendering
                         ref={(el) => {
                             if (el) resolve();
                         }}
@@ -65,17 +66,19 @@ export function OrderDetails({ order, onBack, onStatusUpdate, isAdmin = false }:
                 );
             });
 
-            // Ensure layout is stable
-            await new Promise(r => setTimeout(r, 200));
+            // Ensure layout is stable - slightly longer wait for rendering
+            await new Promise(r => setTimeout(r, 250));
 
             const element = container.querySelector('#invoice-template') as HTMLElement;
             if (element) {
                 // Detect mobile to use conservative scale for performance
                 const isMobile = window.innerWidth <= 768;
 
-                // OPTIMIZATION: Reduce scale and ensure proper window context for speed
+                // OPTIMIZATION: Aggressive performance tuning for mobile
+                // - Scale 0.6: Acceptable print quality, very fast
+                // - simpleMode: Removed all expensive CSS effects
                 const canvas = await html2canvas(element, {
-                    scale: isMobile ? 0.75 : 1.1, // Reduced from 1.2 for better perf
+                    scale: isMobile ? 0.6 : 1.1,
                     useCORS: true,
                     logging: false,
                     backgroundColor: '#ffffff',

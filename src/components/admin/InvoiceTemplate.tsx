@@ -5,13 +5,24 @@ import { format } from 'date-fns';
 interface InvoiceTemplateProps {
     order: SaveOrderResponse;
     companyDetails: CompanyDetails | null;
+    simpleMode?: boolean;
 }
 
-export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(({ order, companyDetails }, ref) => {
+export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(({ order, companyDetails, simpleMode = false }, ref) => {
     if (!order || !companyDetails) return null;
     const details = companyDetails;
 
-    // Image variables removed for speed optimization
+    // Helper classes based on mode
+    const containerClass = simpleMode ? "bg-white text-slate-800 flex flex-col font-sans" : "bg-white text-slate-800 flex flex-col font-sans";
+    const cardClass = simpleMode
+        ? "bg-slate-50 p-6 border border-slate-200"
+        : "bg-slate-50 p-6 rounded-2xl border border-slate-100 flex-grow";
+    const tableContainerClass = simpleMode
+        ? "border border-slate-200 bg-white"
+        : "rounded-3xl border border-slate-200 overflow-hidden bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]";
+    const summaryCardClass = simpleMode
+        ? "w-[340px] bg-slate-50 p-8 border border-slate-200"
+        : "w-[340px] bg-slate-50/50 p-8 rounded-[2rem] border border-slate-100";
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return '';
@@ -30,17 +41,12 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
         }).format(amount);
     };
 
-    // getItemImage removed for speed optimization
-
     return (
-        <div ref={ref} className="bg-white text-slate-800 flex flex-col font-sans" id="invoice-template">
-            {/* Top Decorative Bar Removed for Speed */}
-
+        <div ref={ref} className={containerClass} id="invoice-template">
             {/* Header Section */}
             <div className="p-12 pb-8 flex justify-between items-start">
                 <div className="flex flex-col">
                     <div className="flex items-center gap-4 mb-6">
-                        {/* Logo removed for speed */}
                         <div>
                             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{details.companyName}</h1>
                             {details.gstNumber && <p className="text-xs text-slate-400 font-medium">GSTIN: {details.gstNumber}</p>}
@@ -60,7 +66,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                 </div>
 
                 <div className="text-right">
-                    <div className="inline-block bg-slate-900 text-white px-6 py-2 rounded-full text-sm font-bold tracking-wider uppercase mb-6">
+                    <div className={simpleMode ? "inline-block bg-slate-900 text-white px-6 py-2 text-sm font-bold tracking-wider uppercase mb-6" : "inline-block bg-slate-900 text-white px-6 py-2 rounded-full text-sm font-bold tracking-wider uppercase mb-6"}>
                         Invoice
                     </div>
                     <div className="space-y-1">
@@ -84,14 +90,13 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
             {/* Client Info Grid */}
             <div className="p-12 py-8 grid grid-cols-2 gap-12">
                 <div className="flex flex-col h-full">
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex-grow">
+                    <div className={cardClass}>
                         <p className="font-bold text-slate-900 text-lg mb-1">{order.customerName}</p>
                         <p className="text-sm text-slate-500 font-medium mb-3">{order.customerPhone}</p>
-
                     </div>
                 </div>
                 <div className="flex flex-col h-full">
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex-grow">
+                    <div className={cardClass}>
                         <p className="text-sm text-slate-600 leading-relaxed h-full">
                             <span className="font-bold text-slate-900 block mb-2 text-base">Delivery Address</span>
                             {order.deliveryRoad},<br />
@@ -104,10 +109,10 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
 
             {/* Items Table */}
             <div className="px-12 flex-grow">
-                <div className="rounded-3xl border border-slate-200 overflow-hidden bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+                <div className={tableContainerClass}>
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/80 border-b border-slate-100">
+                            <tr className="bg-slate-50 border-b border-slate-100">
                                 <th className="py-5 px-8 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] w-[6%] text-center">#</th>
                                 <th className="py-5 px-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] w-[44%]">Description</th>
                                 <th className="py-5 px-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] text-center w-[12%]">Quantity</th>
@@ -123,7 +128,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                 const discountPercent = hasDiscount ? Math.round(((originalUnitPrice - finalUnitPrice) / originalUnitPrice) * 100) : 0;
 
                                 return (
-                                    <tr key={idx} className="hover:bg-slate-50/30 transition-colors duration-200">
+                                    <tr key={idx} className={simpleMode ? "bg-white" : "hover:bg-slate-50/30 transition-colors duration-200"}>
                                         <td className="py-6 px-8 align-middle text-center">
                                             <span className="text-slate-300 text-xs font-black tracking-tighter italic">{(idx + 1).toString().padStart(2, '0')}</span>
                                         </td>
@@ -144,7 +149,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                         </td>
                                         <td className="py-6 px-4 text-center align-middle">
                                             <div className="flex justify-center">
-                                                <span className="inline-flex items-center justify-center min-w-[2.5rem] font-black text-slate-900 bg-slate-100/50 px-3 py-1.5 rounded-lg text-xs border border-slate-200/40">
+                                                <span className={simpleMode ? "inline-flex items-center justify-center min-w-[2.5rem] font-bold text-slate-900 px-3 py-1.5 text-xs" : "inline-flex items-center justify-center min-w-[2.5rem] font-black text-slate-900 bg-slate-100/50 px-3 py-1.5 rounded-lg text-xs border border-slate-200/40"}>
                                                     {item.quantity}
                                                 </span>
                                             </div>
@@ -182,7 +187,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
             {/* Footer Summary */}
             <div className="px-12 py-10">
                 <div className="flex justify-end pt-4">
-                    <div className="w-[340px] bg-slate-50/50 p-8 rounded-[2rem] border border-slate-100">
+                    <div className={summaryCardClass}>
                         <div className="space-y-5 pb-6 border-b border-dashed border-slate-200">
                             <div className="flex justify-between items-center">
                                 <span className="text-slate-400 font-bold uppercase tracking-[0.15em] text-[9px]">Subtotal</span>
