@@ -3271,7 +3271,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                                                 "text-sm leading-relaxed max-w-[90%]",
                                                                 selectedPaymentMethod === 'ONLINE' ? "text-slate-300" : "text-slate-500"
                                                             )}>
-                                                                Secure instant payment via UPI, Cards, or Netbanking.
+                                                                Secure instant payment via UPI.
                                                             </p>
 
                                                             <div className="pt-3 flex items-center gap-3">

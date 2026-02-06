@@ -256,6 +256,7 @@ export const CompanyOrdersSheet = ({ children }: { children: React.ReactNode }) 
                     ) : selectedOrder ? (
                         // Detail View
                         <OrderDetails
+                            isAdmin={true}
                             order={selectedOrder}
                             onBack={() => setSelectedOrder(null)}
                             onStatusUpdate={async (newStatus) => {

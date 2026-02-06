@@ -24,9 +24,10 @@ interface OrderDetailsProps {
     order: SaveOrderResponse;
     onBack: () => void;
     onStatusUpdate?: (newStatus: string) => void;
+    isAdmin?: boolean;
 }
 
-export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProps) {
+export function OrderDetails({ order, onBack, onStatusUpdate, isAdmin = false }: OrderDetailsProps) {
     const { companyDetails } = useCart();
     const { toast } = useToast();
     const [downloading, setDownloading] = useState(false);
@@ -200,39 +201,45 @@ export function OrderDetails({ order, onBack, onStatusUpdate }: OrderDetailsProp
 
                             <div className="w-full max-w-xs">
                                 <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2 block">Current Status</label>
-                                <Select
-                                    value={order.orderStatus}
-                                    onValueChange={async (newStatus) => {
-                                        try {
-                                            if (!order.orderId) return;
-                                            await orderService.updateOrderStatus(order.orderId, newStatus);
-                                            // Call the callback to update parent state locally
-                                            onStatusUpdate?.(newStatus);
-                                            toast({
-                                                title: "Status Updated",
-                                                description: `Order status changed to ${newStatus}`,
-                                            });
-                                        } catch (e) {
-                                            console.error("Failed to update status", e);
-                                            toast({
-                                                title: "Update Failed",
-                                                description: "Could not update order status",
-                                                variant: "destructive"
-                                            });
-                                        }
-                                    }}
-                                >
-                                    <SelectTrigger className="w-full text-center justify-between bg-white border-slate-200 h-10 font-bold text-slate-800 focus:ring-primary/20">
-                                        <SelectValue placeholder="Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {['CREATED', 'PAYMENT_PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'].map((status) => (
-                                            <SelectItem key={status} value={status} className="font-medium text-slate-600 focus:bg-slate-50 focus:text-primary">
-                                                {status}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                {isAdmin ? (
+                                    <Select
+                                        value={order.orderStatus}
+                                        onValueChange={async (newStatus) => {
+                                            try {
+                                                if (!order.orderId) return;
+                                                await orderService.updateOrderStatus(order.orderId, newStatus);
+                                                // Call the callback to update parent state locally
+                                                onStatusUpdate?.(newStatus);
+                                                toast({
+                                                    title: "Status Updated",
+                                                    description: `Order status changed to ${newStatus}`,
+                                                });
+                                            } catch (e) {
+                                                console.error("Failed to update status", e);
+                                                toast({
+                                                    title: "Update Failed",
+                                                    description: "Could not update order status",
+                                                    variant: "destructive"
+                                                });
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger className="w-full text-center justify-between bg-white border-slate-200 h-10 font-bold text-slate-800 focus:ring-primary/20">
+                                            <SelectValue placeholder="Status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {['CREATED', 'PAYMENT_PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'].map((status) => (
+                                                <SelectItem key={status} value={status} className="font-medium text-slate-600 focus:bg-slate-50 focus:text-primary">
+                                                    {status}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <div className="w-full bg-white border border-slate-200 h-10 rounded-lg flex items-center justify-center font-bold text-slate-800 shadow-sm">
+                                        {order.orderStatus}
+                                    </div>
+                                )}
                             </div>
 
                             <p className="text-xs text-slate-500 font-medium mt-1">
