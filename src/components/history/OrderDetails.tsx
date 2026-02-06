@@ -67,7 +67,7 @@ export function OrderDetails({ order, onBack, onStatusUpdate, isAdmin = false }:
             });
 
             // Ensure layout is stable - slightly longer wait for rendering
-            await new Promise(r => setTimeout(r, 250));
+            await new Promise(r => setTimeout(r, 400));
 
             const element = container.querySelector('#invoice-template') as HTMLElement;
             if (element) {
@@ -84,7 +84,8 @@ export function OrderDetails({ order, onBack, onStatusUpdate, isAdmin = false }:
                     backgroundColor: '#ffffff',
                     width: 800, // Content width
                     windowWidth: 800, // Virtual window width to prevent responsive squashing
-                    height: element.offsetHeight, // Explicit height
+                    height: element.scrollHeight + 50, // Explicit height + padding to prevent cutoff
+                    windowHeight: element.scrollHeight + 100, // Ensure full context is captured
                     x: 0,
                     y: 0,
                     scrollX: 0,
@@ -189,7 +190,7 @@ export function OrderDetails({ order, onBack, onStatusUpdate, isAdmin = false }:
                 <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 gap-2 rounded-full text-xs font-semibold border-slate-200 text-slate-600 hover:text-primary hover:border-primary/50"
+                    className="hidden sm:flex h-8 gap-2 rounded-full text-xs font-semibold border-slate-200 text-slate-600 hover:text-primary hover:border-primary/50"
                     onClick={handleDownloadInvoice}
                     disabled={downloading}
                 >
