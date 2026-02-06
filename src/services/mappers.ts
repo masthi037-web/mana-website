@@ -139,6 +139,7 @@ export function mapApiProductToAppProduct(apiProd: ApiProduct, deliveryTime?: st
         pricing: pricingOptions,
         variants: variants,
         productOffer: apiProd.productOffer || undefined,
+        productPrice: Number(apiProd.productPrice) || 0,
 
         // Fields mapped from API specific fields
         productStatus: (apiProd as any).productStatus, // using any if strict check fails or just direct if interface matches

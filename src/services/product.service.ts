@@ -3,11 +3,10 @@ import { CompanyInventory, Category as ApiCategory, Catalogue as ApiCatalogue, P
 
 import { apiClient } from './api-client';
 
-// Placeholder images map to randomize/match images if needed, or we just use picsum if the API gives filenames
-const PLACEHOLDER_BASE = 'https://picsum.photos/seed';
+
 
 // ... existing imports
-import { Product } from '@/lib/api-types';
+
 import { mapApiCategoriesToAppCategories, mapApiProductToAppProduct } from './mappers';
 
 // Helper to centralize products-by-category logic
@@ -16,7 +15,7 @@ async function fetchCategoryProductsAPI(categoryId: string | number, forceFresh:
     // Defensive check
     if (!catIdStr || catIdStr === 'undefined' || catIdStr === 'null') return null;
 
-    console.log(`[ProductService] Helper Fetching products for category (${catIdStr}) from: /company/public/get-products-by-category/get (ForceFresh: ${forceFresh})`);
+
     try {
         const catData = await apiClient<ApiCategory>('/company/public/get-products-by-category/get', {
             params: { categoryId: catIdStr },
@@ -24,7 +23,7 @@ async function fetchCategoryProductsAPI(categoryId: string | number, forceFresh:
             // cache: 'no-store' // Removed no-store to allow revalidation
         });
         // Log brief summary instead of full dump
-        console.log(`[ProductService] Valid data received for ${catIdStr}`);
+
         return catData;
     } catch (e) {
         console.error(`Failed to fetch category ${catIdStr}`, e);
@@ -33,19 +32,19 @@ async function fetchCategoryProductsAPI(categoryId: string | number, forceFresh:
 }
 
 export async function fetchCategories(companyId: string, deliveryTime?: string, fetchAllAtOnce: boolean = true): Promise<AppCategory[]> {
-    console.log(`[ProductService] fetchCategories called for company: ${companyId}, fetchAllAtOnce: ${fetchAllAtOnce}`);
+
     if (!companyId) return [];
 
     try {
         if (!fetchAllAtOnce) {
-            console.log(`[ProductService] Fetching category list from: /category/public/get-all-by-company`);
+
             const categories = await apiClient<CategoryPublicResponse[]>('/category/public/get-all-by-company', {
                 params: { companyId },
                 next: { revalidate: 420, tags: ['categories'] } // Cache the category list (7 mins)
             });
 
             if (!categories || categories.length === 0) {
-                console.log('[ProductService] No categories found');
+
                 return [];
             }
 
@@ -58,7 +57,7 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
                 if (catData) {
                     const mappedCats = mapApiCategoriesToAppCategories(Array.isArray(catData) ? catData : [catData], deliveryTime);
                     firstCategoryData = mappedCats[0];
-                    console.log(`[ProductService] Mapped firstCategoryData: found ${firstCategoryData?.catalogs?.reduce((acc, c) => acc + c.products.length, 0) || 0} products`);
+
                 }
             }
 
@@ -80,7 +79,7 @@ export async function fetchCategories(companyId: string, deliveryTime?: string, 
             });
 
         } else {
-            console.log(`[ProductService] Fetching all categories and products from: /company/public/category/catalogue/product/get`);
+
             const data = await apiClient<CompanyInventory>('/company/public/category/catalogue/product/get', {
                 params: { companyId },
                 next: { revalidate: 420, tags: ['products'] } // 7 minutes cache
@@ -130,7 +129,7 @@ export async function fetchProductDetails(productId: string): Promise<AppProduct
 
 export async function validateCheckout(payload: CheckoutValidationRequest): Promise<CheckoutCheckResponse[] | null> {
     try {
-        console.log('Validating checkout with payload:', JSON.stringify(payload, null, 2));
+
         const data = await apiClient<{ productDetails: CheckoutCheckResponse[] }>('/product/checkout/check', {
             method: 'POST',
             body: JSON.stringify(payload),

@@ -38,8 +38,7 @@ import {
 
 
 
-// Remove hardcoded COMPANY_ID
-// const COMPANY_ID = "74f0d689-0ca7-4feb-a123-8e98c151b514";
+
 
 type ViewLevel = 'CATEGORY' | 'CATALOGUE' | 'PRODUCT' | 'PRICING' | 'SIZE_COLOUR';
 
@@ -69,7 +68,7 @@ export default function InventoryContent() {
 
     // --- OWNER & DELETE STATE ---
     const { isOwner } = useAuth();
-    // const isOwner = true; // Hardcoded for testing authentication hook stability
+
     const [itemToDelete, setItemToDelete] = useState<any | null>(null);
 
     const confirmDelete = (product: any, e: React.MouseEvent) => {
@@ -653,7 +652,7 @@ export default function InventoryContent() {
                     productSizeId: Number(selectedPricing.id),
                     colourName: name,
                     colourPrice: Number(price),
-                    productSizeColourQuantity: "0",
+                    productSizeColourQuantity: 0,
                     sizeColourStatus: "ACTIVE"
                 });
             }
@@ -1233,7 +1232,7 @@ export default function InventoryContent() {
                                 />
                             </div>
 
-                            {selectedProduct && selectedProduct.productPrice > 0 ? (
+                            {selectedProduct && (selectedProduct.productPrice || 0) > 0 ? (
                                 <div className="p-3 bg-muted rounded-md border border-dashed my-2">
                                     <p className="text-sm font-medium text-muted-foreground">
                                         Base Price is set on the Product ({selectedProduct.productPrice}).

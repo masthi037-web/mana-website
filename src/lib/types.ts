@@ -44,6 +44,7 @@ export type Product = {
   id: string;
   name: string;
   price: number;
+  productPrice?: number; // Base price from API without size logic
   priceAfterDiscount?: number;
   pricing: ProductPriceOption[]; // For quantity-based pricing
   imageId: string;

@@ -40,11 +40,7 @@ export async function apiClient<T>(
     }
 
     // DEBUG: Check Next.js Cache Config
-    if (fetchOptions.next?.revalidate) {
-        console.log(`[FETCH CONFIG] Caching is ON for ${endpoint} (Revalidate: ${fetchOptions.next.revalidate}s)`);
-    } else {
-        console.log(`[FETCH CONFIG] Caching is OFF for ${endpoint} (Fresh Data)`);
-    }
+
 
 
     // TOKEN HANDLING:
@@ -55,7 +51,7 @@ export async function apiClient<T>(
 
     if (!isAuthEndpoint && typeof window !== 'undefined') {
         token = localStorage.getItem('accessToken') || '';
-        console.log(`[API] token from local storage ${token}`);
+
         if (!token) console.warn(`[API] No token found in localStorage for ${endpoint}`);
     }
 
@@ -69,8 +65,7 @@ export async function apiClient<T>(
         (headers as any)['Authorization'] = `Bearer ${token}`;
     }
 
-    // 🚀 LOG REQUEST
-    console.log(`[API REQUEST] ${(fetchOptions.method || 'GET').toUpperCase()} ${endpoint}`);
+
 
     const startTime = performance.now();
     let res: Response;
@@ -85,9 +80,6 @@ export async function apiClient<T>(
         throw error;
     }
     const duration = performance.now() - startTime;
-    // 🚀 LOG RESPONSE
-    const source = duration < 30 ? '⚡ CACHE HIT (Likely)' : '🌍 NETWORK CALL';
-    console.log(`[API RESPONSE] ${(fetchOptions.method || 'GET').toUpperCase()} ${endpoint} - ${res.status} (${duration.toFixed(0)}ms) - ${source}`);
 
     // ✅ 401 Handling with Refresh Token
     if (res.status === 401 && !_retry) {
@@ -112,7 +104,7 @@ export async function apiClient<T>(
                 isRefreshing = true;
                 refreshPromise = (async () => {
                     try {
-                        console.log('[Auth] Access token expired, attempting refresh...');
+
 
                         // We use fetch directly here to avoid circular dependency or infinite loop
                         const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
@@ -124,7 +116,7 @@ export async function apiClient<T>(
                         if (refreshRes.ok) {
                             const data = await refreshRes.json();
                             if (data.accessToken && data.refreshToken) {
-                                console.log('[Auth] Token refresh successful');
+
                                 localStorage.setItem('accessToken', data.accessToken);
                                 localStorage.setItem('refreshToken', data.refreshToken);
                                 return;

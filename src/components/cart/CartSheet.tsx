@@ -93,7 +93,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
 
     // Timer Logic for QR
-    // Timer Logic for QR
     const [timeLeft, setTimeLeft] = useState(240); // 4 minutes
 
     useEffect(() => {
@@ -127,7 +126,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         }).format(amount);
     };
 
-    // Track initial render to prevent confetti on reload
     // Track initial render to prevent confetti on reload
     const isFirstRender = useRef(true);
 
@@ -343,9 +341,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const [showConflictPopup, setShowConflictPopup] = useState(false);
 
 
-    // ... (inside handleCheckout) ...
 
-    // 5. Compare and Validate
     let blockingChanges = false;
     const changes: ValidationMessage[] = [];
     const uniqueMessages = new Set<string>();
@@ -357,9 +353,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         }
     };
 
-    // ... (throughout validation logic, pass item.cartItemId where appropriate) ...
 
-    // ... (UI Render for Validation Popup) ...
 
     {/* Validation Popup */ }
     {
@@ -425,7 +419,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
     // Manual Payment State
     const [manualProof, setManualProof] = useState<string | null>(null);
-    // const [timeLeft, setTimeLeft] = useState(240); // 4 minutes in seconds
+
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -516,7 +510,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             isInternalUpdate.current = false; // Reset flag, keep validated
         } else {
             if (isValidated) {
-                console.log("CartSheet: Cart changed by user. Resetting validation status.");
                 setIsValidated(false);
             }
         }
@@ -587,7 +580,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         return () => clearTimeout(timer);
     }, []);
 
-    // Initial Load
     // Initial Load
     useEffect(() => {
         if (isCartOpen && isLoggedIn) {
@@ -684,7 +676,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        // QR Code Payment Interception
         // QR Code Payment Interception
         if (!companyDetails?.razorpay) {
             setShowQrPopup(true);
@@ -978,7 +969,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
         // 0. SKIP VALIDATION CHECK
         if (isValidated) {
-            console.log("CartSheet: Cart is already validated. Skipping API check.");
+
             loadCustomerData();
             setView('list');
             // If we have a pending stock conflict (from chained logic), show it now?
@@ -987,7 +978,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        console.log("Starting checkout validation process...");
+
         try {
             // 1. Get Customer Details (Phone, Name)
             const { customerService } = await import('@/services/customer.service');
@@ -1142,7 +1133,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 if (detail.sizeId !== undefined && detail.sizeId !== checkSizeId) {
                     const serverSizeExistsLocally = item.pricing?.some(p => parseInt(p.id) === detail.sizeId);
                     if (serverSizeExistsLocally) {
-                        console.log(`CartSheet: Auto-correcting Size ID for "${item.name}" from ${checkSizeId} to ${detail.sizeId}`);
+                        // Auto-correcting size ID
                         item.productSizeId = detail.sizeId.toString();
                         checkSizeId = detail.sizeId; // Update local var
                     } else {
@@ -1162,7 +1153,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                 // CASE 1: Size Colour Variant
                 if (detail.productSizeColourId !== null && detail.productSizeColourId !== undefined) {
-                    console.log(`Validating Case 1: Size Colour for "${item.name}"`);
+
 
                     // 1. Validate sizeColourName
                     if (detail.sizeColourName && item.selectedSizeColours && item.selectedSizeColours.length > 0) {
@@ -1223,7 +1214,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
                         // Sync Base Price
                         if (serverSizePrice > 0 && item.price !== serverSizePrice) {
-                            console.log(`CartSheet: Syncing Base Price (Case 1) ${item.price} -> ${serverSizePrice}`);
+
                             item.price = serverSizePrice;
                         }
 
@@ -1274,7 +1265,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 }
                 // CASE 2: Size Variant (but NO Size Colour)
                 else if (detail.sizeId !== null && detail.sizeId !== undefined && (detail.productSizeColourId === null || detail.productSizeColourId === undefined)) {
-                    console.log(`Validating Case 2: Size for "${item.name}"`);
+
 
                     // 1. Validate sizeStatus
                     if (detail.sizeStatus && detail.sizeStatus !== 'ACTIVE') {
@@ -1325,7 +1316,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     if (isNaN(resolvedPrice) || resolvedPrice <= 0) resolvedPrice = serverSizePrice;
 
                     // Log for debugging
-                    console.log(`CartSheet [${item.name}]: ServerBase=${serverSizePrice}, Resolved=${resolvedPrice}, LocalBase=${item.price}, LocalAfter=${item.priceAfterDiscount}`);
+
 
                     // FORCE UPDATE Strict Validation
                     if (resolvedPrice > 0) {
@@ -1334,7 +1325,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         // 1. Sync Base Price (Silent unless it creates a visual anomaly we handle elsewhere)
                         // This ensures the "strikethrough" price is correct.
                         if (serverSizePrice > 0 && item.price !== serverSizePrice) {
-                            console.log(`CartSheet: Syncing Base Price ${item.price} -> ${serverSizePrice}`);
+
                             item.price = serverSizePrice;
                         }
 
@@ -1348,7 +1339,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 changedProductIds.add(item.id);
                                 pushChange(`Price for "${item.name}" (${detail.productSize}) updated from ₹${previousEffective} to ₹${resolvedPrice}.`, item.cartItemId);
                             } else {
-                                console.log(`CartSheet: Silent Sync of AfterDiscount for ${item.name} (Effective price unchanged)`);
+
                             }
                             // Always apply the correct discount value
                             item.priceAfterDiscount = resolvedPrice;
@@ -1383,7 +1374,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 }
                 // CASE 3: Product Colour Variant (NO Size)
                 else if (detail.productColourId !== null && detail.productColourId !== undefined && (detail.sizeId === null || detail.sizeId === undefined)) {
-                    console.log(`Validating Case 3: Product Colour for "${item.name}"`);
+
 
                     // 1. Validate colourStatus
                     if (detail.colourStatus && detail.colourStatus !== 'ACTIVE') {
@@ -1425,14 +1416,14 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     if (isNaN(resolvedProdPrice) || resolvedProdPrice <= 0) resolvedProdPrice = serverProdPrice;
 
                     // Log for debugging
-                    console.log(`CartSheet [${item.name}]: ServerBase=${serverProdPrice}, Resolved=${resolvedProdPrice}, LocalBase=${item.price}, LocalAfter=${item.priceAfterDiscount}`);
+
 
                     if (resolvedProdPrice > 0) {
                         const previousEffective = item.priceAfterDiscount || item.price;
 
                         // 1. Sync Base Price (Silent)
                         if (serverProdPrice > 0 && item.price !== serverProdPrice) {
-                            console.log(`CartSheet: Syncing Base Price ${item.price} -> ${serverProdPrice}`);
+
                             item.price = serverProdPrice;
                         }
 
@@ -1443,7 +1434,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 changedProductIds.add(item.id);
                                 pushChange(`Price for "${item.name}" (${detail.colour}) updated from ₹${previousEffective} to ₹${resolvedProdPrice}.`, item.cartItemId);
                             } else {
-                                console.log(`CartSheet: Silent Sync of AfterDiscount for ${item.name} (Effective price unchanged)`);
+
                             }
                             item.priceAfterDiscount = resolvedProdPrice;
                         }
@@ -1476,7 +1467,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 }
                 // CASE 4: Product Only (No Size, No Colour)
                 else if (detail.productId !== null && detail.productId !== undefined) {
-                    console.log(`Validating Case 4: Product Only for "${item.name}"`);
+
 
                     // 1. Validate Prices
                     const serverProdPrice = parseFloat((detail.productPrice || 0).toString());
@@ -1495,14 +1486,14 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     if (isNaN(resolvedProdPrice) || resolvedProdPrice <= 0) resolvedProdPrice = serverProdPrice;
 
                     // Log for debugging
-                    console.log(`CartSheet [${item.name}]: ServerBase=${serverProdPrice}, Resolved=${resolvedProdPrice}, LocalBase=${item.price}, LocalAfter=${item.priceAfterDiscount}`);
+
 
                     if (resolvedProdPrice > 0) {
                         const previousEffective = item.priceAfterDiscount || item.price;
 
                         // 1. Sync Base Price (Silent)
                         if (serverProdPrice > 0 && item.price !== serverProdPrice) {
-                            console.log(`CartSheet: Syncing Base Price ${item.price} -> ${serverProdPrice}`);
+
                             item.price = serverProdPrice;
                         }
 
@@ -1513,7 +1504,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                 changedProductIds.add(item.id);
                                 pushChange(`Price for "${item.name}" updated from ₹${previousEffective} to ₹${resolvedProdPrice}.`, item.cartItemId);
                             } else {
-                                console.log(`CartSheet: Silent Sync of AfterDiscount for ${item.name} (Effective price unchanged)`);
+
                             }
                             item.priceAfterDiscount = resolvedProdPrice;
                         }
@@ -1675,7 +1666,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 // If we also have Price Updates (blockingChanges), we prioritize showing the Price Popup first.
                 // We defer the Stock Conflict popup to Step 2 (after user accepts price changes).
                 if (blockingChanges) {
-                    console.log('CartSheet: Both Stock and Price updates found. Deferring Stock Conflict to after Price Review.');
+
                     setPendingStockConflicts(currentConflicts);
                     // We DO NOT return here. We allow the function to proceed to 'setValidationErrors' (Price Popup).
                 } else {
@@ -1721,7 +1712,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             // ONLY sync products that actually had changes detected during validation
             const productsToSyncCount = changedProductIds.size;
             if (productsToSyncCount > 0) {
-                console.log(`CartSheet: Syncing ${productsToSyncCount} products globally...`, Array.from(changedProductIds));
+
                 Promise.all(Array.from(changedProductIds).map(async (pid) => {
                     const freshProd = await fetchProductDetails(pid);
                     if (freshProd) {
@@ -1738,7 +1729,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
             if (blockingChanges && changes.length > 0) {
                 setValidationErrors(changes);
-                console.log('CartSheet: Blocking changes found. Storing newCart in validatedCart:', newCart);
+
                 setValidatedCart(newCart);
                 setShowValidationPopup(true);
             } else {
@@ -2236,7 +2227,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                     </ul>
 
                                     <Button className="w-full" onClick={() => {
-                                        console.log('CartSheet: Review & Continue clicked. Applying validatedCart:', validatedCart);
+
                                         // Manual Review Logic:
                                         // 1. Mark this as an internal update so useEffect doesn't clear validation
                                         isInternalUpdate.current = true;
@@ -2256,13 +2247,13 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         // CHAINED POPUP LOGIC:
                                         // Check if we deferred any stock conflicts
                                         if (pendingStockConflicts.length > 0) {
-                                            console.log('CartSheet: Now showing deferred Stock Conflicts.');
+
                                             setStockConflicts(pendingStockConflicts);
                                             setShowConflictPopup(true);
                                             setPendingStockConflicts([]); // Clear buffer
                                         } else {
                                             // All Good -> Stay on Cart View (Manual Review Request)
-                                            console.log('CartSheet: Changes applied. User can now review cart before proceeding.');
+
                                             // We DO NOT auto-advance to 'list' view.
                                             // When user clicks "Checkout" again, handleCheckout will see isValidated=true and skip API.
                                         }
