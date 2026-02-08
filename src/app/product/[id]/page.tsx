@@ -492,14 +492,23 @@ export default function ProductDetailPage() {
               Taxes included. {companyDetails?.freeDeliveryCost && `Free shipping on orders over ${companyDetails.freeDeliveryCost}/-`}
             </p>
 
-            {/* Rating simplified */}
+            {/* Rating simplified - Random Logic */}
             <div className="flex items-center gap-2 mt-3">
               <div className="flex items-center gap-1 text-primary">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={cn("h-4 w-4", i < Math.floor(product.rating) ? 'fill-primary text-primary' : 'text-muted-foreground/30 fill-muted-foreground/30')} />
-                ))}
+                {(() => {
+                  const pid = Number(product.id) || product.id.toString().charCodeAt(0);
+                  const randomRating = 4.1 + (pid % 6) * 0.1;
+                  return [...Array(5)].map((_, i) => (
+                    <Star key={i} className={cn("h-4 w-4", i < Math.floor(randomRating) ? 'fill-primary text-primary' : 'text-muted-foreground/30 fill-muted-foreground/30')} />
+                  ));
+                })()}
               </div>
-              <span className="text-muted-foreground text-sm font-medium ml-1">({product.reviews?.length || 0} reviews)</span>
+              <span className="text-muted-foreground text-sm font-medium ml-1">
+                ({(() => {
+                  const pid = Number(product.id) || product.id.toString().charCodeAt(0);
+                  return (4.1 + (pid % 6) * 0.1).toFixed(1);
+                })()})
+              </span>
             </div>
 
             <p className="mt-4 text-muted-foreground leading-relaxed text-base">{product.description}</p>
@@ -757,12 +766,20 @@ export default function ProductDetailPage() {
           {/* ... existing review UI ... */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex flex-col items-center justify-center bg-secondary/30 rounded-2xl p-6 border border-border/50">
-              <p className="text-5xl font-bold text-foreground">{product.rating.toFixed(1)}</p>
-              <div className="flex items-center gap-1 text-primary mt-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={cn("h-6 w-6", i < Math.floor(product.rating) ? 'fill-primary text-primary' : 'fill-muted-foreground/20 text-muted-foreground/20')} />
-                ))}
-              </div>
+              {(() => {
+                const pid = Number(product.id) || product.id.toString().charCodeAt(0);
+                const randomRating = 4.1 + (pid % 6) * 0.1;
+                return (
+                  <>
+                    <p className="text-5xl font-bold text-foreground">{randomRating.toFixed(1)}</p>
+                    <div className="flex items-center gap-1 text-primary mt-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={cn("h-6 w-6", i < Math.floor(randomRating) ? 'fill-primary text-primary' : 'fill-muted-foreground/20 text-muted-foreground/20')} />
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
               <p className="text-muted-foreground text-sm mt-2">Based on {product.reviews?.length || 0} reviews</p>
             </div>
           </div>
