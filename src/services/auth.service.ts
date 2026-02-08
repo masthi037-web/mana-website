@@ -7,12 +7,20 @@ export interface LoginResponse {
 }
 
 export const authService = {
-    async sendOtp(phone: string): Promise<void> {
-        // The API expects phone as a query param based on the user request:
-        // /auth/send-otp?phone=8877665544
+    async sendOtp(phone: string, waConfig: {
+        waPhoneNumId?: string;
+        waToken?: string;
+        waOtpTemplateName?: string;
+    }): Promise<void> {
+        // The API now expects a JSON payload with phone and WhatsApp config
         const response = await apiClient<any>('/auth/send-otp', {
             method: 'POST',
-            params: { phone }
+            body: JSON.stringify({
+                phone,
+                waPhoneNumId: waConfig.waPhoneNumId,
+                waToken: waConfig.waToken,
+                waOtpTemplateName: waConfig.waOtpTemplateName
+            })
         });
         console.log("Send OTP Response:", response);
     },

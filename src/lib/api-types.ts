@@ -147,6 +147,10 @@ export interface CompanyDetails {
     razorpay?: boolean;
     upiQrCode?: string;
     upiId?: string;
+    waPhoneNumId?: string;
+    waToken?: string;
+    waOtpTemplateName?: string;
+    waOrderTemplateName?: string;
 }
 
 export interface CompanyInventory {
@@ -589,6 +593,9 @@ export interface SaveOrderRequest {
     createdAt?: string; // Optional
     updatedAt?: string; // Optional
     items: SaveOrderItem[];
+    waPhoneNumId?: string;
+    waToken?: string;
+    waOrderTemplateName?: string;
 }
 
 export interface SaveOrderResponse {
@@ -674,6 +681,10 @@ export interface CompanyRegistrationRequest {
     upiQrCode?: string | null;
     upiId?: string | null;
     about: string;
+    waPhoneNumId?: string;
+    waToken?: string;
+    waOtpTemplateName?: string;
+    waOrderTemplateName?: string;
 }
 
 export interface UpdateCompanyRequest extends CompanyRegistrationRequest {

@@ -29,7 +29,7 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
     const { toast } = useToast();
     const { domain, companyId } = useTenant();
     const { setWishlistOpen } = useWishlist();
-    const { setCartOpen } = useCart();
+    const { setCartOpen, companyDetails } = useCart();
 
     // State for Auth Flow
     const [view, setView] = React.useState<'profile' | 'login-phone' | 'login-otp' | 'edit-profile'>('login-phone');
@@ -134,7 +134,11 @@ export function ProfileSheet({ children }: { children: React.ReactNode }) {
         setIsLoading(true);
         setFeedback(null);
         try {
-            await authService.sendOtp(phoneNumber);
+            await authService.sendOtp(phoneNumber, {
+                waPhoneNumId: companyDetails?.waPhoneNumId,
+                waToken: companyDetails?.waToken,
+                waOtpTemplateName: companyDetails?.waOtpTemplateName
+            });
             // toast({ title: "OTP Sent", description: "Please check your messages" }); // REMOVED
             setFeedback({ type: 'success', message: `OTP sent to +91 ${phoneNumber}` });
             setView('login-otp');

@@ -828,7 +828,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 deliveryCost: String(shipping),
                 finalTotalAmount: finalTotalAmount,
                 paymentPic: manualProof || null,
-                items: processedItems
+                items: processedItems,
+                waPhoneNumId: companyDetails?.waPhoneNumId,
+                waToken: companyDetails?.waToken,
+                waOrderTemplateName: companyDetails?.waOrderTemplateName
             };
 
             const response = await orderService.saveOrder(payload);

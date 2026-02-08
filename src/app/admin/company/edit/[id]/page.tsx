@@ -58,7 +58,11 @@ export default function EditCompanyPage() {
         razorpay: false,
         upiQrCode: null,
         upiId: '',
-        about: ''
+        about: '',
+        waPhoneNumId: '',
+        waToken: '',
+        waOtpTemplateName: '',
+        waOrderTemplateName: ''
     });
 
     useEffect(() => {
@@ -116,6 +120,10 @@ export default function EditCompanyPage() {
                         upiQrCode: company.upiQrCode || '',
                         upiId: company.upiId || '',
                         about: company.about || '',
+                        waPhoneNumId: company.waPhoneNumId || '',
+                        waToken: company.waToken || '',
+                        waOtpTemplateName: company.waOtpTemplateName || '',
+                        waOrderTemplateName: company.waOrderTemplateName || '',
                     });
                 } else {
                     toast({ title: "Error", description: "Company not found", variant: "destructive" });
@@ -376,6 +384,29 @@ export default function EditCompanyPage() {
                                     label="Upload Banner"
                                 />
                             </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* 6. WhatsApp Configuration */}
+                <Card>
+                    <CardHeader><CardTitle>WhatsApp Configuration</CardTitle></CardHeader>
+                    <CardContent className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="waPhoneNumId">WhatsApp Phone Number ID</Label>
+                            <Input id="waPhoneNumId" name="waPhoneNumId" value={formData.waPhoneNumId || ''} onChange={handleChange} placeholder="e.g. 100012345678901" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="waToken">WhatsApp Token</Label>
+                            <Input id="waToken" name="waToken" type="password" value={formData.waToken || ''} onChange={handleChange} placeholder="Permanent Access Token" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="waOtpTemplateName">OTP Template Name</Label>
+                            <Input id="waOtpTemplateName" name="waOtpTemplateName" value={formData.waOtpTemplateName || ''} onChange={handleChange} placeholder="e.g. auth_otp" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="waOrderTemplateName">Order Template Name</Label>
+                            <Input id="waOrderTemplateName" name="waOrderTemplateName" value={formData.waOrderTemplateName || ''} onChange={handleChange} placeholder="e.g. order_update" />
                         </div>
                     </CardContent>
                 </Card>
